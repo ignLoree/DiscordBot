@@ -1767,6 +1767,61 @@ function buildPromptImageAttachment(title, lines = [], fileBaseName = "minigame"
     }
   }
 
+  if (fileBaseName === "guess_word" && Array.isArray(lines) && lines.length > 0) {
+    try {
+      const width = 1400;
+      const height = 780;
+      const canvas = createCanvas(width, height);
+      const ctx = canvas.getContext("2d");
+
+      const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+      bgGrad.addColorStop(0, "#151c2a");
+      bgGrad.addColorStop(1, "#2a2018");
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      const cardX = 42;
+      const cardY = 42;
+      const cardW = width - 84;
+      const cardH = height - 84;
+      ctx.fillStyle = "rgba(247, 241, 232, 0.96)";
+      roundRect(ctx, cardX, cardY, cardW, cardH, 26);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(111, 78, 55, 0.45)";
+      ctx.lineWidth = 2;
+      roundRect(ctx, cardX, cardY, cardW, cardH, 26);
+      ctx.stroke();
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillStyle = "#6f4e37";
+      ctx.font = "800 76px Sans";
+      ctx.fillText("Indovina la parola", width / 2, cardY + 100);
+
+      const scrambled = String(lines[0] || "").trim() || "?";
+      const usableWidth = cardW - 150;
+      let fontSize = 72;
+      let textLines = [];
+      for (; fontSize >= 44; fontSize -= 4) {
+        ctx.font = `700 ${fontSize}px Sans`;
+        textLines = wrapPromptText(ctx, scrambled, usableWidth);
+        if (textLines.length <= 3) break;
+      }
+      const lineHeight = Math.round(fontSize * 1.22);
+      const totalH = textLines.length * lineHeight;
+      let y = Math.round(cardY + 200 + Math.max(0, (cardH - 300 - totalH) / 2));
+      ctx.fillStyle = "#2c2419";
+      ctx.font = `700 ${fontSize}px Sans`;
+      for (const line of textLines) {
+        ctx.fillText(line, width / 2, y, usableWidth);
+        y += lineHeight;
+      }
+
+      return new AttachmentBuilder(canvas.toBuffer("image/png"), { name: "guess_word.png" });
+    } catch {
+      return null;
+    }
+  }
   if (fileBaseName === "hangman" && Array.isArray(lines) && lines.length >= 2) {
     const masked = String(lines[0] || "").trim();
     const errMatch = String(lines[1] || "").match(/Errori:\s*(\d+)\/(\d+)/);
@@ -2987,8 +3042,9 @@ function buildMaskedTextHint(value) {
  * Indizio con lettere rivelate in posizione (es. "p _ r _ l a"). Non banale come "inizia per" o "N lettere".
  * @param {string} value - Testo (parola o frase)
  * @param {number} [revealRatio] - Quota di lettere da mostrare (0.35–0.5)
+ * @param {boolean} [includeEmoji] - Se true (default) antepone emoji fiamma; in embed "Parola:" usare false per evitare che l'emoji mangi caratteri.
  */
-function buildRevealHint(value, revealRatio = 0.4) {
+function buildRevealHint(value, revealRatio = 0.4, includeEmoji = true) {
   const normalized = (typeof value === "string" ? value : String(value || ""))
     .trim()
     .toLowerCase()
@@ -2997,9 +3053,10 @@ function buildRevealHint(value, revealRatio = 0.4) {
   const chars = normalized.split("");
   const indices = chars.map((_, i) => i).filter((i) => /[a-z0-9àèéìòù]/.test(chars[i]));
   if (indices.length === 0) return null;
+  const wrap = (s) => (includeEmoji ? `<a:VC_Flame:1473106990493335665> **${s}**` : `**${s}**`);
   if (indices.length <= 2) {
     const out = chars.map((c, i) => (indices.includes(i) ? c : /[a-z0-9àèéìòù]/.test(c) ? "_" : c)).join("").replace(/\s+/g, " ");
-    return `<a:VC_Flame:1473106990493335665> **${out}**`;
+    return wrap(out);
   }
   const toReveal = Math.max(2, Math.min(indices.length, Math.round(indices.length * Math.min(0.5, Math.max(0.35, revealRatio)))));
   const revealedSet = new Set([indices[0], indices[indices.length - 1]]);
@@ -3013,7 +3070,7 @@ function buildRevealHint(value, revealRatio = 0.4) {
     if (/[a-z0-9àèéìòù]/i.test(c)) return "_";
     return c;
   });
-  return `<a:VC_Flame:1473106990493335665> **${out.join("").replace(/\s+/g, " ")}**`;
+  return wrap(out.join("").replace(/\s+/g, " "));
 }
 
 function buildCountryHint(country) {
@@ -3524,7 +3581,7 @@ async function startGuessWordGame(client, cfg) {
   const gameMessage = await channel.send({ embeds: [wordEmbed], files: wordAttachment ? [wordAttachment] : [], }).catch(() => null);
 
   const timeout = setTimeout(async () => { const game = activeGames.get(channelId); if (!game) return; recordNoParticipationIfNeeded(channelId, game); activeGames.delete(channelId); if (game.hintTimeout) clearTimeout(game.hintTimeout); await channel.send({ embeds: [buildTimeoutWordEmbed(game.target)] }).catch(() => { }); await clearActiveGame(client, cfg); }, durationMs); timeout.unref?.();
-  const hintTimeout = await scheduleGenericHint(client, channelId, durationMs, `Parola: ${buildRevealHint(target)}`,
+  const hintTimeout = await scheduleGenericHint(client, channelId, durationMs, `Parola: ${buildRevealHint(target, 0.4, false)}`,
   );
 
   activeGames.set(channelId, {
@@ -3574,10 +3631,8 @@ async function startGuessFlagGame(client, cfg) {
     await channel.send({ content: `<@&${roleId}>` }).catch(() => { });
   }
 
-  const flagCardAttachment = await buildGuessFlagCardAttachment(target.flagUrl);
-  const flagImageUrl = flagCardAttachment ? `attachment://${flagCardAttachment.name}` : target.flagUrl;
-  const flagEmbed = buildGuessFlagEmbed(flagImageUrl, rewardExp, durationMs);
-  const gameMessage = await channel.send({ embeds: [flagEmbed], files: flagCardAttachment ? [flagCardAttachment] : [], }).catch(() => null);
+  const flagEmbed = buildGuessFlagEmbed(target.flagUrl, rewardExp, durationMs);
+  const gameMessage = await channel.send({ embeds: [flagEmbed] }).catch(() => null);
 
   const timeout = setTimeout(async () => { const game = activeGames.get(channelId); if (!game) return; recordNoParticipationIfNeeded(channelId, game); activeGames.delete(channelId); if (game.hintTimeout) clearTimeout(game.hintTimeout); await channel.send({ embeds: [buildTimeoutFlagEmbed(game.displayName)] }).catch(() => { }); await clearActiveGame(client, cfg); }, durationMs); timeout.unref?.();
 
@@ -4337,7 +4392,7 @@ async function startHangmanGame(client, cfg) {
   const gameMessage = await channel.send({ embeds: [hangmanEmbed], files: hangmanAttachment ? [hangmanAttachment] : [], }).catch(() => null);
 
   const timeout = setTimeout(async () => { const game = activeGames.get(channelId); if (!game) return; recordNoParticipationIfNeeded(channelId, game); activeGames.delete(channelId); if (game.hintTimeout) clearTimeout(game.hintTimeout); await channel.send({ embeds: [buildTimeoutHangmanEmbed(game.word)] }).catch(() => { }); await clearActiveGame(client, cfg); }, durationMs); timeout.unref?.();
-  const hintTimeout = await scheduleGenericHint(client, channelId, durationMs, `Parola: ${buildRevealHint(word)}`,
+  const hintTimeout = await scheduleGenericHint(client, channelId, durationMs, `Parola: ${buildRevealHint(word, 0.4, false)}`,
   );
 
   activeGames.set(channelId, {
@@ -4536,6 +4591,12 @@ function parseDrivingQuizFromPayload(payload) {
   };
 }
 
+function appendCacheBuster(url) {
+  if (!url || typeof url !== "string") return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}_=${Date.now()}`;
+}
+
 async function fetchDrivingQuizFromApi(apiUrl, timeoutMs = 15000) {
   try {
     const res = await axios.get(apiUrl, { timeout: timeoutMs });
@@ -4557,25 +4618,25 @@ async function startDrivingQuizGame(client, cfg) {
   let row = null;
   let fromApi = false;
 
-  const fallbackSources = [() => { const signPick = pickRandomItem(DRIVING_SIGN_QUESTIONS); if (signPick?.statement && signPick?.signType && Array.isArray(signPick?.options) && signPick.options.length >= 2 && typeof signPick?.correctIndex === "number" && signPick.correctIndex >= 0 && signPick.correctIndex < signPick.options.length) { return { questionType: "multiple", signType: String(signPick.signType), statement: String(signPick.statement), options: signPick.options.map((o) => String(o)), correctIndex: signPick.correctIndex, }; } return null; }, () => { const localPick = pickRandomItem(DRIVING_MULTIPLE_CHOICE_BANK); if (localPick?.statement && Array.isArray(localPick?.options) && localPick.options.length >= 2 && typeof localPick?.correctIndex === "number" && localPick.correctIndex >= 0 && localPick.correctIndex < localPick.options.length) { return { questionType: "multiple", statement: String(localPick.statement), options: localPick.options.map((o) => String(o)), correctIndex: localPick.correctIndex, }; } return null; }, () => { const localPick = pickRandomItem(DRIVING_TRUE_FALSE_BANK); if (localPick?.statement != null && typeof localPick?.answer === "boolean") { return { questionType: "trueFalse", statement: String(localPick.statement), answer: Boolean(localPick.answer), }; } return null; },];
-  for (let i = fallbackSources.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [fallbackSources[i], fallbackSources[j]] = [fallbackSources[j], fallbackSources[i]];
+  const customApiUrl = cfg?.drivingQuiz?.apiUrl || null;
+  if (customApiUrl) {
+    row = await fetchDrivingQuizFromApi(appendCacheBuster(customApiUrl));
+    if (row) fromApi = true;
   }
-  for (const getFallback of fallbackSources) {
-    row = getFallback();
-    if (row) break;
+  if (!row && (cfg?.drivingQuiz?.useDefaultApi !== false)) {
+    row = await fetchDrivingQuizFromApi(appendCacheBuster(DEFAULT_DRIVING_QUIZ_API_URL));
+    if (row) fromApi = true;
   }
 
   if (!row) {
-    const customApiUrl = cfg?.drivingQuiz?.apiUrl || null;
-    if (customApiUrl) {
-      row = await fetchDrivingQuizFromApi(customApiUrl);
-      if (row) fromApi = true;
+    const fallbackSources = [() => { const signPick = pickRandomItem(DRIVING_SIGN_QUESTIONS); if (signPick?.statement && signPick?.signType && Array.isArray(signPick?.options) && signPick.options.length >= 2 && typeof signPick?.correctIndex === "number" && signPick.correctIndex >= 0 && signPick.correctIndex < signPick.options.length) { return { questionType: "multiple", signType: String(signPick.signType), statement: String(signPick.statement), options: signPick.options.map((o) => String(o)), correctIndex: signPick.correctIndex, }; } return null; }, () => { const localPick = pickRandomItem(DRIVING_MULTIPLE_CHOICE_BANK); if (localPick?.statement && Array.isArray(localPick?.options) && localPick.options.length >= 2 && typeof localPick?.correctIndex === "number" && localPick.correctIndex >= 0 && localPick.correctIndex < localPick.options.length) { return { questionType: "multiple", statement: String(localPick.statement), options: localPick.options.map((o) => String(o)), correctIndex: localPick.correctIndex, }; } return null; }, () => { const localPick = pickRandomItem(DRIVING_TRUE_FALSE_BANK); if (localPick?.statement != null && typeof localPick?.answer === "boolean") { return { questionType: "trueFalse", statement: String(localPick.statement), answer: Boolean(localPick.answer), }; } return null; },];
+    for (let i = fallbackSources.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [fallbackSources[i], fallbackSources[j]] = [fallbackSources[j], fallbackSources[i]];
     }
-    if (!row && (cfg?.drivingQuiz?.useDefaultApi !== false)) {
-      row = await fetchDrivingQuizFromApi(DEFAULT_DRIVING_QUIZ_API_URL);
-      if (row) fromApi = true;
+    for (const getFallback of fallbackSources) {
+      row = getFallback();
+      if (row) break;
     }
   }
   if (!row) return false;

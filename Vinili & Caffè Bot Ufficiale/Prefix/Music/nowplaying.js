@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { getQueue, touchMusicOutputChannel } = require("../../Services/Music/musicService");
 
 function formatDateTime(value) {

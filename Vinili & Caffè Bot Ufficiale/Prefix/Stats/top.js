@@ -1,5 +1,5 @@
 const { AttachmentBuilder, ChannelType } = require("discord.js");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const IDs = require("../../Utils/Config/ids");
 const { getServerOverviewStats } = require("../../Services/Community/activityService");
 const { InviteTrack } = require("../../Schemas/Community/communitySchemas");

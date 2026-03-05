@@ -18,7 +18,4 @@ async function deleteThreadForMessage(guild, messageIdOrMessage) {
   }
 }
 
-module.exports = {
-  getOrCreateStaffDoc,
-  deleteThreadForMessage,
-};
+module.exports = { getOrCreateStaffDoc, deleteThreadForMessage };

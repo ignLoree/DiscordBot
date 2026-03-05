@@ -51,8 +51,4 @@ function consumeRecentJoinGateKick(guildId, userId) {
   return payload;
 }
 
-module.exports = {
-  markJoinGateKick,
-  getRecentJoinGateKick,
-  consumeRecentJoinGateKick,
-};
+module.exports = { markJoinGateKick, getRecentJoinGateKick, consumeRecentJoinGateKick };

@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const{playRequest,touchMusicOutputChannel,searchPlayable,}=require("../../Services/Music/musicService");
 const { pickFromPagedMenu } = require("../../Services/Music/pagedPickerService");
 

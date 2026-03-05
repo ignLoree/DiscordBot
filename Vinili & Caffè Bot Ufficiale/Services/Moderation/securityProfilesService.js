@@ -1,15 +1,11 @@
 const fs = require("fs");
 const path = require("path");
 const IDs = require("../../Utils/Config/ids");
-
-const SECURITY_PROFILES_PATH=path.resolve(__dirname,"../../Utils/Config/securityProfiles.json",);
-
-const DEFAULT_STATE={version:1,guilds:{},};
-const DEFAULT_MAIN_ROLE_IDS=[IDs?.roles?.Member,IDs?.roles?.separatore6,IDs?.roles?.separatore8,IDs?.roles?.separatore5,IDs?.roles?.separatore7,].map((id) => normalizeEntityId(id)).filter(Boolean);
-
-const ADMINS_PROFILE=Object.freeze({key:"admins",roleId:String(IDs?.roles?.HighStaff||""),owner:false,fullImmunity:true,automodImmunity:true,dashboardAccess:false,reportImmunity:true,lockServerChannels:true,lockStaffRoles:false,lockServerJoins:true,makeLockdownUpdates:true,kickBanWhitelist:false,channelCreationsWhitelist:false,channelDeletionsWhitelist:false,roleCreationsWhitelist:false,roleDeletionsWhitelist:false,webhookCreationsWhitelist:false,profanityWhitelist:true,linkWhitelist:false,verifyCommand:true,});
-
-const MODERATORS_PROFILE=Object.freeze({key:"moderators",roleId:String(IDs?.roles?.Staff||""),owner:false,fullImmunity:false,automodImmunity:true,dashboardAccess:false,reportImmunity:true,lockServerChannels:false,lockStaffRoles:false,lockServerJoins:false,makeLockdownUpdates:false,kickBanWhitelist:false,channelCreationsWhitelist:false,channelDeletionsWhitelist:false,roleCreationsWhitelist:false,roleDeletionsWhitelist:false,webhookCreationsWhitelist:false,profanityWhitelist:true,linkWhitelist:false,verifyCommand:false,});
+const SECURITY_PROFILES_PATH = path.resolve(__dirname, "../../Utils/Config/securityProfiles.json",);
+const DEFAULT_STATE = { version: 1, guilds: {}, };
+const DEFAULT_MAIN_ROLE_IDS = [IDs?.roles?.Member, IDs?.roles?.separatore6, IDs?.roles?.separatore8, IDs?.roles?.separatore5, IDs?.roles?.separatore7,].map((id) => normalizeEntityId(id)).filter(Boolean);
+const ADMINS_PROFILE = Object.freeze({ key: "admins", roleId: String(IDs?.roles?.HighStaff || ""), owner: false, fullImmunity: true, automodImmunity: true, dashboardAccess: false, reportImmunity: true, lockServerChannels: true, lockStaffRoles: false, lockServerJoins: true, makeLockdownUpdates: true, kickBanWhitelist: false, channelCreationsWhitelist: false, channelDeletionsWhitelist: false, roleCreationsWhitelist: false, roleDeletionsWhitelist: false, webhookCreationsWhitelist: false, profanityWhitelist: true, linkWhitelist: false, verifyCommand: true, });
+const MODERATORS_PROFILE = Object.freeze({ key: "moderators", roleId: String(IDs?.roles?.Staff || ""), owner: false, fullImmunity: false, automodImmunity: true, dashboardAccess: false, reportImmunity: true, lockServerChannels: false, lockStaffRoles: false, lockServerJoins: false, makeLockdownUpdates: false, kickBanWhitelist: false, channelCreationsWhitelist: false, channelDeletionsWhitelist: false, roleCreationsWhitelist: false, roleDeletionsWhitelist: false, webhookCreationsWhitelist: false, profanityWhitelist: true, linkWhitelist: false, verifyCommand: false, });
 
 function readJsonSafe(filePath, fallback) {
   try {
@@ -142,7 +138,7 @@ function getGuildBucket(guildId, create = false) {
 }
 
 function getSecurityProfilesSnapshot(guildId) {
-  const bucket=getGuildBucket(guildId,false)||{trustedAdmins:[],extraOwners:[],quarantineRoleId:normalizeEntityId(IDs?.roles?.Muted),mainRoleIds:[...DEFAULT_MAIN_ROLE_IDS],loggingChannelId:normalizeEntityId(IDs?.channels?.modLogs),modLoggingChannelId:normalizeEntityId(IDs?.channels?.modLogs),partneringChannelIds:normalizeEntityId(IDs?.channels?.partnerships)?[normalizeEntityId(IDs?.channels?.partnerships)]:[],mainChannelId:normalizeEntityId(IDs?.channels?.chat),verificationChannelId:normalizeEntityId(IDs?.channels?.verify),};
+  const bucket = getGuildBucket(guildId, false) || { trustedAdmins: [], extraOwners: [], quarantineRoleId: normalizeEntityId(IDs?.roles?.Muted), mainRoleIds: [...DEFAULT_MAIN_ROLE_IDS], loggingChannelId: normalizeEntityId(IDs?.channels?.modLogs), modLoggingChannelId: normalizeEntityId(IDs?.channels?.modLogs), partneringChannelIds: normalizeEntityId(IDs?.channels?.partnerships) ? [normalizeEntityId(IDs?.channels?.partnerships)] : [], mainChannelId: normalizeEntityId(IDs?.channels?.chat), verificationChannelId: normalizeEntityId(IDs?.channels?.verify), };
   return JSON.parse(JSON.stringify(bucket));
 }
 
@@ -314,7 +310,7 @@ function removePartneringChannel(guildId, channelId) {
   if (!gid || !cid) return { ok: false, reason: "invalid_ids" };
   const bucket = getGuildBucket(gid, false);
   if (!bucket) return { ok: true, removed: false, partneringChannelIds: [] };
-  const before=Array.isArray(bucket.partneringChannelIds)?bucket.partneringChannelIds.length:0;
+  const before = Array.isArray(bucket.partneringChannelIds) ? bucket.partneringChannelIds.length : 0;
   bucket.partneringChannelIds = normalizeEntityArray(
     bucket.partneringChannelIds,
     30,
@@ -375,29 +371,4 @@ function getModeratorsProfileSnapshot() {
   return JSON.parse(JSON.stringify(MODERATORS_PROFILE));
 }
 
-module.exports = {
-  getSecurityProfilesSnapshot,
-  getAdminsProfileSnapshot,
-  getModeratorsProfileSnapshot,
-  addTrustedAdmin,
-  removeTrustedAdmin,
-  addExtraOwner,
-  removeExtraOwner,
-  getSecurityStaticsSnapshot,
-  setQuarantineRole,
-  addMainRole,
-  removeMainRole,
-  setLoggingChannel,
-  setModLoggingChannel,
-  setMainChannel,
-  setVerificationChannel,
-  addPartneringChannel,
-  removePartneringChannel,
-  isTrustedAdmin,
-  isExtraOwner,
-  isSecurityProfileImmune,
-  isAdminsProfileMember,
-  isModeratorsProfileMember,
-  hasAdminsProfileCapability,
-  hasModeratorsProfileCapability,
-};
+module.exports = { getSecurityProfilesSnapshot, getAdminsProfileSnapshot, getModeratorsProfileSnapshot, addTrustedAdmin, removeTrustedAdmin, addExtraOwner, removeExtraOwner, getSecurityStaticsSnapshot, setQuarantineRole, addMainRole, removeMainRole, setLoggingChannel, setModLoggingChannel, setMainChannel, setVerificationChannel, addPartneringChannel, removePartneringChannel, isTrustedAdmin, isExtraOwner, isSecurityProfileImmune, isAdminsProfileMember, isModeratorsProfileMember, hasAdminsProfileCapability, hasModeratorsProfileCapability };

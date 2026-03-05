@@ -4,8 +4,8 @@ const { EmbedBuilder, PermissionsBitField, PermissionFlagsBits, } = require("dis
 const IDs = require("../Config/ids");
 const { hasAdminsProfileCapability } = require("../../Services/Moderation/securityProfilesService");
 const { buildPrefixLookupKeys, buildSlashLookupKeys, hasTemporaryCommandPermission, } = require("./temporaryCommandPermissions");
-const PERMISSIONS_CANDIDATES=[path.resolve(__dirname,"../../permissions.json"),path.join(process.cwd(),"permissions.json"),];
-const EMPTY_PERMISSIONS={slash:{},prefix:{},channels:{},buttons:{},selectMenus:{},modals:{},};
+const PERMISSIONS_CANDIDATES = [path.resolve(__dirname, "../../permissions.json"), path.join(process.cwd(), "permissions.json"),];
+const EMPTY_PERMISSIONS = { slash: {}, prefix: {}, channels: {}, buttons: {}, selectMenus: {}, modals: {}, };
 const PERMISSIONS_CACHE_TTL_MS = 3000;
 let cache = { filePath: null, mtimeMs: 0, data: EMPTY_PERMISSIONS, expiresAt: 0 };
 let idsFallbackCache = null;
@@ -13,7 +13,7 @@ const LIVE_MEMBER_CACHE_TTL_MS = 15_000;
 const liveMemberCache = new Map();
 
 const MAIN_GUILD_ID = IDs?.guilds?.main || null;
-const ALLOWED_GUILD_IDS=new Set([IDs?.guilds?.main,IDs?.guilds?.test].filter(Boolean).map(String),);
+const ALLOWED_GUILD_IDS = new Set([IDs?.guilds?.main, IDs?.guilds?.test].filter(Boolean).map(String),);
 function isAllowedGuildUfficiale(guildId) {
   return !guildId || ALLOWED_GUILD_IDS.has(String(guildId));
 }
@@ -44,9 +44,9 @@ function hasVerificatoRole(member, guildId) {
   return member?.roles?.cache?.has(roleId) === true;
 }
 
-const SPONSOR_STAFF_TICKET_BUTTON_IDS=new Set(["claim_ticket","unclaim","close_ticket","close_ticket_motivo",]);
+const SPONSOR_STAFF_TICKET_BUTTON_IDS = new Set(["claim_ticket", "unclaim", "close_ticket", "close_ticket_motivo",]);
 
-const VERIFY_OR_TICKET_IDS=new Set(["verify_start","verify_enter","ticket_partnership","ticket_highstaff","ticket_supporto","claim_ticket","unclaim","close_ticket","close_ticket_motivo","ticket_open_menu",]);
+const VERIFY_OR_TICKET_IDS = new Set(["verify_start", "verify_enter", "ticket_partnership", "ticket_highstaff", "ticket_supporto", "claim_ticket", "unclaim", "close_ticket", "close_ticket_motivo", "ticket_open_menu",]);
 function isBackupInteraction(customId) {
   const id = String(customId || "").trim();
   if (!id) return false;
@@ -107,7 +107,7 @@ function loadPermissions() {
   const now = Date.now();
   if (cache.data && cache.expiresAt > now) return cache.data;
   try {
-    const permissionsPath=PERMISSIONS_CANDIDATES.find((p) => fs.existsSync(p))||null;
+    const permissionsPath = PERMISSIONS_CANDIDATES.find((p) => fs.existsSync(p)) || null;
     if (!permissionsPath) return EMPTY_PERMISSIONS;
     const stat = fs.statSync(permissionsPath);
     if (
@@ -120,7 +120,7 @@ function loadPermissions() {
     }
     const raw = fs.readFileSync(permissionsPath, "utf-8");
     const parsed = JSON.parse(raw) || {};
-    const normalized={slash:parsed.slash||{},prefix:parsed.prefix||{},channels:parsed.channels||{},buttons:parsed.buttons||{},selectMenus:parsed.selectMenus||{},modals:parsed.modals||{},};
+    const normalized = { slash: parsed.slash || {}, prefix: parsed.prefix || {}, channels: parsed.channels || {}, buttons: parsed.buttons || {}, selectMenus: parsed.selectMenus || {}, modals: parsed.modals || {}, };
     cache = {
       filePath: permissionsPath,
       mtimeMs: stat.mtimeMs,
@@ -154,7 +154,7 @@ function normalizeRoleList(roleIds) {
   return roleIds.map((value) => resolveRoleReference(value)).filter(Boolean);
 }
 
-const PERMISSION_NAME_LOOKUP=(() => {const map=new Map();const sources=[PermissionsBitField?.Flags,PermissionFlagsBits];for(const source of sources){const entries=Object.entries(source||{});for(const[name,value]of entries){if(value==null)continue;const exact=String(name).trim().toLowerCase();const compact=String(name).replace(/[^a-z0-9]/gi,"").toLowerCase();map.set(exact,value);map.set(compact,value);}}return map;})();function resolvePermissionReference(value) {
+const PERMISSION_NAME_LOOKUP = (() => { const map = new Map(); const sources = [PermissionsBitField?.Flags, PermissionFlagsBits]; for (const source of sources) { const entries = Object.entries(source || {}); for (const [name, value] of entries) { if (value == null) continue; const exact = String(name).trim().toLowerCase(); const compact = String(name).replace(/[^a-z0-9]/gi, "").toLowerCase(); map.set(exact, value); map.set(compact, value); } } return map; })(); function resolvePermissionReference(value) {
   if (value == null) return null;
 
   if (typeof value === "bigint") return value;
@@ -288,7 +288,7 @@ function hasAllPermissions(member, permissionFlags) {
 
 async function fetchLiveMember(entity) {
   const guild = entity?.guild || entity?.member?.guild || null;
-  const userId=entity?.user?.id||entity?.author?.id||entity?.member?.id||entity?.member?.user?.id||null;
+  const userId = entity?.user?.id || entity?.author?.id || entity?.member?.id || entity?.member?.user?.id || null;
   if (!guild || !userId || typeof guild.members?.fetch !== "function")
     return null;
   const cacheKey = `${String(guild.id)}:${String(userId)}`;
@@ -450,7 +450,7 @@ function resolveComponentPolicy(map, customId) {
     return map[customId];
   }
 
-  const wildcardKeys=Object.keys(map).filter((key) => key.endsWith("*")).sort((a,b) => b.length-a.length);
+  const wildcardKeys = Object.keys(map).filter((key) => key.endsWith("*")).sort((a, b) => b.length - a.length);
 
   for (const key of wildcardKeys) {
     const prefix = key.slice(0, -1);
@@ -489,23 +489,14 @@ function normalizeButtonPolicy(policy) {
     }
 
     const parsedOwnerSegment = Number.parseInt(policy.ownerSegment, 10);
-    const ownerSegment=Number.isFinite(parsedOwnerSegment)?parsedOwnerSegment:null;
-    const ownerSeparator=typeof policy.ownerSeparator==="string"&&policy.ownerSeparator.length>0?policy.ownerSeparator:":";
+    const ownerSegment = Number.isFinite(parsedOwnerSegment) ? parsedOwnerSegment : null;
+    const ownerSeparator = typeof policy.ownerSeparator === "string" && policy.ownerSeparator.length > 0 ? policy.ownerSeparator : ":";
     const ownerFromMessageMention = Boolean(policy.ownerFromMessageMention);
     const ownerOrRole = Boolean(policy.ownerOrRole);
     const grantRecipientOnly = Boolean(policy.grantRecipientOnly);
     const verifyStartRequired = Boolean(policy.verifyStartRequired);
 
-    return {
-      roles,
-      permissions,
-      ownerSegment,
-      ownerSeparator,
-      ownerFromMessageMention,
-      ownerOrRole,
-      grantRecipientOnly,
-      verifyStartRequired,
-    };
+    return { roles, permissions, ownerSegment, ownerSeparator, ownerFromMessageMention, ownerOrRole, grantRecipientOnly, verifyStartRequired };
   }
 
   return null;
@@ -534,7 +525,7 @@ function hasActiveVerifySession(userId, guildId = null) {
 function extractOwnerIdFromMessageMention(message) {
   if (!message) return null;
 
-  const scan=(text) => {const match=String(text||"").match(/<@!?(\d{16,20})>/);return match?.[1]||null;};
+  const scan = (text) => { const match = String(text || "").match(/<@!?(\d{16,20})>/); return match?.[1] || null; };
 
   const fromContent = scan(message.content);
   if (fromContent) return fromContent;
@@ -559,9 +550,9 @@ function extractOwnerIdFromMessageMention(message) {
 
 function getDevIds(client) {
   const rawIds = IDs?.developers ?? IDs?.guilds?.developers ?? "";
-  const fromIds=Array.isArray(rawIds)?rawIds.map((id) => String(id).trim()).filter(Boolean):String(rawIds).split(",").map((id) => id.trim()).filter(Boolean);
+  const fromIds = Array.isArray(rawIds) ? rawIds.map((id) => String(id).trim()).filter(Boolean) : String(rawIds).split(",").map((id) => id.trim()).filter(Boolean);
   const raw = client?.config?.developers ?? "";
-  const fromConfig=Array.isArray(raw)?raw.map((id) => String(id).trim()).filter(Boolean):String(raw).split(",").map((id) => id.trim()).filter(Boolean);
+  const fromConfig = Array.isArray(raw) ? raw.map((id) => String(id).trim()).filter(Boolean) : String(raw).split(",").map((id) => id.trim()).filter(Boolean);
   return Array.from(new Set([...fromIds, ...fromConfig]));
 }
 
@@ -591,7 +582,7 @@ async function checkSlashPermission(interaction, options = {}) {
   }
 
   if (guildId && !onMainGuild) {
-    const allowed=await hasAllPermissionsWithLiveFallback(interaction,[PermissionFlagsBits.Administrator,]);
+    const allowed = await hasAllPermissionsWithLiveFallback(interaction, [PermissionFlagsBits.Administrator,]);
     if (options.returnDetails) {
       return {
         allowed,
@@ -607,7 +598,7 @@ async function checkSlashPermission(interaction, options = {}) {
     const group = interaction.options?.getSubcommandGroup?.(false) || null;
     const sub = interaction.options?.getSubcommand?.(false) || null;
     const keys = buildSlashLookupKeys(interaction.commandName, group, sub);
-    const hasOverride=await hasTemporaryCommandPermission({guildId,userId,keys,});
+    const hasOverride = await hasTemporaryCommandPermission({ guildId, userId, keys, });
     if (hasOverride) {
       if (options.returnDetails) {
         return { allowed: true, reason: null, requiredRoles: null, channels: null };
@@ -619,11 +610,11 @@ async function checkSlashPermission(interaction, options = {}) {
   const data = loadPermissions();
   const group = interaction.options?.getSubcommandGroup?.(false) || null;
   const sub = interaction.options?.getSubcommand?.(false) || null;
-  const channelPolicy=resolveCommandChannelPolicy(data,buildSlashLookupKeys(interaction.commandName,group,sub),);
-  const bypassChannelPolicyForAntiNuke=String(interaction?.commandName||"").toLowerCase()==="antinuke";
+  const channelPolicy = resolveCommandChannelPolicy(data, buildSlashLookupKeys(interaction.commandName, group, sub),);
+  const bypassChannelPolicyForAntiNuke = String(interaction?.commandName || "").toLowerCase() === "antinuke";
   if (Array.isArray(channelPolicy) && !bypassChannelPolicyForAntiNuke) {
     const channelId = interaction?.channelId || interaction?.channel?.id || null;
-    const allowed=Boolean(channelId)&&channelPolicy.includes(String(channelId));
+    const allowed = Boolean(channelId) && channelPolicy.includes(String(channelId));
     if (!allowed) {
       if (options.returnDetails) {
         return {
@@ -637,7 +628,7 @@ async function checkSlashPermission(interaction, options = {}) {
     }
   }
   const roles = resolveSlashRoles(data, interaction.commandName, group, sub);
-  const permissions=resolveSlashPermissions(data,interaction.commandName,group,sub,);
+  const permissions = resolveSlashPermissions(data, interaction.commandName, group, sub,);
   if (!Array.isArray(roles) && !Array.isArray(permissions)) {
     if (options.returnDetails) {
       return { allowed: true, reason: null, requiredRoles: null, channels: channelPolicy || null };
@@ -655,10 +646,10 @@ async function checkSlashPermission(interaction, options = {}) {
     }
     return false;
   }
-  const hasRole=!Array.isArray(roles)?true:await hasAnyRoleWithLiveFallback(interaction,roles);
-  const hasPermissions=!Array.isArray(permissions)?true:await hasAllPermissionsWithLiveFallback(interaction,permissions);
+  const hasRole = !Array.isArray(roles) ? true : await hasAnyRoleWithLiveFallback(interaction, roles);
+  const hasPermissions = !Array.isArray(permissions) ? true : await hasAllPermissionsWithLiveFallback(interaction, permissions);
   const allowed = hasRole && hasPermissions;
-  const reason=!hasRole?"missing_role":!hasPermissions?"missing_permission":null;
+  const reason = !hasRole ? "missing_role" : !hasPermissions ? "missing_permission" : null;
   if (options.returnDetails) {
     return {
       allowed,
@@ -670,12 +661,7 @@ async function checkSlashPermission(interaction, options = {}) {
   return allowed;
 }
 
-async function checkPrefixPermission(
-  message,
-  commandName,
-  subcommandName = null,
-  options = {},
-) {
+async function checkPrefixPermission(message, commandName, subcommandName = null, options = {}) {
   const guildId = message?.guild?.id || null;
   const userId = message?.author?.id || null;
   const safeCommand = String(commandName || "").toLowerCase();
@@ -695,8 +681,8 @@ async function checkPrefixPermission(
   if (safeCommand === "restart") {
     let allowed = false;
     if (message?.guild && message?.member) {
-      const isOwner=String(message.guild.ownerId||"")===String(userId||"");
-      const isAdmin=Boolean(message.member.permissions?.has?.(PermissionFlagsBits.Administrator),);
+      const isOwner = String(message.guild.ownerId || "") === String(userId || "");
+      const isAdmin = Boolean(message.member.permissions?.has?.(PermissionFlagsBits.Administrator),);
       allowed = isOwner || isAdmin;
     }
     if (options.returnDetails) {
@@ -720,7 +706,7 @@ async function checkPrefixPermission(
   }
 
   if (guildId && !onMainGuild) {
-    const allowed=await hasAllPermissionsWithLiveFallback(message,[PermissionFlagsBits.Administrator,]);
+    const allowed = await hasAllPermissionsWithLiveFallback(message, [PermissionFlagsBits.Administrator,]);
     if (options.returnDetails) {
       return {
         allowed,
@@ -733,11 +719,11 @@ async function checkPrefixPermission(
   }
 
   const data = loadPermissions();
-  const channelPolicy=resolveCommandChannelPolicy(data,buildPrefixLookupKeys(commandName,subcommandName),);
+  const channelPolicy = resolveCommandChannelPolicy(data, buildPrefixLookupKeys(commandName, subcommandName),);
   const bypassChannelPolicyForAntiNuke = safeCommand === "antinuke";
   if (Array.isArray(channelPolicy) && !bypassChannelPolicyForAntiNuke) {
     const channelId = message?.channelId || message?.channel?.id || null;
-    const allowed=Boolean(channelId)&&channelPolicy.includes(String(channelId));
+    const allowed = Boolean(channelId) && channelPolicy.includes(String(channelId));
     if (!allowed) {
       if (options.returnDetails) {
         return {
@@ -752,7 +738,7 @@ async function checkPrefixPermission(
   }
   if (guildId && userId) {
     const keys = buildPrefixLookupKeys(commandName, subcommandName);
-    const hasOverride=await hasTemporaryCommandPermission({guildId,userId,keys,});
+    const hasOverride = await hasTemporaryCommandPermission({ guildId, userId, keys, });
     if (hasOverride) {
       if (options.returnDetails) {
         return { allowed: true, reason: null, requiredRoles: null, channels: channelPolicy || null };
@@ -779,10 +765,10 @@ async function checkPrefixPermission(
     }
     return false;
   }
-  const hasRole=!Array.isArray(roles)?true:await hasAnyRoleWithLiveFallback(message,roles);
-  const hasPermissions=!Array.isArray(permissions)?true:await hasAllPermissionsWithLiveFallback(message,permissions);
+  const hasRole = !Array.isArray(roles) ? true : await hasAnyRoleWithLiveFallback(message, roles);
+  const hasPermissions = !Array.isArray(permissions) ? true : await hasAllPermissionsWithLiveFallback(message, permissions);
   const allowed = hasRole && hasPermissions;
-  const reason=!hasRole?"missing_role":!hasPermissions?"missing_permission":null;
+  const reason = !hasRole ? "missing_role" : !hasPermissions ? "missing_permission" : null;
   if (options.returnDetails) {
     return {
       allowed,
@@ -865,7 +851,7 @@ async function checkButtonPermission(interaction) {
     }
   }
 
-  const hasOwnerConstraint=(Number.isInteger(policy.ownerSegment)&&policy.ownerSegment>=0)||policy.ownerFromMessageMention;
+  const hasOwnerConstraint = (Number.isInteger(policy.ownerSegment) && policy.ownerSegment >= 0) || policy.ownerFromMessageMention;
   let ownerId = null;
   let ownerPass = true;
 
@@ -1003,13 +989,13 @@ async function checkStringSelectPermission(interaction) {
     return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
   }
   const data = loadPermissions();
-  const rawPolicy=resolveComponentPolicy(data?.selectMenus,customId)||resolveComponentPolicy(data?.buttons,customId);
+  const rawPolicy = resolveComponentPolicy(data?.selectMenus, customId) || resolveComponentPolicy(data?.buttons, customId);
   const policy = normalizeButtonPolicy(rawPolicy);
   if (!policy) {
     return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
   }
 
-  const hasOwnerConstraint=(Number.isInteger(policy.ownerSegment)&&policy.ownerSegment>=0)||policy.ownerFromMessageMention;
+  const hasOwnerConstraint = (Number.isInteger(policy.ownerSegment) && policy.ownerSegment >= 0) || policy.ownerFromMessageMention;
   let ownerId = null;
   let ownerPass = true;
 
@@ -1138,13 +1124,13 @@ async function checkModalPermission(interaction) {
   }
 
   const data = loadPermissions();
-  const rawPolicy=resolveComponentPolicy(data?.modals,customId)||resolveComponentPolicy(data?.buttons,customId);
+  const rawPolicy = resolveComponentPolicy(data?.modals, customId) || resolveComponentPolicy(data?.buttons, customId);
   const policy = normalizeButtonPolicy(rawPolicy);
   if (!policy) {
     return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
   }
 
-  const hasOwnerConstraint=(Number.isInteger(policy.ownerSegment)&&policy.ownerSegment>=0)||policy.ownerFromMessageMention;
+  const hasOwnerConstraint = (Number.isInteger(policy.ownerSegment) && policy.ownerSegment >= 0) || policy.ownerFromMessageMention;
   let ownerId = null;
   let ownerPass = true;
 
@@ -1264,40 +1250,33 @@ function getPrefixRequiredRoles(commandName, subcommandName = null) {
   return resolvePrefixRoles(data, commandName, subcommandName);
 }
 
-function buildGlobalPermissionDeniedEmbed(
-  requiredRoleIds = [],
-  entityLabel = "comando",
-  customDescription = null,
-) {
-  const roles=Array.isArray(requiredRoleIds)?requiredRoleIds.filter(Boolean):[];
-  const rolesText=roles.length?roles.map((id) => `<@&${id}>`).join(", ")
-    : "Nessun ruolo configurato.";
-  const description=customDescription!=null?customDescription:`Questo ${entityLabel}è riservato ad una categoria di utenti specifici.`;
+function buildGlobalPermissionDeniedEmbed(requiredRoleIds = [], entityLabel = "comando", customDescription = null) {
+  const roles = Array.isArray(requiredRoleIds) ? requiredRoleIds.filter(Boolean) : [];
+  const rolesText = roles.length ? roles.map((id) => `<@&${id}>`).join(", ")
+    : "<:attentionfromvega:1443651874032062505> Nessun ruolo configurato.";
+  const description = customDescription != null ? customDescription : `<:VC_Lock:1468544444113617063> Questo ${entityLabel} è riservato ad una categoria di utenti specifici.`;
 
-  const embed=new EmbedBuilder().setColor("Red").setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**").setDescription(description);
+  const embed = new EmbedBuilder().setColor("#6f4e37").setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**").setDescription(description);
   if (roles.length > 0) {
     embed.addFields({
       name: "<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**",
-      value: `Ottieni uno dei seguenti ruoli: ${rolesText}`,
+      value: `<:VC_Arrow:1448672967721615452> Ottieni uno dei seguenti ruoli: ${rolesText}`,
     });
   }
   return embed;
 }
 
-function buildGlobalChannelDeniedEmbed(
-  allowedChannelIds = [],
-  entityLabel = "comando",
-) {
-  const channels=Array.isArray(allowedChannelIds)?allowedChannelIds.filter(Boolean).map(String):[];
-  const channelsText=channels.length?channels.map((id) => `<#${id}>`).join(", ")
-    : "Nessun canale configurato.";
+function buildGlobalChannelDeniedEmbed(allowedChannelIds = [], entityLabel = "comando") {
+  const channels = Array.isArray(allowedChannelIds) ? allowedChannelIds.filter(Boolean).map(String) : [];
+  const channelsText = channels.length ? channels.map((id) => `<#${id}>`).join(", ")
+    : "<:attentionfromvega:1443651874032062505> Nessun canale configurato.";
 
-  const embed=new EmbedBuilder().setColor("Red").setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**").setDescription(`Questo ${entityLabel}è disponibile solo in canali specifici.`,
-    );
+  const embed = new EmbedBuilder().setColor("#6f4e37").setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**").setDescription(`<:VC_Lock:1468544444113617063> Questo ${entityLabel} è disponibile solo in canali specifici.`,
+  );
   if (channels.length > 0) {
     embed.addFields({
       name: "<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**",
-      value: `Usa il comando in uno dei seguenti canali: ${channelsText}`,
+      value: `<:VC_Arrow:1448672967721615452> Usa il comando in uno dei seguenti canali: ${channelsText}`,
     });
   }
   return embed;
@@ -1305,21 +1284,9 @@ function buildGlobalChannelDeniedEmbed(
 
 function buildGlobalNotYourControlEmbed() {
   return new EmbedBuilder()
-    .setColor("Red")
+    .setColor("#6f4e37")
     .setTitle("<:VC_Lock:1468544444113617063> **Accesso negato**")
-    .setDescription("Questo controllo non è associato al tuo comando.");
+    .setDescription("<:attentionfromvega:1443651874032062505> Questo controllo non è associato al tuo comando.");
 }
 
-module.exports = {
-  checkSlashPermission,
-  checkPrefixPermission,
-  checkButtonPermission,
-  checkStringSelectPermission,
-  checkModalPermission,
-  getSlashRequiredRoles,
-  getPrefixRequiredRoles,
-  buildGlobalPermissionDeniedEmbed,
-  buildGlobalChannelDeniedEmbed,
-  buildGlobalNotYourControlEmbed,
-  hasAnyRole,
-};
+module.exports = { checkSlashPermission, checkPrefixPermission, checkButtonPermission, checkStringSelectPermission, checkModalPermission, getSlashRequiredRoles, getPrefixRequiredRoles, buildGlobalPermissionDeniedEmbed, buildGlobalChannelDeniedEmbed, buildGlobalNotYourControlEmbed, hasAnyRole };

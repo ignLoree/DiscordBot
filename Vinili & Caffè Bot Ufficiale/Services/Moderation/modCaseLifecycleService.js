@@ -1,6 +1,5 @@
 const { ModCase } = require("../../Schemas/Moderation/moderationSchemas");
 const { closeCase } = require("../../Utils/Moderation/moderation");
-
 const LOOP_MS = 60 * 1000;
 const BATCH_SIZE = 50;
 let loopHandle = null;
@@ -31,7 +30,7 @@ async function tryUnlockChannel(guild, channelId) {
     await channel.permissionOverwrites.edit(
       guild.roles.everyone,
       { SendMessages: null, SendMessagesInThreads: null },
-      { reason: "Auto unlock: timed lock expired" },
+      { reason: "<:cancel:1461730653677551691> Auto unlock: timed lock expired" },
     );
     return true;
   } catch {
@@ -45,13 +44,13 @@ async function closeExpiredMuteCases(client, now) {
   for (const row of rows) {
     const guild=client.guilds.cache.get(String(row.guildId||""))||(await client.guilds.fetch(String(row.guildId||"")).catch(() => null));
     if (!guild) {
-      closeCase(row, "Mute scaduto (guild non disponibile)");
+      closeCase(row, "<:cancel:1461730653677551691> Mute scaduto");
       await row.save().catch(() => null);
       continue;
     }
     const member = await guild.members.fetch(String(row.userId || "")).catch(() => null);
     if (!member) {
-      closeCase(row, "Mute scaduto automaticamente (utente non disponibile)");
+      closeCase(row, "Mute scaduto automaticamente");
       await row.save().catch(() => null);
       continue;
     }
@@ -59,7 +58,7 @@ async function closeExpiredMuteCases(client, now) {
     if (untilTs > Date.now()) {
       closeCase(
         row,
-        `Mute case scaduto: utente ancora in timeout fino a ${new Date(untilTs).toISOString()}`,
+        `<:cancel:1461730653677551691> Mute case scaduto: utente ancora in timeout fino a ${new Date(untilTs).toISOString()}`,
       );
       await row.save().catch(() => null);
       continue;
@@ -75,14 +74,14 @@ async function closeExpiredBanCases(client, now) {
   for (const row of rows) {
     const guild=client.guilds.cache.get(String(row.guildId||""))||(await client.guilds.fetch(String(row.guildId||"")).catch(() => null));
     if (!guild) {
-      closeCase(row, "Ban temporaneo scaduto (guild non disponibile)");
+      closeCase(row, "<:cancel:1461730653677551691> Ban temporaneo scaduto");
       await row.save().catch(() => null);
       continue;
     }
     const unbanned=await tryUnban(guild,row.userId,`Timed ban expired (case #${row.caseId})`,
     );
     if (!unbanned) continue;
-    closeCase(row, "Ban temporaneo scaduto: utente sbannato automaticamente");
+    closeCase(row, "<:cancel:1461730653677551691> Ban temporaneo scaduto: utente sbannato automaticamente");
     await row.save().catch(() => null);
   }
 }
@@ -93,14 +92,14 @@ async function closeExpiredLockCases(client, now) {
   for (const row of rows) {
     const guild=client.guilds.cache.get(String(row.guildId||""))||(await client.guilds.fetch(String(row.guildId||"")).catch(() => null));
     if (!guild) {
-      closeCase(row, "Lock temporaneo scaduto (guild non disponibile)");
+      closeCase(row, "<:cancel:1461730653677551691> Lock temporaneo scaduto");
       await row.save().catch(() => null);
       continue;
     }
     const channelId = String(row.userId || "").replace(/^CHANNEL:/, "");
     const unlocked = await tryUnlockChannel(guild, channelId);
     if (!unlocked) continue;
-    closeCase(row, "Lock temporaneo scaduto: canale sbloccato automaticamente");
+    closeCase(row, "<:cancel:1461730653677551691> Lock temporaneo scaduto: canale sbloccato automaticamente");
     await row.save().catch(() => null);
   }
 }

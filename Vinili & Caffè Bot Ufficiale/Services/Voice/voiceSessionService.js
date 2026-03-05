@@ -14,7 +14,7 @@ function getVoiceSession(guildId) {
 function setVoiceSession(guildId, payload = {}) {
   const key = normalizeGuildId(guildId);
   if (!key) return null;
-  const next={mode:String(payload.mode||"unknown"),channelId:String(payload.channelId||""),updatedAt:Date.now(),};
+  const next = { mode: String(payload.mode || "unknown"), channelId: String(payload.channelId || ""), updatedAt: Date.now(), };
   sessions.set(key, next);
   return next;
 }
@@ -31,9 +31,4 @@ function isDifferentVoiceSession(guildId, channelId) {
   return String(current.channelId) !== String(channelId || "");
 }
 
-module.exports = {
-  getVoiceSession,
-  setVoiceSession,
-  clearVoiceSession,
-  isDifferentVoiceSession,
-};
+module.exports = { getVoiceSession, setVoiceSession, clearVoiceSession, isDifferentVoiceSession };

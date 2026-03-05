@@ -62,18 +62,7 @@ function formatTimestamp(date) {
   return `Today at ${time}`;
 }
 
-module.exports = async function renderSkullboardCanvas({
-  avatarUrl,
-  username,
-  message,
-  nameColor,
-  createdAt,
-  reply,
-  roleIconUrl,
-  mediaUrl,
-  hasMedia,
-  hasEmbedOnly,
-}) {
+module.exports = async function renderSkullboardCanvas({ avatarUrl, username, message, nameColor, createdAt, reply, roleIconUrl, mediaUrl, hasMedia, hasEmbedOnly }) {
   if (!canvasModule) throw new Error("Canvas module not available");
   registerCanvasFonts(canvasModule);
 
@@ -91,7 +80,7 @@ module.exports = async function renderSkullboardCanvas({
 
   const probe = createCanvas(width, 10).getContext("2d");
   probe.font = fontStack(16, "500");
-  const messageLines = hasEmbedOnly ?[]:wrapLines(probe,message || "",textMaxWidth);
+  const messageLines = hasEmbedOnly ? [] : wrapLines(probe, message || "", textMaxWidth);
   const hasReply = Boolean(reply && (reply.content || reply.author));
 
   let mediaImage = null;

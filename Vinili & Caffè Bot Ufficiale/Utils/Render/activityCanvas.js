@@ -1,8 +1,5 @@
 let _canvasModule = null;
-function getCanvasModule() {
-  if (!_canvasModule) _canvasModule = require("canvas");
-  return _canvasModule;
-}
+function getCanvasModule() { if (!_canvasModule) _canvasModule = require("canvas"); return _canvasModule; }
 const { registerCanvasFonts, drawTextWithSpecialFallback, fontStack, } = require("./canvasFonts");
 const emojiImageCache = new Map();
 const CUSTOM_EMOJI_START_RE = /^<(a)?:([a-zA-Z0-9_~]+):(\d{16,22})>/;
@@ -68,8 +65,8 @@ function fitText(ctx, text, maxWidth, size = 16, weight = "600") {
 
 function prepareVisibleText(value) {
   const raw = String(value || "");
-  const protectedMap = new Map([["\u00B9","__VC_KEEP_SUP_1__"],["\u00B2","__VC_KEEP_SUP_2__"],["\u00B3","__VC_KEEP_SUP_3__"],]);
-  const compatibilityMap = new Map([["\u0F04","\u2736"],["\uFE32","\u2502"],["\u1CBC","\u00B7"],]);
+  const protectedMap = new Map([["\u00B9", "__VC_KEEP_SUP_1__"], ["\u00B2", "__VC_KEEP_SUP_2__"], ["\u00B3", "__VC_KEEP_SUP_3__"],]);
+  const compatibilityMap = new Map([["\u0F04", "\u2736"], ["\uFE32", "\u2502"], ["\u1CBC", "\u00B7"],]);
 
   let out = raw;
   for (const [char, token] of protectedMap.entries()) {
@@ -140,8 +137,8 @@ function tokenizeEmojiText(text) {
   let buffer = "";
   let emoji = "";
 
-  const flushText =()=>{if(! buffer)return ;tokens.push({type:"text",value:buffer});buffer = "";};
-  const flushEmoji =()=>{if(! emoji)return ;tokens.push({type:"emoji",value:emoji});emoji = "";};
+  const flushText = () => { if (!buffer) return; tokens.push({ type: "text", value: buffer }); buffer = ""; };
+  const flushEmoji = () => { if (!emoji) return; tokens.push({ type: "emoji", value: emoji }); emoji = ""; };
 
   for (let i = 0; i < chars.length; i += 1) {
     const rest = chars.slice(i).join("");
@@ -195,7 +192,7 @@ function tokenizeEmojiText(text) {
 }
 
 function emojiToTwemojiUrl(emoji) {
-  const codepoints = Array.from(emoji).map((ch)=>ch.codePointAt(0).toString(16)).filter((cp)=>cp !== "fe0f").join("-");
+  const codepoints = Array.from(emoji).map((ch) => ch.codePointAt(0).toString(16)).filter((cp) => cp !== "fe0f").join("-");
   return `https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/${codepoints}.png`;
 }
 
@@ -205,9 +202,9 @@ function customEmojiUrl(id, animated = false) {
 }
 
 async function getEmojiImage(token) {
-  const key = typeof token === "string" ? token:`custom:${token.id}:${token.animated ?1:0}`;
+  const key = typeof token === "string" ? token : `custom:${token.id}:${token.animated ? 1 : 0}`;
   if (emojiImageCache.has(key)) return emojiImageCache.get(key);
-  const sourceUrl = typeof token === "string" ? emojiToTwemojiUrl(token):customEmojiUrl(token.id,false);
+  const sourceUrl = typeof token === "string" ? emojiToTwemojiUrl(token) : customEmojiUrl(token.id, false);
   const promise = getCanvasModule().loadImage(sourceUrl).catch(() => null);
   emojiImageCache.set(key, promise);
   return promise;
@@ -218,27 +215,15 @@ function tokenWidth(ctx, token, size, weight) {
   return textWidth(ctx, token.value, size, weight);
 }
 
-async function drawLabelWithEmoji(
-  ctx,
-  text,
-  x,
-  y,
-  {
-    size = 16,
-    weight = "600",
-    color = "#d7dbe3",
-    align = "left",
-    baseline = "middle",
-  } = {},
-) {
+async function drawLabelWithEmoji(ctx, text, x, y, { size = 16, weight = "600", color = "#d7dbe3", align = "left", baseline = "middle" } = {}) {
   const tokens = tokenizeEmojiText(text);
-  const hasEmoji = tokens.some((t)=>t.type === "emoji" || t.type === "custom_emoji",);
+  const hasEmoji = tokens.some((t) => t.type === "emoji" || t.type === "custom_emoji",);
   if (!hasEmoji) {
     drawLabel(ctx, text, x, y, { size, weight, color, align, baseline });
     return;
   }
 
-  const total = tokens.reduce((sum,token)=>sum + tokenWidth(ctx,token,size,weight),0,);
+  const total = tokens.reduce((sum, token) => sum + tokenWidth(ctx, token, size, weight), 0,);
   let cursorX = x;
   if (align === "center") cursorX = x - total / 2;
   else if (align === "right") cursorX = x - total;
@@ -258,7 +243,7 @@ async function drawLabelWithEmoji(
       continue;
     }
 
-    const img = token.type === "custom_emoji" ? await getEmojiImage(token):await getEmojiImage(token.value);
+    const img = token.type === "custom_emoji" ? await getEmojiImage(token) : await getEmojiImage(token.value);
     if (img) {
       const drawSize = size + 1;
       const topY = y - drawSize / 2;
@@ -291,7 +276,7 @@ function drawBackground(ctx, width, height) {
   ctx.fillStyle = glowA;
   ctx.fillRect(0, 0, width, height);
 
-  const glowB = ctx.createRadialGradient(width -110,height -120,20,width -110,height -120,300,);
+  const glowB = ctx.createRadialGradient(width - 110, height - 120, 20, width - 110, height - 120, 300,);
   glowB.addColorStop(0, "rgba(62, 196, 85, 0.16)");
   glowB.addColorStop(1, "rgba(62, 196, 85, 0)");
   ctx.fillStyle = glowB;
@@ -365,17 +350,7 @@ function drawMetricPanel(ctx, title, rows, x, y, w, h) {
   }
 }
 
-async function drawTopCard(
-  ctx,
-  title,
-  first,
-  second,
-  x,
-  y,
-  w,
-  h,
-  options = {},
-) {
+async function drawTopCard(ctx, title, first, second, x, y, w, h, options = {}) {
   const showRank = options.showRank !== false;
   fillRoundRect(ctx, x, y, w, h, 18, "rgba(46, 55, 70, 0.94)");
   strokeRoundRect(ctx, x, y, w, h, 18, "rgba(255,255,255,0.05)", 1);
@@ -411,18 +386,7 @@ async function drawTopCard(
   );
 }
 
-async function drawTopChip(
-  ctx,
-  label,
-  value,
-  unit,
-  position,
-  x,
-  y,
-  w,
-  h,
-  options = {},
-) {
+async function drawTopChip(ctx, label, value, unit, position, x, y, w, h, options = {},) {
   const showRank = options.showRank !== false;
   fillRoundRect(ctx, x, y, w, h, 12, "rgba(12, 18, 28, 0.95)");
   const safeLabel = prepareVisibleText(label);
@@ -476,10 +440,8 @@ function drawChart(ctx, chart, x, y, w, h) {
   const pw = w - 32;
   const ph = h - 60;
   fillRoundRect(ctx, px, py, pw, ph, 12, "rgba(25, 34, 49, 0.98)");
-
   const points = Array.isArray(chart) ? chart : [];
   if (points.length < 2) return;
-
   const msgValues = points.map((p) => Number(p?.text || 0));
   const voiceValues = points.map((p) => Number(p?.voiceSeconds || 0) / 3600);
   const maxMsg = Math.max(1, ...msgValues);
@@ -496,7 +458,7 @@ function drawChart(ctx, chart, x, y, w, h) {
   }
 
   const projectX = (idx) => px + idx * (pw / (points.length - 1));
-  const projectY =(value,seriesMax)=>py + ph -(value / Math.max(1,seriesMax))*(ph -16)-8;
+  const projectY = (value, seriesMax) => py + ph - (value / Math.max(1, seriesMax)) * (ph - 16) - 8;
 
   ctx.lineWidth = 2.5;
   ctx.strokeStyle = "#3ec455";
@@ -556,7 +518,7 @@ async function drawTopListCard(ctx, title, rows, x, y, w, h, options = {}) {
     );
 
     const valueText = unit ? `${row.value} ${unit}` : String(row.value ?? 0);
-    const valueWidth = Math.min(w -260,Math.max(110,textWidth(ctx,valueText,24,"800")+26),);
+    const valueWidth = Math.min(w - 260, Math.max(110, textWidth(ctx, valueText, 24, "800") + 26),);
     fillRoundRect(
       ctx,
       x + w - 14 - valueWidth,
@@ -587,25 +549,11 @@ function dateText(value) {
   });
 }
 
-async function renderUserActivityCanvas({
-  guildName,
-  userTag,
-  displayName,
-  avatarUrl,
-  createdOn,
-  joinedOn,
-  lookbackDays,
-  windows,
-  ranks,
-  topChannelsText,
-  topChannelsVoice,
-  chart,
-}) {
+async function renderUserActivityCanvas({ guildName, userTag, displayName, avatarUrl, createdOn, joinedOn, lookbackDays, windows, ranks, topChannelsText, topChannelsVoice, chart }) {
   registerCanvasFonts(getCanvasModule());
-  const safeLookback =[1,7,14,21,30].includes(Number(lookbackDays))? Number(lookbackDays):14;
+  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays)) ? Number(lookbackDays) : 14;
   const lookbackKey = `d${safeLookback}`;
   const lookbackWindow = windows?.[lookbackKey] || windows?.d14 || {};
-
   const width = 1280;
   const height = 700;
   const canvas = getCanvasModule().createCanvas(width, height);
@@ -712,24 +660,11 @@ async function renderUserActivityCanvas({
   return canvas.toBuffer("image/png");
 }
 
-async function renderServerActivityCanvas({
-  guildName,
-  guildIconUrl,
-  createdOn,
-  invitedBotOn,
-  lookbackDays,
-  windows,
-  topUsersText,
-  topUsersVoice,
-  topChannelsText,
-  topChannelsVoice,
-  chart,
-}) {
+async function renderServerActivityCanvas({ guildName, guildIconUrl, createdOn, invitedBotOn, lookbackDays, windows, topUsersText, topUsersVoice, topChannelsText, topChannelsVoice, chart }) {
   registerCanvasFonts(getCanvasModule());
-  const safeLookback =[1,7,14,21,30].includes(Number(lookbackDays))? Number(lookbackDays):14;
+  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays)) ? Number(lookbackDays) : 14;
   const lookbackKey = `d${safeLookback}`;
   const lookbackWindow = windows?.[lookbackKey] || windows?.d14 || {};
-
   const width = 1280;
   const height = 910;
   const canvas = getCanvasModule().createCanvas(width, height);
@@ -872,18 +807,9 @@ async function renderServerActivityCanvas({
   return canvas.toBuffer("image/png");
 }
 
-async function renderTopStatisticsCanvas({
-  guildName,
-  guildIconUrl,
-  lookbackDays = 14,
-  topUsersText = [],
-  topChannelsText = [],
-  topUsersVoice = [],
-  topChannelsVoice = [],
-}) {
+async function renderTopStatisticsCanvas({ guildName, guildIconUrl, lookbackDays = 14, topUsersText = [], topChannelsText = [], topUsersVoice = [], topChannelsVoice = [] }) {
   registerCanvasFonts(getCanvasModule());
-  const safeLookback =[1,7,14,21,30].includes(Number(lookbackDays))? Number(lookbackDays):14;
-
+  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays)) ? Number(lookbackDays) : 14;
   const width = 1280;
   const height = 860;
   const canvas = getCanvasModule().createCanvas(width, height);
@@ -991,18 +917,9 @@ async function renderTopStatisticsCanvas({
   return canvas.toBuffer("image/png");
 }
 
-async function renderTopStatisticsSingleCanvas({
-  guildName,
-  guildIconUrl,
-  lookbackDays = 14,
-  title = "Top Statistics",
-  rows = [],
-  unit = "msg",
-  mode = "messages",
-}) {
+async function renderTopStatisticsSingleCanvas({ guildName, guildIconUrl, lookbackDays = 14, title = "Top Statistics", rows = [], unit = "msg", mode = "messages" }) {
   registerCanvasFonts(getCanvasModule());
-  const safeLookback =[1,7,14,21,30].includes(Number(lookbackDays))? Number(lookbackDays):14;
-
+  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays)) ? Number(lookbackDays) : 14;
   const width = 1280;
   const height = 860;
   const canvas = getCanvasModule().createCanvas(width, height);
@@ -1033,7 +950,7 @@ async function renderTopStatisticsSingleCanvas({
     color: "#e2e7ef",
   });
 
-  const normalizedRows = Array.isArray(rows)? rows.map((x)=>({label:x ?. label || "N/A",value:mode === "voice" ? formatHours(x ?. value ||0):compactNumber(x ?. value ||0),})):[];
+  const normalizedRows = Array.isArray(rows) ? rows.map((x) => ({ label: x?.label || "N/A", value: mode === "voice" ? formatHours(x?.value || 0) : compactNumber(x?.value || 0), })) : [];
 
   await drawTopListCard(
     ctx,
@@ -1061,19 +978,7 @@ async function renderTopStatisticsSingleCanvas({
   return canvas.toBuffer("image/png");
 }
 
-async function drawTopRowsColumn(
-  ctx,
-  rows,
-  {
-    x,
-    y,
-    w,
-    rankStart = 1,
-    unit = "msg",
-    rowHeight = 62,
-    rowGap = 8,
-  },
-) {
+async function drawTopRowsColumn(ctx, rows, { x, y, w, rankStart = 1, unit = "msg", rowHeight = 62, rowGap = 8 }) {
   const list = Array.isArray(rows) ? rows : [];
   if (!list.length) return;
   for (let i = 0; i < list.length; i += 1) {
@@ -1100,7 +1005,7 @@ async function drawTopRowsColumn(
     );
 
     const valueText = `${row.value} ${unit}`;
-    const valueWidth = Math.min(w -240,Math.max(110,textWidth(ctx,valueText,24,"800")+26),);
+    const valueWidth = Math.min(w - 240, Math.max(110, textWidth(ctx, valueText, 24, "800") + 26),);
     fillRoundRect(
       ctx,
       x + w - valueWidth - 10,
@@ -1119,33 +1024,20 @@ async function drawTopRowsColumn(
   }
 }
 
-async function renderTopLeaderboardPageCanvas({
-  guildName,
-  guildIconUrl,
-  lookbackDays = 14,
-  title = "Top Statistics",
-  page = 1,
-  totalPages = 1,
-  rows = [],
-  unit = "msg",
-  mode = "messages",
-}) {
+async function renderTopLeaderboardPageCanvas({ guildName, guildIconUrl, lookbackDays = 14, title = "Top Statistics", page = 1, totalPages = 1, rows = [], unit = "msg", mode = "messages" }) {
   registerCanvasFonts(getCanvasModule());
-  const safeLookback =[1,7,14,21,30].includes(Number(lookbackDays))? Number(lookbackDays):14;
+  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays)) ? Number(lookbackDays) : 14;
   const safePage = Math.max(1, Number(page || 1));
   const safeTotalPages = Math.max(1, Number(totalPages || 1));
-
-  const mappedRows =(Array.isArray(rows)? rows:[]).map((row)=>({label:row ?. label || "N/A",value:mode === "voice" ? formatHours(row ?. value ||0):compactNumber(row ?. value ||0),}));
-
+  const mappedRows = (Array.isArray(rows) ? rows : []).map((row) => ({ label: row?.label || "N/A", value: mode === "voice" ? formatHours(row?.value || 0) : compactNumber(row?.value || 0), }));
   const totalRows = mappedRows.length;
-  const forceSingleWideColumn = safePage === safeTotalPages && totalRows >0&& totalRows <5;
+  const forceSingleWideColumn = safePage === safeTotalPages && totalRows > 0 && totalRows < 5;
   const splitAt = totalRows > 5 ? 5 : Math.ceil(totalRows / 2);
-  const leftRows = forceSingleWideColumn ? mappedRows:mappedRows.slice(0,splitAt);
-  const rightRows = forceSingleWideColumn ?[]:mappedRows.slice(splitAt,10);
+  const leftRows = forceSingleWideColumn ? mappedRows : mappedRows.slice(0, splitAt);
+  const rightRows = forceSingleWideColumn ? [] : mappedRows.slice(splitAt, 10);
   const panelHeight = 560;
   const panelY = 216;
   const footerY = 824;
-
   const width = 1280;
   const height = 860;
   const canvas = getCanvasModule().createCanvas(width, height);
@@ -1182,7 +1074,7 @@ async function renderTopLeaderboardPageCanvas({
   const panelInnerTop = 236;
   const panelInnerBottom = panelY + panelHeight - 20;
   const panelInnerHeight = panelInnerBottom - panelInnerTop;
-  const computeColumnLayout =(count)=>{const safeCount = Math.max(1,Number(count ||0));const rowGap = safeCount >1?10:0;const rowHeight = Math.max(48,Math.floor((panelInnerHeight - rowGap *(safeCount -1))/ safeCount),);return {rowHeight,rowGap};};if(forceSingleWideColumn) {
+  const computeColumnLayout = (count) => { const safeCount = Math.max(1, Number(count || 0)); const rowGap = safeCount > 1 ? 10 : 0; const rowHeight = Math.max(48, Math.floor((panelInnerHeight - rowGap * (safeCount - 1)) / safeCount),); return { rowHeight, rowGap }; }; if (forceSingleWideColumn) {
     const singleLayout = computeColumnLayout(leftRows.length);
     await drawTopRowsColumn(ctx, leftRows, {
       x: 34,
@@ -1241,10 +1133,4 @@ async function renderTopLeaderboardPageCanvas({
   return canvas.toBuffer("image/png");
 }
 
-module.exports = {
-  renderUserActivityCanvas,
-  renderServerActivityCanvas,
-  renderTopStatisticsCanvas,
-  renderTopStatisticsSingleCanvas,
-  renderTopLeaderboardPageCanvas,
-};
+module.exports = { renderUserActivityCanvas, renderServerActivityCanvas, renderTopStatisticsCanvas, renderTopStatisticsSingleCanvas, renderTopLeaderboardPageCanvas };

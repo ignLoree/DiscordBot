@@ -31,8 +31,4 @@ function resolveTicketRenamePrefix(currentName, ticketDoc, fallbackPanelConfig =
   return null;
 }
 
-module.exports = {
-  buildTicketChannelName,
-  resolveTicketRenamePrefix,
-  sanitizeTicketChannelTail,
-};
+module.exports = { buildTicketChannelName, resolveTicketRenamePrefix, sanitizeTicketChannelTail };

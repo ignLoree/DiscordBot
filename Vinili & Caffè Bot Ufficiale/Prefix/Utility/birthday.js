@@ -1,5 +1,5 @@
 const{EmbedBuilder,ActionRowBuilder,ButtonBuilder,ButtonStyle,ComponentType,ModalBuilder,TextInputBuilder,TextInputStyle,}=require("discord.js");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const IDs = require("../../Utils/Config/ids");
 const BirthdayProfile = require("../../Schemas/Community/birthdayProfileSchema");
 const{inferBirthYearFromAge,getRomeDateParts,}=require("../../Services/Community/birthdayService");

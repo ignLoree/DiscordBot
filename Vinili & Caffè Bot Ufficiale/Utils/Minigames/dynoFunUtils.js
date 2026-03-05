@@ -1,7 +1,6 @@
-﻿const axios = require("axios");
+const axios = require("axios");
 const { EmbedBuilder } = require("discord.js");
-const { safeMessageReply } = require("../Moderation/reply");
-
+const { safeMessageReply } = require("../../shared/discord/replyRuntime");
 const TRANSLATE_CACHE = new Map();
 
 function buildEmbed(color, description, title = null) {
@@ -12,7 +11,7 @@ function buildEmbed(color, description, title = null) {
 
 async function replyError(message, text) {
   return safeMessageReply(message, {
-    embeds: [buildEmbed("Red", `<:vegax:1443934876440068179> ${text}`)],
+    embeds: [buildEmbed("#6f4e37", `<:cancel:1461730653677551691> ${text}`)],
     allowedMentions: { repliedUser: false },
   });
 }
@@ -25,12 +24,12 @@ async function replyInfo(message, text, title = null) {
 }
 
 async function fetchJson(url, options = {}) {
-  const response=await axios.get(url,{timeout:15000,responseType:"json",...options,});
+  const response = await axios.get(url, { timeout: 15000, responseType: "json", ...options, });
   return response.data;
 }
 
 async function fetchText(url, options = {}) {
-  const response=await axios.get(url,{timeout:15000,responseType:"text",...options,});
+  const response = await axios.get(url, { timeout: 15000, responseType: "text", ...options, });
   return String(response.data || "");
 }
 
@@ -46,10 +45,10 @@ async function translateToItalian(text, options = {}) {
   }
 
   try {
-    const response=await axios.get("https://translate.googleapis.com/translate_a/single",{timeout:7000,responseType:"json",params:{client:"gtx",sl:"auto",tl:"it",dt:"t",q:source,},},);
+    const response = await axios.get("https://translate.googleapis.com/translate_a/single", { timeout: 7000, responseType: "json", params: { client: "gtx", sl: "auto", tl: "it", dt: "t", q: source, }, },);
 
     const chunks = Array.isArray(response?.data?.[0]) ? response.data[0] : [];
-    const translated=chunks.map((chunk) => String(chunk?.[0]||"")).join("").trim();
+    const translated = chunks.map((chunk) => String(chunk?.[0] || "")).join("").trim();
 
     const value = translated || source;
     TRANSLATE_CACHE.set(cacheKey, { value, at: Date.now() });
@@ -74,12 +73,4 @@ function stripCodeBlock(value) {
   return String(value || "").replace(/```/g, "``\\`");
 }
 
-module.exports = {
-  replyError,
-  replyInfo,
-  fetchJson,
-  fetchText,
-  translateToItalian,
-  clamp,
-  stripCodeBlock,
-};
+module.exports = { replyError, replyInfo, fetchJson, fetchText, translateToItalian, clamp, stripCodeBlock };

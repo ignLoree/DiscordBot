@@ -41,7 +41,7 @@ async function upsertChannelSnapshot(channel, options = {}) {
       },
     },
     { upsert: true },
-  ).catch(() => {});
+  ).catch(() => { });
 
   return true;
 }
@@ -75,7 +75,7 @@ async function syncGuildChannelSnapshots(guild) {
   }
 
   if (!operations.length) return 0;
-  await ChannelSnapshot.bulkWrite(operations, { ordered: false }).catch(() => {});
+  await ChannelSnapshot.bulkWrite(operations, { ordered: false }).catch(() => { });
   return operations.length;
 }
 
@@ -83,10 +83,10 @@ async function getChannelSnapshotMap(guildId, channelIds = []) {
   const safeGuildId = normalizeId(guildId);
   if (!safeGuildId) return new Map();
 
-  const ids=Array.from(new Set((Array.isArray(channelIds)?channelIds:[]).map((value) => normalizeId(value)).filter(Boolean),),);
+  const ids = Array.from(new Set((Array.isArray(channelIds) ? channelIds : []).map((value) => normalizeId(value)).filter(Boolean),),);
   if (!ids.length) return new Map();
 
-  const rows=await ChannelSnapshot.find({guildId:safeGuildId,channelId:{$in:ids},}).select("channelId name").lean().catch(() => []);
+  const rows = await ChannelSnapshot.find({ guildId: safeGuildId, channelId: { $in: ids }, }).select("channelId name").lean().catch(() => []);
 
   const out = new Map();
   for (const row of Array.isArray(rows) ? rows : []) {
@@ -98,9 +98,4 @@ async function getChannelSnapshotMap(guildId, channelIds = []) {
   return out;
 }
 
-module.exports = {
-  upsertChannelSnapshot,
-  markDeletedChannelSnapshot,
-  syncGuildChannelSnapshots,
-  getChannelSnapshotMap,
-};
+module.exports = { upsertChannelSnapshot, markDeletedChannelSnapshot, syncGuildChannelSnapshots, getChannelSnapshotMap };

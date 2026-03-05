@@ -1,4 +1,4 @@
-const { safeEditReply } = require("../../Utils/Moderation/reply");
+const { safeEditReply } = require("../../../shared/discord/replyRuntime");
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const { default: axios } = require("axios");
 const EPHEMERAL_FLAG = 1 << 6;

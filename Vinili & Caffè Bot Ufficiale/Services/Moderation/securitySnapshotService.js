@@ -1,23 +1,12 @@
 const fs = require("fs");
 const path = require("path");
-
-const{getAutoModConfigSnapshot,updateAutoModConfig,}=require("./automodService");
-const{getAntiNukeStatusSnapshot,setAntiNukeConfigSnapshot,}=require("./antiNukeService");
-const{getJoinGateConfigSnapshot,setJoinGateConfigSnapshot,}=require("./joinGateService");
-const{getJoinRaidConfigSnapshot,setJoinRaidConfigSnapshot,}=require("./joinRaidService");
-const{writeSecuritySnapshot,listSecuritySnapshots:listSecuritySnapshotsFromBackup,readSecuritySnapshot,getEffectiveGuildIdForSecurity,}=require("../Backup/serverBackupService");
-
+const { getAutoModConfigSnapshot, updateAutoModConfig, } = require("./automodService");
+const { getAntiNukeStatusSnapshot, setAntiNukeConfigSnapshot, } = require("./antiNukeService");
+const { getJoinGateConfigSnapshot, setJoinGateConfigSnapshot, } = require("./joinGateService");
+const { getJoinRaidConfigSnapshot, setJoinRaidConfigSnapshot, } = require("./joinRaidService");
+const { writeSecuritySnapshot, listSecuritySnapshots: listSecuritySnapshotsFromBackup, readSecuritySnapshot, getEffectiveGuildIdForSecurity, } = require("../Backup/serverBackupService");
 const PERMISSIONS_PATH = path.resolve(__dirname, "../../permissions.json");
 const MAX_SNAPSHOTS_LIST = 30;
-
-function readJsonSafe(filePath, fallback) {
-  try {
-    if (!fs.existsSync(filePath)) return fallback;
-    return JSON.parse(fs.readFileSync(filePath, "utf8"));
-  } catch {
-    return fallback;
-  }
-}
 
 function writeJsonSafe(filePath, value) {
   try {
@@ -29,16 +18,16 @@ function writeJsonSafe(filePath, value) {
 }
 
 async function createSecuritySnapshot({ guildId = "", actorId = "", reason = "manual" } = {}) {
-  const permissionsRaw=fs.existsSync(PERMISSIONS_PATH)?fs.readFileSync(PERMISSIONS_PATH,"utf8"):"{}\n";
+  const permissionsRaw = fs.existsSync(PERMISSIONS_PATH) ? fs.readFileSync(PERMISSIONS_PATH, "utf8") : "{}\n";
   const antiNukeConfig = getAntiNukeStatusSnapshot(String(guildId || ""))?.config || {};
   const autoModConfig = getAutoModConfigSnapshot();
   const joinGateConfig = getJoinGateConfigSnapshot();
   const joinRaidConfig = getJoinRaidConfigSnapshot();
 
-  const payload={permissionsRaw,antiNukeConfig,autoModConfig,joinGateConfig,joinRaidConfig,};
+  const payload = { permissionsRaw, antiNukeConfig, autoModConfig, joinGateConfig, joinRaidConfig, };
 
   try {
-    const result=await writeSecuritySnapshot(guildId,payload,{actorId:String(actorId||""),reason:String(reason||"manual"),});
+    const result = await writeSecuritySnapshot(guildId, payload, { actorId: String(actorId || ""), reason: String(reason || "manual"), });
     if (!result?.ok) return { ok: false, reason: "save_failed" };
     return { ok: true, snapshot: result.snapshot };
   } catch (err) {
@@ -77,7 +66,7 @@ function restoreAutoModConfigSnapshot(snapshotCfg) {
   if (!snapshotCfg || typeof snapshotCfg !== "object") {
     return { ok: false, reason: "invalid_automod_snapshot" };
   }
-  const steps=[["thresholds",snapshotCfg.thresholds],["panic",snapshotCfg.panic],["shorteners",snapshotCfg.shorteners],["profiles",snapshotCfg.profiles],];
+  const steps = [["thresholds", snapshotCfg.thresholds], ["panic", snapshotCfg.panic], ["shorteners", snapshotCfg.shorteners], ["profiles", snapshotCfg.profiles],];
   for (const [pathExpr, value] of steps) {
     const result = updateAutoModConfig(pathExpr, value);
     if (!result?.ok) return { ok: false, reason: `automod_${pathExpr}_failed` };
@@ -124,8 +113,4 @@ async function restoreSecuritySnapshot(idOrLast = "last", guildId = "") {
   return { ok: true, snapshot };
 }
 
-module.exports = {
-  createSecuritySnapshot,
-  listSecuritySnapshots,
-  restoreSecuritySnapshot,
-};
+module.exports = { createSecuritySnapshot, listSecuritySnapshots, restoreSecuritySnapshot };

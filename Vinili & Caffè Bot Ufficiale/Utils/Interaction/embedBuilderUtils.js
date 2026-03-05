@@ -1,12 +1,4 @@
-const {
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  ActionRowBuilder,
-  EmbedBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-} = require("discord.js");
+const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 
 function getSession(client, messageId) {
   return client?.embedBuilderSessions?.get(messageId) || null;
@@ -30,40 +22,49 @@ function buildRows(ownerId) {
     new ButtonBuilder()
       .setCustomId(`eb:title:${ownerId}`)
       .setLabel("Titolo")
+      .setEmoji(`<:VC_Modifica:1478859646587633717>`)
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`eb:description:${ownerId}`)
       .setLabel("Descrizione")
+      .setEmoji(`<:VC_Modifica:1478859646587633717>`)
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`eb:color:${ownerId}`)
       .setLabel("Colore")
+      .setEmoji(`<:VC_Modifica:1478859646587633717>`)
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`eb:footer:${ownerId}`)
       .setLabel("Footer")
+      .setEmoji(`<:VC_Modifica:1478859646587633717>`)
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`eb:author:${ownerId}`)
       .setLabel("Autore")
+      .setEmoji(`<:VC_Modifica:1478859646587633717>`)
       .setStyle(ButtonStyle.Secondary),
   );
   const row2 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(`eb:content:${ownerId}`)
       .setLabel("Testo")
+      .setEmoji(`<:VC_Modifica:1478859646587633717>`)
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`eb:thumbnail:${ownerId}`)
       .setLabel("Thumbnail URL")
+      .setEmoji(`<:VC_Modifica:1478859646587633717>`)
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`eb:image:${ownerId}`)
       .setLabel("Image URL")
+      .setEmoji(`<:VC_Modifica:1478859646587633717>`)
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`eb:send:${ownerId}`)
       .setLabel("Invia")
+      .setEmoji(`<:VC_Invia:1478859646587633717>`)
       .setStyle(ButtonStyle.Success),
   );
   return [row1, row2];
@@ -161,15 +162,7 @@ async function updatePreview(interaction, session) {
       embeds: [buildPreviewEmbed(session.embed)],
       components: buildRows(session.ownerId),
     })
-    .catch(() => {});
+    .catch(() => { });
 }
 
-module.exports = {
-  getSession,
-  buildPreviewEmbed,
-  buildRows,
-  buildEditModal,
-  buildSendModal,
-  isValidUrl,
-  updatePreview,
-};
+module.exports = { getSession, buildPreviewEmbed, buildRows, buildEditModal, buildSendModal, isValidUrl, updatePreview };

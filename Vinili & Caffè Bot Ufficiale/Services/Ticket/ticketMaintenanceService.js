@@ -3,14 +3,11 @@ const fs = require("fs");
 const path = require("path");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
 const BOT_ROOT = path.resolve(__dirname, "..", "..");
-
 const OPEN_FOR_MS = 24 * 60 * 60 * 1000;
 const INACTIVE_FOR_MS = 2 * 60 * 60 * 1000;
-
 const TRANSCRIPTS_ROOT = path.join(BOT_ROOT, "local_transcripts");
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const CLEANUP_INTERVAL_MS = 6 * 60 * 60 * 1000;
-
 let promptLoopHandle = null;
 let promptLoopRunning = false;
 let cleanupHandle = null;
@@ -19,12 +16,12 @@ function buildCloseRequestRow() {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId("ticket_autoclose_accept")
-      .setEmoji("<:vegacheckmark:1443666279058772028>")
+      .setEmoji("<:success:1461731530333229226>")
       .setLabel("Accetta e chiudi")
       .setStyle(ButtonStyle.Success),
     new ButtonBuilder()
       .setCustomId("ticket_autoclose_reject")
-      .setEmoji("<:vegax:1443934876440068179>")
+      .setEmoji("<:cancel:1461730653677551691>")
       .setLabel("Rifiuta e mantieni aperto")
       .setStyle(ButtonStyle.Secondary),
   );
@@ -40,21 +37,21 @@ async function getLatestHumanMessageTimestamp(channel, fallbackDate) {
 async function processTickets(client) {
   const now = Date.now();
   const openBefore = new Date(now - OPEN_FOR_MS);
-  const tickets=await Ticket.find({open:true,createdAt:{$lte:openBefore},$or:[{autoClosePromptSentAt:{$exists:false}},{autoClosePromptSentAt:null},],}).limit(100).catch(() => []);
+  const tickets = await Ticket.find({ open: true, createdAt: { $lte: openBefore }, $or: [{ autoClosePromptSentAt: { $exists: false } }, { autoClosePromptSentAt: null },], }).limit(100).catch(() => []);
 
   for (const ticket of tickets) {
     try {
-      const channel=client.channels.cache.get(ticket.channelId)||(await client.channels.fetch(ticket.channelId).catch(() => null));
+      const channel = client.channels.cache.get(ticket.channelId) || (await client.channels.fetch(ticket.channelId).catch(() => null));
       if (!channel || !channel.isTextBased?.()) continue;
 
-      const lastActiveAt=await getLatestHumanMessageTimestamp(channel,ticket.createdAt,);
+      const lastActiveAt = await getLatestHumanMessageTimestamp(channel, ticket.createdAt,);
       if (!lastActiveAt || now - lastActiveAt < INACTIVE_FOR_MS) continue;
 
-      const mentions=new Set([ticket.userId,ticket.claimedBy].filter(Boolean),);
-      const mentionText=Array.from(mentions).map((id) => `<@${id}>`)
+      const mentions = new Set([ticket.userId, ticket.claimedBy].filter(Boolean),);
+      const mentionText = Array.from(mentions).map((id) => `<@${id}>`)
         .join(" ");
 
-      const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Richiesta di chiusura").setDescription("Il ticket è aperto da più di 24 ore e non ci sono messaggi recenti.\nè stato risolto?",);
+      const embed = new EmbedBuilder().setColor("#6f4e37").setTitle("<:PinkQuestionMark:1471892611026391306> Richiesta di chiusura").setDescription("<a:VC_Alert:1448670089670037675> Il ticket è aperto da più di 24 ore e non ci sono messaggi recenti.\nè stato risolto?",);
 
       await channel
         .send({
@@ -67,7 +64,7 @@ async function processTickets(client) {
       await Ticket.updateOne(
         { _id: ticket._id, open: true },
         { $set: { autoClosePromptSentAt: new Date() } },
-      ).catch(() => {});
+      ).catch(() => { });
     } catch (err) {
       global.logger.error(
         "[TICKET AUTO CLOSE PROMPT] Failed on ticket",
@@ -80,7 +77,7 @@ async function processTickets(client) {
 
 function startTicketAutoClosePromptLoop(client) {
   if (promptLoopHandle) return promptLoopHandle;
-  const tick=async() => {if(promptLoopRunning)return;promptLoopRunning=true;try{await processTickets(client);}catch(err){global.logger.error("[TICKET AUTO CLOSE PROMPT] Loop error",err);}finally{promptLoopRunning=false;}};
+  const tick = async () => { if (promptLoopRunning) return; promptLoopRunning = true; try { await processTickets(client); } catch (err) { global.logger.error("[TICKET AUTO CLOSE PROMPT] Loop error", err); } finally { promptLoopRunning = false; } };
   tick();
   promptLoopHandle = setInterval(tick, 10 * 60 * 1000);
   promptLoopHandle.unref?.();
@@ -110,7 +107,7 @@ function cleanupOldTranscripts() {
       if (now - stat.mtimeMs > MAX_AGE_MS) {
         fs.unlinkSync(file);
       }
-    } catch {}
+    } catch { }
   }
 }
 
@@ -122,7 +119,4 @@ function startTranscriptCleanupLoop() {
   return cleanupHandle;
 }
 
-module.exports = {
-  startTicketAutoClosePromptLoop,
-  startTranscriptCleanupLoop,
-};
+module.exports = { startTicketAutoClosePromptLoop, startTranscriptCleanupLoop };

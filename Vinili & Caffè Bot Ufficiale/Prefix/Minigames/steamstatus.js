@@ -1,5 +1,5 @@
 const axios = require("axios");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { replyError } = require("../../Utils/Minigames/dynoFunUtils");
 
 async function probe(url, timeoutMs = 6000) {

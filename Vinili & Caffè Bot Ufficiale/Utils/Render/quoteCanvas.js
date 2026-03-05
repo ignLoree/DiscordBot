@@ -30,15 +30,8 @@ function drawImageCover(ctx, image, x, y, w, h) {
   ctx.drawImage(image, sx, sy, sw, sh, x, y, w, h);
 }
 
-module.exports = async function renderQuoteCanvas({
-  avatarUrl,
-  message,
-  username,
-  footerText,
-}) {
-  if (!canvasModule) {
-    throw new Error("Canvas module not available");
-  }
+module.exports = async function renderQuoteCanvas({ avatarUrl, message, username, footerText }) {
+  if (!canvasModule) { throw new Error("Canvas module not available"); }
   registerCanvasFonts(canvasModule);
   const width = 1024;
   const height = 512;

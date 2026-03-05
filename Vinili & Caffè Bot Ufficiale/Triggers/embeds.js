@@ -2,7 +2,7 @@ async function runEmbedCandidaturePanelAuto(client) {
   const IDs = require("../Utils/Config/ids");
   const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, } = require("discord.js");
   const path = require("path");
-  const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
+  const { upsertPanelMessage } = require("../../shared/discord/panelUpsertRuntime");
   const CANDIDATURE_MEDIA_NAME = "candidature.gif";
   const CANDIDATURE_MEDIA_PATH = path.join(__dirname, "..", "Photos", CANDIDATURE_MEDIA_NAME,);
 
@@ -43,7 +43,7 @@ async function runInfoPanelAuto(client) {
   const path = require("path");
   const { PersonalityPanel } = require("../Schemas/Community/communitySchemas");
   const IDs = require("../Utils/Config/ids");
-  const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
+  const { upsertPanelMessage } = require("../../shared/discord/panelUpsertRuntime");
 
   const INFO_CHANNEL_ID = IDs.channels.info;
   const INFO_MEDIA_NAME = "info.gif";
@@ -96,7 +96,7 @@ async function runInfoPanelAuto(client) {
 async function runStaffEmbedAuto(client) {
   const IDs = require("../Utils/Config/ids");
   const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
-  const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
+  const { upsertPanelMessage } = require("../../shared/discord/panelUpsertRuntime");
 
   const moderationChannel = client.channels.cache.get(IDs.channels.moderazioneStaff) || (await client.channels.fetch(IDs.channels.moderazioneStaff).catch(() => null));
   const bestStaffChannel = client.channels.cache.get(IDs.channels.bestStaff) || (await client.channels.fetch(IDs.channels.bestStaff).catch(() => null));
@@ -174,7 +174,7 @@ async function runVerifyPanelAuto(client) {
   const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, } = require("discord.js");
   const path = require("path");
   const { PersonalityPanel: Panel, } = require("../Schemas/Community/communitySchemas");
-  const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
+  const { upsertPanelMessage } = require("../../shared/discord/panelUpsertRuntime");
 
   const VERIFY_CHANNEL_ID = IDs.channels.verify;
   const VERIFY_MEDIA_NAME = "verifica.gif";
@@ -231,7 +231,7 @@ async function runRuoliPanelAuto(client) {
   const path = require("path");
   const { PersonalityPanel } = require("../Schemas/Community/communitySchemas");
   const IDs = require("../Utils/Config/ids");
-  const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
+  const { upsertPanelMessage } = require("../../shared/discord/panelUpsertRuntime");
 
   const CHANNEL_ID = IDs.channels.ruoliColori;
   const IMAGE_NAME = "personalita.gif";
@@ -319,7 +319,7 @@ async function runTicketPanelAuto(client) {
   const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, AttachmentBuilder, } = require("discord.js");
   const path = require("path");
   const { PersonalityPanel: Panel, } = require("../Schemas/Community/communitySchemas");
-  const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
+  const { upsertPanelMessage } = require("../../shared/discord/panelUpsertRuntime");
 
   const TICKET_CHANNEL_ID = IDs.channels.ticket;
   const TICKET_MEDIA_NAME = "ticket.gif";
@@ -492,7 +492,7 @@ function sponsorMaybeAttachment(filePath, fileName, logLabel) {
 }
 
 async function processOneGuildTagPanel(client, guildId, config) {
-  const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
+  const { upsertPanelMessage } = require("../../shared/discord/panelUpsertRuntime");
   const { PersonalityPanel } = require("../Schemas/Community/communitySchemas");
 
   const guild = await sponsorFetchGuild(client, guildId);
@@ -558,7 +558,7 @@ async function runSponsorPanel(client) {
 
 async function processOneVerifyPanel(client, guildId, verifyChannelIds) {
   const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
-  const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
+  const { upsertPanelMessage } = require("../../shared/discord/panelUpsertRuntime");
   const { PersonalityPanel } = require("../Schemas/Community/communitySchemas");
 
   const guild = await sponsorFetchGuild(client, guildId);
@@ -624,7 +624,7 @@ async function runSponsorVerifyPanels(client) {
 }
 
 async function processOneSponsorTicketPanel(client, guildId, config) {
-  const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
+  const { upsertPanelMessage } = require("../../shared/discord/panelUpsertRuntime");
   const { PersonalityPanel } = require("../Schemas/Community/communitySchemas");
 
   const guild = await sponsorFetchGuild(client, guildId);
@@ -675,7 +675,7 @@ async function runSponsorPanelAuto(client) {
   const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, } = require("discord.js");
   const path = require("path");
   const fs = require("fs");
-  const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
+  const { upsertPanelMessage } = require("../../shared/discord/panelUpsertRuntime");
 
   const SPONSOR_MEDIA_NAME = "sponsor.gif";
   const SPONSOR_MEDIA_PATH = path.join(__dirname, "..", "Photos", SPONSOR_MEDIA_NAME,);

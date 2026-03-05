@@ -36,6 +36,4 @@ function normalizeUnit(unitRaw) {
   return null;
 }
 
-module.exports = {
-  parseFlexibleDuration,
-};
+module.exports = { parseFlexibleDuration };

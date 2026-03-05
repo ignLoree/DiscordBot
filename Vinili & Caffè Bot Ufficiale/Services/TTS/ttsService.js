@@ -1,4 +1,4 @@
-const{joinVoiceChannel,createAudioPlayer,createAudioResource,AudioPlayerStatus,entersState,VoiceConnectionStatus,StreamType,}=require("@discordjs/voice");
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, entersState, VoiceConnectionStatus, StreamType, } = require("@discordjs/voice");
 const { Readable } = require("stream");
 const fs = require("fs");
 const path = require("path");
@@ -15,6 +15,7 @@ const lastSavedChannels = new Map();
 let emojiNameMap = null;
 let nodeEmoji = null;
 const userLangs = new Map();
+
 try {
   emojiNameMap = require("emoji-name-map");
 } catch (error) {
@@ -35,7 +36,7 @@ try {
 function booleanFromConfig(value, fallback = false) {
   if (typeof value === "boolean") return value;
   if (typeof value === "number") return value !== 0;
-  const raw=String(value||"").trim().toLowerCase();
+  const raw = String(value || "").trim().toLowerCase();
   if (["true", "1", "on", "yes", "si", "enabled", "attivo"].includes(raw))
     return true;
   if (
@@ -51,12 +52,12 @@ function shouldHandleMessage(message, config, prefix) {
   const rawContent = String(message.content ?? "");
   if (prefix && rawContent.startsWith(prefix)) return false;
   if (rawContent.startsWith("-")) return false;
-  const isVoiceChannel=message.channel.isVoiceBased?.()&&!message.channel.isThread?.();
-  const isVoiceChannelThread=message.channel.isThread?.()&&message.channel.parent?.isVoiceBased?.();
-  const extraTextIds=[IDs.channels.noMic].filter(Boolean).map((id) => String(id));
+  const isVoiceChannel = message.channel.isVoiceBased?.() && !message.channel.isThread?.();
+  const isVoiceChannelThread = message.channel.isThread?.() && message.channel.parent?.isVoiceBased?.();
+  const extraTextIds = [IDs.channels.noMic].filter(Boolean).map((id) => String(id));
   const channelIdStr = String(message.channel?.id ?? "");
-  const parentIdStr=message.channel?.parentId?String(message.channel.parentId):"";
-  const isExtraText=extraTextIds.some((id) => id===channelIdStr||id===parentIdStr,);
+  const parentIdStr = message.channel?.parentId ? String(message.channel.parentId) : "";
+  const isExtraText = extraTextIds.some((id) => id === channelIdStr || id === parentIdStr,);
   return isVoiceChannel || isVoiceChannelThread || isExtraText;
 }
 
@@ -124,7 +125,7 @@ function buildGoogleTtsUrl(
   return `${baseHost}/translate_tts?ie=UTF-8&client=tw-ob&tl=${tl}&q=${q}`;
 }
 
-const TTS_HEADERS={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",Accept:"audio/mpeg,audio/*;q=0.9,*/*;q=0.8",Referer:"https://translate.google.com/",};
+const TTS_HEADERS = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36", Accept: "audio/mpeg,audio/*;q=0.9,*/*;q=0.8", Referer: "https://translate.google.com/", };
 
 function looksLikeMpegAudio(buffer) {
   if (!Buffer.isBuffer(buffer) || buffer.length < 4) return false;
@@ -138,13 +139,13 @@ function readTtsErrorPreview(buffer) {
 }
 
 async function fetchTtsAudio(url, provider = "TTS") {
-  const res=await axios.get(url,{responseType:"arraybuffer",timeout:15000,headers:TTS_HEADERS,validateStatus:(status) => status>=200&&status<300,});
-  const data=Buffer.isBuffer(res?.data)?res.data:Buffer.from(res?.data||[]);
+  const res = await axios.get(url, { responseType: "arraybuffer", timeout: 15000, headers: TTS_HEADERS, validateStatus: (status) => status >= 200 && status < 300, });
+  const data = Buffer.isBuffer(res?.data) ? res.data : Buffer.from(res?.data || []);
   if (data.length === 0) {
     return null;
   }
-  const contentType=String(res?.headers?.["content-type"]||"",).toLowerCase();
-  const isTextLike=contentType.includes("text/")||contentType.includes("json")||contentType.includes("xml");
+  const contentType = String(res?.headers?.["content-type"] || "",).toLowerCase();
+  const isTextLike = contentType.includes("text/") || contentType.includes("json") || contentType.includes("xml");
   const isAudio = contentType.includes("audio/") || looksLikeMpegAudio(data);
   if (!isAudio || isTextLike) {
     const preview = readTtsErrorPreview(data);
@@ -155,23 +156,23 @@ async function fetchTtsAudio(url, provider = "TTS") {
   return data;
 }
 
-const LANG_TO_VOICERSS={it:"it-it",en:"en-gb",es:"es-es",fr:"fr-fr",de:"de-de",pt:"pt-pt",ru:"ru-ru",pl:"pl-pl",nl:"nl-nl",tr:"tr-tr",ja:"ja-jp",zh:"zh-cn",};
+const LANG_TO_VOICERSS = { it: "it-it", en: "en-gb", es: "es-es", fr: "fr-fr", de: "de-de", pt: "pt-pt", ru: "ru-ru", pl: "pl-pl", nl: "nl-nl", tr: "tr-tr", ja: "ja-jp", zh: "zh-cn", };
 
 async function createTtsStream(text, lang) {
-  const textStr=String(text||"").slice(0,300).trim();
+  const textStr = String(text || "").slice(0, 300).trim();
   if (!textStr) throw new Error("TTS: testo vuoto");
   const rawLang = String(lang || "it").trim();
   const langLocale = rawLang.replace("_", "-");
   const langBase = langLocale.split("-")[0].toLowerCase();
-  const googleLangCandidates=Array.from(new Set([langLocale,langBase].filter(Boolean)),);
+  const googleLangCandidates = Array.from(new Set([langLocale, langBase].filter(Boolean)),);
   let lastErr = null;
 
-  const hosts=["https://translate.google.com.vn","https://translate.google.com",];
+  const hosts = ["https://translate.google.com.vn", "https://translate.google.com",];
   for (const baseHost of hosts) {
     for (const googleLang of googleLangCandidates) {
       try {
         const url = buildGoogleTtsUrl(textStr, googleLang, baseHost);
-        const data=await fetchTtsAudio(url,`GoogleTTS:${baseHost}:${googleLang}`,
+        const data = await fetchTtsAudio(url, `GoogleTTS:${baseHost}:${googleLang}`,
         );
         if (data) return Readable.from(Buffer.from(data));
       } catch (err) {
@@ -179,7 +180,7 @@ async function createTtsStream(text, lang) {
       }
     }
   }
-  const voicerssKey=typeof process!=="undefined"&&process.env&&process.env.TTS_VOICERSS_KEY;
+  const voicerssKey = typeof process !== "undefined" && process.env && process.env.TTS_VOICERSS_KEY;
   if (voicerssKey && textStr.length <= 1000) {
     try {
       const hl = LANG_TO_VOICERSS[langBase] || "it-it";
@@ -220,7 +221,7 @@ function getState(voiceChannel) {
       if (state.currentTtsFile) {
         try {
           fs.unlinkSync(state.currentTtsFile);
-        } catch (_) {}
+        } catch (_) { }
         state.currentTtsFile = null;
       }
       state.playing = false;
@@ -261,9 +262,9 @@ async function ensureConnection(state, voiceChannel) {
   if (state.connection) {
     try {
       state.connection.destroy();
-    } catch {}
+    } catch { }
   }
-  const connection=joinVoiceChannel({channelId:voiceChannel.id,guildId:voiceChannel.guild.id,adapterCreator:voiceChannel.guild.voiceAdapterCreator,selfDeaf:false,});
+  const connection = joinVoiceChannel({ channelId: voiceChannel.id, guildId: voiceChannel.guild.id, adapterCreator: voiceChannel.guild.voiceAdapterCreator, selfDeaf: false, });
   state.connection = connection;
   state.guildId = voiceChannel.guild.id;
   state.channelId = voiceChannel.id;
@@ -280,7 +281,7 @@ async function playNext(state) {
   }
   const item = state.queue.shift();
   state.playing = true;
-  const tmpPath=path.resolve(os.tmpdir(),`tts_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`,
+  const tmpPath = path.resolve(os.tmpdir(), `tts_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`,
   );
   state.currentTtsFile = tmpPath;
   try {
@@ -290,7 +291,7 @@ async function playNext(state) {
       if (state.currentTtsFile)
         try {
           fs.unlinkSync(state.currentTtsFile);
-        } catch (_) {}
+        } catch (_) { }
       state.currentTtsFile = null;
       playNext(state);
       return;
@@ -298,16 +299,16 @@ async function playNext(state) {
     const buffer = await createTtsBuffer(item.text, item.lang);
     if (!buffer || buffer.length === 0) throw new Error("TTS buffer vuoto");
     fs.writeFileSync(tmpPath, buffer);
-    const ffmpegArgs=["-analyzeduration","0","-loglevel","0","-i",tmpPath,"-f","s16le","-ar","48000","-ac","2",];
-    const transcoder=new prism.FFmpeg({args:ffmpegArgs,shell:false,command:ffmpegStatic||"ffmpeg",});
-    const resource=createAudioResource(transcoder,{inputType:StreamType.Raw,inlineVolume:false,});
+    const ffmpegArgs = ["-analyzeduration", "0", "-loglevel", "0", "-i", tmpPath, "-f", "s16le", "-ar", "48000", "-ac", "2",];
+    const transcoder = new prism.FFmpeg({ args: ffmpegArgs, shell: false, command: ffmpegStatic || "ffmpeg", });
+    const resource = createAudioResource(transcoder, { inputType: StreamType.Raw, inlineVolume: false, });
     state.player.play(resource);
   } catch (err) {
     global.logger.error("[TTS PLAY ERROR]", err?.message || err);
     if (state.currentTtsFile)
       try {
         fs.unlinkSync(state.currentTtsFile);
-      } catch (_) {}
+      } catch (_) { }
     state.currentTtsFile = null;
     state.playing = false;
     playNext(state);
@@ -333,7 +334,7 @@ async function handleTtsMessage(message, client, prefix) {
         (await message.guild.members
           .fetch(message.author?.id)
           .catch(() => null)) || message.member;
-    } catch (_) {}
+    } catch (_) { }
   }
   let voiceChannel = null;
   if (message.channel.isVoiceBased?.() && !message.channel.isThread?.()) {
@@ -347,8 +348,8 @@ async function handleTtsMessage(message, client, prefix) {
     voiceChannel = message.member?.voice?.channel;
   }
   if (!voiceChannel) {
-    const warn=await message.reply("<:vegax:1443934876440068179> Devi essere in un canale vocale per usare il TTS.",);
-    const timer=setTimeout(() => warn.delete().catch(() => {}), 5000);
+    const warn = await message.reply("<a:VC_Alert:1448670089670037675> Devi essere in un canale vocale per usare il TTS.",);
+    const timer = setTimeout(() => warn.delete().catch(() => { }), 5000);
     timer.unref?.();
     return;
   }
@@ -362,15 +363,15 @@ async function handleTtsMessage(message, client, prefix) {
     return;
   }
   const state = getState(voiceChannel);
-  const connection=await ensureConnection(state,voiceChannel).catch(() => null,);
+  const connection = await ensureConnection(state, voiceChannel).catch(() => null,);
   if (!connection) return;
   const maxChars = config?.tts?.maxChars || 200;
-  const includeUsername=booleanFromConfig(config?.tts?.includeUsername,false,);
+  const includeUsername = booleanFromConfig(config?.tts?.includeUsername, false,);
   const lang = getUserTtsLang(message.author?.id) || config?.tts?.lang || "it";
   const rawMessageText = message.cleanContent ?? message.content ?? "";
-  const baseText=sanitizeText(typeof rawMessageText==="string"?rawMessageText:String(rawMessageText),);
+  const baseText = sanitizeText(typeof rawMessageText === "string" ? rawMessageText : String(rawMessageText),);
   if (!baseText || !baseText.trim()) return;
-  const name=message.member?.displayName||message.member?.user?.username||message.author?.username||"Utente";
+  const name = message.member?.displayName || message.member?.user?.username || message.author?.username || "Utente";
   const text = includeUsername ? `${name}: ${baseText}` : baseText;
   const clipped = text.slice(0, maxChars);
   enqueue(state, { voiceChannel, text: clipped, lang });
@@ -409,18 +410,18 @@ async function leaveTtsGuild(guildId, client) {
     if (lockedChannelId) setLockedChannel(guildId, lockedChannelId);
   }
   if (!lockedChannelId && client) {
-    const guild=client.guilds?.cache?.get(guildId)||(await client.guilds?.fetch(guildId).catch(() => null));
+    const guild = client.guilds?.cache?.get(guildId) || (await client.guilds?.fetch(guildId).catch(() => null));
     if (guild) {
-      const me=guild.members?.me??(await guild.members?.fetch(client.user?.id).catch(() => null));
+      const me = guild.members?.me ?? (await guild.members?.fetch(client.user?.id).catch(() => null));
       const channelId = me?.voice?.channelId;
       if (channelId) {
         try {
-          const channel=client.channels?.cache?.get(channelId)||(await client.channels?.fetch(channelId).catch(() => null));
+          const channel = client.channels?.cache?.get(channelId) || (await client.channels?.fetch(channelId).catch(() => null));
           if (channel?.isVoiceBased?.()) {
-            const conn=joinVoiceChannel({channelId:channel.id,guildId:guild.id,adapterCreator:guild.voiceAdapterCreator,selfDeaf:false,});
+            const conn = joinVoiceChannel({ channelId: channel.id, guildId: guild.id, adapterCreator: guild.voiceAdapterCreator, selfDeaf: false, });
             conn.destroy();
           }
-        } catch (_) {}
+        } catch (_) { }
       }
     }
     await clearVoiceState(guildId);
@@ -434,16 +435,16 @@ async function leaveTtsGuild(guildId, client) {
     if (state.currentTtsFile) {
       try {
         fs.unlinkSync(state.currentTtsFile);
-      } catch (_) {}
+      } catch (_) { }
       state.currentTtsFile = null;
     }
     try {
       state.player.stop();
-    } catch {}
+    } catch { }
     if (state.connection) {
       try {
         state.connection.destroy();
-      } catch {}
+      } catch { }
       state.connection = null;
     }
     clearLockedChannel(guildId, lockedChannelId);
@@ -482,14 +483,14 @@ async function clearVoiceState(guildId) {
 
 async function restoreTtsConnections(client) {
   try {
-    const autojoinEnabled=booleanFromConfig(client?.config?.tts?.autojoin,false,);
+    const autojoinEnabled = booleanFromConfig(client?.config?.tts?.autojoin, false,);
     if (!autojoinEnabled) {
       await VoiceState.deleteMany({}).catch(() => null);
       return;
     }
     const states = await VoiceState.find({});
     for (const entry of states) {
-      const channel=await client.channels.fetch(entry.channelId).catch(() => null);
+      const channel = await client.channels.fetch(entry.channelId).catch(() => null);
       if (!channel || !channel.isVoiceBased?.()) continue;
       await joinTtsChannel(channel);
     }
@@ -498,12 +499,4 @@ async function restoreTtsConnections(client) {
   }
 }
 
-module.exports = {
-  handleTtsMessage,
-  armTtsChannel,
-  joinTtsChannel,
-  leaveTtsGuild,
-  setUserTtsLang,
-  getUserTtsLang,
-  restoreTtsConnections,
-};
+module.exports = { handleTtsMessage, armTtsChannel, joinTtsChannel, leaveTtsGuild, setUserTtsLang, getUserTtsLang, restoreTtsConnections };

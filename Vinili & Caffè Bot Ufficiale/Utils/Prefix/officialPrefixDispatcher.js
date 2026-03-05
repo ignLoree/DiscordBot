@@ -1,39 +1,38 @@
-const{EmbedBuilder,ButtonBuilder,ButtonStyle,ActionRowBuilder,PermissionFlagsBits,}=require("discord.js");
+const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits, } = require("discord.js");
 const { applyDefaultFooterToEmbeds } = require("../Embeds/defaultFooter");
-const{checkPrefixPermission,getPrefixRequiredRoles,buildGlobalPermissionDeniedEmbed,buildGlobalChannelDeniedEmbed,}=require("../Moderation/commandPermissions");
-const{getUserCommandCooldownSeconds,consumeUserCooldown,}=require("../Moderation/commandCooldown");
-const{buildCooldownErrorEmbed,buildBusyCommandErrorEmbed,buildMissingArgumentsErrorEmbed,buildInternalCommandErrorEmbed,}=require("../Moderation/commandErrorEmbeds");
-const { buildErrorLogEmbed } = require("../Logging/errorLogEmbed");
+const { checkPrefixPermission, getPrefixRequiredRoles, buildGlobalPermissionDeniedEmbed, buildGlobalChannelDeniedEmbed, } = require("../Moderation/commandPermissions");
+const { getUserCommandCooldownSeconds, consumeUserCooldown, } = require("../Moderation/commandCooldown");
+const { buildCooldownErrorEmbed, buildBusyCommandErrorEmbed, buildMissingArgumentsErrorEmbed, buildInternalCommandErrorEmbed, } = require("../Moderation/commandErrorEmbeds");
+const { buildErrorLogEmbed } = require("../../shared/discord/errorLogEmbed");
 const { getCentralChannel } = require("../Logging/commandUsageLogger");
 const { shouldBlockModerationCommands } = require("../../Services/Moderation/antiNukeService");
 const { getSecurityLockState } = require("../../Services/Moderation/securityOrchestratorService");
-const{getCommandExecutionGate,inferModuleKeyFromPrefixCommand,}=require("../../Services/Dashboard/controlCenterService");
+const { getCommandExecutionGate, inferModuleKeyFromPrefixCommand, } = require("../../Services/Dashboard/controlCenterService");
 const { showPrefixUsageGuide } = require("../Moderation/prefixUsageGuide");
 const IDs = require("../Config/ids");
-
 const PREFIX_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.Staff;
 const PREFIX_PRECHECK_TIMEOUT_MS = 4000;
-const PREFIX_EXECUTION_TIMEOUT_MS=Math.max(15_000,Number(process.env.PREFIX_EXECUTION_TIMEOUT_MS||120_000),);
+const PREFIX_EXECUTION_TIMEOUT_MS = Math.max(15_000, Number(process.env.PREFIX_EXECUTION_TIMEOUT_MS || 120_000),);
 
 function hasSendablePayload(data) {
   if (typeof data === "string") return data.trim().length > 0;
   if (!data || typeof data !== "object") return false;
-  const hasContent=typeof data.content==="string"?data.content.trim().length>0:data.content!=null;
+  const hasContent = typeof data.content === "string" ? data.content.trim().length > 0 : data.content != null;
   return Boolean(
     hasContent ||
-      (Array.isArray(data.embeds) && data.embeds.length > 0) ||
-      (Array.isArray(data.components) && data.components.length > 0) ||
-      (Array.isArray(data.files) && data.files.length > 0) ||
-      (Array.isArray(data.stickers) && data.stickers.length > 0) ||
-      (Array.isArray(data.attachments) && data.attachments.length > 0) ||
-      data.poll,
+    (Array.isArray(data.embeds) && data.embeds.length > 0) ||
+    (Array.isArray(data.components) && data.components.length > 0) ||
+    (Array.isArray(data.files) && data.files.length > 0) ||
+    (Array.isArray(data.stickers) && data.stickers.length > 0) ||
+    (Array.isArray(data.attachments) && data.attachments.length > 0) ||
+    data.poll,
   );
 }
 
 async function sendTemporaryMessage(channel, payload, ttlMs) {
   const sent = await channel.send(payload).catch(() => null);
   if (sent) {
-    const timer=setTimeout(() => sent.delete().catch(() => {}), ttlMs);
+    const timer = setTimeout(() => sent.delete().catch(() => { }), ttlMs);
     timer.unref?.();
   }
   return sent;
@@ -59,9 +58,9 @@ async function resolveWithTimeout(task, fallbackValue, label, timeoutMs = PREFIX
 
 function resolveSubcommandState(command, cmd, args) {
   const rawPrefixSubcommandArg = args[0] ? String(args[0]).toLowerCase() : null;
-  const prefixSubcommandFromArgs=rawPrefixSubcommandArg&&command?.subcommandAliases?command.subcommandAliases[rawPrefixSubcommandArg]||rawPrefixSubcommandArg:rawPrefixSubcommandArg;
-  const prefixSubcommandFromAlias=!rawPrefixSubcommandArg&&command?.subcommandAliases?command.subcommandAliases[cmd]||null:null;
-  const prefixSubcommand=prefixSubcommandFromArgs||prefixSubcommandFromAlias||null;
+  const prefixSubcommandFromArgs = rawPrefixSubcommandArg && command?.subcommandAliases ? command.subcommandAliases[rawPrefixSubcommandArg] || rawPrefixSubcommandArg : rawPrefixSubcommandArg;
+  const prefixSubcommandFromAlias = !rawPrefixSubcommandArg && command?.subcommandAliases ? command.subcommandAliases[cmd] || null : null;
+  const prefixSubcommand = prefixSubcommandFromArgs || prefixSubcommandFromAlias || null;
 
   if (
     rawPrefixSubcommandArg &&
@@ -81,7 +80,7 @@ async function executePrefixCommandRuntime({
   payload,
   resolvedClient,
 }) {
-  const{message:execMessage,args:execArgs,command:execCommand,}=payload;
+  const { message: execMessage, args: execArgs, command: execCommand, } = payload;
 
   const originalReply = execMessage.reply.bind(execMessage);
   const commandMessage = Object.create(execMessage);
@@ -92,14 +91,14 @@ async function executePrefixCommandRuntime({
   };
 
   const originalChannelSend = execMessage.channel?.send?.bind(execMessage.channel);
-  const commandChannel=execMessage.channel?Object.create(execMessage.channel):execMessage.channel;
+  const commandChannel = execMessage.channel ? Object.create(execMessage.channel) : execMessage.channel;
 
   if (originalChannelSend) {
     commandChannel.send = (sendPayload) => {
       const withFooter = applyDefaultFooterToEmbeds(sendPayload, execMessage.guild);
       if (!hasSendablePayload(withFooter)) return Promise.resolve(null);
 
-      const sendWithReferenceFallback=async(primaryPayload,fallbackPayload) => {try{return await originalChannelSend(primaryPayload);}catch(error){const hasUnknownRef=error?.code===50035&&Boolean(error?.rawError?.errors?.message_reference);if(!hasUnknownRef)throw error;return originalChannelSend(fallbackPayload);}};if(typeof withFooter=== "string") {
+      const sendWithReferenceFallback = async (primaryPayload, fallbackPayload) => { try { return await originalChannelSend(primaryPayload); } catch (error) { const hasUnknownRef = error?.code === 50035 && Boolean(error?.rawError?.errors?.message_reference); if (!hasUnknownRef) throw error; return originalChannelSend(fallbackPayload); } }; if (typeof withFooter === "string") {
         return sendWithReferenceFallback(
           {
             content: withFooter,
@@ -121,7 +120,7 @@ async function executePrefixCommandRuntime({
         return originalChannelSend(withFooter);
       }
 
-      const normalized={...withFooter,reply:withFooter.reply||(withFooter.messageReference?undefined:{messageReference:execMessage.id,failIfNotExists:false}),failIfNotExists:withFooter.failIfNotExists??false,allowedMentions:{...(withFooter.allowedMentions||{}),repliedUser:withFooter.allowedMentions?.repliedUser??false,},};
+      const normalized = { ...withFooter, reply: withFooter.reply || (withFooter.messageReference ? undefined : { messageReference: execMessage.id, failIfNotExists: false }), failIfNotExists: withFooter.failIfNotExists ?? false, allowedMentions: { ...(withFooter.allowedMentions || {}), repliedUser: withFooter.allowedMentions?.repliedUser ?? false, }, };
       const fallback = { ...normalized };
       delete fallback.reply;
       delete fallback.messageReference;
@@ -136,7 +135,7 @@ async function executePrefixCommandRuntime({
   let commandFinished = false;
 
   if (originalSendTyping) {
-    const sendTypingSafe=async() => {if(commandFinished)return;try{await originalSendTyping();}catch{}};
+    const sendTypingSafe = async () => { if (commandFinished) return; try { await originalSendTyping(); } catch { } };
 
     typingStartTimer = setTimeout(async () => {
       if (commandFinished) return;
@@ -163,7 +162,7 @@ async function executePrefixCommandRuntime({
         execCommand.execute(commandMessage, execArgs, resolvedClient),
       ),
       new Promise((_, reject) => {
-        const timer=setTimeout(() => {
+        const timer = setTimeout(() => {
           reject(
             new Error(
               `Prefix command "${String(execCommand?.name || "unknown")}" timed out after ${PREFIX_EXECUTION_TIMEOUT_MS}ms`,
@@ -175,17 +174,18 @@ async function executePrefixCommandRuntime({
     ]);
   } catch (error) {
     const channelID = IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
-    const errorChannel=channelID?await getCentralChannel(resolvedClient,channelID):null;
-    const errorEmbed=buildErrorLogEmbed({contextLabel:"Comando",contextValue:execCommand?.name||"unknown",userTag:execMessage.author?.tag||"unknown",error,serverName:execMessage.guild?`${execMessage.guild.name}[${execMessage.guild.id}]`
+    const errorChannel = channelID ? await getCentralChannel(resolvedClient, channelID) : null;
+    const errorEmbed = buildErrorLogEmbed({
+      contextLabel: "Comando", contextValue: execCommand?.name || "unknown", userTag: execMessage.author?.tag || "unknown", error, serverName: execMessage.guild ? `${execMessage.guild.name}[${execMessage.guild.id}]`
         : null,
     });
 
     if (errorChannel?.isTextBased?.()) {
-      const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("error_pending").setLabel("In risoluzione").setStyle(ButtonStyle.Primary),new ButtonBuilder().setCustomId("error_solved").setLabel("Risolto").setStyle(ButtonStyle.Success),new ButtonBuilder().setCustomId("error_unsolved").setLabel("Irrisolto").setStyle(ButtonStyle.Danger),);
-      const sentError=await errorChannel.send({embeds:[errorEmbed],components:[row]}).catch(() => null);
+      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("error_pending").setEmoji(`<:VC_InactiveStatus:1472011031709745307>`).setStyle(ButtonStyle.Primary), new ButtonBuilder().setCustomId("error_solved").setEmoji(`<:VC_OnlineStatus:1472011187569950751>`).setStyle(ButtonStyle.Success), new ButtonBuilder().setCustomId("error_unsolved").setEmoji(`<:VC_OfflineStatus:1472011150081130751>`).setStyle(ButtonStyle.Danger),);
+      const sentError = await errorChannel.send({ embeds: [errorEmbed], components: [row] }).catch(() => null);
 
       if (sentError) {
-        const collector=sentError.createMessageComponentCollector({time:1000*60*60*24,});
+        const collector = sentError.createMessageComponentCollector({ time: 1000 * 60 * 60 * 24, });
         collector.on("collect", async (btn) => {
           if (
             !["error_pending", "error_solved", "error_unsolved"].includes(
@@ -231,7 +231,7 @@ async function executePrefixCommandRuntime({
 }
 
 async function drainPrefixQueue(lockId, resolvedClient) {
-  const resolveQueuedMessage=async(payload) => {const fallback=payload?.message||null;const channelId=String(payload?.channelId||fallback?.channelId||"");const messageId=String(payload?.messageId||fallback?.id||"");if(!channelId||!messageId)return fallback;try{const channel=resolvedClient.channels?.cache?.get(channelId)||(await resolvedClient.channels.fetch(channelId).catch(() => null));if(!channel?.messages?.fetch)return fallback;return(await channel.messages.fetch(messageId).catch(() => null))||fallback;}catch{return fallback;}};const removeLoadingReaction=async(msg) => {try{const loadingId=IDs.emojis?.loadingAnimatedId;const fallbackId=IDs.emojis?.loadingFallbackId;const emoji=loadingId?msg.client?.emojis?.cache?.get(loadingId):null;if(emoji){const react=msg.reactions.resolve(emoji.id);if(react)await react.users.remove(resolvedClient.user.id);}const fallback=msg.reactions.resolve("VC_Loading")||(fallbackId?msg.reactions.resolve(fallbackId):null);if(fallback)await fallback.users.remove(resolvedClient.user.id);}catch{}};let queue=resolvedClient.prefixCommandQueue.get(lockId);
+  const resolveQueuedMessage = async (payload) => { const fallback = payload?.message || null; const channelId = String(payload?.channelId || fallback?.channelId || ""); const messageId = String(payload?.messageId || fallback?.id || ""); if (!channelId || !messageId) return fallback; try { const channel = resolvedClient.channels?.cache?.get(channelId) || (await resolvedClient.channels.fetch(channelId).catch(() => null)); if (!channel?.messages?.fetch) return fallback; return (await channel.messages.fetch(messageId).catch(() => null)) || fallback; } catch { return fallback; } }; const removeLoadingReaction = async (msg) => { try { const loadingId = IDs.emojis?.loadingAnimatedId; const fallbackId = IDs.emojis?.loadingFallbackId; const emoji = loadingId ? msg.client?.emojis?.cache?.get(loadingId) : null; if (emoji) { const react = msg.reactions.resolve(emoji.id); if (react) await react.users.remove(resolvedClient.user.id); } const fallback = msg.reactions.resolve("VC_Loading") || (fallbackId ? msg.reactions.resolve(fallbackId) : null); if (fallback) await fallback.users.remove(resolvedClient.user.id); } catch { } }; let queue = resolvedClient.prefixCommandQueue.get(lockId);
   while (queue && queue.length > 0) {
     const next = queue.shift();
     const hydratedMessage = await resolveQueuedMessage(next);
@@ -252,17 +252,9 @@ async function drainPrefixQueue(lockId, resolvedClient) {
   }
 }
 
-async function handleOfficialPrefixMessage({
-  message,
-  resolvedClient,
-  defaultPrefix,
-  overrideCommand = null,
-  maybeSendWrongPrefixHint,
-  getCachedOrFetchMember,
-  hasAnyStaffBypassPermission,
-}) {
+async function handleOfficialPrefixMessage({ message, resolvedClient, defaultPrefix, overrideCommand = null, maybeSendWrongPrefixHint, getCachedOrFetchMember, hasAnyStaffBypassPermission }) {
   const startsWithDefault = message.content.startsWith(defaultPrefix);
-  const deleteCommandMessage=async() => {await message.delete().catch(() => {});};
+  const deleteCommandMessage = async () => { await message.delete().catch(() => { }); };
 
   if (!startsWithDefault) {
     await maybeSendWrongPrefixHint(message, resolvedClient, defaultPrefix);
@@ -270,35 +262,35 @@ async function handleOfficialPrefixMessage({
   }
 
   const usedPrefix = defaultPrefix;
-  const args=message.content.slice(usedPrefix.length).trim().split(/\s+/).filter(Boolean);
+  const args = message.content.slice(usedPrefix.length).trim().split(/\s+/).filter(Boolean);
   const cmd = overrideCommand ? overrideCommand.name : args.shift()?.toLowerCase();
   if (!cmd) return;
 
-  const command=overrideCommand||resolvedClient.pcommands.get(cmd)||resolvedClient.pcommands.get(resolvedClient.aliases.get(cmd));
+  const command = overrideCommand || resolvedClient.pcommands.get(cmd) || resolvedClient.pcommands.get(resolvedClient.aliases.get(cmd));
   if (!command) return;
 
-  const dashboardGate=getCommandExecutionGate({guildId:message.guild?.id,commandType:"prefix",commandName:command?.name,moduleKey:inferModuleKeyFromPrefixCommand(command),member:message.member,guildOwnerId:message.guild?.ownerId,});
+  const dashboardGate = getCommandExecutionGate({ guildId: message.guild?.id, commandType: "prefix", commandName: command?.name, moduleKey: inferModuleKeyFromPrefixCommand(command), member: message.member, guildOwnerId: message.guild?.ownerId, });
   if (!dashboardGate.allowed) {
     await deleteCommandMessage();
-    const reasonText=dashboardGate.reason==="module_disabled"||dashboardGate.reason==="command_disabled"?"Comando disattivato dalla dashboard.":"Comando in manutenzione dalla dashboard.";
+    const reasonText = dashboardGate.reason === "module_disabled" || dashboardGate.reason === "command_disabled" ? "Comando disattivato dalla dashboard." : "Comando in manutenzione dalla dashboard.";
     await sendTemporaryMessage(
       message.channel,
-      { content: `<:VC_right_arrow:1473441155055096081> ${reasonText}` },
+      { content: `<:VC_Lock:1468544444113617063> ${reasonText}` },
       5000,
     );
     return;
   }
 
-  const isAntiNukeRecoveryCommand=["antinuke","security"].includes(String(command?.name||"").toLowerCase(),);
-  const securityLockState=await resolveWithTimeout(() => getSecurityLockState(message.guild),{active:false,joinLockActive:false,commandLockActive:false,sources:[],commandSources:[],},"security lock precheck",);
+  const isAntiNukeRecoveryCommand = ["antinuke", "security"].includes(String(command?.name || "").toLowerCase(),);
+  const securityLockState = await resolveWithTimeout(() => getSecurityLockState(message.guild), { active: false, joinLockActive: false, commandLockActive: false, sources: [], commandSources: [], }, "security lock precheck",);
   if (!isAntiNukeRecoveryCommand && securityLockState.commandLockActive) {
-    const lockSources=Array.isArray(securityLockState.commandSources)?securityLockState.commandSources:securityLockState.sources;
+    const lockSources = Array.isArray(securityLockState.commandSources) ? securityLockState.commandSources : securityLockState.sources;
     await deleteCommandMessage();
     await sendTemporaryMessage(
       message.channel,
       {
         content:
-          `<:VC_right_arrow:1473441155055096081> Server in lockdown di sicurezza: comandi temporaneamente bloccati.${lockSources?.length ? ` (${lockSources.join(", ")})` : ""}`,
+          `<:VC_Lock:1468544444113617063> Server in lockdown di sicurezza: comandi temporaneamente bloccati. ${lockSources?.length ? ` (${lockSources.join(", ")})` : ""}`,
       },
       5000,
     );
@@ -318,7 +310,7 @@ async function handleOfficialPrefixMessage({
       message.channel,
       {
         content:
-          "<:VC_right_arrow:1473441155055096081> Comandi di moderazione temporaneamente bloccati (panic mode sicurezza attiva).",
+          "<:VC_Lock:1468544444113617063> Comandi di moderazione temporaneamente bloccati.",
       },
       5000,
     );
@@ -326,7 +318,7 @@ async function handleOfficialPrefixMessage({
   }
 
   const prefixSubcommand = resolveSubcommandState(command, cmd, args);
-  const permissionResult=await resolveWithTimeout(() => checkPrefixPermission(message,command.name,prefixSubcommand,{returnDetails:true,}),{allowed:true,reason:null,requiredRoles:null,channels:null},`permission precheck for ${command.name}`,
+  const permissionResult = await resolveWithTimeout(() => checkPrefixPermission(message, command.name, prefixSubcommand, { returnDetails: true, }), { allowed: true, reason: null, requiredRoles: null, channels: null }, `permission precheck for ${command.name}`,
   );
   if (!permissionResult?.allowed) {
     if (
@@ -334,7 +326,7 @@ async function handleOfficialPrefixMessage({
       Array.isArray(permissionResult.channels)
     ) {
       await deleteCommandMessage();
-      const embed=buildGlobalChannelDeniedEmbed(permissionResult.channels,"comando",);
+      const embed = buildGlobalChannelDeniedEmbed(permissionResult.channels, "comando",);
       await sendTemporaryMessage(message.channel, { embeds: [embed] }, 5000);
       return;
     }
@@ -345,10 +337,10 @@ async function handleOfficialPrefixMessage({
     return;
   }
 
-  const hasSubcommands=Boolean((Array.isArray(command?.subcommands)&&command.subcommands.length>0)||(command?.subcommandAliases&&typeof command.subcommandAliases==="object"&&Object.keys(command.subcommandAliases).length>0),);
+  const hasSubcommands = Boolean((Array.isArray(command?.subcommands) && command.subcommands.length > 0) || (command?.subcommandAliases && typeof command.subcommandAliases === "object" && Object.keys(command.subcommandAliases).length > 0),);
   const requireArgsForSubcommands = hasSubcommands && !Boolean(command?.allowEmptyArgs);
   if (!args.length && (Boolean(command?.args) || requireArgsForSubcommands)) {
-    const shown=await showPrefixUsageGuide({message,command,prefix:usedPrefix||"+",deleteCommandMessage:null,});
+    const shown = await showPrefixUsageGuide({ message, command, prefix: usedPrefix || "+", deleteCommandMessage: null, });
     if (!shown) {
       const embed = buildMissingArgumentsErrorEmbed();
       await deleteCommandMessage();
@@ -359,23 +351,23 @@ async function handleOfficialPrefixMessage({
 
   let hasPrefixCooldownBypass = Boolean(
     message.member?.roles?.cache?.has(PREFIX_COOLDOWN_BYPASS_ROLE_ID) ||
-      hasAnyStaffBypassPermission(message.member?.permissions) ||
-      String(message.guild?.ownerId || "") === String(message.author?.id || ""),
+    hasAnyStaffBypassPermission(message.member?.permissions) ||
+    String(message.guild?.ownerId || "") === String(message.author?.id || ""),
   );
-  const needsFreshMemberForCooldownBypass=!hasPrefixCooldownBypass&&(!message.member?.permissions||!message.member?.roles?.cache);
+  const needsFreshMemberForCooldownBypass = !hasPrefixCooldownBypass && (!message.member?.permissions || !message.member?.roles?.cache);
   if (needsFreshMemberForCooldownBypass) {
-    const fetchedMember=await getCachedOrFetchMember(message.guild,message.author.id,);
+    const fetchedMember = await getCachedOrFetchMember(message.guild, message.author.id,);
     hasPrefixCooldownBypass = Boolean(
       fetchedMember?.roles?.cache?.has(PREFIX_COOLDOWN_BYPASS_ROLE_ID) ||
-        hasAnyStaffBypassPermission(fetchedMember?.permissions) ||
-        String(message.guild?.ownerId || "") === String(message.author?.id || ""),
+      hasAnyStaffBypassPermission(fetchedMember?.permissions) ||
+      String(message.guild?.ownerId || "") === String(message.author?.id || ""),
     );
   }
 
   if (!hasPrefixCooldownBypass) {
-    const cooldownSeconds=await resolveWithTimeout(() => getUserCommandCooldownSeconds({guildId:message.guild.id,userId:message.author.id,member:message.member,}),0,`cooldown lookup for ${command.name}`,
+    const cooldownSeconds = await resolveWithTimeout(() => getUserCommandCooldownSeconds({ guildId: message.guild.id, userId: message.author.id, member: message.member, }), 0, `cooldown lookup for ${command.name}`,
     );
-    const cooldownResult=consumeUserCooldown({client:resolvedClient,guildId:message.guild.id,userId:message.author.id,cooldownSeconds,});
+    const cooldownResult = consumeUserCooldown({ client: resolvedClient, guildId: message.guild.id, userId: message.author.id, cooldownSeconds, });
     if (!cooldownResult.ok) {
       const remaining = Math.max(1, Math.ceil(cooldownResult.remainingMs / 1000));
       const embed = buildCooldownErrorEmbed(remaining);
@@ -392,9 +384,9 @@ async function handleOfficialPrefixMessage({
 
   const userId = message.author.id;
   const queueLockId = `${message.guild.id}:${userId}`;
-  const sendBusyQueueNotice=async() => {const now=Date.now();const lastNoticeAt=resolvedClient.prefixCommandBusyNoticeAt.get(queueLockId)||0;if(now-lastNoticeAt<5000)return;resolvedClient.prefixCommandBusyNoticeAt.set(queueLockId,now);const embed=buildBusyCommandErrorEmbed();await sendTemporaryMessage(message.channel,{embeds:[embed]},5000);};
+  const sendBusyQueueNotice = async () => { const now = Date.now(); const lastNoticeAt = resolvedClient.prefixCommandBusyNoticeAt.get(queueLockId) || 0; if (now - lastNoticeAt < 5000) return; resolvedClient.prefixCommandBusyNoticeAt.set(queueLockId, now); const embed = buildBusyCommandErrorEmbed(); await sendTemporaryMessage(message.channel, { embeds: [embed] }, 5000); };
 
-  const enqueueCommand=async() => {const loadingEmojiId=IDs.emojis?.loadingAnimatedId;const fallbackEmojiId=IDs.emojis?.loadingFallbackId;const emoji=loadingEmojiId?message.client?.emojis?.cache?.get(loadingEmojiId):null;if(emoji){await message.react(emoji).catch(() => {});}else if(fallbackEmojiId){await message.react(fallbackEmojiId).catch(() => {});}else{await message.react("\u23F3").catch(() => {});}if(!resolvedClient.prefixCommandQueue.has(queueLockId)){resolvedClient.prefixCommandQueue.set(queueLockId,[]);}resolvedClient.prefixCommandQueue.get(queueLockId).push({message,args,command,channelId:message.channelId,messageId:message.id,enqueuedAt:Date.now(),});};if(resolvedClient.prefixCommandLocks.has(queueLockId)) {
+  const enqueueCommand = async () => { const loadingEmojiId = IDs.emojis?.loadingAnimatedId; const fallbackEmojiId = IDs.emojis?.loadingFallbackId; const emoji = loadingEmojiId ? message.client?.emojis?.cache?.get(loadingEmojiId) : null; if (emoji) { await message.react(emoji).catch(() => { }); } else if (fallbackEmojiId) { await message.react(fallbackEmojiId).catch(() => { }); } else { await message.react("\u23F3").catch(() => { }); } if (!resolvedClient.prefixCommandQueue.has(queueLockId)) { resolvedClient.prefixCommandQueue.set(queueLockId, []); } resolvedClient.prefixCommandQueue.get(queueLockId).push({ message, args, command, channelId: message.channelId, messageId: message.id, enqueuedAt: Date.now(), }); }; if (resolvedClient.prefixCommandLocks.has(queueLockId)) {
     await enqueueCommand();
     await sendBusyQueueNotice();
     return;

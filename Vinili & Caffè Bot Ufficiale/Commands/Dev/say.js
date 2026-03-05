@@ -1,4 +1,4 @@
-const { safeEditReply } = require("../../Utils/Moderation/reply");
+const { safeEditReply } = require("../../../shared/discord/replyRuntime");
 const { SlashCommandBuilder } = require("discord.js");
 const EPHEMERAL_FLAG = 1 << 6;
 const MESSAGE_LINK_REGEX = /https?:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/channels\/(\d+)\/(\d+)\/(\d+)/;

@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const TemporaryCommandPermission = require("../../Schemas/Moderation/temporaryCommandPermissionSchema");
-
 const VALID_TYPES = new Set(["prefix", "slash", "any"]);
 
 function isDbReady() {
@@ -56,11 +55,7 @@ function buildPrefixLookupKeys(commandName, subcommandName = null) {
   return Array.from(new Set(keys));
 }
 
-function buildSlashLookupKeys(
-  commandName,
-  groupName = null,
-  subcommandName = null,
-) {
+function buildSlashLookupKeys(commandName, groupName = null, subcommandName = null) {
   const command=String(commandName||"").trim().toLowerCase();
   if (!command) return [];
   const group=String(groupName||"").trim().toLowerCase();
@@ -95,14 +90,7 @@ async function hasTemporaryCommandPermission({ guildId, userId, keys }) {
 
 const PERMANENT_EXPIRY_MS = 100 * 365.25 * 24 * 60 * 60 * 1000;
 
-async function grantTemporaryCommandPermissions({
-  guildId,
-  userId,
-  grantedBy = null,
-  commandKeys = [],
-  durationMs,
-  permanent = false,
-}) {
+async function grantTemporaryCommandPermissions({ guildId, userId, grantedBy = null, commandKeys = [], durationMs, permanent = false }) {
   const permanentGrant = permanent || durationMs == null || durationMs === "";
   const safeDuration = permanentGrant ? 0 : Number(durationMs || 0);
   if (
@@ -133,11 +121,7 @@ async function grantTemporaryCommandPermissions({
   }
 }
 
-async function revokeTemporaryCommandPermissions({
-  guildId,
-  userId,
-  commandKeys = [],
-}) {
+async function revokeTemporaryCommandPermissions({ guildId, userId, commandKeys = [] }) {
   if (!guildId || !userId || !Array.isArray(commandKeys) || !commandKeys.length)
     return 0;
   if (!isDbReady()) return 0;
@@ -177,14 +161,4 @@ async function listTemporaryCommandPermissionsForUser({ guildId, userId }) {
   }
 }
 
-module.exports = {
-  parseCommandTokenList,
-  parseRevokeTokenList,
-  buildPrefixLookupKeys,
-  buildSlashLookupKeys,
-  hasTemporaryCommandPermission,
-  grantTemporaryCommandPermissions,
-  revokeTemporaryCommandPermissions,
-  clearTemporaryCommandPermissionsForUser,
-  listTemporaryCommandPermissionsForUser,
-};
+module.exports = { parseCommandTokenList, parseRevokeTokenList, buildPrefixLookupKeys, buildSlashLookupKeys, hasTemporaryCommandPermission, grantTemporaryCommandPermissions, revokeTemporaryCommandPermissions, clearTemporaryCommandPermissionsForUser, listTemporaryCommandPermissionsForUser };

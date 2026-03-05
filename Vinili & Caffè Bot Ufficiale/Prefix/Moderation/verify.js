@@ -155,7 +155,7 @@ async function resolveTargetsFlexible(message, args) {
 module.exports = {
   name: "verify",
   async execute(message, args) {
-    const { safeMessageReply } = require("../../Utils/Moderation/reply");
+    const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
     const guildId = message.guild?.id;
     if (!message.guild) {
       return safeMessageReply(message, {

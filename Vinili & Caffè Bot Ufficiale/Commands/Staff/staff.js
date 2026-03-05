@@ -1,4 +1,4 @@
-const { safeEditReply } = require("../../Utils/Moderation/reply");
+const { safeEditReply } = require("../../../shared/discord/replyRuntime");
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const StaffModel = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../../Utils/Config/ids");

@@ -1,13 +1,12 @@
 const IDs = require("../Config/ids");
-
 const STAFF_LIST_MARKER = "staff list";
-const ROLE_EMOJIS={[IDs.roles.PartnerManager]:{emoji:"<:partnermanager:1443651916838998099>",number:"∞",},[IDs.roles.Helper]:{emoji:"<:helper:1443651909448630312>",number:"∞"},[IDs.roles.Mod]:{emoji:"<:mod:1443651914209165454>",number:"6"},[IDs.roles.Coordinator]:{emoji:"<:coordinator:1443651923168202824>",number:"4",},[IDs.roles.Supervisor]:{emoji:"<:supervisor:1443651907900932157>",number:"4",},[IDs.roles.Admin]:{emoji:"<:admin:1443651911059247225>",number:"4"},[IDs.roles.Manager]:{emoji:"<:manager:1443651919829536940>",number:"1"},[IDs.roles.CoFounder]:{emoji:"<:cofounder:1443651915752804392>",number:"2",},[IDs.roles.Founder]:{emoji:"<:founder:1443651924674216128>",number:"1"},};
-const ROLE_EXCLUSIONS={[IDs.roles.PartnerManager]:["1442568907801100419"],};
+const ROLE_EMOJIS = { [IDs.roles.PartnerManager]: { emoji: "<:partnermanager:1443651916838998099>", number: "∞", }, [IDs.roles.Helper]: { emoji: "<:helper:1443651909448630312>", number: "∞" }, [IDs.roles.Mod]: { emoji: "<:mod:1443651914209165454>", number: "6" }, [IDs.roles.Coordinator]: { emoji: "<:coordinator:1443651923168202824>", number: "4", }, [IDs.roles.Supervisor]: { emoji: "<:supervisor:1443651907900932157>", number: "4", }, [IDs.roles.Admin]: { emoji: "<:admin:1443651911059247225>", number: "4" }, [IDs.roles.Manager]: { emoji: "<:manager:1443651919829536940>", number: "1" }, [IDs.roles.CoFounder]: { emoji: "<:cofounder:1443651915752804392>", number: "2", }, [IDs.roles.Founder]: { emoji: "<:founder:1443651924674216128>", number: "1" }, };
+const ROLE_EXCLUSIONS = { [IDs.roles.PartnerManager]: ["1442568907801100419"], };
 const STAFF_ROLE_IDS = Object.keys(ROLE_EMOJIS);
 
 function wait(ms) {
   return new Promise((resolve) => {
-    const timer=setTimeout(resolve, ms);
+    const timer = setTimeout(resolve, ms);
     timer.unref?.();
   });
 }
@@ -28,16 +27,6 @@ function iterMembers(membersSource) {
   if (typeof membersSource.values === "function") return membersSource.values();
   if (Array.isArray(membersSource)) return membersSource.values();
   return [];
-}
-
-function countStaffMembers(membersSource) {
-  let count = 0;
-  for (const member of iterMembers(membersSource)) {
-    if (memberHasStaffRole(member)) {
-      count += 1;
-    }
-  }
-  return count;
 }
 
 function memberHasStaffRole(member) {
@@ -67,8 +56,8 @@ function buildContent(guild, membersSource = guild.members.cache) {
 
     const memberCount = filteredMembers.length;
     const { emoji, number } = ROLE_EMOJIS[roleId];
-    const membersList=filteredMembers.map((member) => `<:dot:1443660294596329582> <@${member.id}>`)
-        .join("\n") || "<:dot:1443660294596329582>";
+    const membersList = filteredMembers.map((member) => `<:dot:1443660294596329582> <@${member.id}>`)
+      .join("\n") || "<:dot:1443660294596329582>";
 
     content += `${emoji} • **<@&${roleId}>︲\`${memberCount}/${number}\`**\n\n${membersList}\n\n`;
   }
@@ -80,13 +69,13 @@ async function resolveMessage(channel, client, guildId) {
   const state = ensureState(client);
   const knownId = state.messageIdByGuild.get(guildId);
   if (knownId) {
-    const known=channel.messages.cache.get(knownId)||(await channel.messages.fetch(knownId).catch(() => null));
+    const known = channel.messages.cache.get(knownId) || (await channel.messages.fetch(knownId).catch(() => null));
     if (known) return known;
     state.messageIdByGuild.delete(guildId);
   }
 
   const messages = await channel.messages.fetch({ limit: 100 }).catch(() => null);
-  const existing=messages?.find((message) => message.author?.id===client.user?.id&&String(message.content||"").toLowerCase().includes(STAFF_LIST_MARKER),)||null;
+  const existing = messages?.find((message) => message.author?.id === client.user?.id && String(message.content || "").toLowerCase().includes(STAFF_LIST_MARKER),) || null;
   if (existing) state.messageIdByGuild.set(guildId, existing.id);
   return existing;
 }
@@ -119,15 +108,14 @@ async function refreshStaffList(
   { force = false } = {},
 ) {
   const state = ensureState(client);
-  const guild=client.guilds.cache.get(guildId)||(await client.guilds.fetch(guildId).catch(() => null));
+  const guild = client.guilds.cache.get(guildId) || (await client.guilds.fetch(guildId).catch(() => null));
   if (!guild) return;
 
   const channelId = IDs.channels.staffList;
-  const channel=guild.channels.cache.get(channelId)||(await guild.channels.fetch(channelId).catch(() => null));
+  const channel = guild.channels.cache.get(channelId) || (await guild.channels.fetch(channelId).catch(() => null));
   if (!channel?.isTextBased?.()) return;
 
   const membersSource = await fetchMembersForStaffList(guild);
-  const approxStaffCount = countStaffMembers(membersSource);
 
   const content = buildContent(guild, membersSource);
   const previousHash = state.contentHashByGuild.get(guildId);
@@ -160,25 +148,15 @@ async function refreshStaffList(
   state.contentHashByGuild.set(guildId, content);
 }
 
-function scheduleStaffListRefresh(
-  client,
-  guildId = IDs.guilds.main,
-  delayMs = 500,
-) {
+function scheduleStaffListRefresh(client, guildId = IDs.guilds.main, delayMs = 500) {
   const state = ensureState(client);
   const existingTimer = state.timersByGuild.get(guildId);
   if (existingTimer) clearTimeout(existingTimer);
 
-  const timer=setTimeout(() => {state.timersByGuild.delete(guildId);refreshStaffList(client,guildId).catch((err) => {global.logger.error("[STAFF LIST] refresh failed:",err);});},delayMs);
+  const timer = setTimeout(() => { state.timersByGuild.delete(guildId); refreshStaffList(client, guildId).catch((err) => { global.logger.error("[STAFF LIST] refresh failed:", err); }); }, delayMs);
   timer.unref?.();
 
   state.timersByGuild.set(guildId, timer);
 }
 
-module.exports = {
-  STAFF_ROLE_IDS,
-  memberHasStaffRole,
-  didStaffMembershipChange,
-  refreshStaffList,
-  scheduleStaffListRefresh,
-};
+module.exports = { STAFF_ROLE_IDS, memberHasStaffRole, didStaffMembershipChange, refreshStaffList, scheduleStaffListRefresh };

@@ -1,5 +1,5 @@
-﻿const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, } = require("discord.js");
-const { safeReply } = require("../../Utils/Moderation/reply");
+const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, } = require("discord.js");
+const { safeReply } = require("../../../shared/discord/replyRuntime");
 const EPHEMERAL_FLAG = 1 << 6;
 
 module.exports = {

@@ -8,7 +8,6 @@ const IDs = require("../../Utils/Config/ids");
 const logsApi = require("../../Utils/Moderation/logs");
 const { getModConfig, createModCase, logModCase } = require("../../Utils/Moderation/moderation");
 const { CONTROL_MODES, getControlCenterSnapshot, getOverviewPayload, setModuleMode, setCommandMode, setEventMode, setEventRouteChannel, setEventGroupRouteChannel, getEventActivity, } = require("./controlCenterService");
-
 let dashboardServer = null;
 const SESSION_TTL_HOURS = Math.max(1, Number(process.env.DASHBOARD_SESSION_TTL_HOURS || 24 * 30));
 const SESSION_TTL_MS = SESSION_TTL_HOURS * 60 * 60_000;
@@ -756,6 +755,4 @@ function startDashboardServer(client) {
   return dashboardServer;
 }
 
-module.exports = {
-  startDashboardServer,
-};
+module.exports = { startDashboardServer };

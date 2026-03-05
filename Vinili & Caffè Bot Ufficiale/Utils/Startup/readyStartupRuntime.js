@@ -60,8 +60,4 @@ async function runTaskSequence(tasks, hooks = {}) {
   return results;
 }
 
-module.exports = {
-  formatDurationMs,
-  runTaskGroup,
-  runTaskSequence,
-};
+module.exports = { formatDurationMs, runTaskGroup, runTaskSequence };

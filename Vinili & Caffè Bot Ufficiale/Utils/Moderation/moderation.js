@@ -3,8 +3,7 @@ const { ModConfig } = require("../../Schemas/Moderation/moderationSchemas");
 const { ModCase } = require("../../Schemas/Moderation/moderationSchemas");
 const { sendStaffActionToModLogs } = require("../Logging/modAuditLogUtils");
 const IDs = require("../Config/ids");
-
-const BOT_MODERATOR_IDS=new Set(Object.values(IDs?.bots||{}).filter(Boolean).map((id) => String(id)),);
+const BOT_MODERATOR_IDS = new Set(Object.values(IDs?.bots || {}).filter(Boolean).map((id) => String(id)),);
 
 function normalizeAction(action) {
   return String(action || "UNKNOWN").trim().toUpperCase();
@@ -55,20 +54,11 @@ function parseDuration(input) {
   const val = Number(match[1]);
   const unit = match[2];
   if (!Number.isFinite(val) || val <= 0) return null;
-  const mult=unit==="s"?1000:unit==="m"?60000:unit==="h"?3600000:86400000;
+  const mult = unit === "s" ? 1000 : unit === "m" ? 60000 : unit === "h" ? 3600000 : 86400000;
   return val * mult;
 }
 
-async function createModCase({
-  guildId,
-  action,
-  userId,
-  modId,
-  reason,
-  durationMs,
-  context,
-  dedupe,
-}) {
+async function createModCase({ guildId, action, userId, modId, reason, durationMs, context, dedupe }) {
   if (modId != null && BOT_MODERATOR_IDS.has(String(modId))) {
     const cfg = await getModConfig(guildId).catch(() => null);
     return {
@@ -84,13 +74,13 @@ async function createModCase({
   const normalizedAction = normalizeAction(action);
   const normalizedReason = reason || "Nessun motivo fornito";
   const normalizedDurationMs = durationMs || null;
-  const normalizedContext={channelId:context?.channelId||null,messageId:context?.messageId||null,};
+  const normalizedContext = { channelId: context?.channelId || null, messageId: context?.messageId || null, };
   const dedupeEnabled = Boolean(dedupe?.enabled);
   if (dedupeEnabled) {
     const byMessageId = dedupe?.byMessageId !== false;
     const messageId = String(normalizedContext.messageId || "").trim();
     if (byMessageId && messageId) {
-      const existingByMessage=await ModCase.findOne({guildId,action:normalizedAction,userId,modId,"context.messageId":messageId,}).sort({createdAt:-1}).catch(() => null);
+      const existingByMessage = await ModCase.findOne({ guildId, action: normalizedAction, userId, modId, "context.messageId": messageId, }).sort({ createdAt: -1 }).catch(() => null);
       if (existingByMessage) {
         const cfgExisting = await getModConfig(guildId);
         return {
@@ -106,11 +96,11 @@ async function createModCase({
     const windowMs = Number.isFinite(rawWindowMs) && rawWindowMs > 0 ? rawWindowMs : 15_000;
     const createdAtFrom = new Date(Date.now() - windowMs);
     const matchReason = dedupe?.matchReason !== false;
-    const fallbackQuery={guildId,action:normalizedAction,userId,modId,createdAt:{$gte:createdAtFrom},};
+    const fallbackQuery = { guildId, action: normalizedAction, userId, modId, createdAt: { $gte: createdAtFrom }, };
     if (matchReason) fallbackQuery.reason = normalizedReason;
     if (normalizedDurationMs == null) fallbackQuery.durationMs = null;
     else fallbackQuery.durationMs = Number(normalizedDurationMs);
-    const existingRecent=await ModCase.findOne(fallbackQuery).sort({createdAt:-1}).catch(() => null);
+    const existingRecent = await ModCase.findOne(fallbackQuery).sort({ createdAt: -1 }).catch(() => null);
     if (existingRecent) {
       const cfgExisting = await getModConfig(guildId);
       return {
@@ -122,10 +112,10 @@ async function createModCase({
     }
   }
 
-  const cfg=await ModConfig.findOneAndUpdate({guildId},{$inc:{caseCounter:1},$setOnInsert:{guildId}},{upsert:true,new:true,setDefaultsOnInsert:true},);
+  const cfg = await ModConfig.findOneAndUpdate({ guildId }, { $inc: { caseCounter: 1 }, $setOnInsert: { guildId } }, { upsert: true, new: true, setDefaultsOnInsert: true },);
   const caseId = cfg.caseCounter;
   const expiresAt = normalizedDurationMs ? new Date(Date.now() + normalizedDurationMs) : null;
-  const doc=await ModCase.create({guildId,caseId,action:normalizedAction,userId,modId,reason:normalizedReason,durationMs:normalizedDurationMs,expiresAt,context:normalizedContext,});
+  const doc = await ModCase.create({ guildId, caseId, action: normalizedAction, userId, modId, reason: normalizedReason, durationMs: normalizedDurationMs, expiresAt, context: normalizedContext, });
   return { doc, config: cfg, created: true, isDuplicate: false };
 }
 
@@ -156,29 +146,29 @@ function closeCase(modCase, closeReason = null) {
 
 async function logModCase({ client, guild, modCase, config }) {
   const channelId = config?.logChannelId;
-  const channel=channelId?(guild.channels.cache.get(channelId)||(await guild.channels.fetch(channelId).catch(() => null))):null;
-  const duration=modCase.durationMs?formatDuration(modCase.durationMs):null;
+  const channel = channelId ? (guild.channels.cache.get(channelId) || (await guild.channels.fetch(channelId).catch(() => null))) : null;
+  const duration = modCase.durationMs ? formatDuration(modCase.durationMs) : null;
   const isUserId = /^\d{17,20}$/.test(String(modCase.userId));
-  const userLabel=isUserId?`<@${modCase.userId}>(\`${modCase.userId}\`)`:String(modCase.userId);
-  const embed=new EmbedBuilder().setColor(client?.config?.embedModLight||"#6f4e37").setTitle(`Case #${modCase.caseId}-${modCase.action}`);
-  const fields=[{name:"Utente",value:userLabel,inline:true},{name:"Moderatore",value:`<@${modCase.modId}>`, inline: true },
+  const userLabel = isUserId ? `<@${modCase.userId}>(\`${modCase.userId}\`)` : String(modCase.userId);
+  const embed = new EmbedBuilder().setColor(client?.config?.embedModLight || "#6f4e37").setTitle(`Case #${modCase.caseId}-${modCase.action}`);
+  const fields = [{ name: "<:member_role_icon:1330530086792728618> Utente", value: userLabel, inline: true }, { name: "<:staff:1443651912179388548> Moderatore", value: `<@${modCase.modId}>`, inline: true },
   ];
   if (duration) {
-    fields.push({ name: "Durata", value: duration, inline: true });
-    fields.push({ name: "Motivo", value: modCase.reason || "Nessun motivo fornito", inline: false });
+    fields.push({ name: "<:VC_Clock:1473359204189474886> Durata", value: duration, inline: true });
+    fields.push({ name: "<:VC_reason:1478517122929004544> Motivo", value: modCase.reason || "Nessun motivo fornito", inline: false });
   } else {
-    fields.push({ name: "Motivo", value: modCase.reason || "Nessun motivo fornito", inline: true });
+    fields.push({ name: "<:VC_reason:1478517122929004544> Motivo", value: modCase.reason || "Nessun motivo fornito", inline: true });
   }
   embed.addFields(...fields).setTimestamp();
   if (modCase.context?.channelId) {
     embed.addFields({
-      name: "Canale",
+      name: "<:channeltext:1443247596922470551> Canale",
       value: `<#${modCase.context.channelId}>`,
       inline: true,
     });
   }
   if (channel?.isTextBased?.()) {
-    await channel.send({ embeds: [embed] }).catch(() => {});
+    await channel.send({ embeds: [embed] }).catch(() => { });
   }
   await sendStaffActionToModLogs(guild, modCase).catch(() => null);
 }
@@ -196,14 +186,5 @@ async function tryDmUser(user, content) {
     return false;
   }
 }
-module.exports = {
-  getModConfig,
-  isExempt,
-  createModCase,
-  appendCaseEdit,
-  closeCase,
-  logModCase,
-  formatDuration,
-  parseDuration,
-  tryDmUser,
-};
+
+module.exports = { getModConfig, isExempt, createModCase, appendCaseEdit, closeCase, logModCase, formatDuration, parseDuration, tryDmUser };

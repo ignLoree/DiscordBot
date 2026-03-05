@@ -2,11 +2,10 @@ const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFl
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
 const { getNextTicketId } = require("./ticketIdUtils");
 const { TICKETS_CATEGORY_NAME, isTicketCategoryName, } = require("./ticketCategoryUtils");
-const { safeEditReply: safeEditReplyHelper } = require("../Moderation/reply");
+const { safeEditReply: safeEditReplyHelper } = require("../../shared/discord/replyRuntime");
 const IDs = require("../Config/ids");
 const { findOpenTicketByUser, warmGuildChannels } = require("./ticketInteractionRuntime");
 const { buildTicketChannelName } = require("./ticketNamingRuntime");
-
 const TICKET_PERMISSIONS_SPONSOR = [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.EmbedLinks, PermissionFlagsBits.AttachFiles, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.AddReactions,];
 
 async function handleSponsorTicketOpen(interaction) {
@@ -21,8 +20,8 @@ async function handleSponsorTicketOpen(interaction) {
     await safeEditReplyHelper(interaction, {
       embeds: [
         new EmbedBuilder()
-          .setTitle("Attendi")
-          .setDescription("<:vegax:1443934876440068179> Stai già aprendo un ticket, attendi.")
+          .setTitle("<:VC_Clock:1473359204189474886> Attendi")
+          .setDescription("<:VC_alert:1448670089670037675> Stai già aprendo un ticket, attendi.")
           .setColor("#6f4e37"),
       ],
       flags: 1 << 6,
@@ -37,8 +36,8 @@ async function handleSponsorTicketOpen(interaction) {
       await safeEditReplyHelper(interaction, {
         embeds: [
           new EmbedBuilder()
-            .setTitle("Ticket Aperto")
-            .setDescription(`<:vegax:1443934876440068179> Hai già un ticket aperto: <#${existing.channelId}>`)
+            .setTitle("<:VC_open:1478517277279129712> Ticket Aperto")
+            .setDescription(`<:VC_alert:1448670089670037675> Hai già un ticket aperto: <#${existing.channelId}>`)
             .setColor("#6f4e37"),
         ],
         flags: 1 << 6,
@@ -65,7 +64,7 @@ async function handleSponsorTicketOpen(interaction) {
       await safeEditReplyHelper(interaction, {
         embeds: [
           new EmbedBuilder()
-            .setTitle("Errore")
+            .setTitle("<:VC_alert:1448670089670037675> Errore")
             .setDescription("<:vegax:1443934876440068179> Impossibile creare o trovare la categoria ticket.")
             .setColor("#6f4e37"),
         ],
@@ -94,7 +93,7 @@ async function handleSponsorTicketOpen(interaction) {
       await safeEditReplyHelper(interaction, {
         embeds: [
           new EmbedBuilder()
-            .setTitle("Errore")
+            .setTitle("<:VC_alert:1448670089670037675> Errore")
             .setDescription("<:vegax:1443934876440068179> Impossibile creare il canale ticket.")
             .setColor("#6f4e37"),
         ],
@@ -104,14 +103,14 @@ async function handleSponsorTicketOpen(interaction) {
     }
 
     const sponsorEmbed = new EmbedBuilder()
-      .setTitle("Ticket aperto - Riscatto ruolo")
+      .setTitle("<:VC_open:1478517277279129712> Ticket aperto - Riscatto ruolo")
       .setDescription("Grazie per aver aperto il ticket. Uno staff assegnerà manualmente il ruolo. Attendi in questo canale.")
       .setColor("#6f4e37");
 
     const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),
-      new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
-      new ButtonBuilder().setCustomId("claim_ticket").setLabel("✅ Claim").setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId("close_ticket").setEmoji("<:VC_close:1478517239136256020>").setLabel("Chiudi").setStyle(ButtonStyle.Danger),
+      new ButtonBuilder().setCustomId("close_ticket_motivo").setEmoji("<:VC_reason:1478517122929004544>").setLabel("Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
+      new ButtonBuilder().setCustomId("claim_ticket").setEmoji("<:VC_claim:1478517202016669887>").setLabel("Claim").setStyle(ButtonStyle.Success),
     );
 
     const mainMsg = await channel.send({ embeds: [sponsorEmbed], components: [row] }).catch(() => null);
@@ -131,13 +130,13 @@ async function handleSponsorTicketOpen(interaction) {
     } catch (err) {
       const isDuplicate = err?.code === 11000 || (err?.message && String(err.message).includes("E11000"));
       if (isDuplicate) {
-        await channel.delete().catch(() => {});
+        await channel.delete().catch(() => { });
         const other = await findOpenTicketByUser(guild.id, userId);
         await safeEditReplyHelper(interaction, {
           embeds: [
             new EmbedBuilder()
-              .setTitle("Ticket Aperto")
-              .setDescription(`<:vegax:1443934876440068179> Hai già un ticket aperto${other?.channelId ? `: <#${other.channelId}>` : "."}`)
+              .setTitle("<:vsl_ticket:1329520261053022208> Ticket Aperto")
+              .setDescription(`<:VC_alert:1448670089670037675> Hai già un ticket aperto${other?.channelId ? `: <#${other.channelId}>` : "."}`)
               .setColor("#6f4e37"),
           ],
           flags: 1 << 6,
@@ -149,7 +148,7 @@ async function handleSponsorTicketOpen(interaction) {
       await safeEditReplyHelper(interaction, {
         embeds: [
           new EmbedBuilder()
-            .setTitle("Errore")
+            .setTitle("<:VC_alert:1448670089670037675> Errore")
             .setDescription("<:vegax:1443934876440068179> Impossibile creare il ticket, riprova.")
             .setColor("#6f4e37"),
         ],
@@ -161,8 +160,8 @@ async function handleSponsorTicketOpen(interaction) {
     await safeEditReplyHelper(interaction, {
       embeds: [
         new EmbedBuilder()
-          .setTitle("<:vegacheckmark:1443666279058772028> Ticket Creato")
-          .setDescription(`Aperto un nuovo ticket: ${channel}`)
+          .setTitle("<:vsl_ticket:1329520261053022208> Ticket Creato")
+          .setDescription(`<:VC_open:1478517277279129712> Aperto un nuovo ticket: ${channel}`)
           .setColor("#6f4e37"),
       ],
       flags: 1 << 6,
@@ -180,7 +179,7 @@ async function createTicketsCategory(interaction, guild) {
   const getTopCategoryPosition = () => 0;
   const moveCategoryToTop = async (category) => {
     if (!category || category.type !== ChannelType.GuildCategory) return;
-    await category.setPosition(getTopCategoryPosition()).catch(() => {});
+    await category.setPosition(getTopCategoryPosition()).catch(() => { });
   };
   const getChildrenCount = (categoryId) => guild.channels.cache.filter((ch) => ch.parentId === categoryId).size;
 
@@ -220,7 +219,4 @@ async function createTicketsCategory(interaction, guild) {
   return category;
 }
 
-module.exports = {
-  createTicketsCategory,
-  handleSponsorTicketOpen,
-};
+module.exports = { createTicketsCategory, handleSponsorTicketOpen };

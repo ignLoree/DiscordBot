@@ -2,20 +2,9 @@ const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const Staff = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../Config/ids");
 const { getGuildChannelCached } = require("../Interaction/interactionEntityCache");
-
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-const STAFF_ROLE_PRIORITY = [
-  IDs.roles.Founder,
-  IDs.roles.CoFounder,
-  IDs.roles.Manager,
-  IDs.roles.Admin,
-  IDs.roles.Supervisor,
-  IDs.roles.Coordinator,
-  IDs.roles.Mod,
-  IDs.roles.Helper,
-  IDs.roles.Staff,
-  IDs.roles.PartnerManager,
-].filter(Boolean);
+const STAFF_ROLE_PRIORITY = [IDs.roles.Founder, IDs.roles.CoFounder, IDs.roles.Manager, IDs.roles.Admin, IDs.roles.Supervisor, IDs.roles.Coordinator, IDs.roles.Mod, IDs.roles.Helper, IDs.roles.Staff, IDs.roles.PartnerManager].filter(Boolean);
+
 
 function parseItalianDate(value) {
   if (!value || typeof value !== "string") return null;
@@ -70,12 +59,7 @@ function rangesOverlap(startA, endA, startB, endB) {
   return startA <= endB && startB <= endA;
 }
 
-async function computeStaffersInPauseByRoleForRange(
-  guildId,
-  roleLabel,
-  rangeStartRaw,
-  rangeEndRaw,
-) {
+async function computeStaffersInPauseByRoleForRange(guildId, roleLabel, rangeStartRaw, rangeEndRaw) {
   const targetStart = parseItalianDate(rangeStartRaw);
   const targetEnd = parseItalianDate(rangeEndRaw);
   if (!targetStart || !targetEnd) return 0;
@@ -272,28 +256,9 @@ function schedulePauseButtonsRemoval(guild, channelId, messageId, pauseEndRaw) {
         .replace(" è in pausa.", " è stato in pausa.")
         .replace(" sarà in pausa.", " è stato in pausa.");
       await msg.edit({ content: nextContent, components: [] }).catch(() => null);
-    } catch {}
+    } catch { }
   }, delayMs);
   if (typeof timer?.unref === "function") timer.unref();
 }
 
-module.exports = {
-  MS_PER_DAY,
-  parseItalianDate,
-  getPauseDaysBetween,
-  getTodayUtc,
-  getCurrentYearBoundsUtc,
-  countOverlapDays,
-  rangesOverlap,
-  computeStaffersInPauseByRoleForRange,
-  getStaffPauseRecord,
-  computeConsumedPauseDays,
-  getMemberRoleLabel,
-  getBasePauseLimit,
-  getPauseStatusLabel,
-  getPauseTimingText,
-  computePauseScaledDaysThisYear,
-  buildRequestButtonsRow,
-  buildAcceptedButtonsRow,
-  schedulePauseButtonsRemoval,
-};
+module.exports = { MS_PER_DAY, parseItalianDate, getPauseDaysBetween, getTodayUtc, getCurrentYearBoundsUtc, countOverlapDays, rangesOverlap, computeStaffersInPauseByRoleForRange, getStaffPauseRecord, computeConsumedPauseDays, getMemberRoleLabel, getBasePauseLimit, getPauseStatusLabel, getPauseTimingText, computePauseScaledDaysThisYear, buildRequestButtonsRow, buildAcceptedButtonsRow, schedulePauseButtonsRemoval };

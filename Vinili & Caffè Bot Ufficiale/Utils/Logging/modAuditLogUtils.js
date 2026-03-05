@@ -4,7 +4,7 @@ const IDs = require("../Config/ids");
 async function resolveModLogChannel(guild) {
   const channelId = IDs.channels?.modLogs;
   if (!guild || !channelId) return null;
-  const channel=guild.channels.cache.get(channelId)||(await guild.channels.fetch(channelId).catch(() => null));
+  const channel = guild.channels.cache.get(channelId) || (await guild.channels.fetch(channelId).catch(() => null));
   if (!channel?.isTextBased?.()) return null;
   return channel;
 }
@@ -15,15 +15,9 @@ function canViewAuditLog(guild) {
   );
 }
 
-async function fetchRecentAuditEntry(
-  guild,
-  actionType,
-  matcher,
-  limit = 20,
-  windowMs = 120000,
-) {
+async function fetchRecentAuditEntry(guild, actionType, matcher, limit = 20, windowMs = 120000) {
   if (!canViewAuditLog(guild)) return null;
-  const logs=await guild.fetchAuditLogs({type:actionType,limit}).catch(() => null);
+  const logs = await guild.fetchAuditLogs({ type: actionType, limit }).catch(() => null);
   if (!logs?.entries?.size) return null;
 
   const now = Date.now();
@@ -83,29 +77,29 @@ function formatDurationForModLog(ms) {
  * @param {Object} [options] - { actionLabel?, moderatorId?, reasonOverride?, extraFields? }
  */
 function buildStaffActionModLogEmbed(modCase, options = {}) {
-  const actionLabel=options.actionLabel||String(modCase.action||"Unknown").toLowerCase().replace(/^\w/,(c) => c.toUpperCase());
+  const actionLabel = options.actionLabel || String(modCase.action || "Unknown").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
   const moderatorId = options.moderatorId != null ? options.moderatorId : modCase.modId;
-  const reasonText=options.reasonOverride!==undefined?(options.reasonOverride&&String(options.reasonOverride).slice(0,1024))||"No reason given.":(modCase.reason&&String(modCase.reason).slice(0,1024))||"No reason given.";
-  const embed=new EmbedBuilder().setColor("#57F287").setTitle(`Case ${modCase.caseId}|${actionLabel}|${options.targetUsername!=null?options.targetUsername:modCase.userId}`,
-    );
+  const reasonText = options.reasonOverride !== undefined ? (options.reasonOverride && String(options.reasonOverride).slice(0, 1024)) || "No reason given." : (modCase.reason && String(modCase.reason).slice(0, 1024)) || "No reason given.";
+  const embed = new EmbedBuilder().setColor("#57F287").setTitle(`Case ${modCase.caseId}|${actionLabel}|${options.targetUsername != null ? options.targetUsername : modCase.userId}`,
+  );
   const hasDuration = Number.isFinite(modCase.durationMs) && modCase.durationMs > 0;
-  const fields=[{name:"User",value:`<@${modCase.userId}>`, inline: true },
-    { name: "Moderator", value: `<@${moderatorId}>`, inline: true },
+  const fields = [{ name: "<:member_role_icon:1330530086792728618> User", value: `<@${modCase.userId}>`, inline: true },
+  { name: "<:staff:1443651912179388548> Moderator", value: `<@${moderatorId}>`, inline: true },
   ];
   if (hasDuration) {
     fields.push({
-      name: "Duration",
+      name: "<:VC_Clock:1473359204189474886> Duration",
       value: formatDurationForModLog(modCase.durationMs),
       inline: true,
     });
-    fields.push({ name: "Reason", value: reasonText, inline: false });
+    fields.push({ name: "<:VC_reason:1478517122929004544> Reason", value: reasonText, inline: false });
   } else {
-    fields.push({ name: "Reason", value: reasonText, inline: true });
+    fields.push({ name: "<:VC_reason:1478517122929004544> Reason", value: reasonText, inline: true });
   }
   embed.addFields(...fields);
   const sanctionDate = modCase.createdAt ? new Date(modCase.createdAt) : new Date();
   embed.setTimestamp(sanctionDate.getTime());
-  const footerTs=sanctionDate.toLocaleString("it-IT",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",hour12:false,});
+  const footerTs = sanctionDate.toLocaleString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false, });
   embed.setFooter({ text: `ID: ${modCase.userId} • ${footerTs}` });
   if (Array.isArray(options.extraFields) && options.extraFields.length) {
     options.extraFields.forEach((f) => embed.addFields(f));
@@ -127,16 +121,8 @@ async function sendStaffActionToModLogs(guild, modCase, options = {}) {
     const user = await guild.client.users.fetch(String(modCase.userId)).catch(() => null);
     targetUsername = user?.username || modCase.userId;
   }
-  const embed=buildStaffActionModLogEmbed(modCase,{...options,targetUsername:targetUsername??modCase.userId,});
+  const embed = buildStaffActionModLogEmbed(modCase, { ...options, targetUsername: targetUsername ?? modCase.userId, });
   await channel.send({ embeds: [embed] }).catch(() => null);
 }
 
-module.exports = {
-  resolveModLogChannel,
-  fetchRecentAuditEntry,
-  formatResponsible,
-  nowDiscordTs,
-  formatDurationForModLog,
-  buildStaffActionModLogEmbed,
-  sendStaffActionToModLogs,
-};
+module.exports = { resolveModLogChannel, fetchRecentAuditEntry, formatResponsible, nowDiscordTs, formatDurationForModLog, buildStaffActionModLogEmbed, sendStaffActionToModLogs };

@@ -1,5 +1,5 @@
-﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, PermissionsBitField, } = require("discord.js");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, PermissionsBitField, } = require("discord.js");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const{createCustomRoleGrantRequest,}=require("../../Events/interaction/customRoleHandlers");
 const { CustomRole } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");

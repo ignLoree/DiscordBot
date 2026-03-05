@@ -123,14 +123,4 @@ async function getClientChannelCached(client, channelId, options = {}) {
   });
 }
 
-module.exports = {
-  buildCacheKey,
-  getCachedValue,
-  setCachedValue,
-  getClientChannelCached,
-  getClientGuildCached,
-  getGuildChannelCached,
-  getGuildMemberCached,
-  getGuildRoleCached,
-  getUserCached,
-};
+module.exports = { buildCacheKey, getCachedValue, setCachedValue, getClientChannelCached, getClientGuildCached, getGuildChannelCached, getGuildMemberCached, getGuildRoleCached, getUserCached };

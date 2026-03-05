@@ -1,7 +1,6 @@
 const { EmbedBuilder, ChannelType, PermissionsBitField } = require("discord.js");
 const { getGuildChannelCached, getGuildMemberCached, getGuildRoleCached } = require("./interactionEntityCache");
 const IDs = require("../Config/ids");
-
 const CUSTOM_VOICE_CATEGORY_ID = IDs?.categories?.categoryPrivate || null;
 
 async function fetchGuildChannel(guild, channelId) {
@@ -127,17 +126,4 @@ function buildCustomVocName(emoji, baseName) {
   return `${prefix}${safeBase.slice(0, maxBaseLength)}`;
 }
 
-module.exports = {
-  fetchGuildChannel,
-  fetchGuildMember,
-  fetchGuildRole,
-  replyEphemeral,
-  parseRoleActionId,
-  parseVoiceActionId,
-  findCustomVoiceByRole,
-  canManageRole,
-  refreshEmbedRoleLine,
-  sanitizeVoiceBaseName,
-  parseCustomVocName,
-  buildCustomVocName,
-};
+module.exports = { fetchGuildChannel, fetchGuildMember, fetchGuildRole, replyEphemeral, parseRoleActionId, parseVoiceActionId, findCustomVoiceByRole, canManageRole, refreshEmbedRoleLine, sanitizeVoiceBaseName, parseCustomVocName, buildCustomVocName };

@@ -1,10 +1,9 @@
-const{checkButtonPermission,checkStringSelectPermission,checkModalPermission,buildGlobalPermissionDeniedEmbed,buildGlobalNotYourControlEmbed,}=require("../Moderation/commandPermissions");
-
+const { checkButtonPermission, checkStringSelectPermission, checkModalPermission, buildGlobalPermissionDeniedEmbed, buildGlobalNotYourControlEmbed, } = require("../Moderation/commandPermissions");
 const PRIVATE_FLAG = 1 << 6;
 const BUTTON_SPAM_COOLDOWN_MS = 1200;
 const BUTTON_INFLIGHT_TTL_MS = 15000;
-const MONO_GUILD_DENIED="Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.";
-const TICKET_OPEN_CONTROLS=new Set(["ticket_partnership","ticket_highstaff","ticket_supporto","ticket_open_menu",]);
+const MONO_GUILD_DENIED = "Questo bot è utilizzabile solo nei server autorizzati.";
+const TICKET_OPEN_CONTROLS = new Set(["ticket_partnership", "ticket_highstaff", "ticket_supporto", "ticket_open_menu",]);
 
 function isAckError(error) {
   const code = error?.code || error?.rawError?.code;
@@ -51,7 +50,7 @@ function acquireButtonSpamGuard(interaction, client) {
   if (!isButton && !isSelect) {
     return {
       blocked: false,
-      release: () => {},
+      release: () => { },
     };
   }
 
@@ -68,7 +67,7 @@ function acquireButtonSpamGuard(interaction, client) {
   if (TICKET_OPEN_CONTROLS.has(customId)) {
     return {
       blocked: false,
-      release: () => {},
+      release: () => { },
     };
   }
 
@@ -81,7 +80,7 @@ function acquireButtonSpamGuard(interaction, client) {
   if (userCooldownUntil > nowTs || inFlightUntil > nowTs) {
     return {
       blocked: true,
-      release: () => {},
+      release: () => { },
     };
   }
 
@@ -142,7 +141,7 @@ async function runPermissionGate(interaction) {
             buildGlobalPermissionDeniedEmbed(
               [],
               "bottone",
-              "<:vegax:1443934876440068179> Devi completare la verifica per aprire un ticket. Verificati e riprova.",
+              "<a:VC_Alert:1448670089670037675> Devi completare la verifica per aprire un ticket. Verificati e riprova.",
             ),
           ],
           flags: PRIVATE_FLAG,
@@ -169,7 +168,7 @@ async function runPermissionGate(interaction) {
             buildGlobalPermissionDeniedEmbed(
               [],
               "menu",
-              "<:vegax:1443934876440068179> Devi completare la verifica per aprire un ticket. Verificati e riprova.",
+              "<a:VC_Alert:1448670089670037675> Devi completare la verifica per aprire un ticket. Verificati e riprova.",
             ),
           ],
           flags: PRIVATE_FLAG,
@@ -198,10 +197,4 @@ async function runPermissionGate(interaction) {
   return true;
 }
 
-module.exports = {
-  acquireButtonSpamGuard,
-  isAckError,
-  isTransientDiscordError,
-  runPermissionGate,
-  sendPrivateInteractionResponse,
-};
+module.exports = { acquireButtonSpamGuard, isAckError, isTransientDiscordError, runPermissionGate, sendPrivateInteractionResponse };

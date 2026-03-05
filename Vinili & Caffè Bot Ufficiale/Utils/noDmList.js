@@ -18,7 +18,7 @@ function normalizeData(raw) {
   const out = {};
   for (const [guildId, list] of Object.entries(raw)) {
     if (!Array.isArray(list)) continue;
-    const unique=new Set(list.map((id) => String(id)).filter((id) => id&&id!=="undefined"&&id!=="null"),);
+    const unique = new Set(list.map((id) => String(id)).filter((id) => id && id !== "undefined" && id !== "null"),);
     out[String(guildId)] = [...unique];
   }
   return out;
@@ -45,7 +45,7 @@ async function loadFileData() {
   const backup = await readJsonIfExists(BACKUP_PATH);
   if (backup) {
     cache = backup;
-    await atomicWrite(cache).catch(() => {});
+    await atomicWrite(cache).catch(() => { });
     return cache;
   }
 
@@ -59,9 +59,9 @@ async function atomicWrite(data) {
   const payload = JSON.stringify(normalizeData(data), null, 2);
 
   await fs.writeFile(TMP_PATH, payload, "utf8");
-  await fs.copyFile(DATA_PATH, BACKUP_PATH).catch(() => {});
+  await fs.copyFile(DATA_PATH, BACKUP_PATH).catch(() => { });
   await fs.rename(TMP_PATH, DATA_PATH);
-  await fs.copyFile(DATA_PATH, BACKUP_PATH).catch(() => {});
+  await fs.copyFile(DATA_PATH, BACKUP_PATH).catch(() => { });
 }
 
 async function saveFileData(data) {
@@ -122,7 +122,7 @@ async function migrateFileToDbOnce() {
     }
 
     if (ops.length > 0) {
-      await NoDmPreference.bulkWrite(ops, { ordered: false }).catch(() => {});
+      await NoDmPreference.bulkWrite(ops, { ordered: false }).catch(() => { });
     }
   })();
 
@@ -134,7 +134,7 @@ async function getNoDmSet(guildId) {
 
   if (isDbReady()) {
     await migrateFileToDbOnce();
-    const rows=await NoDmPreference.find({guildId:key},{_id:0,userId:1},).lean();
+    const rows = await NoDmPreference.find({ guildId: key }, { _id: 0, userId: 1 },).lean();
     return new Set(rows.map((row) => String(row.userId)));
   }
 
@@ -154,7 +154,7 @@ async function addNoDm(guildId, userId) {
       { $setOnInsert: { guildId: key, userId: uid } },
       { upsert: true },
     );
-    await mirrorAddToFile(key, uid).catch(() => {});
+    await mirrorAddToFile(key, uid).catch(() => { });
     return;
   }
 
@@ -168,7 +168,7 @@ async function removeNoDm(guildId, userId) {
   if (isDbReady()) {
     await migrateFileToDbOnce();
     await NoDmPreference.deleteOne({ guildId: key, userId: uid });
-    await mirrorRemoveFromFile(key, uid).catch(() => {});
+    await mirrorRemoveFromFile(key, uid).catch(() => { });
     return;
   }
 
@@ -194,9 +194,4 @@ async function sendDm(user, payload, options = {}) {
   return user.send(payload).catch(() => null);
 }
 
-module.exports = {
-  getNoDmSet,
-  addNoDm,
-  removeNoDm,
-  sendDm,
-};
+module.exports = { getNoDmSet, addNoDm, removeNoDm, sendDm };

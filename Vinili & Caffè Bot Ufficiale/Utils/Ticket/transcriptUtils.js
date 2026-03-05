@@ -21,26 +21,26 @@ function formatDate(timestamp) {
   }
 }
 
-const RICH_TOKEN_REGEX =/<a?:([a-zA-Z0-9_]+):(\d{17,20})>|<@!?(\d{17,20})>|<@&(\d{17,20})>|<#(\d{17,20})>/g;
+const RICH_TOKEN_REGEX = /<a?:([a-zA-Z0-9_]+):(\d{17,20})>|<@!?(\d{17,20})>|<@&(\d{17,20})>|<#(\d{17,20})>/g;
 
 function getUserMentionLabel(message, userId) {
-  const member = message.guild ?. members ?. cache ?. get(userId)|| message.mentions ?. members ?. get ?.(userId);
+  const member = message.guild?.members?.cache?.get(userId) || message.mentions?.members?.get?.(userId);
   if (member?.displayName) return `@${member.displayName}`;
 
-  const user = message.client ?. users ?. cache ?. get(userId)|| message.mentions ?. users ?. get ?.(userId);
+  const user = message.client?.users?.cache?.get(userId) || message.mentions?.users?.get?.(userId);
   if (user?.username) return `@${user.username}`;
 
   return `@user-${userId}`;
 }
 
 function getRoleMentionLabel(message, roleId) {
-  const role = message.guild ?. roles ?. cache ?. get(roleId)|| message.mentions ?. roles ?. get ?.(roleId);
+  const role = message.guild?.roles?.cache?.get(roleId) || message.mentions?.roles?.get?.(roleId);
   if (role?.name) return `@${role.name}`;
   return `@role-${roleId}`;
 }
 
 function getChannelMentionLabel(message, channelId) {
-  const channel = message.guild ?. channels ?. cache ?. get(channelId)|| message.mentions ?. channels ?. get ?.(channelId);
+  const channel = message.guild?.channels?.cache?.get(channelId) || message.mentions?.channels?.get?.(channelId);
   if (channel?.name) return `#${channel.name}`;
   return `#channel-${channelId}`;
 }
@@ -105,7 +105,7 @@ function messageContentToHtml(message) {
 
   if (Array.isArray(message.embeds) && message.embeds.length > 0) {
     for (const embed of message.embeds) {
-      const fieldsHtml = Array.isArray(embed.fields)&& embed.fields.length >0?`<div class="embed-fields">${embed.fields.map((field)=>`<div class="embed-field"><div class="embed-field-name">${renderRichTextHtml(message,field.name)}</div><div class="embed-field-value">${renderRichTextHtml(message,field.value)}</div></div>`).join("")}</div>`:"";
+      const fieldsHtml = Array.isArray(embed.fields) && embed.fields.length > 0 ? `<div class="embed-fields">${embed.fields.map((field) => `<div class="embed-field"><div class="embed-field-name">${renderRichTextHtml(message, field.name)}</div><div class="embed-field-value">${renderRichTextHtml(message, field.value)}</div></div>`).join("")}</div>` : "";
 
       body += `
         <div class="embed">
@@ -118,7 +118,7 @@ function messageContentToHtml(message) {
   }
 
   if (message.attachments?.size > 0) {
-    const attachmentItems = Array.from(message.attachments.values()).map((attachment)=>`<li><a href="${escapeHtml(attachment.url)}" target="_blank" rel="noreferrer">${escapeHtml(attachment.name || attachment.url)}</a></li>`,).join("");
+    const attachmentItems = Array.from(message.attachments.values()).map((attachment) => `<li><a href="${escapeHtml(attachment.url)}" target="_blank" rel="noreferrer">${escapeHtml(attachment.name || attachment.url)}</a></li>`,).join("");
     body += `<ul class="attachments">${attachmentItems}</ul>`;
   }
 
@@ -134,7 +134,7 @@ async function fetchAllMessages(channel, maxMessages = 2000) {
   let beforeId = null;
 
   while (results.length < maxMessages) {
-    const chunk = await channel.messages.fetch({limit:100,...(beforeId ?{before:beforeId}:{})}).catch(()=>null);
+    const chunk = await channel.messages.fetch({ limit: 100, ...(beforeId ? { before: beforeId } : {}) }).catch(() => null);
     if (!chunk || chunk.size === 0) break;
 
     const list = Array.from(chunk.values());
@@ -185,10 +185,11 @@ async function createTranscriptHtml(channel) {
   const guildName = escapeHtml(channel.guild?.name || "Server");
   const channelName = escapeHtml(channel.name || "ticket");
 
-  const rows=messages.map((message) => {const avatar=message.author?.displayAvatarURL?.({extension:"png",size:64})||"";const author=escapeHtml(message.author?.tag||"Utente sconosciuto");const time=escapeHtml(formatDate(message.createdTimestamp));const messageBody=messageContentToHtml(message);return`
+  const rows = messages.map((message) => {
+    const avatar = message.author?.displayAvatarURL?.({ extension: "png", size: 64 }) || ""; const author = escapeHtml(message.author?.tag || "Utente sconosciuto"); const time = escapeHtml(formatDate(message.createdTimestamp)); const messageBody = messageContentToHtml(message); return `
       <article class="msg">
         <img class="avatar" src="${escapeHtml(avatar)}" alt=" avatar "><div class="right"><div class="meta"><span class="author">${author}</span><span class="time">${time}</span></div>${messageBody}</div></article>`;
-    })
+  })
     .join("");
 
   return `<!doctype html>
@@ -306,7 +307,7 @@ async function createTranscriptHtml(channel) {
 }
 
 async function saveTranscriptHtml(channel, html) {
-  const basePath = path.join(BOT_ROOT,"local_transcripts",String(channel.guild ?. id || "global"),);
+  const basePath = path.join(BOT_ROOT, "local_transcripts", String(channel.guild?.id || "global"),);
   fs.mkdirSync(basePath, { recursive: true });
   const filename = `transcript_${channel.id}_${Date.now()}.html`;
   const filepath = path.join(basePath, filename);
@@ -314,8 +315,4 @@ async function saveTranscriptHtml(channel, html) {
   return filepath;
 }
 
-module.exports = {
-  createTranscript,
-  createTranscriptHtml,
-  saveTranscriptHtml,
-};
+module.exports = { createTranscript, createTranscriptHtml, saveTranscriptHtml };

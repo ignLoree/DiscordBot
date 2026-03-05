@@ -532,7 +532,7 @@ async function sendLevelUpPayload(channel, member, payload) {
   if (!channel || !member || !payload) return;
   await channel
     .send({
-      content: `<:VC_LevelUp:1443701876892762243> ${member} sei salito/a di livello!`,
+      content: `<a:VC_LevelUp:1469046204582068376> ${member} sei salito/a di livello!`,
       ...payload,
     })
     .catch(() => { });

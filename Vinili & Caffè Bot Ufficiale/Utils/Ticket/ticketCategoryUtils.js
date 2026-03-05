@@ -1,5 +1,4 @@
 const { ChannelType } = require("discord.js");
-
 const TICKETS_CATEGORY_NAME = "⁰⁰・ 　　　　 　 TICKETS 　　　 　 ・";
 const TICKETS_OVERFLOW_SEPARATOR = " • ";
 
@@ -30,15 +29,9 @@ function isChannelInTicketCategory(channel) {
   const first = channel.parent ?? (channel.parentId ? cache.get(channel.parentId) : null);
   if (!first) return false;
 
-  const category = first.type === ChannelType.GuildCategory ? first:first.parentId ? cache.get(first.parentId):null;
+  const category = first.type === ChannelType.GuildCategory ? first : first.parentId ? cache.get(first.parentId) : null;
   if (!category || !category.name) return false;
   return isTicketCategoryName(category.name);
 }
 
-module.exports = {
-  TICKETS_CATEGORY_NAME,
-  TICKETS_OVERFLOW_SEPARATOR,
-  buildOverflowTicketCategoryName,
-  isChannelInTicketCategory,
-  isTicketCategoryName,
-};
+module.exports = { TICKETS_CATEGORY_NAME, TICKETS_OVERFLOW_SEPARATOR, buildOverflowTicketCategoryName, isChannelInTicketCategory, isTicketCategoryName };

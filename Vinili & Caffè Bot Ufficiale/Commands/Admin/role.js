@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const { safeEditReply } = require("../../Utils/Moderation/reply");
+const { safeEditReply } = require("../../../shared/discord/replyRuntime");
 const PRIVATE_FLAG = 1 << 6;
 
 async function verifyRoleMutation(guild, memberId, roleId, shouldHaveRole) {

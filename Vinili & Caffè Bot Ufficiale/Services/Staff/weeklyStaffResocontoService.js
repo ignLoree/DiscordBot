@@ -1,14 +1,13 @@
 const cron = require("node-cron");
-const{ActionRowBuilder,ButtonBuilder,ButtonStyle,ChannelType,}=require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, } = require("discord.js");
 const IDs = require("../../Utils/Config/ids");
 const StaffModel = require("../../Schemas/Staff/staffSchema");
-const{RESOCONTO_APPLY_PREFIX,RESOCONTO_REJECT_PREFIX,}=require("../../Events/interaction/resocontoHandlers");
+const { RESOCONTO_APPLY_PREFIX, RESOCONTO_REJECT_PREFIX, } = require("../../Events/interaction/resocontoHandlers");
 const { getUserOverviewStats } = require("../Community/activityService");
-const{getClientGuildCached,getGuildChannelCached,getGuildMemberCached,}=require("../../Utils/Interaction/interactionEntityCache");
-
+const { getClientGuildCached, getGuildChannelCached, getGuildMemberCached, } = require("../../Utils/Interaction/interactionEntityCache");
 const TIME_ZONE = "Europe/Rome";
-const STAFF_ACTIVITY_LIMITS={[String(IDs.roles.Helper)]:{messages:400,hours:3.5},[String(IDs.roles.Mod)]:{messages:500,hours:5},[String(IDs.roles.Coordinator)]:{messages:500,hours:4.5},[String(IDs.roles.Supervisor)]:{messages:450,hours:4},};
-const STAFF_ROLE_PRIORITY=[String(IDs.roles.Supervisor),String(IDs.roles.Coordinator),String(IDs.roles.Mod),String(IDs.roles.Helper),];
+const STAFF_ACTIVITY_LIMITS = { [String(IDs.roles.Helper)]: { messages: 400, hours: 3.5 }, [String(IDs.roles.Mod)]: { messages: 500, hours: 5 }, [String(IDs.roles.Coordinator)]: { messages: 500, hours: 4.5 }, [String(IDs.roles.Supervisor)]: { messages: 450, hours: 4 }, };
+const STAFF_ROLE_PRIORITY = [String(IDs.roles.Supervisor), String(IDs.roles.Coordinator), String(IDs.roles.Mod), String(IDs.roles.Helper),];
 
 let weeklyStaffResocontoTask = null;
 
@@ -24,7 +23,7 @@ function formatHoursFromSeconds(seconds) {
 }
 
 function getRomeDateParts(date) {
-  const formatter=new Intl.DateTimeFormat("en-GB",{timeZone:TIME_ZONE,year:"numeric",month:"2-digit",day:"2-digit",});
+  const formatter = new Intl.DateTimeFormat("en-GB", { timeZone: TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit", });
   const parts = formatter.formatToParts(date);
   const out = {};
   for (const part of parts) {
@@ -38,10 +37,10 @@ function getRomeDateParts(date) {
 }
 
 function getRomeOffsetMs(utcDate) {
-  const formatter=new Intl.DateTimeFormat("en-US",{timeZone:TIME_ZONE,timeZoneName:"shortOffset",hour:"2-digit",});
-  const timeZoneName=formatter.formatToParts(utcDate).find((part) => part.type==="timeZoneName")?.value;
+  const formatter = new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, timeZoneName: "shortOffset", hour: "2-digit", });
+  const timeZoneName = formatter.formatToParts(utcDate).find((part) => part.type === "timeZoneName")?.value;
 
-  const match=String(timeZoneName||"GMT+0").match(/^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/i,);
+  const match = String(timeZoneName || "GMT+0").match(/^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/i,);
   if (!match) return 0;
 
   const sign = match[1] === "-" ? -1 : 1;
@@ -63,22 +62,22 @@ function createUtcFromRomeLocal(year, month, day, hour, minute, second) {
 
 function getPmResocontoWindow(now = new Date()) {
   const romeToday = getRomeDateParts(now);
-  const romeTodayNoonUtc=new Date(Date.UTC(romeToday.year,romeToday.month-1,romeToday.day,12,0,0),);
+  const romeTodayNoonUtc = new Date(Date.UTC(romeToday.year, romeToday.month - 1, romeToday.day, 12, 0, 0),);
   const dayFromMonday = (romeTodayNoonUtc.getUTCDay() + 6) % 7;
 
-  const mondayNoonUtc=new Date(romeTodayNoonUtc.getTime()-dayFromMonday*24*60*60*1000,);
+  const mondayNoonUtc = new Date(romeTodayNoonUtc.getTime() - dayFromMonday * 24 * 60 * 60 * 1000,);
   const mondayY = mondayNoonUtc.getUTCFullYear();
   const mondayM = mondayNoonUtc.getUTCMonth() + 1;
   const mondayD = mondayNoonUtc.getUTCDate();
 
-  const sundayNoonUtc=new Date(mondayNoonUtc.getTime()+6*24*60*60*1000,);
+  const sundayNoonUtc = new Date(mondayNoonUtc.getTime() + 6 * 24 * 60 * 60 * 1000,);
   const sundayY = sundayNoonUtc.getUTCFullYear();
   const sundayM = sundayNoonUtc.getUTCMonth() + 1;
   const sundayD = sundayNoonUtc.getUTCDate();
 
-  const thisSundayStart=createUtcFromRomeLocal(sundayY,sundayM,sundayD,15,1,0,);
-  const weekStart=now.getTime()<thisSundayStart.getTime()?new Date(thisSundayStart.getTime()-7*24*60*60*1000):thisSundayStart;
-  const scheduledEnd=new Date(weekStart.getTime()+(7*24*60*60*1000-2*60*1000),);
+  const thisSundayStart = createUtcFromRomeLocal(sundayY, sundayM, sundayD, 15, 1, 0,);
+  const weekStart = now.getTime() < thisSundayStart.getTime() ? new Date(thisSundayStart.getTime() - 7 * 24 * 60 * 60 * 1000) : thisSundayStart;
+  const scheduledEnd = new Date(weekStart.getTime() + (7 * 24 * 60 * 60 * 1000 - 2 * 60 * 1000),);
   const weekEnd = now.getTime() < scheduledEnd.getTime() ? now : scheduledEnd;
 
   return { weekStart, weekEnd };
@@ -197,8 +196,8 @@ function pmActionToKey(action) {
 }
 
 function buildResocontoButtons(kind, userId, actionKey, roleId = null) {
-  const payload=kind==="s"?`${kind}:${userId}:${roleId}:${actionKey}`
-      : `${kind}:${userId}:${actionKey}`;
+  const payload = kind === "s" ? `${kind}:${userId}:${roleId}:${actionKey}`
+    : `${kind}:${userId}:${actionKey}`;
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(`${RESOCONTO_APPLY_PREFIX}:${payload}`)
@@ -217,15 +216,16 @@ async function createResocontoThread(message, userId, userLabel = null) {
   if (!/^\d{16,20}$/.test(safeUserId)) return;
   const threadLabel = String(userLabel || safeUserId).trim().slice(0, 70) || safeUserId;
 
-  const thread=await message.startThread({name:`Resoconto di ${threadLabel}`,
-      autoArchiveDuration: 10080,
-      type: ChannelType.PublicThread,
-      reason: "Thread automatico resoconto staff/pm",
-    })
+  const thread = await message.startThread({
+    name: `Resoconto di ${threadLabel}`,
+    autoArchiveDuration: 10080,
+    type: ChannelType.PublicThread,
+    reason: "Thread automatico resoconto staff/pm",
+  })
     .catch(() => null);
   if (!thread?.isTextBased?.()) return;
 
-  const mentionMsg=await thread.send({content:`<@&${IDs.roles.HighStaff}>` })
+  const mentionMsg = await thread.send({ content: `<@&${IDs.roles.HighStaff}>` })
     .catch(() => null);
   if (mentionMsg) {
     await mentionMsg.delete().catch(() => null);
@@ -268,12 +268,12 @@ async function runWeeklyStaffResoconti(client) {
   if (!channel?.isTextBased?.()) return;
 
   const weekStart = getWeekStartDate(new Date());
-  const staffDocs=await StaffModel.find({guildId},{userId:1,positiveCount:1,negativeCount:1,rolesHistory:1,partnerActions:1}).lean().catch(() => []);
+  const staffDocs = await StaffModel.find({ guildId }, { userId: 1, positiveCount: 1, negativeCount: 1, rolesHistory: 1, partnerActions: 1 }).lean().catch(() => []);
 
-  const knownStaffUserIds=Array.from(new Set((Array.isArray(staffDocs)?staffDocs:[]).map((row) => String(row?.userId||"")).filter(Boolean),),);
+  const knownStaffUserIds = Array.from(new Set((Array.isArray(staffDocs) ? staffDocs : []).map((row) => String(row?.userId || "")).filter(Boolean),),);
   if (!knownStaffUserIds.length) return;
 
-  const fetchedMembers=await Promise.all(knownStaffUserIds.map((userId) => getGuildMemberCached(guild,userId)),);
+  const fetchedMembers = await Promise.all(knownStaffUserIds.map((userId) => getGuildMemberCached(guild, userId)),);
 
   const candidateMembers = [];
   for (const member of fetchedMembers) {
@@ -289,11 +289,11 @@ async function runWeeklyStaffResoconti(client) {
   }
   if (!candidateMembers.length) return;
 
-  const staffMap=new Map((Array.isArray(staffDocs)?staffDocs:[]).map((row) => [String(row.userId),row,]),);
+  const staffMap = new Map((Array.isArray(staffDocs) ? staffDocs : []).map((row) => [String(row.userId), row,]),);
 
-  const staffUserIds=candidateMembers.filter((m) => resolveStaffRole(m)).map((m) => String(m.id));
-  const overviewResults=await Promise.all(staffUserIds.map((uid) => getUserOverviewStats(guildId,uid,7)),);
-  const overviewMap=new Map(staffUserIds.map((id,i) => [id,overviewResults[i]||null]),);
+  const staffUserIds = candidateMembers.filter((m) => resolveStaffRole(m)).map((m) => String(m.id));
+  const overviewResults = await Promise.all(staffUserIds.map((uid) => getUserOverviewStats(guildId, uid, 7)),);
+  const overviewMap = new Map(staffUserIds.map((id, i) => [id, overviewResults[i] || null]),);
 
   for (const member of candidateMembers) {
     const userId = String(member.id);
@@ -303,24 +303,24 @@ async function runWeeklyStaffResoconti(client) {
     if (staffRoleId) {
       const overview = overviewMap.get(userId);
       const d7 = overview?.windows?.d7;
-      const weeklyMessages=Math.max(0,Math.floor(toSafeNumber(d7?.text??0)),);
-      const weeklyVoiceSeconds=Math.max(0,Math.floor(toSafeNumber(d7?.voiceSeconds??0)),);
+      const weeklyMessages = Math.max(0, Math.floor(toSafeNumber(d7?.text ?? 0)),);
+      const weeklyVoiceSeconds = Math.max(0, Math.floor(toSafeNumber(d7?.voiceSeconds ?? 0)),);
       const weeklyVoiceHours = weeklyVoiceSeconds / 3600;
-      const activityGrade=computeActivityGrade(staffRoleId,weeklyMessages,weeklyVoiceHours,);
-      const behaviorGrade=computeBehaviorGrade(staffDoc?.positiveCount,staffDoc?.negativeCount,);
+      const activityGrade = computeActivityGrade(staffRoleId, weeklyMessages, weeklyVoiceHours,);
+      const behaviorGrade = computeBehaviorGrade(staffDoc?.positiveCount, staffDoc?.negativeCount,);
       const pexedInWeek = wasPexedInWeek(staffDoc, weekStart);
       const action = computeStaffAction(activityGrade, behaviorGrade, pexedInWeek);
 
       await channel
         .send({
           content: `
-<:discordstaff:1443651872258003005> **Staffer:** __**<@${userId}>**__
-<:dot:1443660294596329582> **Ruolo:** __<@&${staffRoleId}>__
-<:dot:1443660294596329582> **Messaggi in una settimana:** __${weeklyMessages}__
-<:dot:1443660294596329582> **Ore in una settimana:** __${formatHoursFromSeconds(weeklyVoiceSeconds)}__
-<:dot:1443660294596329582> **Attività:** __${activityGrade}__
-<:dot:1443660294596329582> **Condotta:** __${behaviorGrade}__
-<:dot:1443660294596329582> **Azione:** __${action}__`,
+<:staff:1443651912179388548> **Staffer:** __**<@${userId}>**__
+<:VC_Mention:1443994358201323681> **Ruolo:** __<@&${staffRoleId}>__
+<:VC_Chat:1448694742237053061> **Messaggi in una settimana:** __${weeklyMessages}__
+<:voice:1467639623735054509> **Ore in una settimana:** __${formatHoursFromSeconds(weeklyVoiceSeconds)}__
+<a:VC_Exclamation:1448687427836444854>  **Attività:** __${activityGrade}__
+<:VC_Eye:1331619214410383381> **Condotta:** __${behaviorGrade}__
+<:VC_BanHammer:1443933132645732362> **Azione:** __${action}__`,
           components: [
             buildResocontoButtons(
               "s",
@@ -336,14 +336,14 @@ async function runWeeklyStaffResoconti(client) {
 
     if (member.roles.cache.has(String(IDs.roles.PartnerManager))) {
       const pmWindow = getPmResocontoWindow(new Date());
-      const weeklyPartners=countPmWeeklyPartners(staffDoc,pmWindow.weekStart,pmWindow.weekEnd,);
+      const weeklyPartners = countPmWeeklyPartners(staffDoc, pmWindow.weekStart, pmWindow.weekEnd,);
       const action = computePmAction(weeklyPartners);
 
       await channel
         .send({
-          content: `<:partneredserverowner:1443651871125409812> **Partner Manager:** __<@${userId}>__
-<:dot:1443660294596329582> **Partner:** __${weeklyPartners}__
-<:dot:1443660294596329582> **Azione:** __${action}__`,
+          content: `<:partnermanager:1443651916838998099> **Partner Manager:** __<@${userId}>__
+<:partneredserverowner:1443651871125409812> **Partner:** __${weeklyPartners}__
+<:VC_BanHammer:1443933132645732362> **Azione:** __${action}__`,
           components: [buildResocontoButtons("p", userId, pmActionToKey(action))],
         })
         .then((msg) => createResocontoThread(msg, userId, member.user?.username))
@@ -368,7 +368,4 @@ function startWeeklyStaffResocontoLoop(client) {
   return weeklyStaffResocontoTask;
 }
 
-module.exports = {
-  startWeeklyStaffResocontoLoop,
-  runWeeklyStaffResoconti,
-};
+module.exports = { startWeeklyStaffResocontoLoop, runWeeklyStaffResoconti };

@@ -7,18 +7,13 @@ const JoinRaidState = require("../../Schemas/Moderation/joinRaidStateSchema");
 const { isSecurityProfileImmune, hasAdminsProfileCapability, } = require("./securityProfilesService");
 const { isJoinGateSuspiciousAccount, } = require("./suspiciousAccountService");
 const { createModCase, getModConfig, logModCase } = require("../../Utils/Moderation/moderation");
-
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
 const HIGH_STAFF_ROLE_ID = String(IDs.roles?.HighStaff || "");
-const HIGH_STAFF_MENTION = HIGH_STAFF_ROLE_ID ? `<@&${HIGH_STAFF_ROLE_ID}>`
-  : null;
+const HIGH_STAFF_MENTION = HIGH_STAFF_ROLE_ID ? `<@&${HIGH_STAFF_ROLE_ID}>` : null;
 const CORE_EXEMPT_USER_IDS = new Set(["1466495522474037463", "1329118940110127204",]);
 const VERIFIED_BOT_IDS = new Set(Object.values(IDs?.bots || {}).filter(Boolean).map(String),);
-
 const JOIN_RAID_CONFIG = { enabled: true, lockCommands: false, triggerAction: "kick", triggerType: "unique", accountType: "any", punishOnActiveRaid: true, triggerCount: 10, triggerWindowMs: 3 * 60 * 60_000, raidDurationMs: 30 * 60_000, warnedRoleIds: [IDs.roles.Founder, IDs.roles.CoFounder, IDs.roles.Manager, IDs.roles.Admin, IDs.roles.Supervisor, IDs.roles.Coordinator, IDs.roles.Mod, IDs.roles.Helper, IDs.roles.HighStaff,].filter(Boolean).map(String), idFlag: { enabled: true, categorization: "adaptive", minimumMatches: 4, compareWindowMs: 3 * 60 * 60_000, createdAtDeltaMs: 20 * 60_000, }, noPfpFlag: { enabled: true, }, ageFlag: { enabled: true, minimumAgeMs: 3 * 24 * 60 * 60_000, }, };
-
 const JOIN_RAID_PRESETS = { safe: { lockCommands: false, triggerAction: "kick", triggerType: "unique", accountType: "young_or_no_pfp", punishOnActiveRaid: true, triggerCount: 12, triggerWindowMs: 3 * 60 * 60_000, raidDurationMs: 20 * 60_000, idFlag: { minimumMatches: 5, compareWindowMs: 3 * 60 * 60_000, createdAtDeltaMs: 20 * 60_000, }, ageFlag: { minimumAgeMs: 2 * 24 * 60 * 60_000 }, }, balanced: { lockCommands: false, triggerAction: "kick", triggerType: "unique", accountType: "any", punishOnActiveRaid: true, triggerCount: 10, triggerWindowMs: 3 * 60 * 60_000, raidDurationMs: 30 * 60_000, idFlag: { minimumMatches: 4, compareWindowMs: 3 * 60 * 60_000, createdAtDeltaMs: 20 * 60_000, }, ageFlag: { minimumAgeMs: 3 * 24 * 60 * 60_000 }, }, strict: { lockCommands: true, triggerAction: "ban", triggerType: "events", accountType: "any", punishOnActiveRaid: true, triggerCount: 8, triggerWindowMs: 2 * 60 * 60_000, raidDurationMs: 45 * 60_000, idFlag: { minimumMatches: 3, compareWindowMs: 2 * 60 * 60_000, createdAtDeltaMs: 25 * 60_000, }, ageFlag: { minimumAgeMs: 5 * 24 * 60 * 60_000 }, }, };
-
 const GUILD_STATE = new Map();
 const TEMP_BAN_TIMERS = new Map();
 const RAID_REPORT_TIMERS = new Map();
@@ -345,11 +340,11 @@ async function finalizeJoinRaidAndReport(guild, reason = "elapsed") {
 
     await sendJoinRaidLog(
       guild,
-      "Join Raid Report!",
+      "<a:VC_Alert:1448670089670037675> **Join Raid Report!**",
       [
-        `${ARROW} **${caughtCount} users** have been caught by the join raid.`,
-        `${ARROW} **Code:** \`${code}\``,
-        `${ARROW} **Duration:** ${Math.round(Number(JOIN_RAID_CONFIG.raidDurationMs || 0) / 60_000)} minutes`,
+        `<:VC_Mention:1443994358201323681> **${caughtCount} utenti** sono stati catturati dalla protezione raid.`,
+        `<:VC_reason:1478517122929004544> **Codice:** \`${code}\``,
+        `<:VC_Clock:1473359204189474886> **Durata:** ${Math.round(Number(JOIN_RAID_CONFIG.raidDurationMs || 0) / 60_000)} minuti`,
       ],
       "#57F287",
     );
@@ -435,7 +430,7 @@ async function getFlagReasons(state, member, at = nowMs()) {
     if (matches >= needed) {
       reasons.push({
         key: "id_flag",
-        label: "ID Flag (Adaptive)",
+        label: "ID Flag",
         detail: `${matches} matches (need ${needed})`,
       });
     }
@@ -522,11 +517,12 @@ async function warnRaidRoles(guild, contentLines) {
 
 async function sendPunishDm(member, action, reasons) {
   const readableAction = action === "ban" ? "banned" : action === "kick" ? "kicked" : action === "timeout" ? "timed out" : "flagged";
-  const embed = new EmbedBuilder().setColor("#6f4e37").setTitle(`You have been ${readableAction}in ${member.guild.name}!`)
+  const embed = new EmbedBuilder().setColor("#6f4e37").setTitle(`<a:VC_Alert:1448670089670037675> **You have been ${readableAction}in ${member.guild.name}!**`)
     .setDescription(
       [
-        `${ARROW}**Member:**${member.user}[\`${member.user.id}\`]`, `${ARROW}**Reason:**Join Raid protection triggered.`,
-        `${ARROW}**Flags:**${reasons.map((x) => x.label).join(", ") || "N/A"}`,
+        `<:VC_reason:1478517122929004544> **Member:**${member.user}[\`${member.user.id}\`]`,
+        `<:VC_reason:1478517122929004544> **Motivo:**Protezione raid attivata.`,
+        `<a:VC_Alert:1448670089670037675> **Flag:**${reasons.map((x) => x.label).join(", ") || "N/A"}`,
       ].join("\n"),
     );
   try {
@@ -546,8 +542,8 @@ function makeJoinRaidBanMarker(guildId, userId, unbanAt) {
 function buildJoinRaidBanReason(marker = "") {
   const suffix = String(marker || "").trim();
   return suffix
-    ? `Join Raid: flagged account during raid window ${suffix}`
-    : "Join Raid: flagged account during raid window";
+    ? `<a:VC_Alert:1448670089670037675> **Join Raid: flagged account during raid window ${suffix}**`
+    : "<a:VC_Alert:1448670089670037675> **Join Raid: flagged account during raid window**";
 }
 
 async function scheduleTempUnban(guild, userId, reason, marker = "") {
@@ -598,7 +594,7 @@ async function restoreTempBans(guild, options = {}) {
       const shouldUnban = await shouldUnbanJoinRaidBan(guild, userId, String(row?.marker || ""),);
       if (shouldUnban) {
         await guild.members
-          .unban(userId, "Join Raid temporary ban elapsed (restored late)")
+          .unban(userId, "<a:VC_Alert:1448670089670037675> **Ban temporaneo Join Raid scaduto (ripristinato in ritardo)**")
           .catch(() => { });
       }
     }
@@ -659,7 +655,7 @@ async function applyPunishment(member, reasons) {
         await scheduleTempUnban(
           guild,
           member.id,
-          "Join Raid temporary ban elapsed",
+          "<a:VC_Alert:1448670089670037675> **Ban temporaneo Join Raid scaduto**",
           marker,
         );
       }
@@ -667,7 +663,7 @@ async function applyPunishment(member, reasons) {
   } else if (action === "kick") {
     if (canKick) {
       punished = await member
-        .kick("Join Raid: flagged account during raid window")
+        .kick("<a:VC_Alert:1448670089670037675> **Join Raid: flagged account during raid window**")
         .then(() => true)
         .catch((err) => {
           global.logger?.warn?.("[joinRaid] applyPunishment kick failed:", guild.id, member.id, err?.message || err);
@@ -678,7 +674,7 @@ async function applyPunishment(member, reasons) {
     if (canTimeout) {
       const timeoutMs = Math.max(10 * 60_000, JOIN_RAID_CONFIG.raidDurationMs);
       punished = await member
-        .timeout(timeoutMs, "Join Raid: flagged account during raid window")
+        .timeout(timeoutMs, "<a:VC_Alert:1448670089670037675> **Join Raid: flagged account during raid window**")
         .then(() => true)
         .catch((err) => {
           global.logger?.warn?.("[joinRaid] applyPunishment timeout failed:", guild.id, member.id, err?.message || err);
@@ -691,7 +687,7 @@ async function applyPunishment(member, reasons) {
     if (canTimeout) {
       const timeoutMs = Math.max(10 * 60_000, JOIN_RAID_CONFIG.raidDurationMs);
       punished = await member
-        .timeout(timeoutMs, "Join Raid: punitive fallback timeout")
+        .timeout(timeoutMs, "<a:VC_Alert:1448670089670037675> **Join Raid: punitive fallback timeout**")
         .then(() => true)
         .catch((err) => {
           global.logger?.warn?.("[joinRaid] applyPunishment fallback timeout failed:", guild.id, member.id, err?.message || err);
@@ -708,7 +704,7 @@ async function applyPunishment(member, reasons) {
   }
 
   if (punished && appliedAction !== "log" && guild?.client) {
-    const caseReason = `Join Raid: ${reasons.map((r) => r.label || r).join(", ") || "flagged account during raid window"}`;
+    const caseReason = `<a:VC_Alert:1448670089670037675> **Join Raid: ${reasons.map((r) => r.label || r).join(", ") || "flagged account during raid window"}**`;
     const caseDurationMs = appliedAction === "timeout" ? Math.max(10 * 60_000, JOIN_RAID_CONFIG.raidDurationMs) : appliedAction === "ban" ? JOIN_RAID_CONFIG.raidDurationMs : null;
     const modAction = appliedAction === "timeout" ? "MUTE" : appliedAction === "ban" ? "BAN" : "KICK";
     try {
@@ -729,12 +725,12 @@ async function applyPunishment(member, reasons) {
 
   await sendJoinRaidLog(
     guild,
-    `${member.user.username} has been ${actionWord} by Join Raid!`,
+    `<a:VC_Alert:1448670089670037675> **${member.user.username} has been ${actionWord} by Join Raid!**`,
     [
-      `${ARROW} **JoinRaid Filter:** ${reasons.map((x) => x.label).join(", ") || "N/A"}`,
-      `${ARROW} **Member:** ${member.user} [\`${member.id}\`]`,
-      `${ARROW} **Action:** ${appliedAction}${punished ? "" : " (fallback)"}`,
-      `${ARROW} **Can Ban:** ${canBan ? "Yes" : "No"} | **Can Kick:** ${canKick ? "Yes" : "No"} | **Can Timeout:** ${canTimeout ? "Yes" : "No"}`,
+      `<:member_role_icon:1330530086792728618> **JoinRaid Filter:** ${reasons.map((x) => x.label).join(", ") || "N/A"}`,
+      `<:VC_reason:1478517122929004544> **Member:** ${member.user} [\`${member.id}\`]`,
+      `<:VC_BanHammer:1443933132645732362> **Action:** ${appliedAction}${punished ? "" : " (fallback)"}`,
+      `<:PinkQuestionMark:1471892611026391306> **Can Ban:** ${canBan ? "Yes" : "No"} | **Can Kick:** ${canKick ? "Yes" : "No"} | **Can Timeout:** ${canTimeout ? "Yes" : "No"}`,
       appliedAction === "ban"
         ? `${ARROW} **Duration:** ${Math.round(
           JOIN_RAID_CONFIG.raidDurationMs / 60_000,
@@ -817,26 +813,26 @@ async function processJoinRaidForMember(member, options = {}) {
       const initialFlags = buildInitialFlagRows(member.guild, state, 8);
       const actionVerb = JOIN_RAID_CONFIG.triggerAction === "ban" ? "banned" : JOIN_RAID_CONFIG.triggerAction === "kick" ? "kicked" : JOIN_RAID_CONFIG.triggerAction === "timeout" ? "timed out" : "logged";
       await warnRaidRoles(member.guild, [
-        `Join Raid triggered: **${triggerCountNow}** flagged ${String(JOIN_RAID_CONFIG.triggerType || "unique") === "events"
+        `<a:VC_Alert:1448670089670037675> **Join Raid triggered: **${triggerCountNow}** flagged ${String(JOIN_RAID_CONFIG.triggerType || "unique") === "events"
           ? "events"
           : "users"
         } in the last **${formatRaidHours(
           JOIN_RAID_CONFIG.triggerWindowMs,
-        )}h**.`,
-        `Raid protection active until <t:${untilTs}:F>.`,
+        )}h**.**`,
+        `<a:VC_Alert:1448670089670037675> **Raid protection active until <t:${untilTs}:F>.**`,
       ]);
       await sendJoinRaidLog(
         member.guild,
-        "Join Raid Trigger!",
+        "<a:VC_Alert:1448670089670037675> **Join Raid Trigger!**",
         [
-          `${ARROW} Wick has identified a weird join pattern.`,
-          `${ARROW} Flagged accounts joining for the next **${Math.round(JOIN_RAID_CONFIG.raidDurationMs / 60_000)}m** will be **${actionVerb}**.`,
-          `${ARROW} A full report will be posted once the duration ends.`,
+          `<a:VC_Alert:1448670089670037675> **BotGuard has identified a weird join pattern.**`,
+          `<a:VC_Alert:1448670089670037675> **Flagged accounts joining for the next **${Math.round(JOIN_RAID_CONFIG.raidDurationMs / 60_000)}m** will be **${actionVerb}**.**`,
+          `<a:VC_Alert:1448670089670037675> **A full report will be posted once the duration ends.**`,
           "",
-          "**Initial Flags:**",
+          `<a:VC_Alert:1448670089670037675> **Initial Flags:**`,
           ...(initialFlags.length ? initialFlags : ["`No record found.`"]),
           "",
-          `**Code:** \`${state.raidCaseCode}\``,
+          `<a:VC_Alert:1448670089670037675> **Code:** \`${state.raidCaseCode}\``,
         ],
         "#ED4245",
       );
@@ -879,11 +875,11 @@ async function processJoinRaidForMember(member, options = {}) {
         LOW_RISK_FLAG_LOG_COOLDOWN.set(cooldownKey, at);
         await sendJoinRaidLog(
           member.guild,
-          "Join Raid flagged account",
+          "<a:VC_Alert:1448670089670037675> **Join Raid flagged account**",
           [
-            `${ARROW} **Member:** ${member.user} [\`${member.id}\`]`,
-            `${ARROW} **Reasons:** ${reasons.map((x) => x.label).join(", ") || "N/A"}`,
-            `${ARROW} **Action:** \`log\``,
+            `<:member_role_icon:1330530086792728618> **Member:** ${member.user} [\`${member.id}\`]`,
+            `<:VC_reason:1478517122929004544> **Reasons:** ${reasons.map((x) => x.label).join(", ") || "N/A"}`,
+            `<:VC_BanHammer:1443933132645732362> **Action:** \`log\``,
           ],
           "#F59E0B",
         );
@@ -924,20 +920,20 @@ async function activateJoinRaidWindow(
     const untilTs = Math.floor(state.raidUntil / 1000);
     if (!wasActive) {
       await warnRaidRoles(guild, [
-        `Join Raid attivato da escalation sicurezza.`,
-        `Protezione raid attiva fino a <t:${untilTs}:F>.`,
+        `<a:VC_Alert:1448670089670037675> **Join Raid attivato da escalation sicurezza.**`,
+        `<a:VC_Alert:1448670089670037675> **Protezione raid attiva fino a <t:${untilTs}:F>.**`,
       ]);
     }
     await sendJoinRaidLog(
       guild,
-      "Join Raid escalation attivata",
+      "<a:VC_Alert:1448670089670037675> **Join Raid escalation attivata**",
       [
-        `${ARROW} **Reason:** ${String(reason || "Security escalation")}`,
-        `${ARROW} **Code:** \`${state.raidCaseCode || "N/A"}\``,
-        `${ARROW} **Raid Duration:** ${Math.round(
+        `<:VC_reason:1478517122929004544> **Reason:** ${String(reason || "Security escalation")}`,
+        `<:VC_reason:1478517122929004544> **Code:** \`${state.raidCaseCode || "N/A"}\``,
+        `<:VC_Clock:1473359204189474886> **Raid Duration:** ${Math.round(
           safeDuration / 60_000,
         )} minutes`,
-        `${ARROW} **Raid Until:** <t:${untilTs}:F>`,
+        `<:VC_Clock:1473359204189474886> **Raid Until:** <t:${untilTs}:F>`,
       ],
       "#ED4245",
     );
@@ -1081,16 +1077,4 @@ function clearGuildState(guildId) {
   }
 }
 
-module.exports = {
-  JOIN_RAID_CONFIG,
-  JOIN_RAID_PRESETS,
-  getJoinRaidConfigSnapshot,
-  setJoinRaidConfigSnapshot,
-  processJoinRaidForMember,
-  activateJoinRaidWindow,
-  registerJoinRaidSecuritySignal,
-  restoreTempBans,
-  applyJoinRaidPreset,
-  getJoinRaidStatusSnapshot,
-  clearGuildState,
-};
+module.exports = { JOIN_RAID_CONFIG, JOIN_RAID_PRESETS, getJoinRaidConfigSnapshot, setJoinRaidConfigSnapshot, processJoinRaidForMember, activateJoinRaidWindow, registerJoinRaidSecuritySignal, restoreTempBans, applyJoinRaidPreset, getJoinRaidStatusSnapshot, clearGuildState };

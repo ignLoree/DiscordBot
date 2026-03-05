@@ -177,19 +177,37 @@ function getVoteCheckIntervalMs(client) {
 function getVoteReminderText(client) {
   return (
     client?.config?.discadiaVoteReminder?.message ||
-    "<:VC_bump:1330185435401424896> Hey! Sono passate 24 ore: puoi votare di nuovo su Discadia. Grazie per il supporto!"
+    [
+      "<:VC_bump:1330185435401424896> Hey! Sono passate 24 ore: puoi votare di nuovo su Discadia.",
+      "<a:VC_ThankYou:1330186319673950401> **Grazie per il supporto!**",
+      "<:link:1470064815899803668> Per votare su Discadia, clicca sul pulsante sottostante:\n",
+    ].join("\n")
   );
 }
 
 function buildVoteReminderEmbed(client) {
   const text = getVoteReminderText(client);
-  return new EmbedBuilder()
+  const embed = new EmbedBuilder()
     .setColor(client?.config?.embedInfo || "#6f4e37")
-    .setTitle("<:VC_update:1478721333096349817> Reminder voto Discadia")
     .setDescription(text)
     .setFooter({
       text: "Per non ricevere più DM automatici usa +dm-disable (blocca anche avvisi importanti).",
     });
+
+  const components = [];
+  const VOTE_URL = client?.config?.discadiaVoteReminder?.voteUrl;
+  if (VOTE_URL) {
+    components.push(
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setStyle(ButtonStyle.Link)
+          .setEmoji("<a:VC_HeartPink:1448673486603292685>")
+          .setLabel("Vota cliccando qui")
+          .setURL(VOTE_URL),
+      ),
+    );
+  }
+  return embed.setComponents(components);
 }
 
 const lastVoteFallbackSentAt = new Map();

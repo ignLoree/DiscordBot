@@ -1,17 +1,10 @@
-const{getAntiNukeStatusSnapshot,shouldBlockAllCommands,}=require("./antiNukeService");
+const { getAntiNukeStatusSnapshot, shouldBlockAllCommands, } = require("./antiNukeService");
 const { getAutoModPanicSnapshot } = require("./automodService");
 const { getJoinRaidStatusSnapshot } = require("./joinRaidService");
-
 const SECURITY_LOCK_CACHE_TTL_MS = 3000;
 const securityLockCache = new Map();
 
-function buildSecurityLockDecision({
-  antiNukePanic = false,
-  autoModPanic = false,
-  joinRaid = false,
-  lockAllCommands = false,
-  joinRaidLockCommands = false,
-} = {}) {
+function buildSecurityLockDecision({ antiNukePanic = false, autoModPanic = false, joinRaid = false, lockAllCommands = false, joinRaidLockCommands = false } = {}) {
   const joinLockActive = Boolean(antiNukePanic || joinRaid);
   const commandLockByPanic = Boolean(lockAllCommands && antiNukePanic);
   const commandLockByJoinRaid = Boolean(joinRaid && joinRaidLockCommands);
@@ -73,10 +66,10 @@ async function getSecurityLockState(guild) {
   const joinRaidSnapshot = await getJoinRaidStatusSnapshot(guildId).catch(() => null);
   const joinRaid = Boolean(joinRaidSnapshot?.raidActive);
   const joinRaidLockCommands = Boolean(joinRaidSnapshot?.config?.lockCommands);
-  const lockAllCommands=Boolean(antiNuke?.config?.panicMode?.lockdown?.lockAllCommands,);
-  const decision=buildSecurityLockDecision({antiNukePanic,autoModPanic,joinRaid,lockAllCommands,joinRaidLockCommands,});
-  const commandLockActive=await shouldBlockAllCommands(guild).catch(() => decision.commandLockActive,);
-  const result={...decision,commandLockActive:Boolean(commandLockActive),active:Boolean(decision.joinLockActive||commandLockActive),};
+  const lockAllCommands = Boolean(antiNuke?.config?.panicMode?.lockdown?.lockAllCommands,);
+  const decision = buildSecurityLockDecision({ antiNukePanic, autoModPanic, joinRaid, lockAllCommands, joinRaidLockCommands, });
+  const commandLockActive = await shouldBlockAllCommands(guild).catch(() => decision.commandLockActive,);
+  const result = { ...decision, commandLockActive: Boolean(commandLockActive), active: Boolean(decision.joinLockActive || commandLockActive), };
   securityLockCache.set(guildId, {
     result,
     expiresAt: now + SECURITY_LOCK_CACHE_TTL_MS,
@@ -88,8 +81,4 @@ async function shouldBlockIncomingJoins(guild) {
   return Boolean((await getSecurityLockState(guild)).joinLockActive);
 }
 
-module.exports = {
-  buildSecurityLockDecision,
-  getSecurityLockState,
-  shouldBlockIncomingJoins,
-};
+module.exports = { buildSecurityLockDecision, getSecurityLockState, shouldBlockIncomingJoins };

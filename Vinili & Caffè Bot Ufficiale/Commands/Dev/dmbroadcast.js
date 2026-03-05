@@ -1,4 +1,4 @@
-﻿const { safeReply } = require("../../Utils/Moderation/reply");
+const { safeReply } = require("../../../shared/discord/replyRuntime");
 const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, } = require("discord.js");
 const EPHEMERAL_FLAG = 1 << 6;
 

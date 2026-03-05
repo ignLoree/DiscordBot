@@ -12,17 +12,7 @@ function roundedRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-module.exports = async function renderRankCanvas({
-  username,
-  avatarUrl,
-  level,
-  totalExp,
-  currentLevelExp,
-  nextLevelExp,
-  progressPercent,
-  weeklyRank,
-  allTimeRank,
-}) {
+module.exports = async function renderRankCanvas({ username, avatarUrl, level, totalExp, currentLevelExp, nextLevelExp, progressPercent, weeklyRank, allTimeRank }) {
   registerCanvasFonts(canvasModule);
   const width = 1100;
   const height = 360;

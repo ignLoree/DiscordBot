@@ -6,7 +6,6 @@ const DEFAULT_REMINDER_CHANNEL_ID = IDs.channels.chat
 const DEFAULT_TIME_ZONE = "Europe/Rome";
 const DEFAULT_START_HOUR = 9;
 const DEFAULT_END_HOUR = 21;
-/** Slot fissi ogni 45 min, 1 minuto dopo il primo minigame della finestra (es. 9:01, 9:46, 10:31, 11:16…). */
 const REMINDER_FIXED_INTERVAL_MINUTES = 45;
 const DEFAULT_MIN_GAP_MS = 30 * 60 * 1000;
 const scheduledHours = new Map();
@@ -45,28 +44,54 @@ function clearScheduleTimeout(scheduleId) {
   scheduledTimeouts.delete(id);
 }
 
-const reminderPool = [() => new EmbedBuilder().setColor("#6f4e37").setTitle("🌐 Votaci su Discadia!").setDescription(["La prima volta otterrai **250 EXP**, le altre volte altri exp!", "Vota qui: https://discadia.com/server/viniliecaffe/",].join("\n"),), () => new EmbedBuilder().setColor("#6f4e37").setTitle("🌐 Lascia una recensione su DISBOARD!").setDescription([`Lasciare una recensione aiuta il server a farci conoscere e crescere, una volta messa la recensione apri un <#${IDs.channels.ticket}>\`Terza Categoria\` e riceverai **5 livelli**!`, "Recensisci il nostro server qui: https://disboard.org/it/server/1329080093599076474",].join("\n"),), () => new EmbedBuilder().setColor("#6f4e37").setTitle("📌 Marca un messaggio e rendilo un post").setDescription(["Rispondendo al messaggio che si vuole postare con \`+quote\`, potrai poi vederlo nel canale <#1468540884537573479>",].join("\n"),), () => new EmbedBuilder().setColor("#6f4e37").setTitle("🔢 Conta fino all'infinito!").setDescription([`Sei un appassionato di calcoli e matematica? Vieni a contare nel canale <#${IDs.channels.counting}>`,
-].join("\n"),
-),
+const reminderPool = [() =>
+  new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("<a:VC_Vote:1448729692235628818> Votaci su Discadia!")
+    .setDescription([
+      "<:VC_EXP:1468714279673925883> La prima volta otterrai **250 EXP**, le altre volte altri exp!",
+      "<:link:1470064815899803668> Vota qui: https://discadia.com/server/viniliecaffe/",
+    ]
+      .join("\n"),), () =>
+  new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("<:VC_bump:1330185435401424896> Lascia una recensione su DISBOARD!")
+    .setDescription([
+      `<:VC_LevelUp2:1443701876892762243> Lasciare una recensione aiuta il server a farci conoscere e crescere, una volta messa la recensione apri un <#${IDs.channels.ticket}>\`Terza Categoria\` e riceverai **5 livelli**!`,
+      "<:link:1470064815899803668> Recensisci il nostro server qui: https://disboard.org/it/server/1329080093599076474",
+    ]
+      .join("\n"),), () =>
+  new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("<:VC_BlackPin:1448687216871084266> Marca un messaggio e rendilo un post")
+    .setDescription([
+      "<:VC_Chat:1448694742237053061> Rispondendo al messaggio che si vuole postare con \`+quote\`, potrai poi vederlo nel canale <#1468540884537573479>",
+    ]
+      .join("\n"),), () =>
+  new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("<a:VC_Infinity:1448687797266288832> Conta fino all'infinito!")
+    .setDescription([
+      `<a:VC_Countdown:1331620801560051783> Sei un appassionato di calcoli e matematica? Vieni a contare nel canale <#${IDs.channels.counting}>`,
+    ].join("\n"),
+    ),
 () =>
   new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle(
-      "📩 Devi segnalare un utente, fare una partnership o ti serve supporto?",
-    )
+    .setTitle("<:vsl_ticket:1329520261053022208> Devi segnalare un utente, fare una partnership o ti serve supporto?")
     .setDescription(
       [
-        `Attraverso i ticket nel canale<#${IDs.channels.ticket}>puoi contattare un membro dello Staff che ti darà una mano per ogni tua richiesta.`,
+        `<:staff:1443651912179388548> Attraverso i ticket nel canale <#${IDs.channels.ticket}> puoi contattare un membro dello Staff che ti darà una mano per ogni tua richiesta.`,
       ].join("\n"),
     ),
 () =>
   new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("📸 Sblocca i Picperms")
+    .setTitle("<a:VC_PepeFoto:1479131953100750882> Sblocca i Picperms")
     .setDescription(
       [
-        'Puoi sbloccarli in modo veloce mettendo ".gg/viniliecaffe" nello stato del tuo profilo Discord, potenziando il server oppure salendo al Livello 10.',
-        `><a:VC_Arrow:1448672967721615452>Scopri tutte le ricompense dei boost&livelli su:<#${IDs.channels.info}>`,
+        '<:link:1470064815899803668> Puoi sbloccarli in modo veloce mettendo ".gg/viniliecaffe" nello stato del tuo profilo Discord, potenziando il server oppure salendo al Livello 10.',
+        `> <a:VC_Arrow:1448672967721615452> Scopri tutte le ricompense dei boost&livelli su:<#${IDs.channels.info}>`,
       ].join("\n"),
     ),
 () =>
@@ -75,7 +100,7 @@ const reminderPool = [() => new EmbedBuilder().setColor("#6f4e37").setTitle("�
     .setTitle("<:pokeball:1467091572632850474> Gotta Catch 'Em All!")
     .setDescription(
       [
-        "Sei un appassionato di Pokémon? Vieni a catturarli tutti nel canale <#1442569184281362552>",
+        "<a:VC_PikaWave:1331622011004260354> Sei un appassionato di Pokémon? Vieni a catturarli tutti nel canale <#1442569184281362552>",
       ].join("\n"),
     ),
 () =>
@@ -93,10 +118,10 @@ const reminderPool = [() => new EmbedBuilder().setColor("#6f4e37").setTitle("�
 () =>
   new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("🎨 Ottieni i colori gradienti")
+    .setTitle("<:VC_Color:1470781368630775982> Ottieni i colori gradienti")
     .setDescription(
       [
-        "Potrai sbloccare i colori PLUS con il ruolo <@&1329497467481493607> o <@&1442568932136587297>; invece con il <@&1442568950805430312> potrai creartene uno personalizzato! Li trovi su: <#1469429150669602961>",
+        "<:VC_Vip:1448691936797134880> Potrai sbloccare i colori PLUS con il ruolo <@&1329497467481493607> o <@&1442568932136587297>; invece con il <@&1442568950805430312> potrai creartene uno personalizzato! Li trovi su: <#1469429150669602961>",
       ].join("\n"),
     ),
 ];
@@ -219,7 +244,6 @@ function getHourKey(parts) {
   return `${parts.year}-${parts.month}-${parts.day}_${parts.hour}`;
 }
 
-/** True se (hour, minute) è uno slot fisso reminder (ogni 45 min da startHour:01). */
 function isReminderFixedSlot(parts, client) {
   const { hour, minute } = parts;
   const start = getStartHour(client);
@@ -231,7 +255,6 @@ function isReminderFixedSlot(parts, client) {
   return (totalMins - startMins) % REMINDER_FIXED_INTERVAL_MINUTES === 0;
 }
 
-/** Restituisce la fascia oraria per l’embed (es. "9:00 - 9:30"). */
 function getFasciaOrariaLabel(parts, client) {
   const h = parts.hour;
   const m = parts.minute;

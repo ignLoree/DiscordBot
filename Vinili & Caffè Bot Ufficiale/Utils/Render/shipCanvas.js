@@ -33,7 +33,7 @@ function drawRoundedRect(ctx, x, y, w, h, r) {
 
 function drawStars(ctx, width, height, seed) {
   let state = seed || 12345;
-  const next =()=>{state =(state *1664525+1013904223)%4294967296;return state /4294967296;};
+  const next = () => { state = (state * 1664525 + 1013904223) % 4294967296; return state / 4294967296; };
   const count = 70;
   for (let i = 0; i < count; i += 1) {
     const x = Math.floor(next() * width);
@@ -96,7 +96,7 @@ function drawHeartShape(ctx, cx, cy, size) {
 function drawHeart(ctx, cx, cy, size) {
   ctx.save();
 
-  const glow = ctx.createRadialGradient(cx,cy + size *0.35,size *0.2,cx,cy + size *0.35,size *1.25,);
+  const glow = ctx.createRadialGradient(cx, cy + size * 0.35, size * 0.2, cx, cy + size * 0.35, size * 1.25,);
   glow.addColorStop(0, "rgba(255,120,190,0.55)");
   glow.addColorStop(1, "rgba(255,120,190,0)");
   ctx.fillStyle = glow;
@@ -105,7 +105,7 @@ function drawHeart(ctx, cx, cy, size) {
   ctx.fill();
 
   drawHeartShape(ctx, cx, cy, size);
-  const fill = ctx.createLinearGradient(cx - size,cy - size *0.3,cx + size,cy + size,);
+  const fill = ctx.createLinearGradient(cx - size, cy - size * 0.3, cx + size, cy + size,);
   fill.addColorStop(0, "#ff93d1");
   fill.addColorStop(0.5, "#ff4fa7");
   fill.addColorStop(1, "#db2a85");
@@ -130,15 +130,7 @@ function getFittedTitleSize(ctx, text, maxWidth, startSize = 42, minSize = 24) {
   return Math.max(minSize, size);
 }
 
-module.exports = async function renderShipCanvas({
-  leftAvatarUrl,
-  rightAvatarUrl,
-  leftName,
-  rightName,
-  leftId,
-  rightId,
-  percent,
-}) {
+module.exports = async function renderShipCanvas({ leftAvatarUrl, rightAvatarUrl, leftName, rightName, leftId, rightId, percent }) {
   if (!canvasModule) throw new Error("Canvas module not available");
   registerCanvasFonts(canvasModule);
 

@@ -1,7 +1,6 @@
 const { PermissionsBitField } = require("discord.js");
 const IDs = require("../Config/ids");
-
-const COUNTER_PREFIX = "༄☕︲User: ";
+const COUNTER_PREFIX = "༄☕︲Members: ";
 const primaryTimers = new Map();
 const secondaryTimers = new Map();
 
@@ -38,14 +37,14 @@ async function updateMemberCounterNow(guild) {
   const channel = await resolveCounterChannel(guild);
   if (!channel) return false;
 
-  const me=guild.members.me||(await guild.members.fetchMe().catch(() => null));
+  const me = guild.members.me || (await guild.members.fetchMe().catch(() => null));
   if (!me?.permissions?.has(PermissionsBitField.Flags.ManageChannels))
     return false;
 
   const nextName = buildCounterName(await resolveReliableMemberCount(guild));
   if (String(channel.name || "") === nextName) return true;
 
-  await channel.setName(nextName).catch(() => {});
+  await channel.setName(nextName).catch(() => { });
   return true;
 }
 
@@ -67,12 +66,8 @@ function scheduleMemberCounterRefresh(guild, options = {}) {
 
   clearTimers(guildId);
 
-  const primary=setTimeout(async() => {await updateMemberCounterNow(guild).catch(() => {});if(secondPassMs>0){const secondary=setTimeout(async() => {await updateMemberCounterNow(guild).catch(() => {});secondaryTimers.delete(guildId);},secondPassMs);secondary.unref?.();secondaryTimers.set(guildId,secondary);}primaryTimers.delete(guildId);},delayMs);primary.unref?.();primaryTimers.set(guildId, primary);
+  const primary = setTimeout(async () => { await updateMemberCounterNow(guild).catch(() => { }); if (secondPassMs > 0) { const secondary = setTimeout(async () => { await updateMemberCounterNow(guild).catch(() => { }); secondaryTimers.delete(guildId); }, secondPassMs); secondary.unref?.(); secondaryTimers.set(guildId, secondary); } primaryTimers.delete(guildId); }, delayMs); primary.unref?.(); primaryTimers.set(guildId, primary);
   return true;
 }
 
-module.exports = {
-  buildCounterName,
-  updateMemberCounterNow,
-  scheduleMemberCounterRefresh,
-};
+module.exports = { buildCounterName, updateMemberCounterNow, scheduleMemberCounterRefresh };

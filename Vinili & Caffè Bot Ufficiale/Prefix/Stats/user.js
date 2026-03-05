@@ -1,7 +1,7 @@
 /**
  * Comando prefix +user. Builder e logica in Buttons/stats/user.js
  */
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const userButton = require("../../Buttons").user;
 
 module.exports = {

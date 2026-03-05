@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { parseDuration, formatDuration } = require("../../Utils/Moderation/moderation");
 const { parseCommandTokenList, parseRevokeTokenList, grantTemporaryCommandPermissions, revokeTemporaryCommandPermissions, clearTemporaryCommandPermissionsForUser, listTemporaryCommandPermissionsForUser } = require("../../Utils/Moderation/temporaryCommandPermissions");
 

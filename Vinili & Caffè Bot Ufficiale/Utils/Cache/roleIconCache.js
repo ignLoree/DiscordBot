@@ -3,7 +3,6 @@ const path = require("path");
 const https = require("https");
 const http = require("http");
 const crypto = require("crypto");
-
 const CACHE_DIR = path.join(__dirname, "..", "..", "UI", "RoleIcons");
 
 if (!fs.existsSync(CACHE_DIR)) {
@@ -88,7 +87,4 @@ if (!global.__vcRoleIconCacheCleanupInterval) {
   }
 }
 
-module.exports = {
-  cacheRoleIcon,
-  cleanOldIcons,
-};
+module.exports = { cacheRoleIcon, cleanOldIcons };

@@ -1,4 +1,4 @@
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { getNoDmSet } = require("../../Utils/noDmList");
 
 function chunkLines(lines, maxLen = 1900) {

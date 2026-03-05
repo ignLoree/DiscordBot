@@ -1,5 +1,5 @@
-﻿const { AttachmentBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { AttachmentBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const renderQuoteCanvas = require("../../Utils/Render/quoteCanvas");
 const { nextQuoteCount } = require("../../Utils/Quote/quoteCounter");
 const { QuotePrivacy } = require("../../Schemas/Community/communitySchemas");

@@ -1,4 +1,4 @@
-const { safeChannelSend } = require("../../Utils/Moderation/reply");
+const { safeChannelSend } = require("../../../shared/discord/replyRuntime");
 const { EmbedBuilder } = require("discord.js");
 const { AvatarPrivacy, BannerPrivacy, QuotePrivacy, } = require("../../Schemas/Community/communitySchemas");
 

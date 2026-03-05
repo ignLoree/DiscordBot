@@ -28,8 +28,4 @@ function invalidateGuildAutoResponderCache(guildId) {
   autoResponderCache.delete(key);
 }
 
-module.exports = {
-  getGuildAutoResponderCache,
-  setGuildAutoResponderCache,
-  invalidateGuildAutoResponderCache,
-};
+module.exports = { getGuildAutoResponderCache, setGuildAutoResponderCache, invalidateGuildAutoResponderCache };

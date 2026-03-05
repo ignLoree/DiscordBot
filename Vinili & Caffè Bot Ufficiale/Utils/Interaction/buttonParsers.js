@@ -1,34 +1,8 @@
 const Buttons = require("../../Buttons");
 const { SERVER_REFRESH_CUSTOM_ID_PREFIX } = Buttons.server;
-const {
-  ME_REFRESH_CUSTOM_ID_PREFIX,
-  ME_PERIOD_OPEN_CUSTOM_ID_PREFIX,
-  ME_PERIOD_SET_CUSTOM_ID_PREFIX,
-  ME_PERIOD_BACK_CUSTOM_ID_PREFIX,
-  normalizeLookbackDays,
-} = Buttons.me;
-const {
-  USER_REFRESH_CUSTOM_ID_PREFIX,
-  USER_PERIOD_OPEN_CUSTOM_ID_PREFIX,
-  USER_PERIOD_SET_CUSTOM_ID_PREFIX,
-  USER_PERIOD_BACK_CUSTOM_ID_PREFIX,
-} = Buttons.user;
-const {
-  TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_VIEW_SELECT_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PAGE_FIRST_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PAGE_PREV_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PAGE_MODAL_OPEN_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PAGE_NEXT_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX,
-  normalizeTopView,
-  normalizeControlsView,
-  normalizePage,
-} = Buttons.topChannelComponents;
-
+const { ME_REFRESH_CUSTOM_ID_PREFIX, ME_PERIOD_OPEN_CUSTOM_ID_PREFIX, ME_PERIOD_SET_CUSTOM_ID_PREFIX, ME_PERIOD_BACK_CUSTOM_ID_PREFIX, normalizeLookbackDays } = Buttons.me;
+const { USER_REFRESH_CUSTOM_ID_PREFIX, USER_PERIOD_OPEN_CUSTOM_ID_PREFIX, USER_PERIOD_SET_CUSTOM_ID_PREFIX, USER_PERIOD_BACK_CUSTOM_ID_PREFIX } = Buttons.user;
+const { TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX, TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX, TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX, TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX, TOP_CHANNEL_VIEW_SELECT_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_FIRST_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_PREV_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_MODAL_OPEN_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_NEXT_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX, normalizeTopView, normalizeControlsView, normalizePage } = Buttons.topChannelComponents;
 const MAX_COMPONENTS_PER_ROW = 5;
 const MAX_ROWS_PER_MESSAGE = 5;
 const SNOWFLAKE_RE = /^\d{16,20}$/;
@@ -38,22 +12,22 @@ async function denyIfNotOwner(interaction, ownerId) {
   if (!safeOwnerId) return false;
   if (String(interaction?.user?.id || "") === safeOwnerId) return false;
   await interaction.reply({
-    content: "<:vegax:1443934876440068179> Questo controllo non appartiene a te.",
+    content: "<a:VC_Alert:1448670089670037675> Questo controllo non appartiene a te.",
     flags: 1 << 6,
-  }).catch(() => {});
+  }).catch(() => { });
   return true;
 }
 
 async function sendControlErrorFallback(interaction) {
   const payload = {
-    content: "<:vegax:1443934876440068179> Errore durante l'aggiornamento del controllo.",
+    content: "<a:VC_Alert:1448670089670037675> Errore durante l'aggiornamento del controllo.",
     flags: 1 << 6,
   };
   if (interaction.deferred || interaction.replied) {
-    await interaction.followUp(payload).catch(() => {});
+    await interaction.followUp(payload).catch(() => { });
     return;
   }
-  await interaction.reply(payload).catch(() => {});
+  await interaction.reply(payload).catch(() => { });
 }
 
 function parseServerRefreshCustomId(customId) {
@@ -77,12 +51,7 @@ function parseServerRefreshCustomId(customId) {
 
 function parseMeCustomId(rawCustomId) {
   const raw = String(rawCustomId || "");
-  const prefixes = [
-    ME_REFRESH_CUSTOM_ID_PREFIX,
-    ME_PERIOD_OPEN_CUSTOM_ID_PREFIX,
-    ME_PERIOD_SET_CUSTOM_ID_PREFIX,
-    ME_PERIOD_BACK_CUSTOM_ID_PREFIX,
-  ];
+  const prefixes = [ME_REFRESH_CUSTOM_ID_PREFIX, ME_PERIOD_OPEN_CUSTOM_ID_PREFIX, ME_PERIOD_SET_CUSTOM_ID_PREFIX, ME_PERIOD_BACK_CUSTOM_ID_PREFIX];
   const prefix = prefixes.find((item) => raw === item || raw.startsWith(`${item}:`));
   if (!prefix) return null;
 
@@ -98,12 +67,7 @@ function parseMeCustomId(rawCustomId) {
 
 function parseUserCustomId(rawCustomId) {
   const raw = String(rawCustomId || "");
-  const prefixes = [
-    USER_REFRESH_CUSTOM_ID_PREFIX,
-    USER_PERIOD_OPEN_CUSTOM_ID_PREFIX,
-    USER_PERIOD_SET_CUSTOM_ID_PREFIX,
-    USER_PERIOD_BACK_CUSTOM_ID_PREFIX,
-  ];
+  const prefixes = [USER_REFRESH_CUSTOM_ID_PREFIX, USER_PERIOD_OPEN_CUSTOM_ID_PREFIX, USER_PERIOD_SET_CUSTOM_ID_PREFIX, USER_PERIOD_BACK_CUSTOM_ID_PREFIX];
   const prefix = prefixes.find((item) => raw === item || raw.startsWith(`${item}:`));
   if (!prefix) return null;
   const parts = raw.split(":");
@@ -156,15 +120,7 @@ function parseTopChannelPageCustomId(rawCustomId) {
   const page = normalizePage(parts[3 + offset] || "1", 1);
   const totalPages = Math.max(1, normalizePage(parts[4 + offset] || "1", 1));
   const controlsView = normalizeControlsView(parts[5 + offset] || "main");
-  return {
-    action: item.action,
-    ownerId,
-    lookbackDays,
-    selectedView,
-    page,
-    totalPages,
-    controlsView,
-  };
+  return { action: item.action, ownerId, lookbackDays, selectedView, page, totalPages, controlsView };
 }
 
 function parseTopChannelViewSelectCustomId(rawCustomId) {
@@ -238,19 +194,4 @@ function disableComponentsForLoading(components) {
   return out;
 }
 
-module.exports = {
-  MAX_COMPONENTS_PER_ROW,
-  MAX_ROWS_PER_MESSAGE,
-  SNOWFLAKE_RE,
-  denyIfNotOwner,
-  sendControlErrorFallback,
-  parseServerRefreshCustomId,
-  parseMeCustomId,
-  parseUserCustomId,
-  parseTopChannelCustomId,
-  parseTopChannelPageCustomId,
-  parseTopChannelViewSelectCustomId,
-  chunk,
-  normalizeComponentsForDiscord,
-  disableComponentsForLoading,
-};
+module.exports = { MAX_COMPONENTS_PER_ROW, MAX_ROWS_PER_MESSAGE, SNOWFLAKE_RE, denyIfNotOwner, sendControlErrorFallback, parseServerRefreshCustomId, parseMeCustomId, parseUserCustomId, parseTopChannelCustomId, parseTopChannelPageCustomId, parseTopChannelViewSelectCustomId, chunk, normalizeComponentsForDiscord, disableComponentsForLoading };

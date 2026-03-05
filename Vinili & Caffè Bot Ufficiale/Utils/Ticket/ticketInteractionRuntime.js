@@ -1,16 +1,12 @@
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
 const IDs = require("../Config/ids");
-
 const ENTITY_CACHE_TTL_MS = 15_000;
 const CHANNEL_WARM_TTL_MS = 5 * 60_000;
-
 const guildChannelCache = new Map();
 const guildCache = new Map();
 const guildMemberCache = new Map();
 const guildChannelWarmCache = new Map();
-
 const HANDLED_TICKET_BUTTONS = new Set(["ticket_partnership","ticket_highstaff","ticket_supporto","claim_ticket","close_ticket","close_ticket_motivo","accetta","rifiuta","ticket_autoclose_accept","ticket_autoclose_reject","unclaim",]);
-
 const HANDLED_TICKET_SELECT_MENUS = new Set(["ticket_open_menu"]);
 
 function getCachedEntity(cache, key) {
@@ -124,37 +120,24 @@ function canUserHandleCloseRequest(ticketDoc, userId, highStaff) {
   );
 }
 
-async function loadTicketForChannelOrReply({
-  interaction,
-  safeReply,
-  makeErrorEmbed,
-  channelId,
-  missingDescription = "<:vegax:1443934876440068179> Ticket non trovato",
-}) {
+async function loadTicketForChannelOrReply({ interaction, safeReply, makeErrorEmbed, channelId, missingDescription = "<:VC_alert:1448670089670037675> Ticket non trovato" }) {
   const ticketDoc = await findTicketByChannel(channelId);
   if (ticketDoc) return ticketDoc;
   await safeReply(interaction, {
-    embeds: [makeErrorEmbed("Errore", missingDescription)],
+    embeds: [makeErrorEmbed("<:VC_alert:1448670089670037675> Errore", missingDescription)],
     flags: 1 << 6,
   });
   return null;
 }
 
-async function ensureClosableTicketOrReply({
-  interaction,
-  safeReply,
-  makeErrorEmbed,
-  ticketDoc,
-  highStaff,
-  requireClaimed = true,
-}) {
+async function ensureClosableTicketOrReply({ interaction, safeReply, makeErrorEmbed, ticketDoc, highStaff, requireClaimed = true }) {
   if (!ticketDoc) return false;
   if (isTicketOwnedByUser(ticketDoc, interaction.user.id) && !highStaff) {
     await safeReply(interaction, {
       embeds: [
         makeErrorEmbed(
-          "Errore",
-          "<:vegax:1443934876440068179> Non puoi chiudere da solo il ticket che hai aperto.",
+          "<:VC_alert:1448670089670037675> Errore",
+          "<:VC_close:1478517239136256020> Non puoi chiudere da solo il ticket che hai aperto.",
         ),
       ],
       flags: 1 << 6,
@@ -165,8 +148,8 @@ async function ensureClosableTicketOrReply({
     await safeReply(interaction, {
       embeds: [
         makeErrorEmbed(
-          "Errore",
-          "<:vegax:1443934876440068179> Questo ticket non è claimato.",
+          "<:VC_alert:1448670089670037675> Errore",
+          "<:VC_claim:1478517202016669887> Questo ticket non è claimato.",
         ),
       ],
       flags: 1 << 6,
@@ -181,8 +164,8 @@ async function ensureClosableTicketOrReply({
     await safeReply(interaction, {
       embeds: [
         makeErrorEmbed(
-          "Errore",
-          "<:vegax:1443934876440068179> Solo chi ha claimato il ticket può chiuderlo.",
+          "<:VC_alert:1448670089670037675> Errore",
+          "<:VC_claim:1478517202016669887> Solo chi ha claimato il ticket può chiuderlo.",
         ),
       ],
       flags: 1 << 6,
@@ -235,22 +218,4 @@ function isSponsorGuild(guildId) {
   return getSponsorGuildIds().includes(guildId);
 }
 
-module.exports = {
-  canUserHandleCloseRequest,
-  ensureClosableTicketOrReply,
-  findOpenTicketByUser,
-  findTicketByChannel,
-  getClientGuildCached,
-  getGuildChannelCached,
-  getGuildMemberCached,
-  getSelectedTicketAction,
-  hasActiveTicketClaimer,
-  isHandledTicketInteraction,
-  isSponsorGuild,
-  isTicketClaimedByUser,
-  isTicketOwnedByUser,
-  isTicketRatingButton,
-  isTicketTranscriptButton,
-  loadTicketForChannelOrReply,
-  warmGuildChannels,
-};
+module.exports = { canUserHandleCloseRequest, ensureClosableTicketOrReply, findOpenTicketByUser, findTicketByChannel, getClientGuildCached, getGuildChannelCached, getGuildMemberCached, getSelectedTicketAction, hasActiveTicketClaimer, isHandledTicketInteraction, isSponsorGuild, isTicketClaimedByUser, isTicketOwnedByUser, isTicketRatingButton, isTicketTranscriptButton, loadTicketForChannelOrReply, warmGuildChannels };

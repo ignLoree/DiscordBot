@@ -1,11 +1,10 @@
 const { PermissionsBitField } = require("discord.js");
 const IDs = require("../Config/ids");
-
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
 
 function wait(ms) {
   return new Promise((resolve) => {
-    const timer=setTimeout(resolve, ms);
+    const timer = setTimeout(resolve, ms);
     timer.unref?.();
   });
 }
@@ -17,7 +16,7 @@ function toDiscordTimestamp(value = new Date(), style = "F") {
 }
 
 function yesNo(value) {
-  return value ? "Yes" : "No";
+  return value ? "Si" : "No";
 }
 
 function channelDisplay(channel) {
@@ -27,17 +26,17 @@ function channelDisplay(channel) {
 }
 
 function channelTypeLabel(channelOrType) {
-  const value=typeof channelOrType==="number"?channelOrType:Number(channelOrType?.type||0);
-  if (value === 0) return "Text";
-  if (value === 2) return "Voice";
-  if (value === 4) return "Category";
-  if (value === 5) return "Announcement";
+  const value = typeof channelOrType === "number" ? channelOrType : Number(channelOrType?.type || 0);
+  if (value === 0) return "Canale Testuale";
+  if (value === 2) return "Canale Vocale";
+  if (value === 4) return "Categoria";
+  if (value === 5) return "Canale Annuncio";
   if (value === 10) return "Thread annuncio";
   if (value === 11) return "Thread pubblico";
   if (value === 12) return "Thread privato";
   if (value === 13) return "Stage";
-  if (value === 15) return "Forum";
-  if (value === 16) return "Media";
+  if (value === 15) return "Canale Forum";
+  if (value === 16) return "Canale Media";
   return `Sconosciuto (${value})`;
 }
 
@@ -145,16 +144,16 @@ function buildAuditExtraLines(entry, knownChangeKeys = []) {
 
   if (!changeLines.length && !extraLines.length) return lines;
 
-  lines.push("", "**Additional Information**");
+  lines.push("", "**Informazioni aggiuntive**");
   lines.push(...changeLines);
   lines.push(...extraLines);
   return lines;
 }
 
 async function resolveChannelRolesLogChannel(guild) {
-  const channelId=IDs.channels?.channelRolesLogs||IDs.channels?.logCanaliRuoli||null;
+  const channelId = IDs.channels?.channelRolesLogs || IDs.channels?.logCanaliRuoli || null;
   if (!guild || !channelId) return null;
-  const channel=guild.channels.cache.get(channelId)||(await guild.channels.fetch(channelId).catch(() => null));
+  const channel = guild.channels.cache.get(channelId) || (await guild.channels.fetch(channelId).catch(() => null));
   if (!channel?.isTextBased?.()) return null;
   return channel;
 }
@@ -167,7 +166,7 @@ async function resolveResponsible(guild, actionType, matcher) {
   }
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const logs=await guild.fetchAuditLogs({type:actionType,limit:20}).catch(() => null);
+    const logs = await guild.fetchAuditLogs({ type: actionType, limit: 20 }).catch(() => null);
     if (!logs?.entries?.size) {
       if (attempt < 2) {
         await wait(700);
@@ -216,16 +215,4 @@ async function resolveResponsible(guild, actionType, matcher) {
   return { executor: null, reason: null, entry: null };
 }
 
-module.exports = {
-  ARROW,
-  toDiscordTimestamp,
-  yesNo,
-  channelDisplay,
-  channelTypeLabel,
-  formatAuditActor,
-  permissionList,
-  permissionDiff,
-  buildAuditExtraLines,
-  resolveChannelRolesLogChannel,
-  resolveResponsible,
-};
+module.exports = { ARROW, toDiscordTimestamp, yesNo, channelDisplay, channelTypeLabel, formatAuditActor, permissionList, permissionDiff, buildAuditExtraLines, resolveChannelRolesLogChannel, resolveResponsible };

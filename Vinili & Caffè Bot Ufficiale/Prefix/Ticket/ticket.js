@@ -1,5 +1,5 @@
-﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits, } = require("discord.js");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits, } = require("discord.js");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
 const { createTranscript, createTranscriptHtml, saveTranscriptHtml, } = require("../../Utils/Ticket/transcriptUtils");
 const { getNextTicketId } = require("../../Utils/Ticket/ticketIdUtils");

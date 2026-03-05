@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const IDs = require("../../Utils/Config/ids");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { ExpUser } = require("../../Schemas/Community/communitySchemas");
 const { ReviewReward } = require("../../Schemas/Community/communitySchemas");
 const { getLevelInfo, addExpWithLevel, } = require("../../Services/Community/expService");

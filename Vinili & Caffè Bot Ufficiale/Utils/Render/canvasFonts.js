@@ -1,7 +1,6 @@
 const fs = require("fs");
 const path = require("path");
 const { normalizeTextForCanvas } = require("./canvasUtils");
-
 const PRIMARY_FONT = "Noto Sans";
 const TIBETAN_FONT = "Noto Serif Tibetan";
 const SYMBOLS_FONT = "Noto Sans Symbols2";
@@ -12,7 +11,6 @@ const MATH_FONT = "Noto Sans Math";
 const FALLBACK_FONT = "Yu Gothic";
 const BASE_STACK =[`"${COLOR_EMOJI_FONT}"`,'"Noto Sans CJK JP"','"Noto Sans CJK SC"','"Noto Sans CJK TC"','"Noto Sans JP"','"Noto Sans KR"','"Noto Sans SC"','"Noto Sans TC"','"Arial Unicode MS"','"DejaVu Sans"','"Segoe UI"','"Calibri"','"Tahoma"','"Segoe UI Emoji"','"Apple Color Emoji"','"Noto Emoji"',`"${SYMBOLS_FONT}"`,'"Segoe UI Symbol"',`"${MATH_FONT}"`,`"${TIBETAN_FONT}"`,`"${FRAKTUR_FONT}"`,`"${EMOJI_FONT}"`,`"${FALLBACK_FONT}"`,'"Arial"',"sans-serif",];
 const FONT_STACK = [`"${PRIMARY_FONT}"`, ...BASE_STACK].join(", ");
-
 let registered = false;
 
 function registerCanvasFonts(canvasModule) {
@@ -138,18 +136,4 @@ function drawTextWithSpecialFallback(ctx, text, x, y, options = {}) {
   ctx.restore();
 }
 
-module.exports = {
-  registerCanvasFonts,
-  fontStack,
-  fontStackWithPrimary,
-  drawTextWithSpecialFallback,
-  PRIMARY_FONT,
-  TIBETAN_FONT,
-  SYMBOLS_FONT,
-  COLOR_EMOJI_FONT,
-  EMOJI_FONT,
-  FRAKTUR_FONT,
-  MATH_FONT,
-  FALLBACK_FONT,
-  FONT_STACK,
-};
+module.exports = { registerCanvasFonts, fontStack, fontStackWithPrimary, drawTextWithSpecialFallback, PRIMARY_FONT, TIBETAN_FONT, SYMBOLS_FONT, COLOR_EMOJI_FONT, EMOJI_FONT, FRAKTUR_FONT, MATH_FONT, FALLBACK_FONT, FONT_STACK };

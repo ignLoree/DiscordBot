@@ -1,6 +1,6 @@
-﻿const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, PermissionsBitField, UserFlagsBitField, } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, PermissionsBitField, UserFlagsBitField, } = require("discord.js");
 const IDs = require("../../Utils/Config/ids");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { getAutoModMemberSnapshot, isAutoModRoleExemptMember, } = require("../../Services/Moderation/automodService");
 const{isWhitelistedExecutor,}=require("../../Services/Moderation/antiNukeService");
 

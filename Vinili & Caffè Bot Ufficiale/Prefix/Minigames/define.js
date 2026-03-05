@@ -1,4 +1,4 @@
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { fetchJson, replyError, clamp, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 const PART_OF_SPEECH_IT={noun:"sostantivo",verb:"verbo",adjective:"aggettivo",adverb:"avverbio",pronoun:"pronome",preposition:"preposizione",conjunction:"congiunzione",interjection:"interiezione",determiner:"determinante",particle:"particella",numeral:"numerale",phrase:"locuzione",idiom:"modo di dire","phrasal verb":"verbo frasale",};

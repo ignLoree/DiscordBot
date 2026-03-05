@@ -79,10 +79,4 @@ function getReason(args, startIndex) {
   return reason || "Nessun motivo fornito";
 }
 
-module.exports = {
-  fetchMemberSafe,
-  fetchMembersSafe,
-  extractUserId,
-  resolveTarget,
-  getReason,
-};
+module.exports = { fetchMemberSafe, fetchMembersSafe, extractUserId, resolveTarget, getReason };

@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const { ExpUser } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../Config/ids");
-
 const ROLE_COOLDOWN_BYPASS = IDs.roles.Staff;
 const ROLE_LEVEL_30 = IDs.roles.Level30;
 const ROLE_LEVEL_50 = IDs.roles.Level50;
@@ -48,7 +47,7 @@ async function getUserCommandCooldownSeconds({ guildId, userId, member }) {
   let level = 0;
   if (guildId && userId && isDbReady()) {
     try {
-      const user=await ExpUser.findOne({guildId,userId}).select("level").lean();
+      const user = await ExpUser.findOne({ guildId, userId }).select("level").lean();
       level = Number(user?.level || 0);
     } catch {
       level = 0;
@@ -87,8 +86,4 @@ function consumeUserCooldown({ client, guildId, userId, cooldownSeconds }) {
   return { ok: true, remainingMs: 0 };
 }
 
-module.exports = {
-  computeCooldownSeconds,
-  getUserCommandCooldownSeconds,
-  consumeUserCooldown,
-};
+module.exports = { computeCooldownSeconds, getUserCommandCooldownSeconds, consumeUserCooldown };

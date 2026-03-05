@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
-const { safeEditReply } = require("../../Utils/Moderation/reply");
+const { safeEditReply } = require("../../../shared/discord/replyRuntime");
 const { createGuildBackup, readBackupByIdGlobal, listAllBackupMetas, } = require("../../Services/Backup/serverBackupService");
 const { createLoadSession, buildLoadWarningEmbed, buildLoadComponents, getGuildBackupLoadStatus, cancelGuildBackupLoad, } = require("../../Services/Backup/backupLoadService");
 const { renderList } = require("../../Services/Backup/backupListService");

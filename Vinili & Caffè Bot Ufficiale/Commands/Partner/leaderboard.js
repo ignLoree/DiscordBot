@@ -1,4 +1,4 @@
-﻿const { safeEditReply } = require("../../Utils/Moderation/reply");
+const { safeEditReply } = require("../../../shared/discord/replyRuntime");
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const PartnershipCount = require("../../Schemas/Staff/staffSchema");
 const PARTNERS_PER_PAGE = 10;

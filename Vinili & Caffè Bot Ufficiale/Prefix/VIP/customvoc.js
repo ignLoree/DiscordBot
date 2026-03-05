@@ -1,5 +1,5 @@
-﻿const { ChannelType, EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { ChannelType, EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { CustomRole } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");
 const { formatDuration } = require("../../Utils/Moderation/moderation");

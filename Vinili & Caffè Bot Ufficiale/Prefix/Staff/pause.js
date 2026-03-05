@@ -1,5 +1,5 @@
 const IDs = require("../../Utils/Config/ids");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { buildPauseListPayload } = require("../../Utils/Pause/pauseListRuntime");
 
 async function resolveTargetUser(message, rawValue) {

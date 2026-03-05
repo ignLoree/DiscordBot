@@ -1,6 +1,6 @@
-﻿const { EmbedBuilder } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const mongoose = require("mongoose");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const ping = require("../../Schemas/Ping/pingSchema");
 
 function formatUptime(uptime) {

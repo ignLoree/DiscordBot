@@ -1,5 +1,5 @@
-﻿const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, } = require("discord.js");
-const { safeReply } = require("../../Utils/Moderation/reply");
+const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, } = require("discord.js");
+const { safeReply } = require("../../../shared/discord/replyRuntime");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
 const IDs = require("../../Utils/Config/ids");
 const { isChannelInTicketCategory, } = require("../../Utils/Ticket/ticketCategoryUtils");

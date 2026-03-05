@@ -1,5 +1,5 @@
-﻿const { EmbedBuilder } = require("discord.js");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { EmbedBuilder } = require("discord.js");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { getNoDmSet, removeNoDm } = require("../../Utils/noDmList");
 
 module.exports = {

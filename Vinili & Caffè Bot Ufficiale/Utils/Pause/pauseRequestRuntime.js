@@ -1,7 +1,6 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const Staff = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../Config/ids");
-
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const IT_MONTHS = { gennaio: 1, feb: 2, febbraio: 2, mar: 3, marzo: 3, apr: 4, aprile: 4, mag: 5, maggio: 5, giu: 6, giugno: 6, lug: 7, luglio: 7, ago: 8, agosto: 8, set: 9, sett: 9, settembre: 9, ott: 10, ottobre: 10, nov: 11, novembre: 11, dic: 12, dicembre: 12 };
 const PAUSE_REQUEST_ROLE_IDS = [IDs.roles.PartnerManager, IDs.roles.Staff, IDs.roles.HighStaff].filter(Boolean);
@@ -105,17 +104,17 @@ async function getOrCreateStaffDoc(guildId, userId) {
 
 async function createPauseRequest({ guild, userId, requesterMention, rawStart, rawEnd, reason }) {
   const guildId = guild?.id;
-  if (!guild || !guildId || !userId) return { ok: false, error: "Dati pausa non validi." };
+  if (!guild || !guildId || !userId) return { ok: false, error: "<a:VC_Alert:1448670089670037675> Dati pausa non validi." };
   const pauseChannel = guild.channels.cache.get(IDs.channels?.pause);
   const normalized = normalizePauseDates(rawStart, rawEnd);
   if (!normalized) {
-    return { ok: false, error: "Date non valide. Formati supportati: `oggi`, `domani`, `GG/MM`, `GG/MM/AAAA`, `1 agosto`, `1 agosto 2027`." };
+    return { ok: false, error: "<a:VC_Alert:1448670089670037675> Date non valide. Formati supportati: `oggi`, `domani`, `GG/MM`, `GG/MM/AAAA`, `1 agosto`, `1 agosto 2027`." };
   }
   if (!String(reason || "").trim()) {
-    return { ok: false, error: "Devi specificare una motivazione valida." };
+    return { ok: false, error: "<a:VC_Alert:1448670089670037675> Devi specificare una motivazione valida." };
   }
   if (!pauseChannel?.isTextBased?.()) {
-    return { ok: false, error: "Canale pause non disponibile." };
+    return { ok: false, error: "<a:VC_Alert:1448670089670037675> Canale pause non disponibile." };
   }
   const stafferDoc = await getOrCreateStaffDoc(guildId, userId);
   stafferDoc.pauses.push({ dataRichiesta: normalized.dataRichiesta, dataRitorno: normalized.dataRitorno, motivazione: reason, status: "pending" });
@@ -123,16 +122,13 @@ async function createPauseRequest({ guild, userId, requesterMention, rawStart, r
   const createdPause = stafferDoc.pauses[stafferDoc.pauses.length - 1];
   const pauseId = String(createdPause?._id || "");
   const posted = await pauseChannel.send({
-    content: `<@&${IDs.roles.HighStaff}> ${requesterMention} ha richiesto una pausa.\n Data richiesta: ${normalized.dataRichiesta}\n Data ritorno: ${normalized.dataRitorno}\n Motivo: ${reason}`,
+    content: `<:staff:1443651912179388548> <@&${IDs.roles.HighStaff}> ${requesterMention} ha richiesto una pausa.\n<a:VC_Calendar:1448670320180592724> Data richiesta: ${normalized.dataRichiesta}\n Data ritorno: ${normalized.dataRitorno}\n<:VC_reason:1478517122929004544> Motivo: ${reason}`,
     components: pauseId ? [buildPauseRequestButtonsRow(userId, pauseId)] : [],
   }).catch(() => null);
   if (!posted) {
-    return { ok: false, error: "Non sono riuscito a inviare la richiesta all'High Staff." };
+    return { ok: false, error: "<a:VC_Alert:1448670089670037675> Non sono riuscito a inviare la richiesta all'High Staff." };
   }
   return { ok: true, pauseId };
 }
 
-module.exports = {
-  PAUSE_REQUEST_ROLE_IDS,
-  createPauseRequest,
-};
+module.exports = { PAUSE_REQUEST_ROLE_IDS, createPauseRequest };

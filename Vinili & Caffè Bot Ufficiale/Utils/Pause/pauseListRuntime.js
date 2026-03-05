@@ -1,6 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
 const Staff = require("../../Schemas/Staff/staffSchema");
-
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 function parseItalianDate(value) {
@@ -124,7 +123,7 @@ async function buildPauseListPayload({ guildId, requesterId, targetUser, isHighS
     const start = parseItalianDate(pause?.dataRichiesta);
     const end = parseItalianDate(pause?.dataRitorno);
     if (!start || !end || countOverlapDays(start, end, yearStart, yearEnd) <= 0) return null;
-    return `- \`${pause.dataRichiesta}\` -> \`${pause.dataRitorno}\` | **${getPauseStatusLabel(pause, todayUtc)}**|Giorni scalati:\`${computePauseScaledDaysThisYear(pause, todayUtc, yearStart, yearEnd)}\``;
+    return `<:VC_Dot:1443932948599668746> \`${pause.dataRichiesta}\` <a:VC_Arrow:1448672967721615452> \`${pause.dataRitorno}\` | **${getPauseStatusLabel(pause, todayUtc)}** | <:VC_Clock:1473359204189474886> Giorni scalati:\`${computePauseScaledDaysThisYear(pause, todayUtc, yearStart, yearEnd)}\``;
   }).filter(Boolean);
   if (!rows.length) {
     return {
@@ -134,11 +133,9 @@ async function buildPauseListPayload({ guildId, requesterId, targetUser, isHighS
   }
   const totalScaledDays = computeConsumedPauseDays(pauses);
   const embeds = splitRowsForEmbeds(rows).map((chunk, index, chunks) =>
-    new EmbedBuilder().setColor("#6f4e37").setTitle(`Pause ${currentYear}-${targetUser.username}${chunks.length > 1 ? ` (${index + 1}/${chunks.length})` : ""}`).setDescription(`${chunk}\n\nTotale giorni scalati anno corrente:\`${totalScaledDays}\``),
+    new EmbedBuilder().setColor("#6f4e37").setTitle(`<a:VC_Calendar:1448670320180592724> Pause ${currentYear}-${targetUser.username}${chunks.length > 1 ? ` (${index + 1}/${chunks.length})` : ""}`).setDescription(`${chunk}\n\n<:VC_Clock:1473359204189474886>Totale giorni scalati anno corrente:\`${totalScaledDays}\``),
   );
   return { ok: true, embeds };
 }
 
-module.exports = {
-  buildPauseListPayload,
-};
+module.exports = { buildPauseListPayload };

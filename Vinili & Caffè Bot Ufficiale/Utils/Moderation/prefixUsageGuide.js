@@ -1,7 +1,6 @@
 ﻿const{EmbedBuilder,ActionRowBuilder,StringSelectMenuBuilder,ComponentType,}=require("discord.js");
 const fs = require("fs");
 const path = require("path");
-
 const GUIDE_COLOR = "#3498DB";
 const GUIDE_LIFETIME_MS = 10 * 60 * 1000;
 const PERMISSIONS_CANDIDATES=[path.resolve(__dirname,"../../permissions.json"),path.join(process.cwd(),"permissions.json"),];

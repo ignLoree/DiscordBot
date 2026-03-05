@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { TTS_LANGUAGE_OPTIONS } = require("../../Services/TTS/ttsLanguages");
 const { getUserTtsLang } = require("../../Services/TTS/ttsService");
 

@@ -37,7 +37,4 @@ function chunkLines(lines, maxLen = 1800) {
   return chunks.length ? chunks : [""];
 }
 
-module.exports = {
-  splitMessage,
-  chunkLines,
-};
+module.exports = { splitMessage, chunkLines };

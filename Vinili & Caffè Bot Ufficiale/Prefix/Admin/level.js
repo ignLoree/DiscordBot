@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { ExpUser } = require("../../Schemas/Community/communitySchemas");
 const{getLevelInfo,getTotalExpForLevel,recordLevelHistory,setLevelChannelLocked,setRoleIgnored,getGuildExpSettings,setTemporaryEventMultiplier,setGlobalMultiplier,syncLevelRolesForMember,}=require("../../Services/Community/expService");
 

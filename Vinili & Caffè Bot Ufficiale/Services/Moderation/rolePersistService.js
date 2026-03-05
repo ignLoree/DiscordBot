@@ -49,7 +49,7 @@ async function applyRolePersistForMember(member) {
     if (!role) continue;
     if (role.position >= me.roles.highest.position) continue;
     if (member.roles.cache.has(role.id)) continue;
-    await member.roles.add(role.id, "Rolepersist rejoin restore").catch(() => { });
+    await member.roles.add(role.id, "<:success:1461731530333229226> Rolepersist rejoin restore").catch(() => { });
     const refreshedMember = await member.guild.members.fetch(member.id).catch(() => null);
     if (!refreshedMember?.roles?.cache?.has(role.id)) {
       global.logger?.warn?.("[ROLEPERSIST] restore failed:", member.guild.id, member.id, role.id);
@@ -57,9 +57,4 @@ async function applyRolePersistForMember(member) {
   }
 }
 
-module.exports = {
-  setRolePersist,
-  clearRolePersist,
-  listRolePersistByUser,
-  applyRolePersistForMember,
-};
+module.exports = { setRolePersist, clearRolePersist, listRolePersistByUser, applyRolePersistForMember };

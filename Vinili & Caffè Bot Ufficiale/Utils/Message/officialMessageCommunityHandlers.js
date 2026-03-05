@@ -4,9 +4,8 @@ const { MentionReaction, AutoResponder } = require("../../Schemas/Community/auto
 const countschema = require("../../Schemas/Counting/countingSchema");
 const AFK = require("../../Schemas/Afk/afkSchema");
 const { getGuildAutoResponderCache, setGuildAutoResponderCache } = require("../Community/autoResponderCache");
-const { safeMessageReply } = require("../Moderation/reply");
+const { safeMessageReply } = require("../../shared/discord/replyRuntime");
 const IDs = require("../Config/ids");
-
 const COUNTING_CHANNEL_ID = IDs.channels.counting;
 const COUNTING_ALLOWED_REGEX = /^[0-9+\-*/x:() ]+$/;
 const COUNTING_CACHE_TTL_MS = 60_000;
@@ -42,14 +41,14 @@ async function handleAfk(message) {
   if (afkData) {
     const member = message.guild.members.cache.get(userId);
     if (member && afkData.originalName) {
-      await member.setNickname(afkData.originalName).catch(() => {});
+      await member.setNickname(afkData.originalName).catch(() => { });
     }
     await AFK.deleteOne({ guildId, userId });
-    const msg=await safeMessageReply(message,`<:VC_PepeWave:1331589315175907412> Bentornato <@${userId}>! Ho rimosso il tuo stato AFK.`,
+    const msg = await safeMessageReply(message, `<:VC_PepeWave:1331589315175907412> Bentornato <@${userId}>! Ho rimosso il tuo stato AFK.`,
     );
     if (msg) {
-      const timer=setTimeout(() => {
-        msg.delete().catch(() => {});
+      const timer = setTimeout(() => {
+        msg.delete().catch(() => { });
       }, 5000);
       timer.unref?.();
     }
@@ -60,15 +59,15 @@ async function handleAfk(message) {
 
   for (const [mentionedId, mentionedUser] of mentions) {
     if (mentionedUser.bot) continue;
-    const targetAfk=await AFK.findOne({guildId,userId:mentionedId,}).lean();
+    const targetAfk = await AFK.findOne({ guildId, userId: mentionedId, }).lean();
     if (!targetAfk) continue;
 
-    const reason = targetAfk.reason ? `\nMotivo: ${targetAfk.reason}` : "";
-    const msg=await safeMessageReply(message,`**${mentionedUser.username}** è AFK dal <t:${Math.floor(new Date(targetAfk.since||targetAfk.createdAt||Date.now()).getTime()/1000,)}:R>.${reason}`,
+    const reason = targetAfk.reason ? `\n <:VC_reason:1478517122929004544> Motivo: ${targetAfk.reason}` : "";
+    const msg = await safeMessageReply(message, `**${mentionedUser.username}** è AFK dal <t:${Math.floor(new Date(targetAfk.since || targetAfk.createdAt || Date.now()).getTime() / 1000,)}:R>.${reason}`,
     );
     if (msg) {
-      const timer=setTimeout(() => {
-        msg.delete().catch(() => {});
+      const timer = setTimeout(() => {
+        msg.delete().catch(() => { });
       }, 7000);
       timer.unref?.();
     }
@@ -96,8 +95,8 @@ async function getGuildAutoResponders(guildId) {
   if (!guildId) return [];
   const cached = getGuildAutoResponderCache(guildId);
   if (cached) return cached;
-  const docs=await AutoResponder.find({guildId,enabled:true}).lean().catch(() => []);
-  const rules=Array.isArray(docs)?docs.map((doc) => ({triggerLower:String(doc?.triggerLower||"").trim().toLowerCase(),triggerLoose:normalizeForTriggerMatch(doc?.triggerLower||doc?.trigger||"",),triggerTokens:normalizeForTriggerMatch(doc?.triggerLower||doc?.trigger||"",).split(/\s+/).filter((token) => token.length>=3),response:String(doc?.response||""),reactions:Array.isArray(doc?.reactions)?doc.reactions:[],})).filter((doc) => Boolean(doc.triggerLower)).sort((a,b) => b.triggerLower.length-a.triggerLower.length):[];
+  const docs = await AutoResponder.find({ guildId, enabled: true }).lean().catch(() => []);
+  const rules = Array.isArray(docs) ? docs.map((doc) => ({ triggerLower: String(doc?.triggerLower || "").trim().toLowerCase(), triggerLoose: normalizeForTriggerMatch(doc?.triggerLower || doc?.trigger || "",), triggerTokens: normalizeForTriggerMatch(doc?.triggerLower || doc?.trigger || "",).split(/\s+/).filter((token) => token.length >= 3), response: String(doc?.response || ""), reactions: Array.isArray(doc?.reactions) ? doc.reactions : [], })).filter((doc) => Boolean(doc.triggerLower)).sort((a, b) => b.triggerLower.length - a.triggerLower.length) : [];
   setGuildAutoResponderCache(guildId, rules);
   return rules;
 }
@@ -122,7 +121,7 @@ function ruleMatchesMessage(normalizedText, normalizedLoose, rule) {
 async function handleAutoResponders(message) {
   const guildId = message.guild?.id;
   if (!guildId) return;
-  const normalized=String(message.content||"").toLowerCase().trim();
+  const normalized = String(message.content || "").toLowerCase().trim();
   if (!normalized) return;
   if (normalized.startsWith("+")) return;
   const normalizedLoose = normalizeForTriggerMatch(message.content || "");
@@ -130,7 +129,7 @@ async function handleAutoResponders(message) {
   const rules = await getGuildAutoResponders(guildId);
   if (!Array.isArray(rules) || !rules.length) return;
 
-  const matched=rules.find((rule) => ruleMatchesMessage(normalized,normalizedLoose,rule),);
+  const matched = rules.find((rule) => ruleMatchesMessage(normalized, normalizedLoose, rule),);
   if (!matched) return;
 
   const response = String(matched.response || "").trim();
@@ -140,7 +139,7 @@ async function handleAutoResponders(message) {
         content: response,
         allowedMentions: { repliedUser: false },
       })
-      .catch(() => {});
+      .catch(() => { });
   }
 
   const seen = new Set();
@@ -149,7 +148,7 @@ async function handleAutoResponders(message) {
     const emoji = resolveReactionToken(token);
     if (!emoji || seen.has(emoji)) continue;
     seen.add(emoji);
-    await message.react(emoji).catch(() => {});
+    await message.react(emoji).catch(() => { });
   }
 }
 
@@ -164,9 +163,9 @@ async function handleMentionAutoReactions(message) {
     explicitMentionIds.add(String(match[1]));
   }
   if (!explicitMentionIds.size) return;
-  const targetIds=Array.from(new Set(mentionedUsers.filter((user) => !user.bot&&explicitMentionIds.has(user.id)).map((user) => user.id),),);
+  const targetIds = Array.from(new Set(mentionedUsers.filter((user) => !user.bot && explicitMentionIds.has(user.id)).map((user) => user.id),),);
   if (!targetIds.length) return;
-  const docs=await MentionReaction.find({guildId:message.guild.id,userId:{$in:targetIds},}).lean().catch(() => []);
+  const docs = await MentionReaction.find({ guildId: message.guild.id, userId: { $in: targetIds }, }).lean().catch(() => []);
   if (!Array.isArray(docs) || !docs.length) return;
   const uniqueTokens = new Set();
   for (const doc of docs) {
@@ -180,12 +179,12 @@ async function handleMentionAutoReactions(message) {
   for (const token of uniqueTokens) {
     const emoji = resolveReactionToken(token);
     if (!emoji) continue;
-    await message.react(emoji).catch(() => {});
+    await message.react(emoji).catch(() => { });
   }
 }
 
 function logEventError(client, label, error) {
-  const normalizeErrorText=(value) => {if(value instanceof Error){return value.stack||value.message||String(value);}if(typeof value==="string")return value;if(typeof value==="undefined")return "Unknown error";try{return inspect(value,{depth:3,colors:false});}catch{return String(value);}};
+  const normalizeErrorText = (value) => { if (value instanceof Error) { return value.stack || value.message || String(value); } if (typeof value === "string") return value; if (typeof value === "undefined") return "Unknown error"; try { return inspect(value, { depth: 3, colors: false }); } catch { return String(value); } };
 
   const payload = `[${label}] ${normalizeErrorText(error)}`;
   setImmediate(() => {
@@ -213,23 +212,23 @@ async function handleCounting(message, client) {
   }
   if (message.channel.id !== countchannel.id) return;
   if (!COUNTING_ALLOWED_REGEX.test(message.content)) {
-    return message.delete().catch(() => {});
+    return message.delete().catch(() => { });
   }
   let messageValue;
   try {
     const math = require("mathjs");
-    const expression=message.content.replace(/\s+/g,"").replace(/x/g,"*").replace(/:/g,"/");
+    const expression = message.content.replace(/\s+/g, "").replace(/x/g, "*").replace(/:/g, "/");
     messageValue = math.evaluate(expression);
   } catch {
-    return message.delete().catch(() => {});
+    return message.delete().catch(() => { });
   }
-  const reaction = "<:vegacheckmark:1443666279058772028>";
+  const reaction = "<:success:1461731530333229226>";
   if (message.author.id === countdata.LastUser) {
     safeMessageReply(message, {
       embeds: [
         new EmbedBuilder()
           .setDescription(
-            `<:vegax:1443934876440068179> Non puoi contare da solo! Counting perso a: **${countdata.Count}**! Riparti scrivendo **1**.`,
+            `<:cancel:1461730653677551691> Non puoi contare da solo! Counting perso a: **${countdata.Count}**! Riparti scrivendo **1**.`,
           )
           .setColor("#6f4e37"),
       ],
@@ -237,7 +236,7 @@ async function handleCounting(message, client) {
     countdata.Count = 0;
     countdata.LastUser = " ";
     message
-      .react("<:vegax:1443934876440068179>")
+      .react("<:cancel:1461730653677551691>")
       .catch((err) => logEventError(client, "COUNTING", err));
   } else if (
     messageValue - 1 !== countdata.Count ||
@@ -248,14 +247,14 @@ async function handleCounting(message, client) {
       embeds: [
         new EmbedBuilder()
           .setDescription(
-            `<:vegax:1443934876440068179> Hai sbagliato numero! Counting perso a: **${countdata.Count}**! Riparti scrivendo **1**.`,
+            `<:cancel:1461730653677551691> Hai sbagliato numero! Counting perso a: **${countdata.Count}**! Riparti scrivendo **1**.`,
           )
           .setColor("#6f4e37"),
       ],
     });
     countdata.Count = 0;
     message
-      .react("<:vegax:1443934876440068179>")
+      .react("<:cancel:1461730653677551691>")
       .catch((err) => logEventError(client, "COUNTING", err));
   } else {
     countdata.Count += 1;
@@ -268,10 +267,4 @@ async function handleCounting(message, client) {
   invalidateCountingConfig(message.guild.id);
 }
 
-module.exports = {
-  handleAfk,
-  handleAutoResponders,
-  handleCounting,
-  handleMentionAutoReactions,
-  logEventError,
-};
+module.exports = { handleAfk, handleAutoResponders, handleCounting, handleMentionAutoReactions, logEventError };

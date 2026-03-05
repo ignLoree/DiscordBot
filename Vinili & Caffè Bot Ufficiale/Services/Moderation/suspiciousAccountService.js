@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const SuspiciousAccount = require("../../Schemas/Moderation/suspiciousAccountSchema");
-
 const CACHE = new Map();
 const DEFAULT_TTL_MS = 30 * 24 * 60 * 60_000;
 
@@ -91,7 +90,7 @@ async function isJoinGateSuspiciousAccount(guildId, userId) {
 
   try {
     const now = new Date();
-    const row=await SuspiciousAccount.findOne({guildId:gid,userId:uid,$or:[{expiresAt:null},{expiresAt:{$gt:now}}],},{_id:0,source:1,reason:1,expiresAt:1},).lean().catch(() => null);
+    const row = await SuspiciousAccount.findOne({ guildId: gid, userId: uid, $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }], }, { _id: 0, source: 1, reason: 1, expiresAt: 1 },).lean().catch(() => null);
     if (!row) {
       setCache(gid, uid, { suspicious: false }, 30_000);
       return false;
@@ -115,7 +114,4 @@ async function isJoinGateSuspiciousAccount(guildId, userId) {
   }
 }
 
-module.exports = {
-  markJoinGateSuspiciousAccount,
-  isJoinGateSuspiciousAccount,
-};
+module.exports = { markJoinGateSuspiciousAccount, isJoinGateSuspiciousAccount };

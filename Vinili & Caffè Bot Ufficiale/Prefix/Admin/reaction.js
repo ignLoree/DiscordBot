@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { MentionReaction, AutoResponder, } = require("../../Schemas/Community/autoInteractionSchemas");
 const{invalidateGuildAutoResponderCache,}=require("../../Utils/Community/autoResponderCache");
 

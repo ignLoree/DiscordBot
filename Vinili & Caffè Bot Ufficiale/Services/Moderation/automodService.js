@@ -1674,7 +1674,8 @@ async function detectViolations(message, state, profile) {
     !spamWhitelisted &&
     AUTOMOD_ANTISPAM_ENABLED &&
     TEXT_RULES.similarMessage.enabled &&
-    normalized.length >= 8
+    normalized.length >= 8 &&
+    !message.editedTimestamp
   ) {
     state.normHistory.push({ t: at, c: normalized });
     trimNormHistory(state.normHistory, 18_000, at);

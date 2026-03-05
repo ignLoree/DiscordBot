@@ -4,7 +4,6 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("
 const PImage = require("pureimage");
 const IDs = require("../Config/ids");
 const { getClientGuildCached, getGuildChannelCached, getGuildMemberCached, getGuildRoleCached } = require("./interactionEntityCache");
-
 const VERIFY_CODE_TTL_MS = 5 * 60 * 1000;
 const VERIFY_MAX_ATTEMPTS = 3;
 const CENTRAL_VERIFY_LOG_CHANNEL_ID = IDs.channels.verifyLogs || IDs.channels.modLogs || "1442569294796820541";
@@ -20,10 +19,10 @@ const VERIFY_CAPTCHA = {
 };
 const MAIN_GUILD_ID = IDs.guilds?.main || "1329080093599076474";
 const MAIN_VERIFIED_ROLE_ID = IDs.roles?.Member || null;
-
 const verifyState = new Map();
 const fontPath = path.join(__dirname, "..", "..", "UI", "Fonts", "Mojangles.ttf");
 let captchaFontFamily = "captcha";
+
 try {
   PImage.registerFont(fontPath, "captcha").loadSync();
 } catch (err) {
@@ -73,27 +72,27 @@ async function isUserVerifiedInMainGuild(client, userId) {
 function makeExpiredEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
-    .setTitle("<:cancel:1461730653677551691> Unsuccessful Operation!")
+    .setTitle("<:cancel:1461730653677551691> Operazione non riuscita!")
     .setDescription(
-      "<:space:1461733157840621608> <:rightSort:1461726104422453298> Your verification has expired, you need to press Verify again.",
+      "<:space:1461733157840621608> <:rightSort:1461726104422453298> La tua verifica è scaduta, devi premere Verifica di nuovo.",
     );
 }
 
 function makeWrongAnswerEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
-    .setTitle("<:cancel:1461730653677551691> Unsuccessful Operation!")
+    .setTitle("<:cancel:1461730653677551691> Operazione non riuscita!")
     .setDescription(
-      "<:space:1461733157840621608> <:rightSort:1461726104422453298> Wrong answer, try again before it's too late.",
+      "<:space:1461733157840621608> <:rightSort:1461726104422453298> Risposta sbagliata, riprova prima che sia troppo tardi.",
     );
 }
 
 function makeTooManyAttemptsEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
-    .setTitle("<:cancel:1461730653677551691> Unsuccessful Operation!")
+    .setTitle("<:cancel:1461730653677551691> Operazione non riuscita!")
     .setDescription(
-      "<:space:1461733157840621608> <:rightSort:1461726104422453298> Too many wrong attempts. Press **Verify** to start again.",
+      "<:space:1461733157840621608> <:rightSort:1461726104422453298> Troppi tentativi errati. Premi **Verifica** per ricominciare.",
     );
 }
 
@@ -101,7 +100,8 @@ function makeVerifyStartRow() {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId("verify_start")
-      .setLabel("Verify")
+      .setLabel("Verifica")
+      .setEmoji(`<:VC_Verify:1478859646587633717>`)
       .setStyle(ButtonStyle.Success),
   );
 }
@@ -109,24 +109,24 @@ function makeVerifyStartRow() {
 function makeVerifiedEmbed(serverName) {
   return new EmbedBuilder()
     .setColor("#57f287")
-    .setTitle("**You have been verified!**")
+    .setTitle("<:success:1461731530333229226> **Sei stato verificato!**")
     .setDescription(
-      `<:success:1461731530333229226> You passed the verification successfully. You can now access \`${serverName}\``,
+      `<:success:1461731530333229226> Hai superato la verifica con successo. Ora puoi accedere a \`${serverName}\``,
     );
 }
 
 function makeAlreadyVerifiedEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
-    .setTitle("<:alarm:1461725841451909183> **You are verified already!**");
+    .setTitle("<:alarm:1461725841451909183> **Sei già verificato!**");
 }
 
 function makeOwnerEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
-    .setTitle("<:cancel:1461730653677551691> Unsuccessful Operation!")
+    .setTitle("<:cancel:1461730653677551691> Operazione non riuscita!")
     .setDescription(
-      "<:space:1461733157840621608> <:rightSort:1461726104422453298> You are the owner, why would an owner try to verify?",
+      "<:space:1461733157840621608> <:rightSort:1461726104422453298> Sei il proprietario, perché un owner dovrebbe provare a verificarsi?",
     );
 }
 
@@ -276,30 +276,4 @@ function isAlreadyVerifiedInThisGuild(member, guildId) {
   return false;
 }
 
-module.exports = {
-  verifyState,
-  VERIFY_CODE_TTL_MS,
-  VERIFY_MAX_ATTEMPTS,
-  CENTRAL_VERIFY_LOG_CHANNEL_ID,
-  VERIFY_PING_CHANNEL_ID,
-  VERIFY_CAPTCHA,
-  getVerifyStateKey,
-  clearVerifyState,
-  isSponsorGuildVerify,
-  getMainGuild,
-  isUserInMainGuild,
-  isUserVerifiedInMainGuild,
-  makeExpiredEmbed,
-  makeWrongAnswerEmbed,
-  makeTooManyAttemptsEmbed,
-  makeVerifyStartRow,
-  makeVerifiedEmbed,
-  makeAlreadyVerifiedEmbed,
-  makeOwnerEmbed,
-  isUnknownInteraction,
-  sanitizeEmbedText,
-  makeCode,
-  makeCaptchaPng,
-  resolveValidVerifyRoleIds,
-  isAlreadyVerifiedInThisGuild,
-};
+module.exports = { verifyState, VERIFY_CODE_TTL_MS, VERIFY_MAX_ATTEMPTS, CENTRAL_VERIFY_LOG_CHANNEL_ID, VERIFY_PING_CHANNEL_ID, VERIFY_CAPTCHA, getVerifyStateKey, clearVerifyState, isSponsorGuildVerify, getMainGuild, isUserInMainGuild, isUserVerifiedInMainGuild, makeExpiredEmbed, makeWrongAnswerEmbed, makeTooManyAttemptsEmbed, makeVerifyStartRow, makeVerifiedEmbed, makeAlreadyVerifiedEmbed, makeOwnerEmbed, isUnknownInteraction, sanitizeEmbedText, makeCode, makeCaptchaPng, resolveValidVerifyRoleIds, isAlreadyVerifiedInThisGuild }; 

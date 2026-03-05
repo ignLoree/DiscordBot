@@ -1,4 +1,4 @@
-﻿const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { EmbedBuilder } = require("discord.js");
 const AFK = require("../../Schemas/Afk/afkSchema");
 

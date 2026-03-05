@@ -1,5 +1,5 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, } = require("discord.js");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { getUserRanks, getGlobalMultiplier, } = require("../../Services/Community/expService");
 const renderRankCanvas = require("../../Utils/Render/rankCanvas");
 
