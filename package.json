@@ -5,13 +5,13 @@
   "description": "Workspace per bot Ufficiale e Test",
   "main": "loader.js",
   "workspaces": [
-    "Vinili & Caffè Bot Ufficiale",
-    "Vinili & Caffè Bot Test"
+    "Vinyls",
+    "Coffee"
   ],
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning loader.js",
-    "start:official": "npm run start --workspace=\"Vinili & Caffè Bot Ufficiale\"",
-    "start:test": "npm run start --workspace=\"Vinili & Caffè Bot Test\""
+    "start:official": "npm run start --workspace=Vinyls",
+    "start:test": "npm run start --workspace=Coffee"
   },
   "dependencies": {
     "discord.js": "14.25.1"
