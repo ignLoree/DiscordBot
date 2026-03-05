@@ -1,5 +1,5 @@
 let _canvasModule = null;
-function getCanvasModule() { if (!_canvasModule) _canvasModule = require("canvas"); return _canvasModule; }
+function getCanvasModule() { if (!_canvasModule) _canvasModule = require("@napi-rs/canvas"); return _canvasModule; }
 const { registerCanvasFonts, drawTextWithSpecialFallback, fontStack, } = require("./canvasFonts");
 const emojiImageCache = new Map();
 const CUSTOM_EMOJI_START_RE = /^<(a)?:([a-zA-Z0-9_~]+):(\d{16,22})>/;

@@ -117,7 +117,7 @@ const reminderPool = [
           "",
           `<a:VC_Coffe:1448695567244066827> Vinili & Caffè in questo __momento__ ha bisogno di **staff**: apri <#${IDs.channels.candidatureStaff}> e candidati cliccando il pulsante.`,
           "",
-          `><:VC_Eye:1331619214410383381> Puoi candidarti anche come **Partner Manager** direttamente dallo stesso pannello in <#${IDs.channels.candidatureStaff}>, cliccando il pulsante dedicato. Essi saranno anche __pagati__ per le partner fatte, per più info __<#1442579412280410194>__.`,
+          `> <:VC_Eye:1331619214410383381> Puoi candidarti anche come **Partner Manager** direttamente dallo stesso pannello in <#${IDs.channels.candidatureStaff}>, cliccando il pulsante dedicato. Essi saranno anche __pagati__ per le partner fatte, per più info __<#1442579412280410194>__.`,
         ].join("\n"),
       ),
   () =>

@@ -1,4 +1,4 @@
-const canvasModule = require("canvas");
+const canvasModule = require("@napi-rs/canvas");
 const { createCanvas, loadImage } = canvasModule; const { registerCanvasFonts, drawTextWithSpecialFallback, } = require("./canvasFonts");
 
 function roundedRect(ctx, x, y, w, h, r) {

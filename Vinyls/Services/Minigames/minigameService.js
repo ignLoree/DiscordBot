@@ -1,5 +1,5 @@
 const axios = require("axios");
-const { createCanvas, loadImage } = require("canvas");
+const { createCanvas, loadImage } = require("@napi-rs/canvas");
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField, AttachmentBuilder, } = require("discord.js");
 const { MinigameUser, MinigameState, MinigameRotation, } = require("../../Schemas/Minigames/minigameSchema");
 const { addExpWithLevel, shouldIgnoreExpForMember } = require("../Community/expService");
