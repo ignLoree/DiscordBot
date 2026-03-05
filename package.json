@@ -18,7 +18,8 @@
     "discord.js": "14.25.1"
   },
   "overrides": {
-    "opusscript": "0.0.8"
+    "opusscript": "0.0.8",
+    "discord.js": "14.25.1"
   },
   "nodeVersion": "24.7.0",
   "file": "loader.js",
