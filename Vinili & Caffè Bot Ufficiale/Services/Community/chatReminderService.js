@@ -255,21 +255,6 @@ function isReminderFixedSlot(parts, client) {
   return (totalMins - startMins) % REMINDER_FIXED_INTERVAL_MINUTES === 0;
 }
 
-function getFasciaOrariaLabel(parts, client) {
-  const h = parts.hour;
-  const m = parts.minute;
-  const pad = (n) => String(n).padStart(2, "0");
-  const start = `${pad(h)}:${pad(m)}`;
-  let endH = h;
-  let endM = m + REMINDER_FIXED_INTERVAL_MINUTES;
-  if (endM >= 60) {
-    endM -= 60;
-    endH += 1;
-  }
-  const end = `${pad(endH)}:${pad(endM)}`;
-  return `${start} - ${end}`;
-}
-
 function rand(max) {
   if (max <= 0) return 0;
   return randomInt(0, max + 1);
@@ -369,14 +354,12 @@ async function sendReminder(client, scheduleId, kind = "first") {
   }
 }
 
-/** Invia un reminder allo slot fisso (ogni 30 min) con fascia oraria nell’embed. */
+/** Invia un reminder allo slot fisso (ogni 30 min). */
 async function sendReminderAtFixedSlot(client, parts, slotKey) {
   const channelId = getReminderChannelId(client);
   const channel = client.channels.cache.get(channelId) || (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return;
   const embed = await nextReminderEmbed(parts);
-  const fasciaOraria = getFasciaOrariaLabel(parts, client);
-  embed.setFooter({ text: `🕐 Fascia oraria: ${fasciaOraria}` });
   await channel.send({ embeds: [embed] }).catch(() => { });
   lastSentAt = Date.now();
   lastReminderSlotKey = slotKey;

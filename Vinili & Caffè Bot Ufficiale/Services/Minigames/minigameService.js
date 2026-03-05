@@ -3384,8 +3384,8 @@ async function loadRotationState(client, cfg) {
   if (!guildId) return;
   const dateKey = getRomeDateKey(new Date());
   const doc = await MinigameRotation.findOne({ guildId, channelId }).lean().catch(() => null);
-  if (doc && Array.isArray(doc.queue)) {
-    rotationDate = doc.dateKey || dateKey;
+  if (doc && Array.isArray(doc.queue) && doc.dateKey === dateKey) {
+    rotationDate = doc.dateKey;
     rotationQueue = doc.queue.slice();
     return;
   }
@@ -3415,7 +3415,12 @@ async function saveRotationState(client, cfg) {
 async function getNextGameType(client, cfg) {
   const available = getAvailableGameTypes(cfg);
   if (available.length === 0) return null;
-  if (!rotationDate) rotationDate = getRomeDateKey(new Date());
+  const todayKey = getRomeDateKey(new Date());
+  if (!rotationDate) rotationDate = todayKey;
+  if (rotationDate !== todayKey) {
+    rotationDate = todayKey;
+    rotationQueue = [];
+  }
   if (rotationQueue.length === 0) {
     rotationQueue = available.slice();
     for (let i = rotationQueue.length - 1; i > 0; i -= 1) {
@@ -3434,13 +3439,26 @@ async function getNextGameType(client, cfg) {
       cleaned.push(type);
       seen.add(type);
     }
+    let hadNewTypes = false;
     for (const type of available) {
       if (!seen.has(type)) {
+        hadNewTypes = true;
         cleaned.push(type);
         seen.add(type);
       }
     }
-    rotationQueue = cleaned;
+    if (hadNewTypes) {
+      rotationQueue = available.slice();
+      for (let i = rotationQueue.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [rotationQueue[i], rotationQueue[j]] = [
+          rotationQueue[j],
+          rotationQueue[i],
+        ];
+      }
+    } else {
+      rotationQueue = cleaned;
+    }
   }
   let next = rotationQueue.shift() || available[0];
   const channelId = cfg?.channelId;
