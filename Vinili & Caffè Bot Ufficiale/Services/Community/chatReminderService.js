@@ -6,9 +6,12 @@ const DEFAULT_REMINDER_CHANNEL_ID = IDs.channels.chat
 const DEFAULT_TIME_ZONE = "Europe/Rome";
 const DEFAULT_START_HOUR = 9;
 const DEFAULT_END_HOUR = 21;
+/** Slot fissi ogni 45 min, 1 minuto dopo il primo minigame della finestra (es. 9:01, 9:46, 10:31, 11:16…). */
+const REMINDER_FIXED_INTERVAL_MINUTES = 45;
 const DEFAULT_MIN_GAP_MS = 30 * 60 * 1000;
 const scheduledHours = new Map();
 const scheduledTimeouts = new Map();
+let lastReminderSlotKey = null;
 let rotationDate = null;
 let rotationQueue = [];
 let rotationGuildId = null;
@@ -216,6 +219,34 @@ function getHourKey(parts) {
   return `${parts.year}-${parts.month}-${parts.day}_${parts.hour}`;
 }
 
+/** True se (hour, minute) è uno slot fisso reminder (ogni 45 min da startHour:01). */
+function isReminderFixedSlot(parts, client) {
+  const { hour, minute } = parts;
+  const start = getStartHour(client);
+  const end = getEndHour(client);
+  if (hour < start || hour > end) return false;
+  const totalMins = hour * 60 + minute;
+  const startMins = start * 60 + 1;
+  if (totalMins < startMins) return false;
+  return (totalMins - startMins) % REMINDER_FIXED_INTERVAL_MINUTES === 0;
+}
+
+/** Restituisce la fascia oraria per l’embed (es. "9:00 - 9:30"). */
+function getFasciaOrariaLabel(parts, client) {
+  const h = parts.hour;
+  const m = parts.minute;
+  const pad = (n) => String(n).padStart(2, "0");
+  const start = `${pad(h)}:${pad(m)}`;
+  let endH = h;
+  let endM = m + REMINDER_FIXED_INTERVAL_MINUTES;
+  if (endM >= 60) {
+    endM -= 60;
+    endH += 1;
+  }
+  const end = `${pad(endH)}:${pad(endM)}`;
+  return `${start} - ${end}`;
+}
+
 function rand(max) {
   if (max <= 0) return 0;
   return randomInt(0, max + 1);
@@ -315,6 +346,20 @@ async function sendReminder(client, scheduleId, kind = "first") {
   }
 }
 
+/** Invia un reminder allo slot fisso (ogni 30 min) con fascia oraria nell’embed. */
+async function sendReminderAtFixedSlot(client, parts, slotKey) {
+  const channelId = getReminderChannelId(client);
+  const channel = client.channels.cache.get(channelId) || (await client.channels.fetch(channelId).catch(() => null));
+  if (!channel) return;
+  const embed = await nextReminderEmbed(parts);
+  const fasciaOraria = getFasciaOrariaLabel(parts, client);
+  embed.setFooter({ text: `🕐 Fascia oraria: ${fasciaOraria}` });
+  await channel.send({ embeds: [embed] }).catch(() => { });
+  lastSentAt = Date.now();
+  lastReminderSlotKey = slotKey;
+  await saveRotationState();
+}
+
 async function scheduleForHour(client, parts, guildId) {
   cleanupScheduledHourKeys();
   const key = getHourKey(parts);
@@ -379,33 +424,22 @@ async function restoreSchedules(client) {
   for (const item of due) {
     await sendReminder(client, item._id, item.kind || "first").catch(() => { });
   }
-  let upcoming = await ChatReminderSchedule.find({
-    fireAt: { $gt: now },
-  }).lean();
-  upcoming = Array.isArray(upcoming)
-    ? upcoming.sort((a, b) => new Date(a.fireAt) - new Date(b.fireAt))
-    : [];
-  const minGapMs = getMinGapMs(client);
-  let lastTime = lastSentAt ? new Date(lastSentAt).getTime() : null;
-  for (const item of upcoming) {
-    let fireAt = new Date(item.fireAt).getTime();
-    if (lastTime && fireAt - lastTime < minGapMs) {
-      fireAt = lastTime + minGapMs;
-      await ChatReminderSchedule.updateOne(
-        { _id: item._id },
-        { $set: { fireAt: new Date(fireAt) } },
-      ).catch(() => { });
-    }
-    const delay = Math.max(1, fireAt - Date.now());
-    const timeout = setTimeout(() => { scheduledTimeouts.delete(String(item._id)); sendReminder(client, item._id, item.kind || "first").catch(() => { }); }, delay); timeout.unref?.();
-    attachScheduleTimeout(item._id, timeout);
-    lastTime = fireAt;
-  }
+  await ChatReminderSchedule.deleteMany({ fireAt: { $gt: now } }).catch(() => { });
 }
 
 function startHourlyReminderLoop(client) {
   if (hourlyLoopHandle) return hourlyLoopHandle;
-  const tick = async () => { cleanupScheduledHourKeys(); const parts = getRomeParts(new Date(), client); if (parts.hour < getStartHour(client) || parts.hour > getEndHour(client)) return; const guildId = client.guilds.cache.first()?.id || null; if (!guildId) return; await scheduleForHour(client, parts, guildId); };
+  const tick = async () => {
+    cleanupScheduledHourKeys();
+    const parts = getRomeParts(new Date(), client);
+    if (!isReminderFixedSlot(parts, client)) return;
+    const slotKey = `${getDateKey(parts)}_${parts.hour}_${parts.minute}`;
+    if (slotKey === lastReminderSlotKey) return;
+    const guildId = client.guilds.cache.first()?.id || null;
+    if (!guildId) return;
+    await loadRotationState(guildId, getDateKey(parts));
+    await sendReminderAtFixedSlot(client, parts, slotKey);
+  };
   restoreSchedules(client).catch(() => { });
   tick();
   hourlyLoopHandle = setInterval(tick, 60 * 1000);

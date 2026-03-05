@@ -4,6 +4,7 @@ const IDs = require("../Utils/Config/ids");
 const { getNoDmSet } = require("../Utils/noDmList");
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
 const{scheduleMemberCounterRefresh,updateMemberCounterNow,}=require("../Utils/Community/memberCounterUtils");
+const{scheduleStaffListRefresh,memberHasStaffRole}=require("../Utils/Community/staffListUtils");
 const{processJoinRaidForMember,registerJoinRaidSecuritySignal,}=require("../Services/Moderation/joinRaidService");
 const{getJoinGateConfigSnapshot,}=require("../Services/Moderation/joinGateService");
 const { getSecurityLockState } = require("../Services/Moderation/securityOrchestratorService");
@@ -1202,6 +1203,10 @@ module.exports = {
       await maybeSendInviteNearRewardReminder(member, info);
       await maybeSendInviteReward(member, info);
       await announceInviteInfo(member, welcomeChannel, info);
+
+      if (member.guild?.id === IDs.guilds.main && member.client && memberHasStaffRole(member)) {
+        scheduleStaffListRefresh(member.client, member.guild.id);
+      }
     } catch (error) {
       global.logger?.error?.("[guildMemberAdd] failed:", error);
     }

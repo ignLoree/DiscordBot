@@ -491,50 +491,58 @@ function sponsorMaybeAttachment(filePath, fileName, logLabel) {
   }
 }
 
-async function runSponsorGuildTagPanels(client) {
+async function processOneGuildTagPanel(client, guildId, config) {
   const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
   const { PersonalityPanel } = require("../Schemas/Community/communitySchemas");
+
+  const guild = await sponsorFetchGuild(client, guildId);
+  if (!guild) {
+    global.logger.warn("[SPONSOR GUILD TAG] Guild not found:", guildId);
+    return;
+  }
+  const channel = await sponsorFetchTextChannel(guild, config.channelId);
+  if (!channel) {
+    global.logger.warn("[SPONSOR GUILD TAG] Channel not found:", guildId, config.channelId);
+    return;
+  }
+  let boosterRoleMention = "`Server Booster`";
+  if (config.boosterRoleId) {
+    const role = await guild.roles.fetch(config.boosterRoleId).catch(() => null);
+    if (role) boosterRoleMention = `<@&${role.id}>`;
+  }
+  const embed = buildSponsorTagEmbed(config, boosterRoleMention);
+  const attachment = sponsorMaybeAttachment(TAG_IMAGE_PATH, TAG_IMAGE_NAME, "SPONSOR GUILD TAG");
+  if (attachment) embed.setImage(`attachment://${TAG_IMAGE_NAME}`);
+
+  const panelDoc = await sponsorGetOrCreatePanelDoc(guildId, config.channelId).catch((err) => { global.logger.error("[SPONSOR GUILD TAG] Panel doc:", err); return null; });
+  if (!panelDoc) return;
+
+  // Riuso messageId da DB per edit diretto senza fetch storia
+  const messagePayload = { messageId: panelDoc.infoMessageId1 || null, embeds: [embed], components: [], ...(attachment ? { files: [attachment], attachmentName: TAG_IMAGE_NAME } : {}), };
+  const sentMessage = await upsertPanelMessage(channel, client, messagePayload);
+  if (sentMessage?.id) {
+    await PersonalityPanel.updateOne(
+      { guildId, channelId: config.channelId },
+      { $set: { infoMessageId1: sentMessage.id } },
+    ).catch(() => { });
+  } else if (messagePayload.messageId) {
+    await PersonalityPanel.updateOne(
+      { guildId, channelId: config.channelId },
+      { $set: { infoMessageId1: null } },
+    ).catch(() => { });
+  }
+}
+
+async function runSponsorGuildTagPanels(client) {
   const guildTagConfig = IDs.sponsorGuildTagConfig || {};
-  for (const [guildId, config] of Object.entries(guildTagConfig)) {
-    try {
-      const guild = await sponsorFetchGuild(client, guildId);
-      if (!guild) {
-        global.logger.warn("[SPONSOR GUILD TAG] Guild not found:", guildId);
-        continue;
-      }
-      const channel = await sponsorFetchTextChannel(guild, config.channelId);
-      if (!channel) {
-        global.logger.warn("[SPONSOR GUILD TAG] Channel not found:", guildId, config.channelId);
-        continue;
-      }
-      let boosterRoleMention = "`Server Booster`";
-      if (config.boosterRoleId) {
-        const role = await guild.roles.fetch(config.boosterRoleId).catch(() => null);
-        if (role) boosterRoleMention = `<@&${role.id}>`;
-      }
-      const embed = buildSponsorTagEmbed(config, boosterRoleMention);
-      const attachment = sponsorMaybeAttachment(TAG_IMAGE_PATH, TAG_IMAGE_NAME, "SPONSOR GUILD TAG");
-      if (attachment) embed.setImage(`attachment://${TAG_IMAGE_NAME}`);
-
-      const panelDoc = await sponsorGetOrCreatePanelDoc(guildId, config.channelId).catch((err) => { global.logger.error("[SPONSOR GUILD TAG] Panel doc:", err); return null; });
-      if (!panelDoc) continue;
-
-      const messagePayload = { messageId: panelDoc.infoMessageId1 || null, embeds: [embed], components: [], ...(attachment ? { files: [attachment], attachmentName: TAG_IMAGE_NAME } : {}), };
-      const sentMessage = await upsertPanelMessage(channel, client, messagePayload);
-      if (sentMessage?.id) {
-        await PersonalityPanel.updateOne(
-          { guildId, channelId: config.channelId },
-          { $set: { infoMessageId1: sentMessage.id } },
-        ).catch(() => { });
-      } else if (messagePayload.messageId) {
-        await PersonalityPanel.updateOne(
-          { guildId, channelId: config.channelId },
-          { $set: { infoMessageId1: null } },
-        ).catch(() => { });
-      }
-    } catch (err) {
-      global.logger.error("[SPONSOR GUILD TAG] Error guild " + guildId, err);
-    }
+  const entries = Object.entries(guildTagConfig);
+  for (let i = 0; i < entries.length; i += SPONSOR_BATCH_SIZE) {
+    const batch = entries.slice(i, i + SPONSOR_BATCH_SIZE);
+    await Promise.all(
+      batch.map(([guildId, config]) =>
+        processOneGuildTagPanel(client, guildId, config).catch((err) => global.logger.error("[SPONSOR GUILD TAG] Error guild " + guildId, err)),
+      ),
+    );
   }
 }
 
@@ -548,11 +556,49 @@ async function runSponsorPanel(client) {
   }
 }
 
-async function runSponsorVerifyPanels(client) {
+async function processOneVerifyPanel(client, guildId, verifyChannelIds) {
   const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
   const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
   const { PersonalityPanel } = require("../Schemas/Community/communitySchemas");
 
+  const guild = await sponsorFetchGuild(client, guildId);
+  if (!guild) {
+    global.logger.warn("[SPONSOR] Verify panel: guild non trovata:", guildId);
+    return 0;
+  }
+  await sponsorEnsureChannelsFetched(guild);
+  let channel = await sponsorFetchTextChannel(guild, verifyChannelIds[guildId]);
+  if (!channel) channel = guild.channels.cache.find((ch) => ch.name?.toLowerCase().includes("start")) || null;
+  if (!channel?.isTextBased?.()) {
+    global.logger.warn("[SPONSOR] Verify panel: canale non trovato in guild " + guild.name + " (" + guildId + ").");
+    return 0;
+  }
+
+  const color = client.config?.embedVerify || SPONSOR_PANEL_COLOR;
+  const verifyEmbed = new EmbedBuilder().setColor(color).setTitle("<:verification:1461725843125571758> **`Verification Required!`**").setDescription("<:space:1461733157840621608> <:alarm:1461725841451909183> **Per accedere a `" + (guild.name || "this server") + "` devi prima verificarti.**\n" + "<:space:1461733157840621608><:space:1461733157840621608> <:rightSort:1461726104422453298> Clicca il pulsante **Verify** qui sotto per iniziare.",);
+  const verifyRow = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("verify_start").setLabel("Verify").setStyle(ButtonStyle.Success),);
+
+  const panelDoc = await sponsorGetOrCreatePanelDoc(guildId, channel.id).catch(() => null);
+  if (!panelDoc) return 0;
+
+  // Riuso messageId da DB per evitare fetch storia messaggi (edit diretto)
+  const verifyPayload = { messageId: panelDoc.verifyPanelMessageId || null, embeds: [verifyEmbed], components: [verifyRow], };
+  const panelMessage = await upsertPanelMessage(channel, client, verifyPayload);
+  if (panelMessage?.id) {
+    await PersonalityPanel.updateOne(
+      { guildId, channelId: channel.id },
+      { $set: { verifyPanelMessageId: panelMessage.id } },
+    ).catch(() => { });
+  } else if (verifyPayload.messageId) {
+    await PersonalityPanel.updateOne(
+      { guildId, channelId: channel.id },
+      { $set: { verifyPanelMessageId: null } },
+    ).catch(() => { });
+  }
+  return panelMessage?.id ? 1 : 0;
+}
+
+async function runSponsorVerifyPanels(client) {
   let sponsorGuildIds = Array.isArray(client.config?.sponsorGuildIds) ? [...client.config.sponsorGuildIds] : [];
   const verifyChannelIds = client.config?.sponsorVerifyChannelIds || {};
   if (sponsorGuildIds.length === 0) sponsorGuildIds = Object.keys(verifyChannelIds);
@@ -562,90 +608,65 @@ async function runSponsorVerifyPanels(client) {
   }
 
   let sent = 0;
-  for (const guildId of sponsorGuildIds) {
-    try {
-      const guild = await sponsorFetchGuild(client, guildId);
-      if (!guild) {
-        global.logger.warn("[SPONSOR] Verify panel: guild non trovata:", guildId);
-        continue;
-      }
-      await sponsorEnsureChannelsFetched(guild);
-      let channel = await sponsorFetchTextChannel(guild, verifyChannelIds[guildId]);
-      if (!channel) {
-        channel = guild.channels.cache.find((ch) => ch.name?.toLowerCase().includes("start")) || null;
-      }
-      if (!channel?.isTextBased?.()) {
-        global.logger.warn("[SPONSOR] Verify panel: canale non trovato in guild " + guild.name + " (" + guildId + ").");
-        continue;
-      }
-
-      const color = client.config?.embedVerify || SPONSOR_PANEL_COLOR;
-      const verifyEmbed = new EmbedBuilder().setColor(color).setTitle("<:verification:1461725843125571758> **`Verification Required!`**").setDescription("<:space:1461733157840621608> <:alarm:1461725841451909183> **Per accedere a `" + (guild.name || "this server") + "` devi prima verificarti.**\n" + "<:space:1461733157840621608><:space:1461733157840621608> <:rightSort:1461726104422453298> Clicca il pulsante **Verify** qui sotto per iniziare.",);
-
-      const verifyRow = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("verify_start").setLabel("Verify").setStyle(ButtonStyle.Success),);
-
-      const panelDoc = await sponsorGetOrCreatePanelDoc(guildId, channel.id).catch(() => null);
-      if (!panelDoc) continue;
-
-      const verifyPayload = { messageId: panelDoc.verifyPanelMessageId || null, embeds: [verifyEmbed], components: [verifyRow], };
-      const panelMessage = await upsertPanelMessage(channel, client, verifyPayload);
-      if (panelMessage?.id) {
-        await PersonalityPanel.updateOne(
-          { guildId, channelId: channel.id },
-          { $set: { verifyPanelMessageId: panelMessage.id } },
-        ).catch(() => { });
-      } else if (verifyPayload.messageId) {
-        await PersonalityPanel.updateOne(
-          { guildId, channelId: channel.id },
-          { $set: { verifyPanelMessageId: null } },
-        ).catch(() => { });
-      }
-      if (!panelMessage?.id) continue;
-      sent++;
-    } catch (err) {
-      global.logger.error("[SPONSOR] runSponsorVerifyPanels guild " + guildId + ":", err?.message || err);
-    }
+  for (let i = 0; i < sponsorGuildIds.length; i += SPONSOR_BATCH_SIZE) {
+    const batch = sponsorGuildIds.slice(i, i + SPONSOR_BATCH_SIZE);
+    const results = await Promise.all(
+      batch.map((guildId) =>
+        processOneVerifyPanel(client, guildId, verifyChannelIds).catch((err) => {
+          global.logger.error("[SPONSOR] runSponsorVerifyPanels guild " + guildId + ":", err?.message || err);
+          return 0;
+        }),
+      ),
+    );
+    sent += results.reduce((a, n) => a + n, 0);
   }
   return sent;
 }
 
-async function runSponsorTicketPanels(client) {
+async function processOneSponsorTicketPanel(client, guildId, config) {
   const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
   const { PersonalityPanel } = require("../Schemas/Community/communitySchemas");
 
+  const guild = await sponsorFetchGuild(client, guildId);
+  if (!guild) return;
+  await sponsorEnsureChannelsFetched(guild);
+  const guildedRoleMention = await sponsorResolveRoleMention(guild, config.guildedRoleId, "`Guilded`");
+
+  let channel = await sponsorFetchTextChannel(guild, config.ticketChannelId);
+  if (!channel) channel = await sponsorFindFallbackTicketChannel(guild);
+  if (!channel?.isTextBased?.()) return;
+
+  const attachment = sponsorMaybeAttachment(TICKET_IMAGE_PATH, TICKET_IMAGE_NAME, "SPONSOR TICKET");
+  const embed = buildSponsorTicketEmbed(config, guildedRoleMention);
+  const ticketRow = buildSponsorTicketMenuRow();
+
+  const panelDoc = await sponsorGetOrCreatePanelDoc(guildId, channel.id).catch(() => null);
+  // Riuso messageId da DB per edit diretto senza fetch storia
+  const ticketPayload = { messageId: panelDoc?.sponsorTicketPanelMessageId || null, embeds: [embed], components: [ticketRow], ...(attachment ? { files: [attachment], attachmentName: TICKET_IMAGE_NAME } : {}), };
+  const sentMessage = await upsertPanelMessage(channel, client, ticketPayload);
+  if (sentMessage?.id) {
+    await PersonalityPanel.updateOne(
+      { guildId, channelId: channel.id },
+      { $set: { sponsorTicketPanelMessageId: sentMessage.id } },
+    ).catch(() => { });
+  } else if (ticketPayload.messageId) {
+    await PersonalityPanel.updateOne(
+      { guildId, channelId: channel.id },
+      { $set: { sponsorTicketPanelMessageId: null } },
+    ).catch(() => { });
+  }
+}
+
+async function runSponsorTicketPanels(client) {
   const ticketConfig = IDs.sponsorTicketConfig || {};
-  for (const [guildId, config] of Object.entries(ticketConfig)) {
-    try {
-      const guild = await sponsorFetchGuild(client, guildId);
-      if (!guild) continue;
-      await sponsorEnsureChannelsFetched(guild);
-      const guildedRoleMention = await sponsorResolveRoleMention(guild, config.guildedRoleId, "`Guilded`");
-
-      let channel = await sponsorFetchTextChannel(guild, config.ticketChannelId);
-      if (!channel) channel = await sponsorFindFallbackTicketChannel(guild);
-      if (!channel?.isTextBased?.()) continue;
-
-      const attachment = sponsorMaybeAttachment(TICKET_IMAGE_PATH, TICKET_IMAGE_NAME, "SPONSOR TICKET");
-      const embed = buildSponsorTicketEmbed(config, guildedRoleMention);
-      const ticketRow = buildSponsorTicketMenuRow();
-
-      const panelDoc = await sponsorGetOrCreatePanelDoc(guildId, channel.id).catch(() => null);
-      const ticketPayload = { messageId: panelDoc?.sponsorTicketPanelMessageId || null, embeds: [embed], components: [ticketRow], ...(attachment ? { files: [attachment], attachmentName: TICKET_IMAGE_NAME } : {}), };
-      const sentMessage = await upsertPanelMessage(channel, client, ticketPayload);
-      if (sentMessage?.id) {
-        await PersonalityPanel.updateOne(
-          { guildId, channelId: channel.id },
-          { $set: { sponsorTicketPanelMessageId: sentMessage.id } },
-        ).catch(() => { });
-      } else if (ticketPayload.messageId) {
-        await PersonalityPanel.updateOne(
-          { guildId, channelId: channel.id },
-          { $set: { sponsorTicketPanelMessageId: null } },
-        ).catch(() => { });
-      }
-    } catch (err) {
-      global.logger.error("[SPONSOR TICKET] Error guild " + guildId, err);
-    }
+  const entries = Object.entries(ticketConfig);
+  for (let i = 0; i < entries.length; i += SPONSOR_BATCH_SIZE) {
+    const batch = entries.slice(i, i + SPONSOR_BATCH_SIZE);
+    await Promise.all(
+      batch.map(([guildId, config]) =>
+        processOneSponsorTicketPanel(client, guildId, config).catch((err) => global.logger.error("[SPONSOR TICKET] Error guild " + guildId, err)),
+      ),
+    );
   }
 }
 
@@ -809,8 +830,9 @@ async function runEmbedOnlySections(client) {
   );
 }
 
-const WARMUP_SPONSOR_DELAY_MS = 3000;
-const WARMUP_SPONSOR_BETWEEN_MS = 300;
+const WARMUP_SPONSOR_DELAY_MS = 500;
+const WARMUP_SPONSOR_BETWEEN_MS = 100;
+const SPONSOR_BATCH_SIZE = 6;
 
 async function warmupSponsorGuilds(client) {
   const startedAt = Date.now();
@@ -821,15 +843,13 @@ async function warmupSponsorGuilds(client) {
     const timer = setTimeout(r, WARMUP_SPONSOR_DELAY_MS);
     timer.unref?.();
   });
-  for (const guildId of sponsorIds) {
-    try {
-      await client.guilds.fetch(guildId).catch(() => null);
-      await new Promise((r) => {
-        const timer = setTimeout(r, WARMUP_SPONSOR_BETWEEN_MS);
-        timer.unref?.();
-      });
-    } catch (err) {
-      global.logger.warn("[SPONSOR] Warmup guild " + guildId + ":", err?.message || err);
+  for (let i = 0; i < sponsorIds.length; i += SPONSOR_BATCH_SIZE) {
+    const batch = sponsorIds.slice(i, i + SPONSOR_BATCH_SIZE);
+    await Promise.all(
+      batch.map((guildId) => client.guilds.fetch(guildId).catch((err) => { global.logger.warn("[SPONSOR] Warmup guild " + guildId + ":", err?.message || err); return null; })),
+    );
+    if (i + SPONSOR_BATCH_SIZE < sponsorIds.length) {
+      await new Promise((r) => { const t = setTimeout(r, WARMUP_SPONSOR_BETWEEN_MS); t.unref?.(); });
     }
   }
   global.logger?.info?.(

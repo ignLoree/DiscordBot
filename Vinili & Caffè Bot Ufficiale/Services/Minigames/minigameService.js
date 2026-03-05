@@ -1,5 +1,5 @@
 const axios = require("axios");
-const { createCanvas } = require("canvas");
+const { createCanvas, loadImage } = require("canvas");
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField, AttachmentBuilder, } = require("discord.js");
 const { MinigameUser, MinigameState, MinigameRotation, } = require("../../Schemas/Minigames/minigameSchema");
 const { addExpWithLevel, shouldIgnoreExpForMember } = require("../Community/expService");
@@ -109,6 +109,53 @@ async function translateToItalian(text, cfg = {}) {
 
 const HANGMAN_WORDS = ["computer", "tastiera", "discord", "capitale", "bandiera", "calciatore", "canzone", "album", "regione", "patente",];
 const ITALIAN_GK_DEFAULT_CATEGORIES = ["cultura-generale", "storia", "geografia", "scienza", "arte", "musica", "sport", "letteratura", "cinema", "tecnologia",];
+
+/** Fuso orario per gli slot fissi minigame (8:00–23:45 ogni 15 min) */
+const MINIGAME_FIXED_TIMEZONE = "Europe/Rome";
+const MINIGAME_FIRST_HOUR = 8;
+const MINIGAME_LAST_HOUR = 23;
+const MINIGAME_LAST_MINUTE = 45;
+const MINIGAME_SLOT_MINUTES = [0, 15, 30, 45];
+
+let lastMinigameSlotKey = null;
+
+function getMinigameTimeZone(client) {
+  return client?.config?.minigames?.timeZone || MINIGAME_FIXED_TIMEZONE;
+}
+
+function getMinigameRomeTime(date, client) {
+  const tz = client ? (client?.config?.minigames?.timeZone || MINIGAME_FIXED_TIMEZONE) : MINIGAME_FIXED_TIMEZONE;
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  const parts = formatter.formatToParts(date);
+  const map = {};
+  for (const p of parts) {
+    if (p.type !== "literal") map[p.type] = p.value;
+  }
+  return {
+    year: Number(map.year),
+    month: Number(map.month),
+    day: Number(map.day),
+    hour: Number(map.hour),
+    minute: Number(map.minute),
+    second: Number(map.second),
+  };
+}
+
+/** True se l’orario Rome (hour, minute) è uno slot fissato (8:00, 8:15, … 23:45). */
+function isMinigameFixedSlot(rome) {
+  const { hour, minute } = rome;
+  if (hour < MINIGAME_FIRST_HOUR || hour > MINIGAME_LAST_HOUR) return false;
+  if (hour === MINIGAME_LAST_HOUR && minute > MINIGAME_LAST_MINUTE) return false;
+  return MINIGAME_SLOT_MINUTES.includes(minute);
+}
 
 function getConfig(client) {
   const cfg = client?.config?.minigames || null;
@@ -256,6 +303,10 @@ function normalizeCountryName(raw) {
     .trim();
 }
 
+function compactNoSpaces(s) {
+  return String(s || "").replace(/\s+/g, "").trim();
+}
+
 function normalizeUserAnswerText(raw) {
   return String(raw || "")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
@@ -272,6 +323,13 @@ function isValidWord(word) {
   return /^\p{L}+$/u.test(word);
 }
 
+/** Per "Indovina la parola": accetta parole 4-10 lettere per avere abbastanza parole dal dizionario. */
+function isValidGuessWord(word) {
+  if (!word) return false;
+  if (word.length < 4 || word.length > 10) return false;
+  return /^\p{L}+$/u.test(word);
+}
+
 function extractWordListFromApiPayload(payload) {
   if (Array.isArray(payload)) return payload;
   if (Array.isArray(payload?.words)) return payload.words;
@@ -279,6 +337,10 @@ function extractWordListFromApiPayload(payload) {
   if (typeof payload?.word === "string") return [payload.word];
   if (typeof payload?.text === "string") return [payload.text];
   if (typeof payload?.answer === "string") return [payload.answer];
+  if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+    const keys = Object.keys(payload).filter((k) => typeof k === "string" && k.trim().length >= 2);
+    if (keys.length) return keys;
+  }
   return [];
 }
 
@@ -296,7 +358,7 @@ async function loadWordList(cfg) {
     } catch { }
   }
 
-  const filtered = list.map(normalizeWord).filter(isValidWord);
+  const filtered = list.map(normalizeWord).filter(isValidGuessWord);
 
   cachedWords = filtered;
   cachedWordsAt = now;
@@ -629,12 +691,17 @@ async function loadFootballTeamsFromApi(cfg) {
   return cachedTeams;
 }
 
+const DEFAULT_ONLY_FAMOUS_MIN_FANS = 50000;
+const FALLBACK_MIN_FANS = 20000;
+const MIN_SINGERS_AFTER_FILTER = 15;
+
 async function loadSingersFromApi(cfg) {
   const now = Date.now();
   if (cachedSingers && now - cachedSingersAt < SINGER_CACHE_TTL_MS)
     return cachedSingers;
 
   const apiUrl = cfg?.guessSinger?.apiUrl || "https://api.deezer.com/chart/0/artists?limit=100";
+  const minFans = Number(cfg?.guessSinger?.onlyFamousMinFans ?? DEFAULT_ONLY_FAMOUS_MIN_FANS) || 0;
   const out = [];
   try {
     const res = await axios.get(apiUrl, { timeout: 15000 });
@@ -643,7 +710,20 @@ async function loadSingersFromApi(cfg) {
       const name = artist?.name;
       const image = pickBestSingerImage(artist);
       if (!name) continue;
+      const fans = Number(artist?.nb_fan ?? 0);
+      if (minFans > 0 && fans < minFans) continue;
       out.push({ name, answers: buildAliases([name]), image });
+    }
+    if (minFans > 0 && out.length < MIN_SINGERS_AFTER_FILTER) {
+      out.length = 0;
+      const fallback = Number(cfg?.guessSinger?.fallbackMinFans ?? FALLBACK_MIN_FANS) || FALLBACK_MIN_FANS;
+      for (const artist of list) {
+        const name = artist?.name;
+        const image = pickBestSingerImage(artist);
+        if (!name) continue;
+        if (Number(artist?.nb_fan ?? 0) < fallback) continue;
+        out.push({ name, answers: buildAliases([name]), image });
+      }
     }
   } catch { }
 
@@ -702,6 +782,13 @@ async function loadAlbumsFromApi(cfg) {
   if (cachedAlbums && now - cachedAlbumsAt < ALBUM_CACHE_TTL_MS)
     return cachedAlbums;
 
+  const onlyFamousArtists = cfg?.guessAlbum?.onlyFamousArtists !== false;
+  let famousArtistNames = null;
+  if (onlyFamousArtists) {
+    const singers = await loadSingersFromApi(cfg);
+    famousArtistNames = new Set(singers.map((s) => normalizeCountryName(s?.name)).filter(Boolean));
+  }
+
   const apiUrl = cfg?.guessAlbum?.apiUrl || "https://api.deezer.com/chart/0/albums?limit=100";
   const out = [];
   try {
@@ -712,6 +799,8 @@ async function loadAlbumsFromApi(cfg) {
       const artist = album?.artist?.name || "Artista sconosciuto";
       const image = album?.cover_xl || album?.cover_big || album?.cover_medium || album?.cover || null;
       if (!title || !image) continue;
+      if (onlyFamousArtists && famousArtistNames && !famousArtistNames.has(normalizeCountryName(artist)))
+        continue;
       out.push({ album: title, artist, answers: buildAliases([title]), image });
     }
   } catch { }
@@ -1504,7 +1593,7 @@ function buildPromptImageAttachment(title, lines = [], fileBaseName = "minigame"
       ctx.textBaseline = "top";
       ctx.fillStyle = "#6f4e37";
       ctx.font = "800 76px Sans";
-      ctx.fillText("Cultura generale", width / 2, cardY + 52);
+      ctx.fillText("Cultura generale", width / 2, cardY + 100);
 
       const question = polishItalianQuestionText(String(lines[0] || "").trim() || "Domanda");
       const usableWidth = cardW - 150;
@@ -1518,7 +1607,7 @@ function buildPromptImageAttachment(title, lines = [], fileBaseName = "minigame"
 
       const lineHeight = Math.round(questionFont * 1.22);
       const totalH = questionLines.length * lineHeight;
-      let y = Math.round(cardY + 180 + Math.max(0, (cardH - 280 - totalH) / 2));
+      let y = Math.round(cardY + 200 + Math.max(0, (cardH - 300 - totalH) / 2));
 
       ctx.fillStyle = "#2c2419";
       ctx.font = `700 ${questionFont}px Sans`;
@@ -1657,6 +1746,12 @@ function isNearTextGuess(rawGuess, rawAnswers, options = {}) {
   const answers = Array.isArray(rawAnswers) ? rawAnswers.map((x) => normalizeCountryName(x)).filter(Boolean) : [normalizeCountryName(rawAnswers)].filter(Boolean);
   if (!answers.length) return false;
 
+  const compactGuess = compactNoSpaces(guess);
+  for (const answer of answers) {
+    if (!answer) continue;
+    if (guess === answer || (compactGuess && compactGuess === compactNoSpaces(answer))) return true;
+  }
+
   const maxAbs = Number(options?.maxDistance || 2);
   const maxRatio = Number(options?.maxRatio || 0.28);
   for (const answer of answers) {
@@ -1681,9 +1776,11 @@ function isStrictAliasGuessCorrect(
 
   const uniqueAnswers = Array.from(new Set(answers));
   const paddedGuess = ` ${guess} `;
+  const compactGuess = compactNoSpaces(guess);
 
   for (const answer of uniqueAnswers) {
     if (guess === answer) return true;
+    if (compactGuess && compactGuess === compactNoSpaces(answer)) return true;
     if (paddedGuess.includes(` ${answer} `)) return true;
   }
   return false;
@@ -1709,11 +1806,13 @@ function isLooseAliasGuessCorrect(
   const minTokenLength = Number(options?.minTokenLength || 3);
   const singleTokenMinLength = Number(options?.singleTokenMinLength || 5);
   const paddedGuess = ` ${guess} `;
+  const compactGuess = compactNoSpaces(guess);
 
   if (guess.length >= minGuessLength) {
     for (const answer of uniqueAnswers) {
       const paddedAnswer = ` ${answer} `;
       if (paddedAnswer.includes(paddedGuess)) return true;
+      if (compactGuess && compactGuess === compactNoSpaces(answer)) return true;
     }
   }
 
@@ -1743,7 +1842,11 @@ function isLooseAliasGuessCorrect(
 
 function extractWordGuessCandidates(raw) {
   const lower = String(raw || "").toLowerCase();
-  const tokens = lower.split(/[^a-zà-öø-ÿ]+/i).map((t) => t.trim()).filter(Boolean).filter((t) => t.length >= 5 && t.length <= 6);
+  const tokens = lower
+    .split(/[^a-zà-öø-ÿ]+/i)
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .filter((t) => t.length >= 4 && t.length <= 10);
   return Array.from(new Set(tokens));
 }
 
@@ -1756,10 +1859,30 @@ function buildPlayerAnswerAliases(name, aliases = []) {
   return Array.from(out.values());
 }
 
+const PLAYER_RETIRED_PATTERNS = [
+  /\s*_Retired\s*$/i,
+  /\s*_retired\s*$/i,
+  /\s*\(Retired\)\s*$/i,
+  /\s*\(retired\)\s*$/i,
+  /\s*-\s*Retired\s*$/i,
+  /\s*Retired\s*$/i,
+];
+const PLAYER_RETIRED_ITALIAN = " (Ritirato)";
+
+function normalizePlayerDisplayName(str) {
+  if (!str || typeof str !== "string") return str;
+  let out = String(str).trim();
+  for (const re of PLAYER_RETIRED_PATTERNS) {
+    out = out.replace(re, PLAYER_RETIRED_ITALIAN);
+  }
+  return out.trim() || str;
+}
+
 function buildPlayerAliases(player) {
   const aliases = new Set();
   const add = (value) => { const normalized = normalizePlayerGuess(value); if (normalized) aliases.add(normalized); };
   add(player?.strPlayer);
+  add(normalizePlayerDisplayName(player?.strPlayer));
   add(player?.strKnownAs);
   add(player?.strNickname);
   return Array.from(aliases.values());
@@ -1859,7 +1982,7 @@ function buildPlayerInfoFromApiPlayer(player) {
   const image = player.strThumb || player.strCutout || player.strRender || null;
   if (!image) return null;
   return {
-    name: player.strPlayer,
+    name: normalizePlayerDisplayName(player.strPlayer),
     team: player.strTeam || "Squadra sconosciuta",
     nationality: player.strNationality || "Nazionalità sconosciuta",
     image,
@@ -1916,7 +2039,7 @@ async function fetchPlayerInfo(cfg, name) {
     if (!player?.strPlayer) return null;
     if (!player.strThumb && !player.strCutout) return null;
     return {
-      name: player.strPlayer,
+      name: normalizePlayerDisplayName(player.strPlayer),
       team: player.strTeam || "Squadra sconosciuta",
       nationality: player.strNationality || "Nazionalità sconosciuta",
       image: player.strThumb || player.strCutout || null,
@@ -1947,7 +2070,7 @@ async function fetchPlayerFromRandomLetter(cfg) {
       if (!player?.strPlayer) continue;
       if (!player.strThumb && !player.strCutout) continue;
       return {
-        name: player.strPlayer,
+        name: normalizePlayerDisplayName(player.strPlayer),
         team: player.strTeam || "Squadra sconosciuta",
         nationality: player.strNationality || "Nazionalità sconosciuta",
         image: player.strThumb || player.strCutout || null,
@@ -1991,7 +2114,7 @@ async function fetchLeagueFamousPlayer(cfg) {
 async function fetchRandomSong(cfg) {
   const apiBase = cfg?.guessSong?.apiUrl;
   if (!apiBase) return null;
-  const popularTerms = Array.isArray(cfg?.guessSong?.popularTerms) && cfg.guessSong.popularTerms.length ? cfg.guessSong.popularTerms : ["the weeknd", "dua lipa", "ed sheeran", "drake", "ariana grande", "post malone", "taylor swift", "billie eilish", "maneskin", "elodie", "sfera ebbasta", "thasup", "bad bunny", "eminem", "coldplay",];
+  const popularTerms = Array.isArray(cfg?.guessSong?.popularTerms) && cfg.guessSong.popularTerms.length ? cfg.guessSong.popularTerms : ["the weeknd", "dua lipa", "ed sheeran", "drake", "ariana grande", "taylor swift", "billie eilish", "maneskin", "elodie", "sfera ebbasta", "thasup", "bad bunny", "eminem", "coldplay", "maroon 5", "bruno mars", "adele", "beyoncé", "rihanna", "justin bieber", "shawn mendes", "harry styles", "the chainsmokers", "david guetta", "calvin harris", "marco mengoni", "fedez", "j-ax", "ghali", "salmo", "lazza", "madame", "rosa chemical", "tananai", "blanco", "ultimo", "lorenzo fragola", "laura pausini", "eros ramazzotti", "vasco rossi", "ligabue", "tiziano ferro", "jovanotti", "giorgia", "alessandra amoroso", "articolo 31", "gemitaiz", "caparezza",];
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const term = popularTerms[randomBetween(0, popularTerms.length - 1)];
     const url = `${apiBase}${encodeURIComponent(term)}&entity=song&limit=50`;
@@ -2030,17 +2153,28 @@ async function fetchAudioAttachment(url) {
   }
 }
 
+const POPULAR_SONG_TOP_PER_SOURCE = 50;
+const DEFAULT_POPULAR_FEEDS = [
+  "https://itunes.apple.com/it/rss/topsongs/limit=100/json",
+  "https://itunes.apple.com/us/rss/topsongs/limit=100/json",
+  "https://itunes.apple.com/gb/rss/topsongs/limit=100/json",
+  "https://itunes.apple.com/fr/rss/topsongs/limit=100/json",
+  "https://itunes.apple.com/de/rss/topsongs/limit=100/json",
+];
+
 async function loadPopularSongList(cfg) {
   const now = Date.now();
   if (cachedSongs && now - cachedSongsAt < SONG_CACHE_TTL_MS)
     return cachedSongs;
   const all = [];
+  const topN = Math.max(20, Number(cfg?.guessSong?.topPerSource ?? POPULAR_SONG_TOP_PER_SOURCE) || POPULAR_SONG_TOP_PER_SOURCE);
 
   const deezerChartUrl = cfg?.guessSong?.deezerChartUrl || "https://api.deezer.com/chart/0/tracks?limit=100";
   try {
     const chartRes = await axios.get(deezerChartUrl, { timeout: 15000 });
     const tracks = Array.isArray(chartRes?.data?.data) ? chartRes.data.data : [];
-    for (const track of tracks) {
+    const slice = tracks.slice(0, topN);
+    for (const track of slice) {
       if (!track?.title || !track?.artist?.name) continue;
       all.push({
         source: "deezer",
@@ -2059,13 +2193,14 @@ async function loadPopularSongList(cfg) {
     }
   } catch { }
 
-  const feeds = Array.isArray(cfg?.guessSong?.popularFeeds) ? cfg.guessSong.popularFeeds : ["https://itunes.apple.com/it/rss/topsongs/limit=100/json", "https://itunes.apple.com/us/rss/topsongs/limit=100/json",];
+  const feeds = Array.isArray(cfg?.guessSong?.popularFeeds)?.length ? cfg.guessSong.popularFeeds : DEFAULT_POPULAR_FEEDS;
   for (const feed of feeds) {
     if (!feed) continue;
     try {
       const res = await axios.get(feed, { timeout: 15000 });
       const entries = Array.isArray(res?.data?.feed?.entry) ? res.data.feed.entry : [];
-      for (const entry of entries) {
+      const sliceEntries = entries.slice(0, topN);
+      for (const entry of sliceEntries) {
         const id = entry?.id?.attributes?.["im:id"] || entry?.id?.attributes?.im_id;
         const title = entry?.["im:name"]?.label || entry?.title?.label;
         const artist = entry?.["im:artist"]?.label || entry?.["im:artist"]?.name;
@@ -2367,7 +2502,7 @@ function buildGuessSingerEmbed(rewardExp, durationMs, imageUrl) {
   return embed;
 }
 
-function buildGuessAlbumEmbed(rewardExp, durationMs, imageUrl) {
+function buildGuessAlbumEmbed(rewardExp, durationMs, imageUrlOrAttachment) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
@@ -2378,8 +2513,104 @@ function buildGuessAlbumEmbed(rewardExp, durationMs, imageUrl) {
       `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
     ].join("\n"),
     );
-  if (imageUrl) embed.setImage(imageUrl);
+  if (imageUrlOrAttachment) embed.setImage(imageUrlOrAttachment);
   return embed;
+}
+
+const CENSORED_ARTWORK_MAX_SIDE = 600;
+const CENSOR_BOTTOM_RATIO = 0.42;
+const CENSOR_CENTER_TOP = 0.28;
+const CENSOR_CENTER_BOTTOM = 0.72;
+const CENSOR_STEP_INTERVAL_MS = 60 * 1000;
+
+/**
+ * Carica l'artwork e applica overlay di censura con opacità variabile (0 = immagine pulita, 1 = massima censura).
+ * @param {string} imageUrl - URL dell'immagine
+ * @param {{ attachmentName?: string, overlayAlpha?: number }} [opts] - overlayAlpha in [0,1], 0 = nessun overlay
+ * @returns {Promise<{ buffer: Buffer, attachmentName: string } | null>}
+ */
+async function censorArtworkImage(imageUrl, opts = {}) {
+  if (!imageUrl || typeof imageUrl !== "string") return null;
+  const overlayAlpha = Math.max(0, Math.min(1, Number(opts?.overlayAlpha ?? 0.85)));
+  try {
+    const res = await axios.get(imageUrl, { responseType: "arraybuffer", timeout: 12000 });
+    const buf = Buffer.from(res.data);
+    if (!buf?.length) return null;
+    const img = await loadImage(buf);
+    if (!img || !img.width || !img.height) return null;
+
+    const maxSide = CENSORED_ARTWORK_MAX_SIDE;
+    let w = img.width;
+    let h = img.height;
+    if (w > maxSide || h > maxSide) {
+      if (w >= h) {
+        h = Math.round((h * maxSide) / w);
+        w = maxSide;
+      } else {
+        w = Math.round((w * maxSide) / h);
+        h = maxSide;
+      }
+    }
+
+    const canvas = createCanvas(w, h);
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, w, h);
+
+    if (overlayAlpha > 0) {
+      const alphaBottom = overlayAlpha * 0.88;
+      const alphaCenter = overlayAlpha * 0.62;
+      ctx.fillStyle = `rgba(0,0,0,${alphaBottom})`;
+      ctx.fillRect(0, h * (1 - CENSOR_BOTTOM_RATIO), w, h * CENSOR_BOTTOM_RATIO);
+      ctx.fillStyle = `rgba(0,0,0,${alphaCenter})`;
+      ctx.fillRect(0, h * CENSOR_CENTER_TOP, w, h * (CENSOR_CENTER_BOTTOM - CENSOR_CENTER_TOP));
+    }
+
+    const attachmentName = opts?.attachmentName || "minigame_artwork.png";
+    return { buffer: canvas.toBuffer("image/png"), attachmentName };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Schedula gli aggiornamenti a tempo: ogni minuto si riduce la censura, nell'ultimo minuto immagine pulita.
+ * @param {object} params - channelId, channel, gameMessageId, originalArtworkUrl, durationMs, buildEmbed, rewardExp, attachmentName, gameType
+ * @returns {NodeJS.Timeout[]} timeouts da clearare alla fine del gioco
+ */
+function scheduleArtworkCensorSteps(params) {
+  const { channelId, channel, gameMessageId, originalArtworkUrl, durationMs, buildEmbed, rewardExp, attachmentName, gameType } = params;
+  if (!channelId || !channel || !gameMessageId || !originalArtworkUrl || !buildEmbed) return [];
+  const timeouts = [];
+  const totalMinutes = Math.max(1, Math.floor(durationMs / CENSOR_STEP_INTERVAL_MS));
+  for (let step = 1; step < totalMinutes; step++) {
+    const delay = durationMs - step * CENSOR_STEP_INTERVAL_MS;
+    if (delay < 8000) continue;
+    const isLastStep = step === totalMinutes - 1;
+    const alpha = isLastStep ? 0 : Math.max(0, 0.9 - (step * 0.9) / Math.max(1, totalMinutes - 1));
+    const t = setTimeout(async () => {
+      const game = activeGames.get(channelId);
+      if (!game || (game.type !== "guessSong" && game.type !== "guessAlbum")) return;
+      try {
+        const msg = await channel.messages.fetch(gameMessageId).catch(() => null);
+        if (!msg?.editable) return;
+        if (alpha <= 0) {
+          const embed = buildEmbed(rewardExp, durationMs, originalArtworkUrl);
+          const payload = gameType === "guessSong" ? { embeds: [embed], components: msg.components, files: [] } : { embeds: [embed], files: [] };
+          await msg.edit(payload).catch(() => {});
+          return;
+        }
+        const censored = await censorArtworkImage(originalArtworkUrl, { attachmentName, overlayAlpha: alpha });
+        if (!censored) return;
+        const embed = buildEmbed(rewardExp, durationMs, `attachment://${censored.attachmentName}`);
+        const files = [new AttachmentBuilder(censored.buffer, { name: censored.attachmentName })];
+        const payload = gameType === "guessSong" ? { embeds: [embed], components: msg.components, files } : { embeds: [embed], files };
+        await msg.edit(payload).catch(() => {});
+      } catch { }
+    }, delay);
+    if (typeof t.unref === "function") t.unref();
+    timeouts.push(t);
+  }
+  return timeouts;
 }
 
 function buildHangmanEmbed(maskedWord, rewardExp, durationMs) {
@@ -3174,9 +3405,40 @@ async function startGuessSongGame(client, cfg) {
 
   const previewCustomId = `minigame_song_preview:${Date.now()}`;
   const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(previewCustomId).setLabel("Ascolta anteprima").setEmoji(`<:VC_Preview:1462941162393309431>`).setStyle(ButtonStyle.Secondary).setDisabled(!info.previewUrl),);
-  const gameMessage = await channel.send({ embeds: [buildGuessSongEmbed(rewardExp, durationMs, info.artwork)], components: [row], }).catch(() => null);
 
-  const timeout = setTimeout(async () => { const game = activeGames.get(channelId); if (!game) return; activeGames.delete(channelId); if (game.hintTimeout) clearTimeout(game.hintTimeout); await channel.send({ embeds: [buildTimeoutSongEmbed(game.title, game.artist)] }).catch(() => { }); await clearActiveGame(client, cfg); }, durationMs); timeout.unref?.();
+  const songAttachmentName = "minigame_song.png";
+  let songImageUrl = info.artwork;
+  const songCensored = info.artwork ? await censorArtworkImage(info.artwork, { attachmentName: songAttachmentName, overlayAlpha: 0.9 }) : null;
+  if (songCensored) {
+    songImageUrl = `attachment://${songCensored.attachmentName}`;
+  }
+  const songFiles = songCensored ? [new AttachmentBuilder(songCensored.buffer, { name: songCensored.attachmentName })] : [];
+  const gameMessage = await channel.send({ embeds: [buildGuessSongEmbed(rewardExp, durationMs, songImageUrl)], components: [row], files: songFiles, }).catch(() => null);
+
+  const censorRevealTimeouts = info.artwork && gameMessage?.id
+    ? scheduleArtworkCensorSteps({
+        channelId,
+        channel,
+        gameMessageId: gameMessage.id,
+        originalArtworkUrl: info.artwork,
+        durationMs,
+        buildEmbed: buildGuessSongEmbed,
+        rewardExp,
+        attachmentName: songAttachmentName,
+        gameType: "guessSong",
+      })
+    : [];
+
+  const timeout = setTimeout(async () => {
+    const game = activeGames.get(channelId);
+    if (!game) return;
+    if (Array.isArray(game.censorRevealTimeouts)) game.censorRevealTimeouts.forEach(clearTimeout);
+    activeGames.delete(channelId);
+    if (game.hintTimeout) clearTimeout(game.hintTimeout);
+    await channel.send({ embeds: [buildTimeoutSongEmbed(game.title, game.artist)] }).catch(() => {});
+    await clearActiveGame(client, cfg);
+  }, durationMs);
+  timeout.unref?.();
 
   const hintTimeout = await scheduleGenericHint(client, channelId, durationMs, `${info.artistCountry} \u2022 ${info.genre} \u2022 ${buildMaskedTextHint(info.title)}`,
   );
@@ -3192,6 +3454,7 @@ async function startGuessSongGame(client, cfg) {
     endsAt: Date.now() + durationMs,
     timeout,
     hintTimeout,
+    censorRevealTimeouts,
     gameMessageId: gameMessage?.id || null,
   });
 
@@ -3549,9 +3812,40 @@ async function startGuessAlbumGame(client, cfg) {
 
   if (cfg.roleId)
     await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => { });
-  const gameMessage = await channel.send({ embeds: [buildGuessAlbumEmbed(rewardExp, durationMs, pick.image)] }).catch(() => null);
 
-  const timeout = setTimeout(async () => { const game = activeGames.get(channelId); if (!game) return; activeGames.delete(channelId); if (game.hintTimeout) clearTimeout(game.hintTimeout); await channel.send({ embeds: [buildTimeoutAlbumEmbed(game.album, game.artist)] }).catch(() => { }); await clearActiveGame(client, cfg); }, durationMs); timeout.unref?.();
+  const albumAttachmentName = "minigame_album.png";
+  let albumImageUrl = pick.image;
+  const albumCensored = pick.image ? await censorArtworkImage(pick.image, { attachmentName: albumAttachmentName, overlayAlpha: 0.9 }) : null;
+  if (albumCensored) {
+    albumImageUrl = `attachment://${albumCensored.attachmentName}`;
+  }
+  const albumFiles = albumCensored ? [new AttachmentBuilder(albumCensored.buffer, { name: albumCensored.attachmentName })] : [];
+  const gameMessage = await channel.send({ embeds: [buildGuessAlbumEmbed(rewardExp, durationMs, albumImageUrl)], files: albumFiles, }).catch(() => null);
+
+  const censorRevealTimeouts = pick.image && gameMessage?.id
+    ? scheduleArtworkCensorSteps({
+        channelId,
+        channel,
+        gameMessageId: gameMessage.id,
+        originalArtworkUrl: pick.image,
+        durationMs,
+        buildEmbed: buildGuessAlbumEmbed,
+        rewardExp,
+        attachmentName: albumAttachmentName,
+        gameType: "guessAlbum",
+      })
+    : [];
+
+  const timeout = setTimeout(async () => {
+    const game = activeGames.get(channelId);
+    if (!game) return;
+    if (Array.isArray(game.censorRevealTimeouts)) game.censorRevealTimeouts.forEach(clearTimeout);
+    activeGames.delete(channelId);
+    if (game.hintTimeout) clearTimeout(game.hintTimeout);
+    await channel.send({ embeds: [buildTimeoutAlbumEmbed(game.album, game.artist)] }).catch(() => {});
+    await clearActiveGame(client, cfg);
+  }, durationMs);
+  timeout.unref?.();
   const hintTimeout = await scheduleGenericHint(client, channelId, durationMs, `Artista: **${pick.artist}** \u2022 Album: ${buildMaskedTextHint(pick.album)}`,
   );
 
@@ -3565,6 +3859,7 @@ async function startGuessAlbumGame(client, cfg) {
     endsAt: Date.now() + durationMs,
     timeout,
     hintTimeout,
+    censorRevealTimeouts,
     gameMessageId: gameMessage?.id || null,
   });
 
@@ -3586,26 +3881,34 @@ async function startGuessAlbumGame(client, cfg) {
   return true;
 }
 
+function isValidHangmanWord(word) {
+  if (!word || typeof word !== "string") return false;
+  const w = word.trim();
+  if (w.length < 4 || w.length > 12) return false;
+  return /^\p{L}+$/u.test(w);
+}
+
 async function startHangmanGame(client, cfg) {
   const channelId = cfg.channelId;
   if (!channelId || activeGames.has(channelId)) return false;
 
   let words = [];
-  const apiUrl = cfg?.hangman?.apiUrl || null;
+  const apiUrl = cfg?.hangman?.apiUrl || cfg?.guessWord?.apiUrl || null;
   if (apiUrl) {
     try {
       const res = await axios.get(apiUrl, { timeout: 15000 });
       const list = extractWordListFromApiPayload(res?.data);
-      words = list.map(normalizeWord).filter(isValidWord);
+      words = list.map(normalizeWord).filter(isValidHangmanWord);
     } catch { }
   }
   if (!words.length) {
-    words = await loadWordList(cfg);
+    const fromShared = await loadWordList(cfg);
+    words = fromShared.filter(isValidHangmanWord);
   }
   if (!words.length) {
     const customWords = Array.isArray(cfg?.hangman?.words) ? cfg.hangman.words : [];
     const fallbackWords = customWords.length ? customWords : HANGMAN_WORDS;
-    words = fallbackWords.map(normalizeWord).filter(isValidWord);
+    words = fallbackWords.map(normalizeWord).filter(isValidHangmanWord);
   }
   if (!words.length) return false;
 
@@ -4161,14 +4464,26 @@ function startMinigameLoop(client) {
   if (loopState.has(client)) return;
   loopState.add(client);
 
-  const tick = async () => { const cfg = getConfig(client); if (!cfg?.enabled) return; if (!pendingGames.has(cfg.channelId)) { const type = await getNextGameType(client, cfg); if (!type) return; pendingGames.set(cfg.channelId, { type, createdAt: Date.now() }); } await maybeStartRandomGame(client, false); };
+  const runAtSlot = async () => {
+    const cfg = getConfig(client);
+    if (!cfg?.enabled) return;
+    const rome = getMinigameRomeTime(new Date(), client);
+    if (!isMinigameFixedSlot(rome)) return;
+    const slotKey = `${rome.year}-${String(rome.month).padStart(2, "0")}-${String(rome.day).padStart(2, "0")}_${rome.hour}_${rome.minute}`;
+    if (slotKey === lastMinigameSlotKey) return;
+    lastMinigameSlotKey = slotKey;
+    if (!pendingGames.has(cfg.channelId)) {
+      const type = await getNextGameType(client, cfg);
+      if (!type) return;
+      pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
+    }
+    await maybeStartRandomGame(client, true);
+  };
 
-  const cfg = getConfig(client);
-  const intervalMs = Math.max(60 * 1000, Number(cfg?.intervalMs || 15 * 60 * 1000),);
-  tick();
-  const timer = setInterval(tick, intervalMs);
+  const timer = setInterval(runAtSlot, 60 * 1000);
   if (typeof timer.unref === "function") timer.unref();
   loopIntervals.set(client, timer);
+  runAtSlot();
 }
 
 async function forceStartMinigame(client) {
@@ -4225,15 +4540,7 @@ async function handleMinigameMessage(message, client) {
   if (message.author?.bot) return false;
   if (message.channelId !== cfg.channelId) return false;
   recordActivity(cfg.channelId, getActivityWindowMs(cfg));
-  if (standbyChannels.has(cfg.channelId)) {
-    if (canStartByInterval(cfg) && isReadyByActivity(cfg)) {
-      const type = await getNextGameType(client, cfg);
-      if (type)
-        pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
-      standbyChannels.delete(cfg.channelId);
-      await maybeStartRandomGame(client, false);
-    }
-  }
+  // I minigame partono solo agli orari fissi (8:00–23:45 ogni 15 min); non si avviano al messaggio in chat.
 
   const game = activeGames.get(cfg.channelId);
   if (!game) return false;
@@ -4271,8 +4578,16 @@ async function handleMinigameMessage(message, client) {
     if (!guessCandidates.length) {
       return false;
     }
-
-    if (guessCandidates.includes(game.target)) {
+    const targetNorm = String(game.target || "").toLowerCase();
+    const targetCompact = compactNoSpaces(targetNorm);
+    const match =
+      guessCandidates.includes(game.target) ||
+      guessCandidates.some(
+        (c) =>
+          c === targetNorm ||
+          (targetCompact && compactNoSpaces(c) === targetCompact),
+      );
+    if (match) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
@@ -4345,6 +4660,7 @@ async function handleMinigameMessage(message, client) {
     ) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
+      if (Array.isArray(game.censorRevealTimeouts)) game.censorRevealTimeouts.forEach(clearTimeout);
       activeGames.delete(cfg.channelId);
       await awardWinAndReply(message, game.rewardExp);
       return true;
@@ -4407,7 +4723,11 @@ async function handleMinigameMessage(message, client) {
 
   if (game.type === "fastType") {
     const normalizedContent = normalizeCountryName(normalizeUserAnswerText(content),);
-    if (normalizedContent === game.normalizedPhrase) {
+    const phraseNorm = game.normalizedPhrase || normalizeCountryName(game.phrase || "");
+    if (
+      normalizedContent === phraseNorm ||
+      (compactNoSpaces(normalizedContent) && compactNoSpaces(normalizedContent) === compactNoSpaces(phraseNorm))
+    ) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
@@ -4468,6 +4788,7 @@ async function handleMinigameMessage(message, client) {
     if (isSongGuessCorrect(content, game.answers)) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
+      if (Array.isArray(game.censorRevealTimeouts)) game.censorRevealTimeouts.forEach(clearTimeout);
       activeGames.delete(cfg.channelId);
       await awardWinAndReply(message, game.rewardExp);
       return true;
@@ -4520,7 +4841,11 @@ async function handleMinigameMessage(message, client) {
         if (idx < game.options.length && idx === game.correctIndex) correct = true;
       } else {
         const correctText = normalizeCountryName(game.options[game.correctIndex] || "");
-        if (correctText && norm === correctText) correct = true;
+        if (
+          correctText &&
+          (norm === correctText || (compactNoSpaces(norm) && compactNoSpaces(norm) === compactNoSpaces(correctText)))
+        )
+          correct = true;
       }
     } else {
       const guess = normalizeTruthValue(content);
@@ -4567,8 +4892,12 @@ async function handleMinigameMessage(message, client) {
     const guessParts = normalized.split(" ").filter(Boolean);
     if (guessParts.length !== 1) return false;
     const guessText = guessParts[0];
+    const wordNorm = normalizeCountryName(String(game.word || ""));
 
-    if (guessText === game.word) {
+    if (
+      wordNorm &&
+      (guessText === wordNorm || compactNoSpaces(guessText) === compactNoSpaces(wordNorm))
+    ) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);

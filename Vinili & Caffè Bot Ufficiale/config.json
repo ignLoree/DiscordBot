@@ -120,9 +120,13 @@
       "apiUrl": "https://itunes.apple.com/search?term=",
       "artistApiUrl": "https://musicbrainz.org/ws/2/artist/?query=artist=",
       "deezerChartUrl": "https://api.deezer.com/chart/0/tracks?limit=100",
+      "topPerSource": 50,
       "popularFeeds": [
         "https://itunes.apple.com/it/rss/topsongs/limit=100/json",
-        "https://itunes.apple.com/us/rss/topsongs/limit=100/json"
+        "https://itunes.apple.com/us/rss/topsongs/limit=100/json",
+        "https://itunes.apple.com/gb/rss/topsongs/limit=100/json",
+        "https://itunes.apple.com/fr/rss/topsongs/limit=100/json",
+        "https://itunes.apple.com/de/rss/topsongs/limit=100/json"
       ]
     },
     "guessCapital": {
@@ -160,12 +164,14 @@
     "guessSinger": {
       "durationMs": 180000,
       "rewardExp": 150,
-      "apiUrl": "https://api.deezer.com/chart/0/artists?limit=100"
+      "apiUrl": "https://api.deezer.com/chart/0/artists?limit=100",
+      "onlyFamousMinFans": 50000
     },
     "guessAlbum": {
       "durationMs": 180000,
       "rewardExp": 150,
-      "apiUrl": "https://api.deezer.com/chart/0/albums?limit=100"
+      "apiUrl": "https://api.deezer.com/chart/0/albums?limit=100",
+      "onlyFamousArtists": true
     },
     "hangman": {
       "durationMs": 240000,
@@ -193,8 +199,8 @@
   },
   "chatReminder": {
     "timeZone": "Europe/Rome",
-    "startHour": 9,
-    "endHour": 21,
+    "startHour": 8,
+    "endHour": 24,
     "minGapMs": 1800000,
     "firstReminderMinMessages30m": 5,
     "secondReminderMinMessages30m": 20

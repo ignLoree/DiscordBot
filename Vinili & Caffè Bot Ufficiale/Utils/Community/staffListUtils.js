@@ -92,25 +92,25 @@ async function resolveMessage(channel, client, guildId) {
 }
 
 async function fetchMembersForStaffList(guild) {
-  const full = await guild.members.fetch().catch(() => null);
-  if (full?.size) return full;
-
   const all = new Map();
   let after = null;
+  const limit = 1000;
 
   while (true) {
-    const chunk=await guild.members.fetch({limit:100,after:after??undefined}).catch(() => null);
+    const chunk = await guild.members
+      .fetch({ limit, after: after ?? undefined, force: true })
+      .catch(() => null);
     if (!chunk?.size) break;
 
     for (const [id, member] of chunk) all.set(id, member);
 
+    if (chunk.size < limit) break;
     const last = chunk.last?.();
     after = last?.id ?? null;
-    if (chunk.size < 100) break;
-    await wait(350);
+    await wait(400);
   }
 
-  return all;
+  return all.size ? all : guild.members.cache;
 }
 
 async function refreshStaffList(
@@ -163,7 +163,7 @@ async function refreshStaffList(
 function scheduleStaffListRefresh(
   client,
   guildId = IDs.guilds.main,
-  delayMs = 1200,
+  delayMs = 500,
 ) {
   const state = ensureState(client);
   const existingTimer = state.timersByGuild.get(guildId);
