@@ -3,25 +3,18 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 require('dotenv').config({ path: path.join(__dirname, '.env'), quiet: true });
-
 const baseDir = __dirname;
-
 const ENABLE_LOADER_GIT_PULL = false;
 const ENABLE_LOADER_NPM_INSTALL = false;
-
-const BOTS=[{key:'official',label:'Ufficiale',folderSuffix:'Bot Ufficiale',startupDelayMs:0},{key:'test',label:'Bot Test',folderSuffix:'Bot Test',startupDelayMs:7000}];
-
+const BOTS=[{key:'vinyls',label:'Vinyls',folderSuffix:'Vinyls',startupDelayMs:0},{key:'Coffee',label:'Coffee',folderSuffix:'Coffee',startupDelayMs:7000}];
 const RESTART_FLAG = path.resolve(baseDir, 'restart.json');
 const POLL_INTERVAL_MS = 5000;
 const FORCE_KILL_DELAY_MS = 8000;
 const NPM_CACHE_DIR = path.join(os.tmpdir(), '.npm-global');
-
 const processRefs = {};
 const restarting = {};
 let npmInstallInProgress = null;
-
 const silencedEnv=process.env.SHOW_NODE_WARNINGS==='1'?{...process.env}:{...process.env,NODE_NO_WARNINGS:'1'};
-
 const WORKSPACES_ENABLED = hasWorkspacesConfig();
 
 function normalizeComparableName(value) {
