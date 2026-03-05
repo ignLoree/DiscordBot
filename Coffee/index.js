@@ -16,7 +16,10 @@ if (process.env.RUN_UNDER_LOADER !== "1") {
 const installProcessHandlers = require("./Handlers/processHandler");
 installProcessHandlers();
 
-const client = new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates,GatewayIntentBits.DirectMessages,GatewayIntentBits.GuildMessageReactions,GatewayIntentBits.GuildModeration,],partials:[Partials.Message,Partials.Channel,Partials.Reaction,Partials.User,Partials.GuildMember,],presence:{status:"invisible"},rest:{timeout:12_000,offset:50,retries:2,},...(typeof Options ?. cacheWithLimits === "function" &&{makeCache:Options.cacheWithLimits({...(Options.DefaultMakeCacheSettings ||{}),MessageManager:100,GuildMemberManager:200,PresenceManager:0,ReactionManager:50,}),}),...(typeof Options ?. DefaultSweeperSettings === "object" &&{sweepers:{...(Options.DefaultSweeperSettings ||{}),messages:{interval:300,lifetime:600},},}),});
+let intentList = [GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates,GatewayIntentBits.DirectMessages,GatewayIntentBits.GuildMessageReactions,GatewayIntentBits.GuildModeration,].filter((x) => x !== undefined && x !== null);
+if (intentList.length === 0) intentList = [1];
+const partialList = [Partials.Message,Partials.Channel,Partials.Reaction,Partials.User,Partials.GuildMember,].filter((x) => x !== undefined && x !== null);
+const client = new Client({intents:intentList,partials:partialList,presence:[Partials.Message,Partials.Channel,Partials.Reaction,Partials.User,Partials.GuildMember,],presence:{status:"invisible"},rest:{timeout:12_000,offset:50,retries:2,},...(typeof Options ?. cacheWithLimits === "function" &&{makeCache:Options.cacheWithLimits({...(Options.DefaultMakeCacheSettings ||{}),MessageManager:100,GuildMemberManager:200,PresenceManager:0,ReactionManager:50,}),}),...(typeof Options ?. DefaultSweeperSettings === "object" &&{sweepers:{...(Options.DefaultSweeperSettings ||{}),messages:{interval:300,lifetime:600},},}),});
 
 try {
   client.config = require("./config.json");
