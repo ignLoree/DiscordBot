@@ -1,4 +1,4 @@
-const canvasModule = require("@napi-rs/canvas");
+const canvasModule = require("canvas");
 const { registerCanvasFonts, fontStack, drawTextWithSpecialFallback, } = require("./canvasFonts");
 const { createCanvas, loadImage } = canvasModule;
 

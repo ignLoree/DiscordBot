@@ -5,7 +5,7 @@ const os = require('os');
 require('dotenv').config({ path: path.join(__dirname, '.env'), quiet: true });
 const baseDir = __dirname;
 const ENABLE_LOADER_GIT_PULL = false;
-const ENABLE_LOADER_NPM_INSTALL = false;
+const ENABLE_LOADER_NPM_INSTALL = true;
 const BOTS=[{key:'vinyls',label:'Vinyls',folderSuffix:'Vinyls',startupDelayMs:0},{key:'Coffee',label:'Coffee',folderSuffix:'Coffee',startupDelayMs:7000}];
 const RESTART_FLAG = path.resolve(baseDir, 'restart.json');
 const POLL_INTERVAL_MS = 5000;
@@ -13,7 +13,7 @@ const FORCE_KILL_DELAY_MS = 8000;
 const NPM_CACHE_DIR = path.join(os.tmpdir(), '.npm-global');
 const processRefs = {};
 const restarting = {};
-let npmInstallInProgress = null;
+const npmInstallInProgressByDir = {};
 const silencedEnv=process.env.SHOW_NODE_WARNINGS==='1'?{...process.env}:{...process.env,NODE_NO_WARNINGS:'1'};
 const WORKSPACES_ENABLED = hasWorkspacesConfig();
 
@@ -204,8 +204,9 @@ function ensureDependencies(workingDir, useWorkspaces) {
     if (!needNpmInstall(workingDir, useWorkspaces)) return Promise.resolve();
 
     const installDir = useWorkspaces ? baseDir : workingDir;
-    if (!npmInstallInProgress) {
-        npmInstallInProgress = new Promise((resolveInstall) => {
+    const key = path.resolve(installDir);
+    if (!npmInstallInProgressByDir[key]) {
+        npmInstallInProgressByDir[key] = new Promise((resolveInstall) => {
             console.log(`[Loader] npm install in ${installDir}`);
             runNpmInstall(installDir).then((code) => {
                 if (code === 0) {
@@ -222,13 +223,10 @@ function ensureDependencies(workingDir, useWorkspaces) {
                 });
             });
         }).finally(() => {
-            npmInstallInProgress = null;
+            delete npmInstallInProgressByDir[key];
         });
-    } else {
-        console.log('[Loader] npm install già in corso, attendo completamento...');
     }
-
-    return npmInstallInProgress;
+    return npmInstallInProgressByDir[key];
 }
 
 function spawnBotProcess(bot, workingDir, file, resolve) {
@@ -266,7 +264,7 @@ function runfile(bot, options = {}) {
         const bypassDelay = Boolean(options.bypassDelay);
         const useWorkspaces = WORKSPACES_ENABLED;
 
-        const start=()=>{cleanupStalePid(bot.key);const repoRoot=fs.existsSync(path.join(baseDir,'.git'))?baseDir:workingDir;if(!skipGitPull&&ENABLE_LOADER_GIT_PULL){updateRepo(repoRoot);} const depTask=ENABLE_LOADER_NPM_INSTALL?ensureDependencies(workingDir,useWorkspaces):Promise.resolve();depTask.finally(()=>spawnBotProcess(bot,workingDir,file,resolve));};const delay=bypassDelay?0 : Number(bot.startupDelayMs || 0);
+        const start=()=>{cleanupStalePid(bot.key);const repoRoot=fs.existsSync(path.join(baseDir,'.git'))?baseDir:workingDir;if(!skipGitPull&&ENABLE_LOADER_GIT_PULL){updateRepo(repoRoot);} const depTask=ENABLE_LOADER_NPM_INSTALL?ensureDependencies(workingDir,false):Promise.resolve();depTask.finally(()=>spawnBotProcess(bot,workingDir,file,resolve));};const delay=bypassDelay?0 : Number(bot.startupDelayMs || 0);
         if (delay > 0) {
             console.log(`[Loader] Ritardo avvio ${bot.label}: ${delay}ms`);
             setTimeout(start, delay);
