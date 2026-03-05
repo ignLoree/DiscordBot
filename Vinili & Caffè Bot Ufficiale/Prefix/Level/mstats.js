@@ -30,22 +30,33 @@ module.exports = {
     const targetUser = await resolveTargetUser(message, args);
 
     let totalExp = 0;
+    let currentStreak = 0;
+    let bestStreak = 0;
     try {
-      const doc=await MinigameUser.findOne({guildId:message.guild.id,userId:targetUser.id,});
+      const doc = await MinigameUser.findOne({ guildId: message.guild.id, userId: targetUser.id }).lean();
       totalExp = Number(doc?.totalExp || 0);
+      currentStreak = Number(doc?.currentStreak ?? 0);
+      bestStreak = Number(doc?.bestStreak ?? 0);
     } catch {}
 
     const unlocked = getUnlockedRewards(totalExp);
-    const unlockedText=unlocked.length?unlocked.map((reward) => `<a:VC_Arrow:1448672967721615452> <@&${reward.roleId}>`,
-          )
-          .join("\n")
-      : "Nessun ruolo ancora sbloccato";
+    const unlockedText = unlocked.length ? unlocked.map((reward) => `<a:VC_Arrow:1448672967721615452> <@&${reward.roleId}>`).join("\n") : "Nessun ruolo ancora sbloccato";
 
-    const embed=new EmbedBuilder().setColor("#6f4e37").setAuthor({name:targetUser.username,iconURL:targetUser.displayAvatarURL(),}).setTitle(`Le statistiche nei Minigames di ${targetUser.username}<a:VC_Flowers:1468687836055212174>`,
-      )
-      .setDescription(
-        [
-          `<a:VC_Arrow:1448672967721615452>Hai un totale di\`${totalExp}\` punti (e exp guadagnati) <a:VC_FlowerPink:1468688049725636903>`,"","🎲 .ᐟRuoli sbloccati:",unlockedText,].join("\n"),);
+    const descLines = [
+      `<a:VC_Arrow:1448672967721615452> Hai un totale di \`${totalExp}\` punti (exp) <a:VC_FlowerPink:1468688049725636903>`,
+      "",
+      "🎲 .ᐟ Ruoli sbloccati:",
+      unlockedText,
+    ];
+    if (currentStreak > 0 || bestStreak > 0) {
+      descLines.push("", "<a:VC_Flame:1473106990493335665> **Serie vittorie:** " + (currentStreak > 0 ? `attuale **${currentStreak}**` : "—") + (bestStreak > 0 ? ` • record **${bestStreak}**` : ""));
+    }
+
+    const embed = new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setAuthor({ name: targetUser.username, iconURL: targetUser.displayAvatarURL() })
+      .setTitle(`Le statistiche nei Minigames di ${targetUser.username} <a:VC_Flowers:1468687836055212174>`)
+      .setDescription(descLines.join("\n"));
 
     await safeMessageReply(message, {
       embeds: [embed],

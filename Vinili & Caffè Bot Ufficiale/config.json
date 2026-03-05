@@ -77,10 +77,19 @@
   "minigames": {
     "enabled": true,
     "translateApiToItalian": true,
-    "intervalMs": 1800000,
+    "intervalMs": 900000,
+    "noParticipationIntervalMs": 1800000,
     "activityWindowMs": 1800000,
     "minMessages": 3,
     "failsafeMs": 5400000,
+    "fastGuess": {
+      "windowMs": 30000,
+      "multiplier": 1.5
+    },
+    "streak": {
+      "bonusPercentPerWin": 10,
+      "maxBonusPercent": 50
+    },
     "timeWindow": {
       "start": {
         "hour": 9,
@@ -133,6 +142,10 @@
       "durationMs": 180000,
       "rewardExp": 150,
       "apiUrl": "https://restcountries.com/v3.1/all?fields=name,translations,capital,flags"
+    },
+    "guessReverseCapital": {
+      "durationMs": 180000,
+      "rewardExp": 150
     },
     "guessRegionCapital": {
       "durationMs": 180000,
