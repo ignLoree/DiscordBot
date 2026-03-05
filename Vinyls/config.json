@@ -1,0 +1,261 @@
+{
+  "prefix": "+",
+  "status": "idle",
+  "logLevel": "debug",
+  "eventListeners": 50,
+  "developers": ["295500038401163264"],
+  "disboard": {
+    "cooldownMinutes": 120,
+    "bumpSuccessPatterns": [
+      "Bump done",
+      "Bump successful"
+    ]
+  },
+  "discadia": {
+    "cooldownMinutes": 1440,
+    "bumpSuccessPatterns": [
+      "has been successfully bumped",
+      "successfully bumped",
+      "bumped successfully"
+    ]
+  },
+  "discadiaVoteReminder": {
+    "enabled": true,
+    "cooldownHours": 24,
+    "checkIntervalMinutes": 30,
+    "message": "Ciao! Sono passate 24 ore, puoi votare di nuovo su Discadia: https://discadia.com/server/viniliecaffe/ Grazie per il supporto!"
+  },
+  "autoPoll": {
+    "enabled": true,
+    "apiUrl": "https://opentdb.com/api.php?amount=1&type=multiple&encode=url3986",
+    "apiThemeCatalog": [
+      { "id": 9, "key": "general_knowledge", "label": "General Knowledge" },
+      { "id": 10, "key": "books", "label": "Books" },
+      { "id": 11, "key": "film", "label": "Film" },
+      { "id": 12, "key": "music", "label": "Music" },
+      { "id": 13, "key": "musicals_theatres", "label": "Musicals & Theatres" },
+      { "id": 14, "key": "television", "label": "Television" },
+      { "id": 15, "key": "video_games", "label": "Video Games" },
+      { "id": 16, "key": "board_games", "label": "Board Games" },
+      { "id": 17, "key": "science_nature", "label": "Science & Nature" },
+      { "id": 18, "key": "computers", "label": "Computers" },
+      { "id": 19, "key": "mathematics", "label": "Mathematics" },
+      { "id": 20, "key": "mythology", "label": "Mythology" },
+      { "id": 21, "key": "sports", "label": "Sports" },
+      { "id": 22, "key": "geography", "label": "Geography" },
+      { "id": 23, "key": "history", "label": "History" },
+      { "id": 24, "key": "politics", "label": "Politics" },
+      { "id": 25, "key": "art", "label": "Art" },
+      { "id": 26, "key": "celebrities", "label": "Celebrities" },
+      { "id": 27, "key": "animals", "label": "Animals" },
+      { "id": 28, "key": "vehicles", "label": "Vehicles" },
+      { "id": 29, "key": "comics", "label": "Comics" },
+      { "id": 30, "key": "gadgets", "label": "Gadgets" },
+      { "id": 31, "key": "anime_manga", "label": "Anime & Manga" },
+      { "id": 32, "key": "cartoon_animations", "label": "Cartoon & Animations" }
+    ],
+    "apiThemeCategories": ["all"],
+    "sources": [
+      "openrouter",
+      "local"
+    ],
+    "minOptions": 2,
+    "maxOptions": 10,
+    "windowStartHour": 19,
+    "windowStartMinute": 0,
+    "windowEndHour": 21,
+    "windowEndMinute": 59
+  },
+  "tts": {
+    "enabled": true,
+    "lang": "it",
+    "maxChars": 1000,
+    "autojoin": false,
+    "includeUsername": false,
+    "stayConnected": false
+  },
+  "minigames": {
+    "enabled": true,
+    "translateApiToItalian": true,
+    "intervalMs": 900000,
+    "noParticipationIntervalMs": 1800000,
+    "activityWindowMs": 1800000,
+    "minMessages": 3,
+    "failsafeMs": 5400000,
+    "fastGuess": {
+      "windowMs": 30000,
+      "multiplier": 1.5
+    },
+    "streak": {
+      "bonusPercentPerWin": 10,
+      "maxBonusPercent": 50
+    },
+    "timeWindow": {
+      "start": {
+        "hour": 9,
+        "minute": 0
+      },
+      "end": {
+        "hour": 23,
+        "minute": 45
+      }
+    },
+    "guessNumber": {
+      "min": 1,
+      "max": 100,
+      "durationMs": 180000,
+      "rewardExp": 100
+    },
+    "guessWord": {
+      "durationMs": 180000,
+      "rewardExp": 150,
+      "apiUrl": "https://cdn.jsdelivr.net/npm/italian-words-dict@3.4.0/dist/words.json"
+    },
+    "guessFlag": {
+      "durationMs": 180000,
+      "rewardExp": 150,
+      "apiUrl": "https://restcountries.com/v3.1/all?fields=name,translations,flags,altSpellings"
+    },
+    "guessPlayer": {
+      "durationMs": 180000,
+      "rewardExp": 150,
+      "onlyFamous": true,
+      "apiUrl": "https://www.thesportsdb.com/api/v1/json/123/searchplayers.php?p="
+    },
+    "guessSong": {
+      "durationMs": 180000,
+      "rewardExp": 150,
+      "onlyFamous": true,
+      "apiUrl": "https://itunes.apple.com/search?term=",
+      "artistApiUrl": "https://musicbrainz.org/ws/2/artist/?query=artist=",
+      "deezerChartUrl": "https://api.deezer.com/chart/0/tracks?limit=100",
+      "topPerSource": 50,
+      "popularFeeds": [
+        "https://itunes.apple.com/it/rss/topsongs/limit=100/json",
+        "https://itunes.apple.com/us/rss/topsongs/limit=100/json",
+        "https://itunes.apple.com/gb/rss/topsongs/limit=100/json",
+        "https://itunes.apple.com/fr/rss/topsongs/limit=100/json",
+        "https://itunes.apple.com/de/rss/topsongs/limit=100/json"
+      ]
+    },
+    "guessCapital": {
+      "durationMs": 180000,
+      "rewardExp": 150,
+      "apiUrl": "https://restcountries.com/v3.1/all?fields=name,translations,capital,flags"
+    },
+    "guessReverseCapital": {
+      "durationMs": 180000,
+      "rewardExp": 150
+    },
+    "guessRegionCapital": {
+      "durationMs": 180000,
+      "rewardExp": 150
+    },
+    "fastType": {
+      "durationMs": 120000,
+      "rewardExp": 200
+    },
+    "guessTeam": {
+      "durationMs": 180000,
+      "rewardExp": 150,
+      "apiUrl": "https://www.thesportsdb.com/api/v1/json/123/search_all_teams.php?l=",
+      "leagues": [
+        "Italian Serie A",
+        "English Premier League",
+        "Spanish La Liga",
+        "German Bundesliga",
+        "French Ligue 1",
+        "Dutch Eredivisie",
+        "Belgian Pro League",
+        "Portuguese Primeira Liga",
+        "Saudi Pro League",
+        "Italian Serie B",
+        "English League Championship",
+        "American Major League Soccer"
+      ]
+    },
+    "guessSinger": {
+      "durationMs": 180000,
+      "rewardExp": 150,
+      "apiUrl": "https://api.deezer.com/chart/0/artists?limit=100",
+      "onlyFamousMinFans": 50000
+    },
+    "guessAlbum": {
+      "durationMs": 180000,
+      "rewardExp": 150,
+      "apiUrl": "https://api.deezer.com/chart/0/albums?limit=100",
+      "onlyFamousArtists": true
+    },
+    "hangman": {
+      "durationMs": 240000,
+      "rewardExp": 200,
+      "maxMisses": 7
+    },
+    "italianGK": {
+      "durationMs": 180000,
+      "rewardExp": 150,
+      "apiUrl": "https://opentdb.com/api.php?amount=5",
+      "requireItalian": false
+    },
+    "drivingQuiz": {
+      "durationMs": 180000,
+      "rewardExp": 150
+    },
+    "mathExpression": {
+      "durationMs": 150000,
+      "rewardExp": 200
+    },
+    "findBot": {
+      "durationMs": 300000,
+      "rewardExp": 200
+    }
+  },
+  "categoryNumbering": {
+    "enabled": true,
+    "debounceMs": 1200,
+    "intervalMs": 600000,
+    "minDigits": 2,
+    "separator": " "
+  },
+  "mainGuildId": "1329080093599076474",
+  "sponsorGuildIds": [
+    "1471511676019933354",
+    "1471511928739201047",
+    "1471512183547498579",
+    "1471512555762483330",
+    "1471512797140484230",
+    "1471512808448458958"
+  ],
+  "sponsorVerifyChannelIds": {
+    "1471511676019933354": "1471520139345137778",
+    "1471511928739201047": "1471520932878090260",
+    "1471512183547498579": "1471521065368027279",
+    "1471512555762483330": "1471521125484986470",
+    "1471512797140484230": "1471521191876362446",
+    "1471512808448458958": "1471521259543068694"
+  },
+  "verificatoRoleIds": {
+    "1471511676019933354": "1471522935188623435",
+    "1471511928739201047": "1471522716099154091",
+    "1471512183547498579": "1471522479867433073",
+    "1471512555762483330": "1471522093484081300",
+    "1471512797140484230": "1471521864898838689",
+    "1471512808448458958": "1471521694698176726"
+  },
+  "sponsorTicketChannelIds": {
+    "1471511676019933354": "1471974302109667410",
+    "1471511928739201047": "1471974355964657765",
+    "1471512183547498579": "1471974536357347570",
+    "1471512555762483330": "1471974622777049098",
+    "1471512797140484230": "1471974712958648412",
+    "1471512808448458958": "1471974799453720740"
+  },
+  "sponsorStaffRoleIds": {
+    "1471511676019933354": "1471987347330695311",
+    "1471511928739201047": "1471987465651880088",
+    "1471512183547498579": "1471987552557994095",
+    "1471512555762483330": "1471987639291871336",
+    "1471512797140484230": "1471987763774754946",
+    "1471512808448458958": "1471987856712138883"
+  }
+}

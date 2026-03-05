@@ -1,0 +1,305 @@
+{
+  "snapshots": [
+    {
+      "id": "sec-20260223133306-3095",
+      "createdAt": 1771853586671,
+      "guildId": "1329080093599076474",
+      "actorId": "295500038401163264",
+      "reason": "manual backup",
+      "payload": {
+        "permissionsRaw": "{\n    \"slash\": {\n        \"backup\": {\n            \"roles\": [\n                \"roles.Founder\"\n            ],\n            \"channels\": [\n                \"1442569288161558528\"\n            ],\n            \"subcommands\": {\n                \"info\": [\n                    \"roles.HighStaff\"\n                ],\n                \"load\": [\n                    \"roles.HighStaff\"\n                ],\n                \"create\": [\n                    \"roles.HighStaff\"\n                ],\n                \"list\": [\n                    \"roles.HighStaff\"\n                ],\n                \"delete\": [\n                    \"roles.HighStaff\"\n                ],\n                \"status\": [\n                    \"roles.HighStaff\"\n                ],\n                \"cancel\": [\n                    \"roles.HighStaff\"\n                ]\n            }\n        },\n        \"copy\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ],\n            \"subcommands\": {\n                \"emoji\": [\n                    \"roles.HighStaff\"\n                ],\n                \"sticker\": [\n                    \"roles.HighStaff\"\n                ]\n            }\n        },\n        \"dmbroadcast\": {\n            \"roles\": [\n                \"roles.Founder\"\n            ]\n        },\n        \"leaderboard\": {\n            \"roles\": [\n                \"roles.PartnerManager\",\n                \"roles.HighStaff\"\n            ],\n            \"channels\": [\n                \"1442569209849843823\",\n                \"1442569262689554444\",\n                \"1442569288161558528\"\n            ]\n        },\n        \"partner\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ],\n            \"channels\": [\n                \"1442569209849843823\",\n                \"1442569262689554444\",\n                \"1442569288161558528\"\n            ],\n            \"subcommands\": {\n                \"modifypoint.add\": {\n                    \"roles\": [\n                        \"roles.HighStaff\"\n                    ]\n                },\n                \"modifypoint.remove\": {\n                    \"roles\": [\n                        \"roles.HighStaff\"\n                    ]\n                }\n            }\n        },\n        \"partnership\": {\n            \"roles\": [\n                \"roles.PartnerManager\"\n            ]\n        },\n        \"pausa\": {\n            \"roles\": [\n                \"roles.Staff\"\n            ],\n            \"channels\": [\n                \"1442569209849843823\",\n                \"1442569262689554444\",\n                \"1442569288161558528\"\n            ],\n            \"subcommands\": {\n                \"request\": [\n                    \"roles.Staff\",\n                    \"roles.PartnerManager\"\n                ],\n                \"list\": [\n                    \"roles.Staff\",\n                    \"roles.PartnerManager\",\n                    \"roles.HighStaff\"\n                ]\n            }\n        },\n        \"poll\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ],\n            \"subcommands\": {\n                \"create\": [\n                    \"roles.HighStaff\"\n                ],\n                \"remove\": [\n                    \"roles.HighStaff\"\n                ],\n                \"edit\": [\n                    \"roles.HighStaff\"\n                ]\n            }\n        },\n        \"say\": {\n            \"roles\": [\n                \"roles.Founder\"\n            ]\n        },\n        \"staff\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ],\n            \"channels\": [\n                \"1442569209849843823\",\n                \"1442569262689554444\",\n                \"1442569288161558528\"\n            ],\n            \"subcommands\": {\n                \"pex\": [\n                    \"roles.HighStaff\"\n                ],\n                \"depex\": [\n                    \"roles.HighStaff\"\n                ],\n                \"warn\": [\n                    \"roles.HighStaff\"\n                ],\n                \"resoconto.staffer\": [\n                    \"roles.HighStaff\",\n                    \"roles.Coordinator\",\n                    \"roles.Supervisor\"\n                ],\n                \"resoconto.pm\": [\n                    \"roles.HighStaff\",\n                    \"roles.Coordinator\",\n                    \"roles.Supervisor\"\n                ]\n            }\n        },\n        \"valutazione\": {\n            \"roles\": \"roles.HighStaff\",\n            \"channels\": [\n                \"1442569262689554444\",\n                \"1442569288161558528\"\n            ],\n            \"subcommands\": {\n                \"positiva.add\": [\n                    \"roles.HighStaff\"\n                ],\n                \"positiva.remove\": [\n                    \"roles.HighStaff\"\n                ],\n                \"negativa.add\": [\n                    \"roles.HighStaff\"\n                ],\n                \"negativa.remove\": [\n                    \"roles.HighStaff\"\n                ],\n                \"media\": [\n                    \"roles.Staff\"\n                ]\n            }\n        }\n    },\n    \"prefix\": {\n        \"afk\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"avatar\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"subcommands\": {\n                \"get\": [\n                    \"roles.Member\"\n                ],\n                \"server\": [\n                    \"roles.Member\"\n                ],\n                \"user\": [\n                    \"roles.Member\"\n                ],\n                \"guild\": [\n                    \"roles.Member\"\n                ]\n            }\n        },\n        \"banner\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"subcommands\": {\n                \"user\": [\n                    \"roles.Member\"\n                ],\n                \"server\": [\n                    \"roles.Member\"\n                ],\n                \"guild\": [\n                    \"roles.Member\"\n                ]\n            }\n        },\n        \"block\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"subcommands\": {\n                \"avatar\": [\n                    \"roles.Member\"\n                ],\n                \"banner\": [\n                    \"roles.Member\"\n                ],\n                \"quotes\": [\n                    \"roles.Member\"\n                ]\n            }\n        },\n        \"classifica\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"subcommands\": {\n                \"alltime\": [\n                    \"roles.Member\"\n                ],\n                \"weekly\": [\n                    \"roles.Member\"\n                ]\n            }\n        },\n        \"security\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ],\n            \"channels\": [\n                \"1442569288161558528\"\n            ],\n            \"subcommands\": {\n                \"status\": [\n                    \"roles.Founder\",\n                    \"roles.CoFounder\"\n                ],\n                \"health\": [\n                    \"roles.Founder\",\n                    \"roles.CoFounder\"\n                ],\n                \"drill\": [\n                    \"roles.Founder\",\n                    \"roles.CoFounder\"\n                ],\n                \"backup\": [\n                    \"roles.Founder\",\n                    \"roles.CoFounder\"\n                ],\n                \"profiles\": [\n                    \"roles.Founder\",\n                    \"roles.CoFounder\"\n                ],\n                \"joingate\": [\n                    \"roles.Founder\",\n                    \"roles.CoFounder\"\n                ],\n                \"join-gate\": [\n                    \"roles.Founder\",\n                    \"roles.CoFounder\"\n                ],\n                \"jg\": [\n                    \"roles.Founder\",\n                    \"roles.CoFounder\"\n                ],\n                \"raid\": [\n                    \"roles.Founder\",\n                    \"roles.CoFounder\"\n                ],\n                \"panic\": [\n                    \"roles.Founder\",\n                    \"roles.CoFounder\"\n                ],\n                \"maintenance\": [\n                    \"roles.Founder\",\n                    \"roles.CoFounder\"\n                ],\n                \"preset\": [\n                    \"roles.Founder\",\n                    \"roles.CoFounder\"\n                ],\n                \"antinuke\": [\n                    \"roles.Founder\",\n                    \"roles.CoFounder\"\n                ],\n                \"automod\": [\n                    \"roles.Founder\",\n                    \"roles.CoFounder\"\n                ]\n            }\n        },\n        \"statics\": {\n            \"roles\": [\n                    \"roles.Founder\",\n                    \"roles.CoFounder\"\n            ],\n            \"channels\": [\n                \"1442569288161558528\"\n            ]\n        },\n        \"customregister\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ],\n            \"channels\": [\n                \"1442569288161558528\"\n            ],\n            \"subcommands\": {\n                \"role\": [\n                    \"roles.HighStaff\"\n                ],\n                \"voc\": [\n                    \"roles.HighStaff\"\n                ],\n                \"voice\": [\n                    \"roles.HighStaff\"\n                ]\n            }\n        },\n        \"customrole\": {\n            \"roles\": [\n                \"roles.vip\",\n                \"roles.donator\",\n                \"roles.ServerBooster\",\n                \"roles.Level70\"\n            ],\n            \"channels\": [\n                \"1442569138114662490\"\n            ],\n            \"subcommands\": {\n                \"create\": [\n                    \"roles.vip\",\n                    \"roles.donator\",\n                    \"roles.ServerBooster\",\n                    \"roles.Level70\"\n                ],\n                \"modify\": [\n                    \"roles.vip\",\n                    \"roles.donator\",\n                    \"roles.ServerBooster\",\n                    \"roles.Level70\"\n                ],\n                \"add\": [\n                    \"roles.vip\",\n                    \"roles.donator\",\n                    \"roles.ServerBooster\",\n                    \"roles.Level70\"\n                ],\n                \"remove\": [\n                    \"roles.vip\",\n                    \"roles.donator\",\n                    \"roles.ServerBooster\",\n                    \"roles.Level70\"\n                ]\n            }\n        },\n        \"customvoc\": {\n            \"roles\": [\n                \"roles.vip\",\n                \"roles.donator\",\n                \"roles.ServerBooster\",\n                \"roles.Level70\"\n            ],\n            \"channels\": [\n                \"1442569138114662490\"\n            ]\n        },\n        \"description\": [\n            \"roles.PartnerManager\"\n        ],\n        \"dm-disable\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"channels\": [\n                \"1442569138114662490\"\n            ]\n        },\n        \"dm-enable\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"channels\": [\n                \"1442569138114662490\"\n            ]\n        },\n        \"bh\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"channels\": [\n                \"1442569138114662490\"\n            ],\n            \"subcommands\": {\n                \"set\": [\n                    \"roles.Member\"\n                ],\n                \"edit\": [\n                    \"roles.Member\"\n                ],\n                \"remove\": [\n                    \"roles.Member\"\n                ]\n            }\n        },\n        \"birthday\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"channels\": [\n                \"1442569138114662490\"\n            ],\n            \"subcommands\": {\n                \"set\": [\n                    \"roles.Member\"\n                ],\n                \"edit\": [\n                    \"roles.Member\"\n                ],\n                \"remove\": [\n                    \"roles.Member\"\n                ]\n            }\n        },\n        \"embed\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ],\n            \"channels\": [\n                \"1442569288161558528\"\n            ],\n            \"subcommands\": {\n                \"create\": [\n                    \"roles.HighStaff\"\n                ]\n            }\n        },\n        \"help\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"channels\": [\n                \"1442569138114662490\"\n            ]\n        },\n        \"info\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ],\n            \"channels\": [\n                \"1442569288161558528\"\n            ]\n        },\n        \"invites\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"channels\": [\n                \"1442569138114662490\"\n            ]\n        },\n        \"join\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"channels\": [\n                \"1442569187376763010\"\n            ]\n        },\n        \"languages\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"channels\": [\n                \"1442569187376763010\"\n            ]\n        },\n        \"leave\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"channels\": [\n                \"1442569187376763010\"\n            ]\n        },\n        \"level\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ],\n            \"channels\": [\n                \"1442569288161558528\"\n            ],\n            \"subcommands\": {\n                \"set\": [\n                    \"roles.HighStaff\"\n                ],\n                \"add\": [\n                    \"roles.HighStaff\"\n                ],\n                \"remove\": [\n                    \"roles.HighStaff\"\n                ],\n                \"reset\": [\n                    \"roles.HighStaff\"\n                ],\n                \"lock\": [\n                    \"roles.HighStaff\"\n                ],\n                \"unlock\": [\n                    \"roles.HighStaff\"\n                ],\n                \"multiplier\": [\n                    \"roles.HighStaff\"\n                ],\n                \"gmulti\": [\n                    \"roles.HighStaff\"\n                ],\n                \"ignore\": [\n                    \"roles.HighStaff\"\n                ],\n                \"unignore\": [\n                    \"roles.HighStaff\"\n                ],\n                \"config\": [\n                    \"roles.HighStaff\"\n                ]\n            }\n        },\n        \"me\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"channels\": [\n                \"1442569138114662490\"\n            ]\n        },\n        \"user\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"channels\": [\n                \"1442569138114662490\"\n            ]\n        },\n        \"membercount\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"mstats\": [\n            \"roles.Member\"\n        ],\n        \"no-dm-list\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ],\n            \"channels\": [\n                \"1442569288161558528\"\n            ]\n        },\n        \"perm\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ],\n            \"channels\": [\n                \"1442569288161558528\"\n            ],\n            \"subcommands\": {\n                \"grant\": [\n                    \"roles.HighStaff\"\n                ],\n                \"revoke\": [\n                    \"roles.HighStaff\"\n                ],\n                \"list\": [\n                    \"roles.HighStaff\"\n                ],\n                \"clear\": [\n                    \"roles.HighStaff\"\n                ]\n            }\n        },\n        \"ping\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"channels\": [\n                \"1442569138114662490\",\n                \"1442569262689554444\",\n                \"1442569288161558528\"\n            ]\n        },\n        \"purge\": [\n            \"roles.HighStaff\"\n        ],\n        \"quote\": {\n            \"roles\": [\n                \"roles.ServerBooster\",\n                \"roles.donator\",\n                \"roles.vip\",\n                \"roles.Level10\"\n            ],\n            \"channels\": [\n                \"1442569130573303898\",\n                \"1442569136067575809\",\n                \"1442569138114662490\",\n                \"1442569141717438495\"\n            ]\n        },\n        \"rank\": [\n            \"roles.Member\"\n        ],\n        \"reaction\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ],\n            \"channels\": [\n                \"1442569262689554444\",\n                \"1442569288161558528\"\n            ],\n            \"subcommands\": {\n                \"mention\": [\n                    \"roles.HighStaff\"\n                ],\n                \"auto\": [\n                    \"roles.HighStaff\"\n                ],\n                \"help\": [\n                    \"roles.HighStaff\"\n                ]\n            }\n        },\n        \"recensione\": [\n            \"roles.HighStaff\"\n        ],\n        \"restart\": [\n            \"roles.Founder\"\n        ],\n        \"server\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"channels\": [\n                \"1442569138114662490\"\n            ]\n        },\n        \"status\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ],\n            \"channels\": [\n                \"1442569288161558528\"\n            ]\n        },\n        \"set\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"subcommands\": {\n                \"autojoin\": [\n                    \"roles.HighStaff\"\n                ],\n                \"voice\": {\n                    \"roles\": [\n                        \"roles.Member\"\n                    ],\n                    \"channels\": [\n                        \"1442569187376763010\"\n                    ]\n                }\n            }\n        },\n        \"ship\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"channels\": [\n                \"1469685688814407726\"\n            ]\n        },\n        \"snipe\": [\n            \"roles.Member\"\n        ],\n        \"temprole\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ],\n            \"channels\": [\n                \"1442569288161558528\"\n            ],\n            \"subcommands\": {\n                \"toggle\": [\n                    \"roles.Staff\"\n                ],\n                \"add\": [\n                    \"roles.Staff\"\n                ],\n                \"remove\": [\n                    \"roles.Staff\"\n                ]\n            }\n        },\n        \"ticket\": {\n            \"roles\": [\n                \"roles.Staff\"\n            ],\n            \"subcommands\": {\n                \"add\": [\n                    \"roles.Staff\",\n                    \"roles.PartnerManager\"\n                ],\n                \"remove\": [\n                    \"roles.Staff\",\n                    \"roles.PartnerManager\"\n                ],\n                \"closerequest\": [\n                    \"roles.Staff\",\n                    \"roles.PartnerManager\"\n                ],\n                \"close\": [\n                    \"roles.Staff\",\n                    \"roles.PartnerManager\"\n                ],\n                \"claim\": [\n                    \"roles.Staff\",\n                    \"roles.PartnerManager\"\n                ],\n                \"unclaim\": [\n                    \"roles.Staff\",\n                    \"roles.PartnerManager\"\n                ],\n                \"switchpanel\": [\n                    \"roles.HighStaff\"\n                ],\n                \"rename\": [\n                    \"roles.HighStaff\"\n                ],\n                \"reopen\": [\n                    \"roles.HighStaff\"\n                ]\n            }\n        },\n        \"top\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"channels\": [\n                \"1442569138114662490\"\n            ]\n        },\n        \"unblock\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"subcommands\": {\n                \"avatar\": [\n                    \"roles.Member\"\n                ],\n                \"banner\": [\n                    \"roles.Member\"\n                ],\n                \"quotes\": [\n                    \"roles.Member\"\n                ]\n            }\n        },\n        \"verify\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ]\n        },\n        \"adorable\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"birb\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"cat\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"catfacts\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"chucknorris\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"country\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"dadjoke\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"define\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"dog\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"dogfacts\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"flip\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"github\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"itunes\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"joke\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"math\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"movie\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"pokemon\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"pug\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"quotefun\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"roll\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"rps\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"slots\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"space\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"steamstatus\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"weather\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        },\n        \"ban\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ],\n            \"channels\": [\n                \"1442569262689554444\",\n                \"1442569288161558528\",\n                \"1442569245878648924\"\n            ]\n        },\n        \"case\": {\n            \"roles\": [\n                \"roles.Staff\"\n            ],\n            \"channels\": [\n                \"1442569262689554444\",\n                \"1442569288161558528\",\n                \"1442569245878648924\"\n            ]\n        },\n        \"delwarn\": {\n            \"roles\": [\n                \"roles.Staff\"\n            ],\n            \"channels\": [\n                \"1442569262689554444\",\n                \"1442569288161558528\",\n                \"1442569245878648924\"\n            ]\n        },\n        \"duration\": {\n            \"roles\": [\n                \"roles.Staff\"\n            ],\n            \"channels\": [\n                \"1442569262689554444\",\n                \"1442569288161558528\",\n                \"1442569245878648924\"\n            ]\n        },\n        \"kick\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ],\n            \"channels\": [\n                \"1442569262689554444\",\n                \"1442569288161558528\",\n                \"1442569245878648924\"\n            ]\n        },\n        \"lock\": {\n            \"roles\": [\n                \"roles.Staff\"\n            ],\n            \"channels\": [\n                \"1442569262689554444\",\n                \"1442569288161558528\",\n                \"1442569245878648924\"\n            ]\n        },\n        \"moderations\": {\n            \"roles\": [\n                \"roles.Staff\"\n            ],\n            \"channels\": [\n                \"1442569262689554444\",\n                \"1442569288161558528\",\n                \"1442569245878648924\"\n            ]\n        },\n        \"modlogs\": {\n            \"roles\": [\n                \"roles.Staff\"\n            ],\n            \"channels\": [\n                \"1442569262689554444\",\n                \"1442569288161558528\",\n                \"1442569245878648924\"\n            ]\n        },\n        \"modstats\": {\n            \"roles\": [\n                \"roles.Staff\"\n            ],\n            \"channels\": [\n                \"1442569262689554444\",\n                \"1442569288161558528\",\n                \"1442569245878648924\"\n            ]\n        },\n        \"mute\": {\n            \"roles\": [\n                \"roles.Staff\"\n            ],\n            \"channels\": [\n                \"1442569262689554444\",\n                \"1442569288161558528\",\n                \"1442569245878648924\"\n            ]\n        },\n        \"reason\": {\n            \"roles\": [\n                \"roles.Staff\"\n            ],\n            \"channels\": [\n                \"1442569262689554444\",\n                \"1442569288161558528\",\n                \"1442569245878648924\"\n            ]\n        },\n        \"unban\": {\n            \"roles\": [\n                \"roles.Staff\"\n            ],\n            \"channels\": [\n                \"1442569262689554444\",\n                \"1442569288161558528\",\n                \"1442569245878648924\"\n            ]\n        },\n        \"unlock\": {\n            \"roles\": [\n                \"roles.Staff\"\n            ],\n            \"channels\": [\n                \"1442569262689554444\",\n                \"1442569288161558528\",\n                \"1442569245878648924\"\n            ]\n        },\n        \"unmute\": {\n            \"roles\": [\n                \"roles.Staff\"\n            ],\n            \"channels\": [\n                \"1442569262689554444\",\n                \"1442569288161558528\",\n                \"1442569245878648924\"\n            ]\n        },\n        \"warn\": {\n            \"roles\": [\n                \"roles.Staff\"\n            ],\n            \"channels\": [\n                \"1442569262689554444\",\n                \"1442569288161558528\",\n                \"1442569245878648924\"\n            ]\n        },\n        \"warnings\": {\n            \"roles\": [\n                \"roles.Staff\"\n            ],\n            \"channels\": [\n                \"1442569262689554444\",\n                \"1442569288161558528\",\n                \"1442569245878648924\"\n            ]\n        }\n    },\n    \"buttons\": {\n        \"accetta\": {\n            \"ownerFromMessageMention\": true\n        },\n        \"avatar_unblock:*\": {\n            \"ownerSegment\": 1\n        },\n        \"avatar_views\": [\n            \"roles.Member\"\n        ],\n        \"backup_delete_cancel:*\": {\n            \"ownerSegment\": 2\n        },\n        \"backup_delete_confirm:*\": {\n            \"ownerSegment\": 2\n        },\n        \"backup_info_delete:*\": {\n            \"ownerSegment\": 2\n        },\n        \"backup_info_delete_cancel:*\": {\n            \"ownerSegment\": 2\n        },\n        \"backup_info_delete_confirm:*\": {\n            \"ownerSegment\": 2\n        },\n        \"backup_info_load:*\": {\n            \"ownerSegment\": 2\n        },\n        \"backup_list_next:*\": {\n            \"ownerSegment\": 1\n        },\n        \"backup_list_prev:*\": {\n            \"ownerSegment\": 1\n        },\n        \"banner_unblock:*\": {\n            \"ownerSegment\": 1\n        },\n        \"banner_views\": [\n            \"roles.Member\"\n        ],\n        \"bh_age:*\": {\n            \"ownerSegment\": 1\n        },\n        \"bh_cancel:*\": {\n            \"ownerSegment\": 1\n        },\n        \"bh_date:*\": {\n            \"ownerSegment\": 1\n        },\n        \"bh_privacy:*\": {\n            \"ownerSegment\": 1\n        },\n        \"bh_remove_no:*\": {\n            \"ownerSegment\": 1\n        },\n        \"bh_remove_yes:*\": {\n            \"ownerSegment\": 1\n        },\n        \"bh_save:*\": {\n            \"ownerSegment\": 1\n        },\n        \"claim_ticket\": [\n            \"roles.Staff\",\n            \"roles.HighStaff\",\n            \"roles.PartnerManager\"\n        ],\n        \"close_ticket\": [\n            \"roles.Staff\",\n            \"roles.HighStaff\",\n            \"roles.PartnerManager\"\n        ],\n        \"close_ticket_motivo\": [\n            \"roles.Staff\",\n            \"roles.HighStaff\",\n            \"roles.PartnerManager\"\n        ],\n        \"ticket_autoclose_accept\": null,\n        \"ticket_autoclose_reject\": null,\n        \"customrole_color:*\": {\n            \"ownerSegment\": 1\n        },\n        \"customrole_delete:*\": {\n            \"ownerSegment\": 1\n        },\n        \"customrole_emoji:*\": {\n            \"ownerSegment\": 1\n        },\n        \"customrole_grant:*\": {\n            \"grantRecipientOnly\": true\n        },\n        \"customrole_members:*\": {\n            \"ownerSegment\": 1\n        },\n        \"customrole_name:*\": {\n            \"ownerSegment\": 1\n        },\n        \"customvoc_emoji:*\": {\n            \"ownerSegment\": 1\n        },\n        \"customvoc_name:*\": {\n            \"ownerSegment\": 1\n        },\n        \"downv\": [\n            \"roles.Member\"\n        ],\n        \"eb:author:*\": {\n            \"ownerFromMessageMention\": true\n        },\n        \"eb:color:*\": {\n            \"ownerFromMessageMention\": true\n        },\n        \"eb:content:*\": {\n            \"ownerFromMessageMention\": true\n        },\n        \"eb:description:*\": {\n            \"ownerFromMessageMention\": true\n        },\n        \"eb:footer:*\": {\n            \"ownerFromMessageMention\": true\n        },\n        \"eb:image:*\": {\n            \"ownerFromMessageMention\": true\n        },\n        \"eb:send:*\": {\n            \"ownerFromMessageMention\": true\n        },\n        \"eb:thumbnail:*\": {\n            \"ownerFromMessageMention\": true\n        },\n        \"eb:title:*\": {\n            \"ownerFromMessageMention\": true\n        },\n        \"error_pending\": {\n            \"permissions\": \"Administrator\"\n        },\n        \"error_solved\": {\n            \"permissions\": \"Administrator\"\n        },\n        \"error_unsolved\": {\n            \"permissions\": \"Administrator\"\n        },\n        \"generalimoderazione\": [\n            \"roles.Staff\"\n        ],\n        \"info_badges_roles\": [\n            \"roles.Member\"\n        ],\n        \"info_boost_levels\": [\n            \"roles.Member\"\n        ],\n        \"info_donations\": [\n            \"roles.Member\"\n        ],\n        \"info_levels\": [\n            \"roles.Member\"\n        ],\n        \"info_rules\": [\n            \"roles.Member\"\n        ],\n        \"info_strike_close:*\": {\n            \"ownerFromMessageMention\": true\n        },\n        \"info_strike_first:*\": {\n            \"ownerFromMessageMention\": true\n        },\n        \"info_strike_last:*\": {\n            \"ownerFromMessageMention\": true\n        },\n        \"info_strike_next:*\": {\n            \"ownerFromMessageMention\": true\n        },\n        \"info_strike_prev:*\": {\n            \"ownerFromMessageMention\": true\n        },\n        \"info_verifica\": [\n            \"roles.Member\"\n        ],\n        \"limiti\": [\n            \"roles.Staff\"\n        ],\n        \"metodi\": [\n            \"roles.Member\"\n        ],\n        \"next\": [\n            \"roles.PartnerManager\",\n            \"roles.HighStaff\"\n        ],\n        \"pause\": [\n            \"roles.Staff\"\n        ],\n        \"pause_accept:*\": [\n            \"roles.HighStaff\"\n        ],\n        \"pause_cancel:*\": [\n            \"roles.HighStaff\"\n        ],\n        \"pause_list:*\": {\n            \"roles\": [\n                \"roles.Staff\",\n                \"roles.PartnerManager\",\n                \"roles.HighStaff\"\n            ],\n            \"ownerSegment\": 1\n        },\n        \"pause_reject:*\": [\n            \"roles.HighStaff\"\n        ],\n        \"ping\": [\n            \"roles.Member\"\n        ],\n        \"prev\": [\n            \"roles.PartnerManager\",\n            \"roles.HighStaff\"\n        ],\n        \"r_multiplier_info\": [\n            \"roles.Member\"\n        ],\n        \"regolamento\": [\n            \"roles.Staff\"\n        ],\n        \"rifiuta\": {\n            \"ownerFromMessageMention\": true\n        },\n        \"sanzioni\": [\n            \"roles.Staff\"\n        ],\n        \"stats_me_period_back*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_me_period_open*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_me_period_set*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_me_refresh*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_user_period_back*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_user_period_open*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_user_period_set*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_user_refresh*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_server_refresh*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_top_channel_page_first*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_top_channel_page_last*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_top_channel_page_modal_open*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_top_channel_page_next*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_top_channel_page_prev*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_top_channel_period_back*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_top_channel_period_open*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_top_channel_period_set*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_top_channel_refresh*\": {\n            \"ownerSegment\": 1\n        },\n        \"statics:*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_top_channel_view_select*\": {\n            \"ownerSegment\": 1\n        },\n        \"suggestion_staff_accept\": [\n            \"roles.HighStaff\"\n        ],\n        \"suggestion_staff_reject\": [\n            \"roles.HighStaff\"\n        ],\n        \"testualimoderazione\": [\n            \"roles.Staff\"\n        ],\n        \"ticket_rate:*\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ],\n            \"ownerFromMessageMention\": true,\n            \"ownerOrRole\": true\n        },\n        \"ticket_transcript:*\": {\n            \"roles\": [\n                \"roles.HighStaff\"\n            ],\n            \"ownerFromMessageMention\": true,\n            \"ownerOrRole\": true\n        },\n        \"torna_indietro\": {\n            \"ownerFromMessageMention\": true\n        },\n        \"unclaim\": [\n            \"roles.Staff\",\n            \"roles.HighStaff\",\n            \"roles.PartnerManager\"\n        ],\n        \"upv\": [\n            \"roles.Member\"\n        ],\n        \"valutazioni\": [\n            \"roles.Staff\"\n        ],\n        \"verify_enter\": {\n            \"verifyStartRequired\": true\n        },\n        \"apply_helper\": [\n            \"roles.Member\"\n        ],\n        \"apply_partnermanager\": [\n            \"roles.Member\"\n        ],\n        \"apply_start:*\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"ownerSegment\": 2\n        },\n        \"apply_back:*\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"ownerSegment\": 2\n        },\n        \"apply_page:*\": {\n            \"roles\": [\n                \"roles.Member\"\n            ],\n            \"ownerSegment\": 2\n        },\n        \"verify_start\": null,\n        \"vocalimoderazione\": [\n            \"roles.Staff\"\n        ],\n        \"warnstaff\": [\n            \"roles.Staff\"\n        ]\n    },\n    \"selectMenus\": {\n        \"customrole_add_select:*\": {\n            \"ownerSegment\": 1\n        },\n        \"customrole_remove_select:*\": {\n            \"ownerSegment\": 1\n        },\n        \"backup_list_select:*\": {\n            \"ownerSegment\": 1\n        },\n        \"usage_guide:*\": {\n            \"ownerSegment\": 2\n        },\n        \"dyno_temprole_help:*\": {\n            \"ownerSegment\": 1\n        },\n        \"personality_age\": [\n            \"roles.Member\"\n        ],\n        \"personality_colors_1\": [\n            \"roles.Member\"\n        ],\n        \"personality_colors_2\": [\n            \"roles.Member\"\n        ],\n        \"personality_colors_plus\": [\n            \"roles.Donator\",\n            \"roles.vip\",\n            \"roles.Level70\",\n            \"roles.ServerBooster\"\n        ],\n        \"personality_dm\": [\n            \"roles.Member\"\n        ],\n        \"personality_mentions\": [\n            \"roles.Member\"\n        ],\n        \"personality_pronouns\": [\n            \"roles.Member\"\n        ],\n        \"personality_region\": [\n            \"roles.Member\"\n        ],\n        \"personality_relationship\": [\n            \"roles.Member\"\n        ],\n        \"stats_top_channel_view_select*\": {\n            \"ownerSegment\": 1\n        },\n        \"ticket_open_menu\": null\n    },\n    \"modals\": {\n        \"customrole_modal_*\": {\n            \"ownerSegment\": 1\n        },\n        \"customvoc_modal_*\": {\n            \"ownerSegment\": 1\n        },\n        \"dm_broadcast:*\": {\n            \"ownerSegment\": 1\n        },\n        \"ebm:*\": {\n            \"ownerSegment\": 1\n        },\n        \"ebm:send:*\": {\n            \"ownerSegment\": 1\n        },\n        \"bh_modal_date:*\": {\n            \"ownerSegment\": 1\n        },\n        \"bh_modal_age:*\": {\n            \"ownerSegment\": 1\n        },\n        \"modal_close_ticket:*\": {\n            \"ownerSegment\": 1\n        },\n        \"partnershipModal_*\": {\n            \"ownerSegment\": 1\n        },\n        \"partnershipModal_cmd_*\": {\n            \"ownerSegment\": 1\n        },\n        \"partnershipModal_ctx_*\": {\n            \"ownerSegment\": 1\n        },\n        \"stats_top_channel_page_modal:*\": {\n            \"ownerSegment\": 1\n        },\n        \"suggestion_staff_modal:*\": {\n            \"ownerSegment\": 1\n        },\n        \"verify_code:*\": {\n            \"ownerSegment\": 1\n        },\n        \"apply_form:*\": {\n            \"roles\": [\n                \"roles.Member\"\n            ]\n        }\n    }\n}\n",
+        "antiNukeConfig": {
+          "kickBanFilter": {
+            "enabled": true,
+            "minuteLimit": 5,
+            "hourLimit": 15,
+            "heatPerAction": 20
+          },
+          "roleCreationFilter": {
+            "enabled": true,
+            "minuteLimit": 5,
+            "hourLimit": 15,
+            "heatPerAction": 10
+          },
+          "roleDeletionFilter": {
+            "enabled": true,
+            "minuteLimit": 3,
+            "hourLimit": 10,
+            "heatPerAction": 25
+          },
+          "channelCreationFilter": {
+            "enabled": true,
+            "minuteLimit": 4,
+            "hourLimit": 12,
+            "heatPerAction": 16
+          },
+          "channelDeletionFilter": {
+            "enabled": true,
+            "minuteLimit": 3,
+            "hourLimit": 8,
+            "heatPerAction": 25
+          },
+          "webhookCreationFilter": {
+            "enabled": true,
+            "minuteLimit": 3,
+            "hourLimit": 10,
+            "heatPerAction": 15
+          },
+          "webhookUpdateFilter": {
+            "enabled": true,
+            "minuteLimit": 4,
+            "hourLimit": 12,
+            "heatPerAction": 12
+          },
+          "webhookDeletionFilter": {
+            "enabled": true,
+            "minuteLimit": 3,
+            "hourLimit": 8,
+            "heatPerAction": 10
+          },
+          "inviteCreationFilter": {
+            "enabled": true,
+            "minuteLimit": 4,
+            "hourLimit": 15,
+            "heatPerAction": 12
+          },
+          "panicMode": {
+            "enabled": true,
+            "useHeatAlgorithm": true,
+            "thresholdHeat": 130,
+            "decayPerSec": 5,
+            "durationMs": 600000,
+            "maxDurationMs": 2700000,
+            "extendByMsOnTrigger": 120000,
+            "warnedRoleIds": [
+              "1442568894349840435",
+              "1442568896237277295",
+              "1442568897902678038",
+              "1442568901887000618",
+              "1442568904311570555"
+            ],
+            "whitelistCategoryIds": [],
+            "lockdown": {
+              "dangerousRoles": true,
+              "lockModerationCommands": true,
+              "lockAllCommands": true,
+              "channelLockdown": true,
+              "banAttackExecutor": true,
+              "unlockDangerousRolesOnFinish": true,
+              "roleAllowlistIds": []
+            },
+            "autoBackupSync": {
+              "enabled": false,
+              "restoreDeletedRoles": true,
+              "restoreDeletedChannels": true,
+              "deleteNewRoles": true,
+              "deleteNewChannels": true,
+              "deleteNewWebhooks": true
+            },
+            "instantRollbackWhileActive": {
+              "enabled": true,
+              "quarantineExecutor": true,
+              "deleteCreatedRoles": true,
+              "deleteCreatedChannels": true,
+              "deleteCreatedWebhooks": true
+            }
+          }
+        },
+        "autoModConfig": {
+          "status": {
+            "enabled": true,
+            "antiSpamEnabled": true,
+            "monitorUnwhitelistedWebhooks": true
+          },
+          "thresholds": {
+            "warn": 35,
+            "delete": 65,
+            "timeout": 100
+          },
+          "heatSystem": {
+            "maxHeat": 100,
+            "decayPerSec": 5,
+            "resetOnPunishment": true
+          },
+          "autoTimeouts": {
+            "enabled": true,
+            "regularStrikeDurationMs": 60000,
+            "capStrikeDurationMs": 660000,
+            "capStrike": 3,
+            "multiplierEnabled": true,
+            "multiplierPercent": 200,
+            "profileResetMs": 21600000
+          },
+          "autoLockdown": {
+            "enabled": true,
+            "mentionTrigger": 50,
+            "mentionWindowMs": 3000,
+            "mentionHourCap": 20
+          },
+          "heatFilters": {
+            "regularMessage": true,
+            "suspiciousAccount": true,
+            "similarMessage": true,
+            "emojis": true,
+            "newLines": true,
+            "zalgo": true,
+            "characters": true,
+            "inviteLinks": true,
+            "maliciousLinks": true,
+            "nsfwLinks": true,
+            "wordBlacklist": true,
+            "linkBlacklist": true,
+            "mentions": true,
+            "attachments": true,
+            "webhookMessages": true
+          },
+          "heatFactors": {
+            "regularMessage": 1,
+            "suspiciousAccount": 1,
+            "similarMessage": 1,
+            "emojis": 1,
+            "newLines": 1,
+            "zalgo": 1,
+            "characters": 1,
+            "inviteLinks": 1,
+            "maliciousLinks": 1,
+            "nsfwLinks": 1,
+            "wordBlacklist": 1,
+            "linkBlacklist": 1,
+            "mentions": 1,
+            "attachments": 1
+          },
+          "heatCaps": {
+            "maxPerMessage": 85,
+            "charactersMax": 40,
+            "textClusterMax": 35,
+            "attachmentClusterMax": 28,
+            "mentionClusterMax": 70
+          },
+          "panic": {
+            "enabled": true,
+            "considerActivityHistory": true,
+            "useGlobalBadUsersDb": true,
+            "triggerCount": 3,
+            "triggerWindowMs": 600000,
+            "durationMs": 600000,
+            "raidWindowMs": 120000,
+            "raidUserThreshold": 6,
+            "raidYoungThreshold": 4
+          },
+          "shorteners": {
+            "crawl": true,
+            "timeoutMs": 2200,
+            "maxHops": 3
+          },
+          "profiles": {
+            "default": {
+              "exempt": false,
+              "heatMultiplier": 1,
+              "mentionsEnabled": true,
+              "attachmentsEnabled": true,
+              "inviteLinksEnabled": true
+            },
+            "media": {
+              "exempt": false,
+              "heatMultiplier": 0.85,
+              "mentionsEnabled": true,
+              "attachmentsEnabled": false,
+              "inviteLinksEnabled": true
+            },
+            "ticket": {
+              "exempt": true,
+              "heatMultiplier": 0.6,
+              "mentionsEnabled": false,
+              "attachmentsEnabled": false,
+              "inviteLinksEnabled": false
+            },
+            "staff": {
+              "exempt": true,
+              "heatMultiplier": 0.25,
+              "mentionsEnabled": false,
+              "attachmentsEnabled": false,
+              "inviteLinksEnabled": false
+            }
+          }
+        },
+        "joinGateConfig": {
+          "enabled": true,
+          "dmPunishedMembers": true,
+          "noAvatar": {
+            "enabled": true,
+            "action": "log"
+          },
+          "newAccounts": {
+            "enabled": true,
+            "minAgeDays": 3,
+            "action": "kick"
+          },
+          "botAdditions": {
+            "enabled": true,
+            "action": "kick"
+          },
+          "unverifiedBotAdditions": {
+            "enabled": true,
+            "action": "kick"
+          },
+          "suspiciousAccount": {
+            "enabled": true,
+            "action": "log"
+          },
+          "advertisingName": {
+            "enabled": true,
+            "action": "kick"
+          },
+          "usernameFilter": {
+            "enabled": true,
+            "postJoinEnabled": true,
+            "action": "kick",
+            "strictWords": [
+              "discord staff",
+              "discord support",
+              "nitro free",
+              "steam gift",
+              "free nitro",
+              "airdrop"
+            ],
+            "wildcardWords": [
+              "*discord*support*",
+              "*discord*staff*",
+              "*nitro*free*",
+              "*steam*gift*",
+              "*crypto*airdrop*"
+            ]
+          }
+        },
+        "joinRaidConfig": {
+          "enabled": true,
+          "triggerAction": "ban",
+          "triggerType": "unique",
+          "accountType": "any",
+          "punishOnActiveRaid": true,
+          "triggerCount": 10,
+          "triggerWindowMs": 10800000,
+          "raidDurationMs": 1800000,
+          "warnedRoleIds": [
+            "1442568894349840435"
+          ],
+          "idFlag": {
+            "enabled": true,
+            "categorization": "adaptive",
+            "minimumMatches": 4,
+            "compareWindowMs": 10800000,
+            "createdAtDeltaMs": 1200000
+          },
+          "noPfpFlag": {
+            "enabled": true
+          },
+          "ageFlag": {
+            "enabled": true,
+            "minimumAgeMs": 259200000
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "version": 2,
+  "updatedAt": 1771703624411,
+  "global": {
+    "modules": {
+      "antinuke": "enabled"
+    },
+    "commands": {
+      "prefix": {
+        "adorable": "enabled"
+      },
+      "slash": {}
+    },
+    "events": {},
+    "routes": {},
+    "routeGroups": {}
+  },
+  "guilds": {
+    "1329080093599076474": {
+      "modules": {
+        "antinuke": "enabled",
+        "automod": "enabled"
+      },
+      "commands": {
+        "prefix": {
+          "adorable": "enabled"
+        },
+        "slash": {}
+      },
+      "events": {},
+      "routes": {},
+      "routeGroups": {}
+    },
+    "1462458562507964584": {
+      "modules": {},
+      "commands": {
+        "prefix": {
+          "adorable": "enabled"
+        },
+        "slash": {}
+      },
+      "events": {},
+      "routes": {},
+      "routeGroups": {}
+    }
+  }
+}

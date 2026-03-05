@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "backupId": "Z7FUN6QLYNM2",
+  "guildId": "1471512808448458958",
+  "createdAt": "2026-02-27T23:09:09.670Z",
+  "source": "automatic",
+  "checksum": {
+    "algorithm": "sha256",
+    "payload": "caa480cdbcfbcfd49b877e89ebcd21e236a661b2b6be2053e6aa497b53833463",
+    "compressed": "61438ef7d5d67a78cb3cefc6ff94a3325481bec8e681c9822abd0766d6e42fbf"
+  },
+  "file": {
+    "primary": "Z7FUN6QLYNM2.json.gz",
+    "backup": "Z7FUN6QLYNM2.json.gz.bak",
+    "sizeBytes": 50280
+  }
+}

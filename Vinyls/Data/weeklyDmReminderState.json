@@ -1,0 +1,2890 @@
+{
+  "1329080093599076474": {
+    "plannedAt": 1772195106718,
+    "jobs": [
+      {
+        "id": "1772195107279_0_422718",
+        "userId": "1461362148155457715",
+        "sendAt": 1772184754926,
+        "attempts": 0,
+        "sentAt": 1772195107772,
+        "skipped": null,
+        "reminder": {
+          "title": "Ruoli e colori •",
+          "description": "In <#1469429150669602961> trovi personalizzazione e vantaggi.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nUn uso corretto di canali e comandi rende tutto più semplice."
+        },
+        "nextAttemptAt": null
+      },
+      {
+        "id": "1772195107279_1_268321",
+        "userId": "414631629760233482",
+        "sendAt": 1772308795518,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "News e avvisi •",
+          "description": "Controlla <#1442569115972669541> per non perdere novità importanti.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nUn uso corretto di canali e comandi rende tutto più semplice."
+        }
+      },
+      {
+        "id": "1772195107280_2_454958",
+        "userId": "1438903301977411626",
+        "sendAt": 1772225732228,
+        "attempts": 0,
+        "sentAt": 1772225754407,
+        "skipped": null,
+        "reminder": {
+          "title": "Quote della community",
+          "description": "Se trovi un messaggio memorabile, usa i comandi quote: poi lo trovi in <#1468540884537573479>."
+        },
+        "nextAttemptAt": null
+      },
+      {
+        "id": "1772195107280_3_528245",
+        "userId": "531812067049603073",
+        "sendAt": 1772627787950,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Classifiche bot •",
+          "description": "Usa +rank, +classifica weekly e +classifica alltime per tracciare la tua crescita.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nUn uso corretto di canali e comandi rende tutto più semplice."
+        }
+      },
+      {
+        "id": "1772195107280_4_635441",
+        "userId": "1317829720594710680",
+        "sendAt": 1772561430552,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Panoramica server •",
+          "description": "Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nSe vuoi, questa settimana prova a seguire questo punto per primo."
+        }
+      },
+      {
+        "id": "1772195107280_5_832217",
+        "userId": "813770005916286976",
+        "sendAt": 1772530678306,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Quote e contenuti •",
+          "description": "Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nContribuire in modo ordinato aiuta davvero tutta la community."
+        }
+      },
+      {
+        "id": "1772195107280_6_112717",
+        "userId": "1209905074218999813",
+        "sendAt": 1772315732390,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Classifiche bot •",
+          "description": "Usa +rank, +classifica weekly e +classifica alltime per tracciare la tua crescita.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nAnche un solo contributo utile al giorno fa differenza."
+        }
+      },
+      {
+        "id": "1772195107281_7_973953",
+        "userId": "1397729516079546469",
+        "sendAt": 1772223663882,
+        "attempts": 2,
+        "sentAt": null,
+        "skipped": "dm-failed",
+        "reminder": {
+          "title": "Verifica e onboarding",
+          "description": "Se inviti amici, ricordagli di completare la verifica in <#1442569059983163403>."
+        },
+        "nextAttemptAt": 1772245314321
+      },
+      {
+        "id": "1772195107281_8_258371",
+        "userId": "1466559423630671942",
+        "sendAt": 1772446797802,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Forum community •",
+          "description": "Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nFocus utile: qualità prima della quantità nelle interazioni.\nUn uso corretto di canali e comandi rende tutto più semplice."
+        }
+      },
+      {
+        "id": "1772195107281_9_880197",
+        "userId": "1283678437340483607",
+        "sendAt": 1772481538729,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Poll ed eventi •",
+          "description": "Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nFocus utile: qualità prima della quantità nelle interazioni.\nUn uso corretto di canali e comandi rende tutto più semplice."
+        }
+      },
+      {
+        "id": "1772195107281_10_55477",
+        "userId": "831993744135421994",
+        "sendAt": 1772537766634,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Ruoli e vantaggi del server",
+          "description": "Hai già controllato i ruoli sbloccabili con livelli, boost e voti? Dai un'occhiata al canale info del server."
+        }
+      },
+      {
+        "id": "1772195107281_11_777459",
+        "userId": "1182667112817360929",
+        "sendAt": 1772229060439,
+        "attempts": 0,
+        "sentAt": 1772229114717,
+        "skipped": null,
+        "reminder": {
+          "title": "Classifiche bot •",
+          "description": "Usa +rank, +classifica weekly e +classifica alltime per tracciare la tua crescita.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nSe vuoi, questa settimana prova a seguire questo punto per primo."
+        },
+        "nextAttemptAt": null
+      },
+      {
+        "id": "1772195107282_12_788861",
+        "userId": "882703902099767378",
+        "sendAt": 1772400622659,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Media e condivisioni •",
+          "description": "In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nContribuire in modo ordinato aiuta davvero tutta la community."
+        }
+      },
+      {
+        "id": "1772195107282_13_873139",
+        "userId": "1350146967413592165",
+        "sendAt": 1772713900960,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Canale polls",
+          "description": "Votare nei poll in <#1442569128706838528> aiuta a prendere decisioni più utili per tutti."
+        }
+      },
+      {
+        "id": "1772195107282_14_953521",
+        "userId": "1165957564840804413",
+        "sendAt": 1772543552304,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Media e condivisioni •",
+          "description": "In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nUn uso corretto di canali e comandi rende tutto più semplice."
+        }
+      },
+      {
+        "id": "1772195107282_15_63641",
+        "userId": "712629562348929024",
+        "sendAt": 1772620681802,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Forum community •",
+          "description": "Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nContribuire in modo ordinato aiuta davvero tutta la community."
+        }
+      },
+      {
+        "id": "1772195107283_16_533656",
+        "userId": "820256360985264128",
+        "sendAt": 1772303179176,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Candidature •",
+          "description": "Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nSe vuoi, questa settimana prova a seguire questo punto per primo."
+        }
+      },
+      {
+        "id": "1772195107283_17_651542",
+        "userId": "1325584889415864320",
+        "sendAt": 1772202103760,
+        "attempts": 0,
+        "sentAt": 1772202112747,
+        "skipped": null,
+        "reminder": {
+          "title": "Canale news",
+          "description": "Controlla periodicamente <#1442569115972669541> per non perderti novità su eventi, regole e aggiornamenti."
+        },
+        "nextAttemptAt": null
+      },
+      {
+        "id": "1772195107283_18_914552",
+        "userId": "1348679222838689886",
+        "sendAt": 1772741581240,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Supporter e badge",
+          "description": "Molti badge e ruoli speciali hanno vantaggi concreti: scopri i requisiti e punta a sbloccarne almeno uno."
+        }
+      },
+      {
+        "id": "1772195107284_19_791276",
+        "userId": "1332797979299545209",
+        "sendAt": 1772309424517,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Ticket supporto •",
+          "description": "Per problemi o dubbi usa i ticket in <#1442569095068254219>.\nFocus utile: qualità prima della quantità nelle interazioni.\nContribuire in modo ordinato aiuta davvero tutta la community."
+        }
+      },
+      {
+        "id": "1772195107284_20_914536",
+        "userId": "1435846954176483472",
+        "sendAt": 1772295291369,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Staff pagato •",
+          "description": "Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nAnche un solo contributo utile al giorno fa differenza."
+        }
+      },
+      {
+        "id": "1772195107284_21_812599",
+        "userId": "335492820276346880",
+        "sendAt": 1772650443477,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Counting e attività leggere •",
+          "description": "Un passaggio in <#1442569179743125554> mantiene il server vivo anche nei momenti lenti.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nAnche un solo contributo utile al giorno fa differenza."
+        }
+      },
+      {
+        "id": "1772195107285_22_730297",
+        "userId": "759499965297852506",
+        "sendAt": 1772461775050,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Preparazione candidatura",
+          "description": "Prima di inviare la candidatura, cura grammatica, chiarezza e motivazioni: aumenta molto le possibilità di essere considerato."
+        }
+      },
+      {
+        "id": "1772195107285_23_351633",
+        "userId": "1090146313217265756",
+        "sendAt": 1772641943889,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "News e avvisi •",
+          "description": "Controlla <#1442569115972669541> per non perdere novità importanti.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nContribuire in modo ordinato aiuta davvero tutta la community."
+        }
+      },
+      {
+        "id": "1772195107285_24_877550",
+        "userId": "1274027644056240192",
+        "sendAt": 1772532603090,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Poll ed eventi •",
+          "description": "Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nContribuire in modo ordinato aiuta davvero tutta la community."
+        }
+      },
+      {
+        "id": "1772195107286_25_34011",
+        "userId": "1295089170934530110",
+        "sendAt": 1772446064717,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Canale comandi",
+          "description": "Per usare i comandi del bot in modo ordinato usa <#1442569138114662490>."
+        }
+      },
+      {
+        "id": "1772195107286_26_934305",
+        "userId": "1442583772720529539",
+        "sendAt": 1772475010234,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Crescita livelli •",
+          "description": "Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nAnche un solo contributo utile al giorno fa differenza."
+        }
+      },
+      {
+        "id": "1772195107286_27_173505",
+        "userId": "1324841591051124808",
+        "sendAt": 1772449454096,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Comandi bot •",
+          "description": "Per usare bene il bot parti da +help e prova i comandi in <#1442569138114662490>.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nSe vuoi, questa settimana prova a seguire questo punto per primo."
+        }
+      },
+      {
+        "id": "1772195107286_28_919920",
+        "userId": "1426954418586386532",
+        "sendAt": 1772644186722,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Staff pagato •",
+          "description": "Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nAnche un solo contributo utile al giorno fa differenza."
+        }
+      },
+      {
+        "id": "1772195107287_29_82232",
+        "userId": "861182300338913312",
+        "sendAt": 1772558486987,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Ticket supporto •",
+          "description": "Per problemi o dubbi usa i ticket in <#1442569095068254219>.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nPiccoli miglioramenti continui portano risultati reali."
+        }
+      },
+      {
+        "id": "1772195107287_30_536866",
+        "userId": "676009951662964747",
+        "sendAt": 1772720757666,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Counting e attività leggere •",
+          "description": "Un passaggio in <#1442569179743125554> mantiene il server vivo anche nei momenti lenti.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nPiccoli miglioramenti continui portano risultati reali."
+        }
+      },
+      {
+        "id": "1772195107287_31_360217",
+        "userId": "1232323327176081418",
+        "sendAt": 1772381807100,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Forum community •",
+          "description": "Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nAnche un solo contributo utile al giorno fa differenza."
+        }
+      },
+      {
+        "id": "1772195107288_32_355371",
+        "userId": "1360577298713284750",
+        "sendAt": 1772397378334,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Obiettivo settimanale",
+          "description": "Impostati un mini-obiettivo: più costanza in chat, più presenza in vocale o più partecipazione ai poll."
+        }
+      },
+      {
+        "id": "1772195107288_33_889517",
+        "userId": "1466559423630671942",
+        "sendAt": 1772285599264,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Classifiche bot •",
+          "description": "Usa +rank, +classifica weekly e +classifica alltime per tracciare la tua crescita.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nSe vuoi, questa settimana prova a seguire questo punto per primo."
+        }
+      },
+      {
+        "id": "1772195107289_34_808348",
+        "userId": "414631629760233482",
+        "sendAt": 1772615353441,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Quote e contenuti •",
+          "description": "Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nUn uso corretto di canali e comandi rende tutto più semplice."
+        }
+      },
+      {
+        "id": "1772195107289_35_533988",
+        "userId": "1426954418586386532",
+        "sendAt": 1772311043580,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Ruoli e colori •",
+          "description": "In <#1469429150669602961> trovi personalizzazione e vantaggi.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nAnche un solo contributo utile al giorno fa differenza."
+        }
+      },
+      {
+        "id": "1772195107289_36_815754",
+        "userId": "1182667112817360929",
+        "sendAt": 1772551700382,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Candidature •",
+          "description": "Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nFocus utile: qualità prima della quantità nelle interazioni.\nUn uso corretto di canali e comandi rende tutto più semplice."
+        }
+      },
+      {
+        "id": "1772195107289_37_926943",
+        "userId": "1165957564840804413",
+        "sendAt": 1772719251882,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Media e condivisioni •",
+          "description": "In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nFocus utile: qualità prima della quantità nelle interazioni.\nAnche un solo contributo utile al giorno fa differenza."
+        }
+      },
+      {
+        "id": "1772195107289_38_661657",
+        "userId": "831993744135421994",
+        "sendAt": 1772359628177,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Suggerimenti utili",
+          "description": "Le idee più chiare in <#1442569147559973094> vengono valutate meglio.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nUn uso corretto di canali e comandi rende tutto più semplice."
+        }
+      },
+      {
+        "id": "1772195107290_39_861845",
+        "userId": "1397729516079546469",
+        "sendAt": 1772560070335,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Quote e contenuti •",
+          "description": "Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nAnche un solo contributo utile al giorno fa differenza."
+        }
+      },
+      {
+        "id": "1772195107290_40_184302",
+        "userId": "759499965297852506",
+        "sendAt": 1772298911220,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Staff pagato: approccio",
+          "description": "Prima di puntare al compenso, concentra il focus su qualità del supporto e responsabilità nelle attività staff."
+        }
+      },
+      {
+        "id": "1772195107290_41_524644",
+        "userId": "1442583772720529539",
+        "sendAt": 1772651157929,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Media e contenuti",
+          "description": "Passa da <#1442569136067575809> per condividere contenuti interessanti in linea con il regolamento."
+        }
+      },
+      {
+        "id": "1772195107290_42_18242",
+        "userId": "861182300338913312",
+        "sendAt": 1772279493292,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Counting e attività leggere",
+          "description": "Un passaggio in <#1442569179743125554> mantiene il server vivo anche nei momenti lenti.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nUn uso corretto di canali e comandi rende tutto più semplice."
+        }
+      },
+      {
+        "id": "1772195107290_43_240372",
+        "userId": "813770005916286976",
+        "sendAt": 1772272620743,
+        "attempts": 0,
+        "sentAt": 1772272674891,
+        "skipped": null,
+        "reminder": {
+          "title": "Forum community •",
+          "description": "Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nPiccoli miglioramenti continui portano risultati reali."
+        },
+        "nextAttemptAt": null
+      },
+      {
+        "id": "1772195107291_44_414854",
+        "userId": "1274027644056240192",
+        "sendAt": 1772185163127,
+        "attempts": 0,
+        "sentAt": 1772195108440,
+        "skipped": null,
+        "reminder": {
+          "title": "News e avvisi",
+          "description": "Controlla <#1442569115972669541> per non perdere novità importanti.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nContribuire in modo ordinato aiuta davvero tutta la community."
+        },
+        "nextAttemptAt": null
+      },
+      {
+        "id": "1772195107291_45_588849",
+        "userId": "1090146313217265756",
+        "sendAt": 1772297928318,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Crescita livelli •",
+          "description": "Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nSe vuoi, questa settimana prova a seguire questo punto per primo."
+        }
+      },
+      {
+        "id": "1772195107291_46_895723",
+        "userId": "1360577298713284750",
+        "sendAt": 1772185314244,
+        "attempts": 0,
+        "sentAt": 1772195108790,
+        "skipped": null,
+        "reminder": {
+          "title": "Comando classifica weekly",
+          "description": "Usa +classifica weekly per vedere il tuo posizionamento reale nella settimana corrente."
+        },
+        "nextAttemptAt": null
+      },
+      {
+        "id": "1772195107291_47_909172",
+        "userId": "1435846954176483472",
+        "sendAt": 1772634314768,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Panoramica server •",
+          "description": "Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nFocus utile: qualità prima della quantità nelle interazioni.\nContribuire in modo ordinato aiuta davvero tutta la community."
+        }
+      },
+      {
+        "id": "1772195107291_48_597555",
+        "userId": "1209905074218999813",
+        "sendAt": 1772467200366,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Media e condivisioni",
+          "description": "In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nContribuire in modo ordinato aiuta davvero tutta la community."
+        }
+      },
+      {
+        "id": "1772195107292_49_603703",
+        "userId": "1438903301977411626",
+        "sendAt": 1772568193283,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Gestione DM",
+          "description": "Puoi disattivare questi promemoria con +dm-disable e riattivarli in seguito con +dm-enable."
+        }
+      },
+      {
+        "id": "1772195107292_50_227058",
+        "userId": "1332797979299545209",
+        "sendAt": 1772638889206,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Poll ed eventi •",
+          "description": "Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nSe vuoi, questa settimana prova a seguire questo punto per primo."
+        }
+      },
+      {
+        "id": "1772195107292_51_681634",
+        "userId": "712629562348929024",
+        "sendAt": 1772298533632,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Crescita livelli •",
+          "description": "Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nSe vuoi, questa settimana prova a seguire questo punto per primo."
+        }
+      },
+      {
+        "id": "1772195107292_52_627162",
+        "userId": "1317829720594710680",
+        "sendAt": 1772274091818,
+        "attempts": 0,
+        "sentAt": 1772274094147,
+        "skipped": null,
+        "reminder": {
+          "title": "Canale ruoli",
+          "description": "In <#1469429150669602961> puoi personalizzare il profilo e sbloccare opzioni interessanti."
+        },
+        "nextAttemptAt": null
+      },
+      {
+        "id": "1772195107292_53_238535",
+        "userId": "335492820276346880",
+        "sendAt": 1772185471958,
+        "attempts": 0,
+        "sentAt": 1772195109279,
+        "skipped": null,
+        "reminder": {
+          "title": "Idea della settimana",
+          "description": "Prova a migliorare un'abitudine: meno messaggi casuali, più interventi utili e ordinati."
+        },
+        "nextAttemptAt": null
+      },
+      {
+        "id": "1772195107293_54_804140",
+        "userId": "1350146967413592165",
+        "sendAt": 1772384335675,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Comandi utili del bot",
+          "description": "Con +help trovi rapidamente i comandi principali del bot. Provali in <#1442569138114662490>."
+        }
+      },
+      {
+        "id": "1772195107293_55_942679",
+        "userId": "1324841591051124808",
+        "sendAt": 1772731830823,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Livelli e progressione",
+          "description": "Un po' di chat e vocale ogni settimana ti aiuta a salire di livello e sbloccare perks progressivi. Controlla +rank e +classifica."
+        }
+      },
+      {
+        "id": "1772195107293_56_586319",
+        "userId": "676009951662964747",
+        "sendAt": 1772225817997,
+        "attempts": 0,
+        "sentAt": 1772225874725,
+        "skipped": null,
+        "reminder": {
+          "title": "Poll ed eventi •",
+          "description": "Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nContribuire in modo ordinato aiuta davvero tutta la community."
+        },
+        "nextAttemptAt": null
+      },
+      {
+        "id": "1772195107293_57_574190",
+        "userId": "1325584889415864320",
+        "sendAt": 1772537646372,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Quote e contenuti •",
+          "description": "Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nFocus utile: qualità prima della quantità nelle interazioni.\nPiccoli miglioramenti continui portano risultati reali."
+        }
+      },
+      {
+        "id": "1772195107293_58_342170",
+        "userId": "1461362148155457715",
+        "sendAt": 1772629157721,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Crescita livelli",
+          "description": "Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nAnche un solo contributo utile al giorno fa differenza."
+        }
+      },
+      {
+        "id": "1772195107294_59_164988",
+        "userId": "1232323327176081418",
+        "sendAt": 1772573044054,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Attività community",
+          "description": "Partecipare a eventi, sondaggi e discussioni aiuta il server a crescere e migliora l'esperienza di tutti."
+        }
+      },
+      {
+        "id": "1772195107294_60_779262",
+        "userId": "1295089170934530110",
+        "sendAt": 1772294272147,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Poll ed eventi",
+          "description": "Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nPiccoli miglioramenti continui portano risultati reali."
+        }
+      },
+      {
+        "id": "1772195107294_61_867824",
+        "userId": "1283678437340483607",
+        "sendAt": 1772744034865,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Canale media",
+          "description": "Condividi contenuti in modo pulito: qualità > quantità, sempre."
+        }
+      },
+      {
+        "id": "1772195107294_62_739491",
+        "userId": "531812067049603073",
+        "sendAt": 1772484405634,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Forum community",
+          "description": "Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nPiccoli miglioramenti continui portano risultati reali."
+        }
+      },
+      {
+        "id": "1772195107295_63_846358",
+        "userId": "1348679222838689886",
+        "sendAt": 1772200543961,
+        "attempts": 0,
+        "sentAt": 1772200545025,
+        "skipped": null,
+        "reminder": {
+          "title": "Candidature •",
+          "description": "Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nContribuire in modo ordinato aiuta davvero tutta la community."
+        },
+        "nextAttemptAt": null
+      },
+      {
+        "id": "1772195107295_64_185442",
+        "userId": "820256360985264128",
+        "sendAt": 1772634587026,
+        "attempts": 0,
+        "sentAt": null,
+        "skipped": null,
+        "reminder": {
+          "title": "Classifica personale",
+          "description": "Usa +rank per controllare rapidamente il tuo stato e pianificare il prossimo obiettivo."
+        }
+      }
+    ],
+    "reminderHistory": {
+      "1129408977621495908": {
+        "lastSignature": "Classifiche bot 91||Usa +rank, +classifica weekly e +classifica alltime per tracciare la tua crescita.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1322508229951099001": {
+        "lastSignature": "Poll ed eventi 57||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "496951194812416009": {
+        "lastSignature": "Poll ed eventi 63||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "982719895642996827": {
+        "lastSignature": "News e avvisi 48||Controlla <#1442569115972669541> per non perdere novità importanti.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "802900466068619275": {
+        "lastSignature": "Quote e contenuti 53||Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "820256360985264128": {
+        "lastSignature": "Classifica personale||Usa +rank per controllare rapidamente il tuo stato e pianificare il prossimo obiettivo.",
+        "plannedAt": 1772195107295,
+        "cooldownDays": 3,
+        "lastSentAt": 1771590233873
+      },
+      "277771372850053130": {
+        "lastSignature": "Quote della community||Se trovi un messaggio memorabile, usa i comandi quote: poi lo trovi in <#1468540884537573479>.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1436866902617227354": {
+        "lastSignature": "Percorso staff||Se punti allo staff, inizia mostrando presenza utile, comportamento corretto e collaborazione con la community.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1407780906223140946": {
+        "lastSignature": "Top settimanale||Controlla <#1470183921236049940> per vedere chi sta spingendo di più questa settimana.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1379573374786736160": {
+        "lastSignature": "Obiettivo settimanale||Impostati un mini-obiettivo: più costanza in chat, più presenza in vocale o più partecipazione ai poll.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1438577687982505996": {
+        "lastSignature": "Ruoli e vantaggi del server||Hai già controllato i ruoli sbloccabili con livelli, boost e voti? Dai un'occhiata al canale info del server.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1405543637877788723": {
+        "lastSignature": "Comando classifica alltime||Usa +classifica alltime per monitorare la tua crescita nel lungo periodo.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1435904361011347646": {
+        "lastSignature": "Panoramica server 4||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1420140767959056504": {
+        "lastSignature": "Comandi utili del bot||Con +help trovi rapidamente i comandi principali del bot. Provali in <#1442569138114662490>.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1256339839369089034": {
+        "lastSignature": "Comandi bot 11||Per usare bene il bot parti da +help e prova i comandi in <#1442569138114662490>.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1272617793740865700": {
+        "lastSignature": "Quote e contenuti 55||Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1241037698060259368": {
+        "lastSignature": "Comandi bot 12||Per usare bene il bot parti da +help e prova i comandi in <#1442569138114662490>.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1215763433702559937": {
+        "lastSignature": "Supporter e badge||Molti badge e ruoli speciali hanno vantaggi concreti: scopri i requisiti e punta a sbloccarne almeno uno.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1362322204062388264": {
+        "lastSignature": "Comando classifica alltime||Usa +classifica alltime per monitorare la tua crescita nel lungo periodo.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1076869761088106516": {
+        "lastSignature": "Ruoli e vantaggi del server||Hai già controllato i ruoli sbloccabili con livelli, boost e voti? Dai un'occhiata al canale info del server.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "959141735420792902": {
+        "lastSignature": "Canali vocali||Un po' di presenza in vocale migliora l'attività personale e rende più viva la community.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1353037596111933480": {
+        "lastSignature": "Eventi community||Partecipa agli eventi quando puoi: è il modo più veloce per conoscere utenti nuovi.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1082022037700214945": {
+        "lastSignature": "Quote e contenuti 55||Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "431521924301062156": {
+        "lastSignature": "Panoramica server 1||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1187242839030104084": {
+        "lastSignature": "Forum community 25||Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "861182300338913312": {
+        "lastSignature": "Counting e attività leggere||Un passaggio in <#1442569179743125554> mantiene il server vivo anche nei momenti lenti.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nUn uso corretto di canali e comandi rende tutto più semplice.",
+        "plannedAt": 1772195107290,
+        "cooldownDays": 3,
+        "lastSentAt": 1771590233873
+      },
+      "981980068609949777": {
+        "lastSignature": "Focus community||Passa in chat, forum e poll: tre piccoli passi che migliorano davvero l'esperienza generale.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1456676188864123004": {
+        "lastSignature": "Panoramica server 3||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nFocus utile: qualità prima della quantità nelle interazioni.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1019915562329047040": {
+        "lastSignature": "Candidatura efficace||Una buona candidatura è concreta: racconta cosa puoi offrire, non solo il ruolo che vuoi ottenere.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "792845738149281825": {
+        "lastSignature": "Canale quote||Le quote migliori finiscono in <#1468540884537573479>: ottimo per salvare momenti top della community.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1426954418586386532": {
+        "lastSignature": "Ruoli e colori •||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nAnche un solo contributo utile al giorno fa differenza.",
+        "plannedAt": 1772195107289,
+        "cooldownDays": 3,
+        "lastSentAt": 1771590233873
+      },
+      "1026019949132648498": {
+        "lastSignature": "Forum community 22||Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "968077291987025940": {
+        "lastSignature": "Media e condivisioni 81||In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1283678437340483607": {
+        "lastSignature": "Canale media||Condividi contenuti in modo pulito: qualità > quantità, sempre.",
+        "plannedAt": 1772195107294,
+        "cooldownDays": 3,
+        "lastSentAt": 1771590233873
+      },
+      "1166000636920344666": {
+        "lastSignature": "Poll ed eventi 60||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1243295906934161519": {
+        "lastSignature": "Ruoli e colori 77||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1157010534252675152": {
+        "lastSignature": "Partner Manager||Se ti interessa il percorso Partner Manager, consulta indicazioni e canali dedicati prima di candidarti.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1398103328042385468": {
+        "lastSignature": "Ruoli e colori 71||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1435966913418235954": {
+        "lastSignature": "Comandi bot 14||Per usare bene il bot parti da +help e prova i comandi in <#1442569138114662490>.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1413642534206570667": {
+        "lastSignature": "Forum community 27||Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1192593121247252615": {
+        "lastSignature": "Eventi e sondaggi||Partecipa a eventi e poll in <#1442569128706838528>: aiuti la comunità e resti aggiornato.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "838658216278622238": {
+        "lastSignature": "News e aggiornamenti||Controlla <#1442569115972669541> per novità, cambi e annunci importanti del server.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "882710639489974384": {
+        "lastSignature": "Comandi bot 9||Per usare bene il bot parti da +help e prova i comandi in <#1442569138114662490>.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1459241470270902315": {
+        "lastSignature": "Poll ed eventi 60||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1112376938720399370": {
+        "lastSignature": "Canale role info||In <#1442569111119990887> trovi molte informazioni utili su ruoli, vantaggi e funzioni del server.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1278365639525793803": {
+        "lastSignature": "Focus comandi||Questa settimana prova una combinazione: +help, poi +rank, poi +classifica weekly.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1464522109500919962": {
+        "lastSignature": "Suggerimenti utili 33||Le idee più chiare in <#1442569147559973094> vengono valutate meglio.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1434605994029093008": {
+        "lastSignature": "Crescita livelli 16||Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1152673191681081365": {
+        "lastSignature": "Profilo server||Ogni tanto aggiorna il tuo profilo ruoli/interessi: aiuta a trovare persone con gusti simili.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1307308336777003020": {
+        "lastSignature": "Canale role info||In <#1442569111119990887> trovi molte informazioni utili su ruoli, vantaggi e funzioni del server.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1321631514747998278": {
+        "lastSignature": "Comando rank||Con +rank puoi verificare subito se stai mantenendo un buon ritmo di attività.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1442928680291536968": {
+        "lastSignature": "Panoramica server 1||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "547101949552623636": {
+        "lastSignature": "Supporter e badge||Molti badge e ruoli speciali hanno vantaggi concreti: scopri i requisiti e punta a sbloccarne almeno uno.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1394533179528056943": {
+        "lastSignature": "Staff pagato: approccio||Prima di puntare al compenso, concentra il focus su qualità del supporto e responsabilità nelle attività staff.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1306961443043676164": {
+        "lastSignature": "Candidature 96||Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772119718999,
+        "cooldownDays": 7
+      },
+      "1238602996070223935": {
+        "lastSignature": "Ticket supporto 36||Per problemi o dubbi usa i ticket in <#1442569095068254219>.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772098490657,
+        "cooldownDays": 7
+      },
+      "1005079758704492574": {
+        "lastSignature": "Focus feedback||Se trovi qualcosa che non funziona bene, segnalarlo con chiarezza aiuta tutti.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772141934529,
+        "cooldownDays": 7
+      },
+      "1436529608831926433": {
+        "lastSignature": "Counting e attività leggere 69||Un passaggio in <#1442569179743125554> mantiene il server vivo anche nei momenti lenti.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772043024034,
+        "cooldownDays": 7
+      },
+      "1074764460062953592": {
+        "lastSignature": "Quote e contenuti 56||Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772043685791,
+        "cooldownDays": 7
+      },
+      "1043600283793629264": {
+        "lastSignature": "Gestione DM||Puoi disattivare questi promemoria con +dm-disable e riattivarli in seguito con +dm-enable.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771949018689,
+        "cooldownDays": 7
+      },
+      "1171143634146578563": {
+        "lastSignature": "Sfrutta il forum||Nel <#1442569141717438495> puoi creare discussioni ordinate invece di disperdere messaggi in chat.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772101258509,
+        "cooldownDays": 7
+      },
+      "1435422801006952448": {
+        "lastSignature": "Ruoli e colori 73||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nFocus utile: qualità prima della quantità nelle interazioni.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771941697905,
+        "cooldownDays": 7
+      },
+      "1386297891164782693": {
+        "lastSignature": "Supporter e badge||Molti badge e ruoli speciali hanno vantaggi concreti: scopri i requisiti e punta a sbloccarne almeno uno.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772105762590,
+        "cooldownDays": 7
+      },
+      "1147801562241056832": {
+        "lastSignature": "Quote e contenuti 54||Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771935638159,
+        "cooldownDays": 7
+      },
+      "1434561216847544481": {
+        "lastSignature": "Quote e contenuti 53||Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772026039722,
+        "cooldownDays": 7
+      },
+      "834535279489843262": {
+        "lastSignature": "Counting e attività leggere 69||Un passaggio in <#1442569179743125554> mantiene il server vivo anche nei momenti lenti.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771851602911,
+        "cooldownDays": 7
+      },
+      "1003353932363485204": {
+        "lastSignature": "Gestione DM||Puoi disattivare questi promemoria con +dm-disable e riattivarli in seguito con +dm-enable.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772015451686,
+        "cooldownDays": 7
+      },
+      "1405132609234800660": {
+        "lastSignature": "Supporter e badge||Molti badge e ruoli speciali hanno vantaggi concreti: scopri i requisiti e punta a sbloccarne almeno uno.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771932091467,
+        "cooldownDays": 7
+      },
+      "1434169081497518082": {
+        "lastSignature": "Staff pagato: approccio||Prima di puntare al compenso, concentra il focus su qualità del supporto e responsabilità nelle attività staff.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772045764640,
+        "cooldownDays": 7
+      },
+      "1438592343434465454": {
+        "lastSignature": "Crescita livelli 17||Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nFocus utile: qualità prima della quantità nelle interazioni.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772018174336,
+        "cooldownDays": 7
+      },
+      "1185700821174866043": {
+        "lastSignature": "Crescita livelli 16||Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772111796827,
+        "cooldownDays": 7
+      },
+      "931094094200053820": {
+        "lastSignature": "Poll ed eventi 57||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772036520311,
+        "cooldownDays": 7
+      },
+      "1346396363084271636": {
+        "lastSignature": "Counting e attività leggere 64||Un passaggio in <#1442569179743125554> mantiene il server vivo anche nei momenti lenti.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772128808473,
+        "cooldownDays": 7
+      },
+      "1001559366782156931": {
+        "lastSignature": "Candidature 94||Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nFocus utile: qualità prima della quantità nelle interazioni.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771951418078,
+        "cooldownDays": 7
+      },
+      "1436885785151406150": {
+        "lastSignature": "Poll ed eventi 61||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771842380867,
+        "cooldownDays": 7
+      },
+      "1354136110288339005": {
+        "lastSignature": "Suggerimenti utili 30||Le idee più chiare in <#1442569147559973094> vengono valutate meglio.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772103370548,
+        "cooldownDays": 7
+      },
+      "780872151770595379": {
+        "lastSignature": "Profilo server||Ogni tanto aggiorna il tuo profilo ruoli/interessi: aiuta a trovare persone con gusti simili.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772020936079,
+        "cooldownDays": 7
+      },
+      "947176260558262343": {
+        "lastSignature": "Comandi bot 13||Per usare bene il bot parti da +help e prova i comandi in <#1442569138114662490>.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772019014440,
+        "cooldownDays": 7
+      },
+      "1324841591051124808": {
+        "lastSignature": "Livelli e progressione||Un po' di chat e vocale ogni settimana ti aiuta a salire di livello e sbloccare perks progressivi. Controlla +rank e +classifica.",
+        "plannedAt": 1772195107293,
+        "cooldownDays": 3,
+        "lastSentAt": 1771619879238
+      },
+      "944980651713658970": {
+        "lastSignature": "Staff pagato: informazioni||Se ti interessa il percorso staff pagato, consulta <#1442579412280410194> per dettagli e requisiti.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772139714828,
+        "cooldownDays": 7
+      },
+      "962066236227854337": {
+        "lastSignature": "Ruoli e colori 75||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772052125093,
+        "cooldownDays": 7
+      },
+      "341692137269886986": {
+        "lastSignature": "Quote della community||Se trovi un messaggio memorabile, usa i comandi quote: poi lo trovi in <#1468540884537573479>.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771925551753,
+        "cooldownDays": 7
+      },
+      "1467499453509275711": {
+        "lastSignature": "Candidature 98||Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772021779902,
+        "cooldownDays": 7
+      },
+      "1254746132219953229": {
+        "lastSignature": "Quote e contenuti 51||Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1772023219942,
+        "cooldownDays": 7
+      },
+      "1442897199909310634": {
+        "lastSignature": "Canale quote||Le quote migliori finiscono in <#1468540884537573479>: ottimo per salvare momenti top della community.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1461365248467537983": {
+        "lastSignature": "Panoramica server 5||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1254423964856487948": {
+        "lastSignature": "Forum community 27||Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1466559423630671942": {
+        "lastSignature": "Classifiche bot •||Usa +rank, +classifica weekly e +classifica alltime per tracciare la tua crescita.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nSe vuoi, questa settimana prova a seguire questo punto per primo.",
+        "plannedAt": 1772195107288,
+        "cooldownDays": 3,
+        "lastSentAt": 1771590233873
+      },
+      "815499161495273512": {
+        "lastSignature": "Candidature 95||Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1439354353013100745": {
+        "lastSignature": "Quote della community||Se trovi un messaggio memorabile, usa i comandi quote: poi lo trovi in <#1468540884537573479>.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1462818923673157779": {
+        "lastSignature": "Verifica e onboarding||Se inviti amici, ricordagli di completare la verifica in <#1442569059983163403>.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1159831916451741708": {
+        "lastSignature": "Candidature 92||Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1160658189847638156": {
+        "lastSignature": "Staff pagato 101||Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nFocus utile: qualità prima della quantità nelle interazioni.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1274027644056240192": {
+        "lastSignature": "News e avvisi||Controlla <#1442569115972669541> per non perdere novità importanti.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nContribuire in modo ordinato aiuta davvero tutta la community.",
+        "plannedAt": 1772195107291,
+        "cooldownDays": 3,
+        "lastSentAt": 1772195108440
+      },
+      "319166651603877898": {
+        "lastSignature": "Comandi bot 8||Per usare bene il bot parti da +help e prova i comandi in <#1442569138114662490>.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1360993950604984531": {
+        "lastSignature": "News e avvisi 46||Controlla <#1442569115972669541> per non perdere novità importanti.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1425120682873847879": {
+        "lastSignature": "Staff pagato: approccio||Prima di puntare al compenso, concentra il focus su qualità del supporto e responsabilità nelle attività staff.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1318961518339035221": {
+        "lastSignature": "Counting e attività leggere 68||Un passaggio in <#1442569179743125554> mantiene il server vivo anche nei momenti lenti.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "887069413474455612": {
+        "lastSignature": "Canale news||Controlla periodicamente <#1442569115972669541> per non perderti novità su eventi, regole e aggiornamenti.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "612991511654826030": {
+        "lastSignature": "Crescita livelli 17||Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nFocus utile: qualità prima della quantità nelle interazioni.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1447965271724789822": {
+        "lastSignature": "Panoramica server 2||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "398487653374230548": {
+        "lastSignature": "Canale media||Condividi contenuti in modo pulito: qualità > quantità, sempre.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1272603390769369140": {
+        "lastSignature": "Candidature staff aperte||Se vuoi entrare nello staff, controlla i requisiti e valuta la candidatura: costanza e serietà fanno la differenza.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1270481164095848491": {
+        "lastSignature": "Focus feedback||Se trovi qualcosa che non funziona bene, segnalarlo con chiarezza aiuta tutti.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1397643171076505600": {
+        "lastSignature": "Media e condivisioni 83||In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1314650459138424933": {
+        "lastSignature": "Panoramica server 7||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "919637230266490921": {
+        "lastSignature": "Contatore e mini-attività||Per attività leggere passa da <#1442569179743125554> e dai un'occhiata ai canali community.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1393570953887219805": {
+        "lastSignature": "Suggerimenti utili 35||Le idee più chiare in <#1442569147559973094> vengono valutate meglio.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1461362148155457715": {
+        "lastSignature": "Crescita livelli||Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nAnche un solo contributo utile al giorno fa differenza.",
+        "plannedAt": 1772195107293,
+        "cooldownDays": 3,
+        "lastSentAt": 1772195107772
+      },
+      "1356719929004523642": {
+        "lastSignature": "Candidature 93||Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "831993744135421994": {
+        "lastSignature": "Suggerimenti utili||Le idee più chiare in <#1442569147559973094> vengono valutate meglio.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nUn uso corretto di canali e comandi rende tutto più semplice.",
+        "plannedAt": 1772195107289,
+        "cooldownDays": 3,
+        "lastSentAt": 1771590233873
+      },
+      "993943399365357618": {
+        "lastSignature": "Media e condivisioni 84||In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1385388958523064502": {
+        "lastSignature": "Panoramica server 2||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1198347481394729041": {
+        "lastSignature": "Quote e contenuti 52||Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nFocus utile: qualità prima della quantità nelle interazioni.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "605316231582580776": {
+        "lastSignature": "Media e condivisioni 84||In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1056545207899914291": {
+        "lastSignature": "Staff pagato 105||Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1444293900201103474": {
+        "lastSignature": "Canale polls||Votare nei poll in <#1442569128706838528> aiuta a prendere decisioni più utili per tutti.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "331440411002535939": {
+        "lastSignature": "Quote della community||Se trovi un messaggio memorabile, usa i comandi quote: poi lo trovi in <#1468540884537573479>.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1360488786303389839": {
+        "lastSignature": "Ruoli e vantaggi del server||Hai già controllato i ruoli sbloccabili con livelli, boost e voti? Dai un'occhiata al canale info del server.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1385561879518122085": {
+        "lastSignature": "Candidature 92||Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "787039548365340755": {
+        "lastSignature": "Forum community 28||Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1348679222838689886": {
+        "lastSignature": "Candidature •||Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nContribuire in modo ordinato aiuta davvero tutta la community.",
+        "plannedAt": 1772195107295,
+        "cooldownDays": 3,
+        "lastSentAt": 1772200545025
+      },
+      "1223230437372071956": {
+        "lastSignature": "Panoramica server 3||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nFocus utile: qualità prima della quantità nelle interazioni.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1056777708161482843": {
+        "lastSignature": "Ticket e supporto||Se ti serve supporto, usa i ticket in <#1442569095068254219>: è il modo più veloce per ricevere assistenza dallo staff.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "779425939675283518": {
+        "lastSignature": "Media e condivisioni 82||In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "839165871347597332": {
+        "lastSignature": "News e aggiornamenti||Controlla <#1442569115972669541> per novità, cambi e annunci importanti del server.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1442875603429884047": {
+        "lastSignature": "Staff pagato 99||Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1371247739324731514": {
+        "lastSignature": "Classifiche bot 89||Usa +rank, +classifica weekly e +classifica alltime per tracciare la tua crescita.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1344427979115204649": {
+        "lastSignature": "Counting e attività leggere 68||Un passaggio in <#1442569179743125554> mantiene il server vivo anche nei momenti lenti.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1023265933046857819": {
+        "lastSignature": "Panoramica server 1||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1446559344295415808": {
+        "lastSignature": "Panoramica server 6||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1277701874019074171": {
+        "lastSignature": "Ticket supporto 41||Per problemi o dubbi usa i ticket in <#1442569095068254219>.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1077590854828576809": {
+        "lastSignature": "Ticket supporto 36||Per problemi o dubbi usa i ticket in <#1442569095068254219>.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1267756781019463802": {
+        "lastSignature": "Forum community 24||Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nFocus utile: qualità prima della quantità nelle interazioni.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1419743543089692704": {
+        "lastSignature": "Poll ed eventi 58||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1088118919937658890": {
+        "lastSignature": "Obiettivo settimanale||Impostati un mini-obiettivo: più costanza in chat, più presenza in vocale o più partecipazione ai poll.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1394360232485978255": {
+        "lastSignature": "Crescita livelli 20||Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1348431137198047352": {
+        "lastSignature": "Forum community 27||Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "548570471159824384": {
+        "lastSignature": "Media e condivisioni 81||In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1333441591762751571": {
+        "lastSignature": "Poll ed eventi 58||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "828369687900848138": {
+        "lastSignature": "Ruoli e colori 75||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1176523995470889045": {
+        "lastSignature": "Canale polls||Votare nei poll in <#1442569128706838528> aiuta a prendere decisioni più utili per tutti.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1316461187155624106": {
+        "lastSignature": "Staff pagato 105||Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1457929490859692163": {
+        "lastSignature": "Canale news||Controlla periodicamente <#1442569115972669541> per non perderti novità su eventi, regole e aggiornamenti.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1416282604021223447": {
+        "lastSignature": "Ticket supporto 36||Per problemi o dubbi usa i ticket in <#1442569095068254219>.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1392891676086767636": {
+        "lastSignature": "Counting e attività leggere 67||Un passaggio in <#1442569179743125554> mantiene il server vivo anche nei momenti lenti.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1226156608602636318": {
+        "lastSignature": "Ticket supporto 42||Per problemi o dubbi usa i ticket in <#1442569095068254219>.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "759499965297852506": {
+        "lastSignature": "Staff pagato: approccio||Prima di puntare al compenso, concentra il focus su qualità del supporto e responsabilità nelle attività staff.",
+        "plannedAt": 1772195107290,
+        "cooldownDays": 3,
+        "lastSentAt": 1771590233873
+      },
+      "419972420573724683": {
+        "lastSignature": "Staff pagato: candidatura||Se vuoi proporti per percorsi pagati, prepara una candidatura ordinata e basata su contributi reali.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1127941659397730345": {
+        "lastSignature": "Forum community 27||Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1384936437299810357": {
+        "lastSignature": "Comando help||Se ti senti perso tra i comandi, +help resta sempre il punto migliore da cui partire.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "737016085076770932": {
+        "lastSignature": "Ruoli e colori 77||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1136217229462081587": {
+        "lastSignature": "Candidature 93||Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1165957564840804413": {
+        "lastSignature": "Media e condivisioni •||In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nFocus utile: qualità prima della quantità nelle interazioni.\nAnche un solo contributo utile al giorno fa differenza.",
+        "plannedAt": 1772195107289,
+        "cooldownDays": 3,
+        "lastSentAt": 1771590233873
+      },
+      "1405848425215561748": {
+        "lastSignature": "Media e condivisioni 81||In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "712629562348929024": {
+        "lastSignature": "Crescita livelli •||Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nSe vuoi, questa settimana prova a seguire questo punto per primo.",
+        "plannedAt": 1772195107292,
+        "cooldownDays": 3,
+        "lastSentAt": 1771590233873
+      },
+      "1339826581555642372": {
+        "lastSignature": "Supporter e badge||Molti badge e ruoli speciali hanno vantaggi concreti: scopri i requisiti e punta a sbloccarne almeno uno.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "777248841992765450": {
+        "lastSignature": "Canale partnership||Se ti interessano le collaborazioni, tieni d'occhio <#1442569193470824448> e le regole dedicate.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1421277400934645870": {
+        "lastSignature": "Crescita livelli 19||Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "792901668693475349": {
+        "lastSignature": "Ruoli e colori 75||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1435846954176483472": {
+        "lastSignature": "Panoramica server •||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nFocus utile: qualità prima della quantità nelle interazioni.\nContribuire in modo ordinato aiuta davvero tutta la community.",
+        "plannedAt": 1772195107291,
+        "cooldownDays": 3,
+        "lastSentAt": 1771590233873
+      },
+      "1344395298193018976": {
+        "lastSignature": "Preparazione candidatura||Prima di inviare la candidatura, cura grammatica, chiarezza e motivazioni: aumenta molto le possibilità di essere considerato.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1163408706910830674": {
+        "lastSignature": "Staff pagato 99||Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "792640058376454154": {
+        "lastSignature": "Panoramica server 2||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1175125521202421825": {
+        "lastSignature": "Quote della community||Se trovi un messaggio memorabile, usa i comandi quote: poi lo trovi in <#1468540884537573479>.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1093653392036987040": {
+        "lastSignature": "Forum community 24||Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nFocus utile: qualità prima della quantità nelle interazioni.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1134492124826574948": {
+        "lastSignature": "Classifiche bot 91||Usa +rank, +classifica weekly e +classifica alltime per tracciare la tua crescita.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "499609534768349186": {
+        "lastSignature": "Crescita livelli 16||Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1382936426035019776": {
+        "lastSignature": "Canale suggerimenti||Hai un'idea per migliorare il server? Scrivila in <#1442569147559973094>.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1442583772720529539": {
+        "lastSignature": "Media e contenuti||Passa da <#1442569136067575809> per condividere contenuti interessanti in linea con il regolamento.",
+        "plannedAt": 1772195107290,
+        "cooldownDays": 3,
+        "lastSentAt": 1771590233873
+      },
+      "1268314626290876427": {
+        "lastSignature": "Poll ed eventi 60||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1435975988625277111": {
+        "lastSignature": "News e avvisi 48||Controlla <#1442569115972669541> per non perdere novità importanti.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1382057433823973448": {
+        "lastSignature": "Partner Manager||Se ti interessa il percorso Partner Manager, consulta indicazioni e canali dedicati prima di candidarti.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1451974109234991245": {
+        "lastSignature": "Ruoli e colori 71||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1307129720634212505": {
+        "lastSignature": "News e avvisi 49||Controlla <#1442569115972669541> per non perdere novità importanti.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1281336414868344953": {
+        "lastSignature": "Ticket supporto 36||Per problemi o dubbi usa i ticket in <#1442569095068254219>.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1243923274703044750": {
+        "lastSignature": "Candidature 94||Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nFocus utile: qualità prima della quantità nelle interazioni.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1436540816402288742": {
+        "lastSignature": "Forum e discussioni||Se hai un tema interessante, aprilo nel forum del server (<#1442569141717438495>): aiuta a tenere la community attiva e ordinata.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1245796059717042179": {
+        "lastSignature": "Comando classifica weekly||Usa +classifica weekly per vedere il tuo posizionamento reale nella settimana corrente.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "758738562522021921": {
+        "lastSignature": "Counting e attività leggere 68||Un passaggio in <#1442569179743125554> mantiene il server vivo anche nei momenti lenti.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1275451335403110482": {
+        "lastSignature": "Supporto rapido||Se hai un dubbio tecnico o organizzativo, apri ticket invece di aspettare: risolvi prima e meglio.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "335492820276346880": {
+        "lastSignature": "Idea della settimana||Prova a migliorare un'abitudine: meno messaggi casuali, più interventi utili e ordinati.",
+        "plannedAt": 1772195107292,
+        "cooldownDays": 3,
+        "lastSentAt": 1772195109279
+      },
+      "837399211057348660": {
+        "lastSignature": "Ruoli e colori 74||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "928732522337148939": {
+        "lastSignature": "News e avvisi 45||Controlla <#1442569115972669541> per non perdere novità importanti.\nFocus utile: qualità prima della quantità nelle interazioni.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1320089752468193280": {
+        "lastSignature": "Buone pratiche||Evita spam e flood: qualità dei messaggi e interazioni sane fanno la differenza.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1435776378891931710": {
+        "lastSignature": "Canale ruoli||In <#1469429150669602961> puoi personalizzare il profilo e sbloccare opzioni interessanti.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1256569148616609812": {
+        "lastSignature": "Counting e attività leggere 64||Un passaggio in <#1442569179743125554> mantiene il server vivo anche nei momenti lenti.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "769554308692705340": {
+        "lastSignature": "Onboarding amici||Quando inviti qualcuno, accompagnalo nei primi passaggi: verifica, regole, canali utili e comandi base.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "636987675659862018": {
+        "lastSignature": "Supporter e badge||Molti badge e ruoli speciali hanno vantaggi concreti: scopri i requisiti e punta a sbloccarne almeno uno.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1330237957524947077": {
+        "lastSignature": "Comando classifica alltime||Usa +classifica alltime per monitorare la tua crescita nel lungo periodo.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1322941533120626752": {
+        "lastSignature": "Comando help||Se ti senti perso tra i comandi, +help resta sempre il punto migliore da cui partire.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1416848939109449869": {
+        "lastSignature": "News e avvisi 47||Controlla <#1442569115972669541> per non perdere novità importanti.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1046116989501968454": {
+        "lastSignature": "Poll ed eventi 59||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nFocus utile: qualità prima della quantità nelle interazioni.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1317829720594710680": {
+        "lastSignature": "Canale ruoli||In <#1469429150669602961> puoi personalizzare il profilo e sbloccare opzioni interessanti.",
+        "plannedAt": 1772195107292,
+        "cooldownDays": 3,
+        "lastSentAt": 1772274094147
+      },
+      "1358449143839981658": {
+        "lastSignature": "Obiettivo settimanale||Impostati un mini-obiettivo: più costanza in chat, più presenza in vocale o più partecipazione ai poll.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1444624149841707048": {
+        "lastSignature": "Poll ed eventi 59||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nFocus utile: qualità prima della quantità nelle interazioni.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "526875886721695754": {
+        "lastSignature": "News e avvisi 46||Controlla <#1442569115972669541> per non perdere novità importanti.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1433378720286113813": {
+        "lastSignature": "Comandi bot 14||Per usare bene il bot parti da +help e prova i comandi in <#1442569138114662490>.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1445895707335852158": {
+        "lastSignature": "Attività community||Partecipare a eventi, sondaggi e discussioni aiuta il server a crescere e migliora l'esperienza di tutti.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "796087565190037566": {
+        "lastSignature": "Poll ed eventi 63||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "810093777305337926": {
+        "lastSignature": "Crescita livelli 19||Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1439297526565179472": {
+        "lastSignature": "Counting e attività leggere 69||Un passaggio in <#1442569179743125554> mantiene il server vivo anche nei momenti lenti.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "908760130227667025": {
+        "lastSignature": "Panoramica server 3||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nFocus utile: qualità prima della quantità nelle interazioni.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1235585325347115048": {
+        "lastSignature": "News e aggiornamenti||Controlla <#1442569115972669541> per novità, cambi e annunci importanti del server.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1329442406017269854": {
+        "lastSignature": "Staff pagato 100||Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1209905074218999813": {
+        "lastSignature": "Media e condivisioni||In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nContribuire in modo ordinato aiuta davvero tutta la community.",
+        "plannedAt": 1772195107291,
+        "cooldownDays": 3,
+        "lastSentAt": 1771590233873
+      },
+      "1151603569158529166": {
+        "lastSignature": "Poll ed eventi 60||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1076918377823613008": {
+        "lastSignature": "Comandi bot 12||Per usare bene il bot parti da +help e prova i comandi in <#1442569138114662490>.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1182667112817360929": {
+        "lastSignature": "Candidature •||Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nFocus utile: qualità prima della quantità nelle interazioni.\nUn uso corretto di canali e comandi rende tutto più semplice.",
+        "plannedAt": 1772195107289,
+        "cooldownDays": 3,
+        "lastSentAt": 1772229114717
+      },
+      "1438235854735802571": {
+        "lastSignature": "News e avvisi 48||Controlla <#1442569115972669541> per non perdere novità importanti.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "792353165483180043": {
+        "lastSignature": "Supporter e badge||Molti badge e ruoli speciali hanno vantaggi concreti: scopri i requisiti e punta a sbloccarne almeno uno.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1456683263979425813": {
+        "lastSignature": "Canali vocali||Un po' di presenza in vocale migliora l'attività personale e rende più viva la community.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "821379501471694899": {
+        "lastSignature": "Media e condivisioni 78||In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1240026581217316928": {
+        "lastSignature": "Media e condivisioni 79||In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "957681550122696704": {
+        "lastSignature": "Classifiche bot 89||Usa +rank, +classifica weekly e +classifica alltime per tracciare la tua crescita.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1266058199509762149": {
+        "lastSignature": "Canale suggerimenti||Hai un'idea per migliorare il server? Scrivila in <#1442569147559973094>.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "266648243960676352": {
+        "lastSignature": "Staff pagato 101||Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nFocus utile: qualità prima della quantità nelle interazioni.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1382113169966759972": {
+        "lastSignature": "Percorso staff||Se punti allo staff, inizia mostrando presenza utile, comportamento corretto e collaborazione con la community.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "843838523425292319": {
+        "lastSignature": "Canale comandi||Per usare i comandi del bot in modo ordinato usa <#1442569138114662490>.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1463601759158145166": {
+        "lastSignature": "Crescita livelli 15||Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1225370029290426378": {
+        "lastSignature": "Poll ed eventi 60||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1435942392472801421": {
+        "lastSignature": "Media e condivisioni 81||In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "938180616954970154": {
+        "lastSignature": "Ruoli e colori 77||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "775421290483548160": {
+        "lastSignature": "Forum community 27||Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1443588955411841036": {
+        "lastSignature": "Staff pagato 100||Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "451435031819452416": {
+        "lastSignature": "Funzioni del bot||Tra quote, livelli, classifiche e comandi utility c'è molto da usare: prova una funzione nuova questa settimana.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1083394242765918208": {
+        "lastSignature": "Quote della community||Se trovi un messaggio memorabile, usa i comandi quote: poi lo trovi in <#1468540884537573479>.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1307301955110178847": {
+        "lastSignature": "Candidature staff aperte||Se vuoi entrare nello staff, controlla i requisiti e valuta la candidatura: costanza e serietà fanno la differenza.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1360577298713284750": {
+        "lastSignature": "Comando classifica weekly||Usa +classifica weekly per vedere il tuo posizionamento reale nella settimana corrente.",
+        "plannedAt": 1772195107291,
+        "cooldownDays": 3,
+        "lastSentAt": 1772195108790
+      },
+      "1374714960785178654": {
+        "lastSignature": "Staff pagato: requisiti||Per accedere a ruoli pagati servono costanza, affidabilità e risultati concreti nel tempo.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1356922347785031690": {
+        "lastSignature": "Panoramica server 4||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1436545757535797268": {
+        "lastSignature": "Quote e contenuti 55||Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "676113660678242305": {
+        "lastSignature": "Ruoli e colori 76||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1006529744717742111": {
+        "lastSignature": "Forum community 22||Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1321597954439643176": {
+        "lastSignature": "Classifica personale||Usa +rank per controllare rapidamente il tuo stato e pianificare il prossimo obiettivo.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1380069137199530048": {
+        "lastSignature": "Panoramica server 1||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1231200256520093761": {
+        "lastSignature": "Comando classifica weekly||Usa +classifica weekly per vedere il tuo posizionamento reale nella settimana corrente.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1044646197144600649": {
+        "lastSignature": "Counting e attività leggere 65||Un passaggio in <#1442569179743125554> mantiene il server vivo anche nei momenti lenti.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1243912935311409165": {
+        "lastSignature": "Quote e contenuti 54||Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1100373788216021093": {
+        "lastSignature": "News e avvisi 47||Controlla <#1442569115972669541> per non perdere novità importanti.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1351241183728242792": {
+        "lastSignature": "Canale media||Condividi contenuti in modo pulito: qualità > quantità, sempre.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1001170044526538762": {
+        "lastSignature": "News e avvisi 46||Controlla <#1442569115972669541> per non perdere novità importanti.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1337976736234602538": {
+        "lastSignature": "Panoramica server 4||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "414631629760233482": {
+        "lastSignature": "Quote e contenuti •||Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nUn uso corretto di canali e comandi rende tutto più semplice.",
+        "plannedAt": 1772195107289,
+        "cooldownDays": 3,
+        "lastSentAt": 1771590233873
+      },
+      "1325584889415864320": {
+        "lastSignature": "Quote e contenuti •||Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nFocus utile: qualità prima della quantità nelle interazioni.\nPiccoli miglioramenti continui portano risultati reali.",
+        "plannedAt": 1772195107293,
+        "cooldownDays": 3,
+        "lastSentAt": 1772202112747
+      },
+      "796080988245196821": {
+        "lastSignature": "Candidature 92||Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1412560499249250415": {
+        "lastSignature": "Buone pratiche||Evita spam e flood: qualità dei messaggi e interazioni sane fanno la differenza.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "694107007795593217": {
+        "lastSignature": "News e avvisi 45||Controlla <#1442569115972669541> per non perdere novità importanti.\nFocus utile: qualità prima della quantità nelle interazioni.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1435799553948254280": {
+        "lastSignature": "Forum community 25||Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1426511123741544610": {
+        "lastSignature": "Poll ed eventi 62||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1075915994515656785": {
+        "lastSignature": "Crescita livelli 20||Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1295089170934530110": {
+        "lastSignature": "Poll ed eventi||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nPiccoli miglioramenti continui portano risultati reali.",
+        "plannedAt": 1772195107294,
+        "cooldownDays": 3,
+        "lastSentAt": 1771590233873
+      },
+      "1105502925406601277": {
+        "lastSignature": "Comandi bot 12||Per usare bene il bot parti da +help e prova i comandi in <#1442569138114662490>.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1232323327176081418": {
+        "lastSignature": "Attività community||Partecipare a eventi, sondaggi e discussioni aiuta il server a crescere e migliora l'esperienza di tutti.",
+        "plannedAt": 1772195107294,
+        "cooldownDays": 3,
+        "lastSentAt": 1771590233873
+      },
+      "1405425746155016193": {
+        "lastSignature": "Candidature 96||Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1438903301977411626": {
+        "lastSignature": "Gestione DM||Puoi disattivare questi promemoria con +dm-disable e riattivarli in seguito con +dm-enable.",
+        "plannedAt": 1772195107292,
+        "cooldownDays": 3,
+        "lastSentAt": 1772225754407
+      },
+      "739504673131856007": {
+        "lastSignature": "Poll ed eventi 58||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "462700670433230849": {
+        "lastSignature": "Candidature 94||Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nFocus utile: qualità prima della quantità nelle interazioni.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1371362456353636362": {
+        "lastSignature": "Comandi utili del bot||Con +help trovi rapidamente i comandi principali del bot. Provali in <#1442569138114662490>.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "531812067049603073": {
+        "lastSignature": "Forum community||Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nPiccoli miglioramenti continui portano risultati reali.",
+        "plannedAt": 1772195107294,
+        "cooldownDays": 3,
+        "lastSentAt": 1771590233873
+      },
+      "825996687864234004": {
+        "lastSignature": "Suggerimenti utili 31||Le idee più chiare in <#1442569147559973094> vengono valutate meglio.\nFocus utile: qualità prima della quantità nelle interazioni.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1243899942448140352": {
+        "lastSignature": "Staff pagato 104||Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "672806423289266188": {
+        "lastSignature": "Media e condivisioni 80||In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nFocus utile: qualità prima della quantità nelle interazioni.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1463350326529757409": {
+        "lastSignature": "Counting e attività leggere 65||Un passaggio in <#1442569179743125554> mantiene il server vivo anche nei momenti lenti.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1046467513787101245": {
+        "lastSignature": "Crescita livelli 16||Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1396963225945243708": {
+        "lastSignature": "News e avvisi 48||Controlla <#1442569115972669541> per non perdere novità importanti.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "613495239151452182": {
+        "lastSignature": "Staff pagato 103||Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "676009951662964747": {
+        "lastSignature": "Poll ed eventi •||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nContribuire in modo ordinato aiuta davvero tutta la community.",
+        "plannedAt": 1772195107293,
+        "cooldownDays": 3,
+        "lastSentAt": 1772225874725
+      },
+      "828303162145505350": {
+        "lastSignature": "Comandi bot 12||Per usare bene il bot parti da +help e prova i comandi in <#1442569138114662490>.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1437246159013019740": {
+        "lastSignature": "Panoramica server 1||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1421013695936462848": {
+        "lastSignature": "Crescita livelli 19||Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1083432728692785292": {
+        "lastSignature": "Crescita livelli 20||Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "711631035984642118": {
+        "lastSignature": "Preparazione candidatura||Prima di inviare la candidatura, cura grammatica, chiarezza e motivazioni: aumenta molto le possibilità di essere considerato.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "821047416203640833": {
+        "lastSignature": "Focus comandi||Questa settimana prova una combinazione: +help, poi +rank, poi +classifica weekly.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1301892997482549323": {
+        "lastSignature": "Crescita livelli 16||Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "813770005916286976": {
+        "lastSignature": "Forum community •||Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nPiccoli miglioramenti continui portano risultati reali.",
+        "plannedAt": 1772195107290,
+        "cooldownDays": 3,
+        "lastSentAt": 1772272674891
+      },
+      "886190954304897076": {
+        "lastSignature": "Canale ruoli||In <#1469429150669602961> puoi personalizzare il profilo e sbloccare opzioni interessanti.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1086374025279848609": {
+        "lastSignature": "Ticket supporto 41||Per problemi o dubbi usa i ticket in <#1442569095068254219>.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "708421268709310594": {
+        "lastSignature": "Quote e contenuti 53||Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "717694963416039478": {
+        "lastSignature": "Forum community 24||Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nFocus utile: qualità prima della quantità nelle interazioni.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1380338876442345492": {
+        "lastSignature": "Quote e contenuti 56||Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1368171375101083778": {
+        "lastSignature": "News e avvisi 45||Controlla <#1442569115972669541> per non perdere novità importanti.\nFocus utile: qualità prima della quantità nelle interazioni.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1200532689053294652": {
+        "lastSignature": "Canale comandi||Per usare i comandi del bot in modo ordinato usa <#1442569138114662490>.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1125181828941238322": {
+        "lastSignature": "Ruoli e colori 77||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1340602917337436230": {
+        "lastSignature": "Onboarding amici||Quando inviti qualcuno, accompagnalo nei primi passaggi: verifica, regole, canali utili e comandi base.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "922863154130739292": {
+        "lastSignature": "Poll ed eventi 63||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1051626471464120320": {
+        "lastSignature": "Verifica e onboarding||Se inviti amici, ricordagli di completare la verifica in <#1442569059983163403>.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "915309634699550822": {
+        "lastSignature": "Ruoli e colori 73||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nFocus utile: qualità prima della quantità nelle interazioni.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1178801388147462228": {
+        "lastSignature": "Canale comandi||Per usare i comandi del bot in modo ordinato usa <#1442569138114662490>.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1429159731703845051": {
+        "lastSignature": "Staff pagato 103||Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1434282879520604202": {
+        "lastSignature": "Ruoli colori e badge||Dai un'occhiata a <#1469429150669602961> per colori e vantaggi sbloccabili.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1307334462748622889": {
+        "lastSignature": "Panoramica server 7||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1101442673769992204": {
+        "lastSignature": "Comandi utility||Dedica 2 minuti a provare un comando utility che non hai mai usato: spesso scopri funzioni utilissime.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1467985778608177166": {
+        "lastSignature": "Classifiche bot 91||Usa +rank, +classifica weekly e +classifica alltime per tracciare la tua crescita.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "739939037220962374": {
+        "lastSignature": "Preparazione candidatura||Prima di inviare la candidatura, cura grammatica, chiarezza e motivazioni: aumenta molto le possibilità di essere considerato.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1350188699811319848": {
+        "lastSignature": "Counting e attività leggere 68||Un passaggio in <#1442569179743125554> mantiene il server vivo anche nei momenti lenti.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1467641442041200752": {
+        "lastSignature": "Comandi bot 8||Per usare bene il bot parti da +help e prova i comandi in <#1442569138114662490>.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1406975418375995553": {
+        "lastSignature": "Candidature 95||Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1385574318540324886": {
+        "lastSignature": "News e avvisi 44||Controlla <#1442569115972669541> per non perdere novità importanti.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1462008294800490569": {
+        "lastSignature": "Canale comandi||Per usare i comandi del bot in modo ordinato usa <#1442569138114662490>.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1062002757013348373": {
+        "lastSignature": "Buone pratiche||Evita spam e flood: qualità dei messaggi e interazioni sane fanno la differenza.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "786174710995877889": {
+        "lastSignature": "Ticket supporto 41||Per problemi o dubbi usa i ticket in <#1442569095068254219>.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1119960078288691210": {
+        "lastSignature": "Ticket supporto 38||Per problemi o dubbi usa i ticket in <#1442569095068254219>.\nFocus utile: qualità prima della quantità nelle interazioni.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "838525536681590834": {
+        "lastSignature": "Poll ed eventi 62||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "717456023488561162": {
+        "lastSignature": "Ticket supporto 37||Per problemi o dubbi usa i ticket in <#1442569095068254219>.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1283451236871438398": {
+        "lastSignature": "Forum community 23||Nel forum <#1442569141717438495> puoi aprire discussioni ordinate e utili.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1406336615181189172": {
+        "lastSignature": "Focus feedback||Se trovi qualcosa che non funziona bene, segnalarlo con chiarezza aiuta tutti.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1438846818380288067": {
+        "lastSignature": "Poll ed eventi 58||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1438838633556738138": {
+        "lastSignature": "Ticket supporto 37||Per problemi o dubbi usa i ticket in <#1442569095068254219>.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1406218381564313671": {
+        "lastSignature": "Staff pagato 103||Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1146166755144765614": {
+        "lastSignature": "Staff pagato 101||Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nFocus utile: qualità prima della quantità nelle interazioni.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1412427692761944138": {
+        "lastSignature": "Ruoli e colori 75||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1284952168675410013": {
+        "lastSignature": "Quote e contenuti 53||Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "758047028768145429": {
+        "lastSignature": "Classifiche bot 85||Usa +rank, +classifica weekly e +classifica alltime per tracciare la tua crescita.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1090146313217265756": {
+        "lastSignature": "Crescita livelli •||Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nSe vuoi, questa settimana prova a seguire questo punto per primo.",
+        "plannedAt": 1772195107291,
+        "cooldownDays": 3,
+        "lastSentAt": 1771590233873
+      },
+      "1350146967413592165": {
+        "lastSignature": "Comandi utili del bot||Con +help trovi rapidamente i comandi principali del bot. Provali in <#1442569138114662490>.",
+        "plannedAt": 1772195107293,
+        "cooldownDays": 3,
+        "lastSentAt": 1771590233873
+      },
+      "1409231260013822023": {
+        "lastSignature": "Comandi bot 13||Per usare bene il bot parti da +help e prova i comandi in <#1442569138114662490>.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1435417125345955860": {
+        "lastSignature": "Media e condivisioni 80||In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nFocus utile: qualità prima della quantità nelle interazioni.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1353488741259284595": {
+        "lastSignature": "Comandi bot 12||Per usare bene il bot parti da +help e prova i comandi in <#1442569138114662490>.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "982676470751191091": {
+        "lastSignature": "Ruoli e colori 72||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "965592554127110204": {
+        "lastSignature": "Staff pagato 99||Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1447356151535505459": {
+        "lastSignature": "Media e condivisioni 83||In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569138114662490> e +help\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "882703902099767378": {
+        "lastSignature": "Media e condivisioni •||In <#1442569136067575809> punta sempre su contenuti puliti e utili.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nContribuire in modo ordinato aiuta davvero tutta la community.",
+        "plannedAt": 1772195107282,
+        "cooldownDays": 7,
+        "lastSentAt": 1771590233873
+      },
+      "836964309195948073": {
+        "lastSignature": "Counting e attività leggere 66||Un passaggio in <#1442569179743125554> mantiene il server vivo anche nei momenti lenti.\nFocus utile: qualità prima della quantità nelle interazioni.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1436540279883825345": {
+        "lastSignature": "Quote della community||Se trovi un messaggio memorabile, usa i comandi quote: poi lo trovi in <#1468540884537573479>.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1307393119100080158": {
+        "lastSignature": "Staff pagato 100||Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1405956851580932219": {
+        "lastSignature": "Ruoli e colori 74||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1435704261508989102": {
+        "lastSignature": "Ruoli e colori 71||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nObiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "775275653876285442": {
+        "lastSignature": "Staff pagato 101||Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nFocus utile: qualità prima della quantità nelle interazioni.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "479261874979078155": {
+        "lastSignature": "Candidature 97||Se vuoi candidarti, prepara bene i dettagli in <#1442569232507473951>.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1151856445499920404": {
+        "lastSignature": "Panoramica server 5||Resta aggiornato passando da <#1442569111119990887> e <#1442569115972669541>.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nAnche un solo contributo utile al giorno fa differenza.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1155596690758316164": {
+        "lastSignature": "Suggerimenti utili 34||Le idee più chiare in <#1442569147559973094> vengono valutate meglio.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nUn uso corretto di canali e comandi rende tutto più semplice.\n\nFocus: <#1442569095068254219> e supporto\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1272686522855985215": {
+        "lastSignature": "Canale ruoli||In <#1469429150669602961> puoi personalizzare il profilo e sbloccare opzioni interessanti.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1229457101743722648": {
+        "lastSignature": "Ruoli e colori 72||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nSuggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569141717438495> e discussioni\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1185675564825202762": {
+        "lastSignature": "Supporto rapido||Se hai un dubbio tecnico o organizzativo, apri ticket invece di aspettare: risolvi prima e meglio.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1333821838978973707": {
+        "lastSignature": "Ruoli e colori 73||In <#1469429150669602961> trovi personalizzazione e vantaggi.\nFocus utile: qualità prima della quantità nelle interazioni.\nContribuire in modo ordinato aiuta davvero tutta la community.\n\nFocus: <#1442569128706838528> e partecipazione\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1438816694737834054": {
+        "lastSignature": "News e avvisi 46||Controlla <#1442569115972669541> per non perdere novità importanti.\nPromemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1136435322742386759": {
+        "lastSignature": "Ticket supporto 42||Per problemi o dubbi usa i ticket in <#1442569095068254219>.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nPiccoli miglioramenti continui portano risultati reali.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: esplora un canale che frequenti poco.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1337831730241081344": {
+        "lastSignature": "Obiettivo settimanale||Impostati un mini-obiettivo: più costanza in chat, più presenza in vocale o più partecipazione ai poll.\n\nFocus: <#1442569147559973094> e feedback\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "697434086326665308": {
+        "lastSignature": "Ruoli e vantaggi del server||Hai già controllato i ruoli sbloccabili con livelli, boost e voti? Dai un'occhiata al canale info del server.\n\nFocus: <#1469429150669602961> e perks\nAzione della settimana: interagisci con eventi o sondaggi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1420158136311877723": {
+        "lastSignature": "Canale role info||In <#1442569111119990887> trovi molte informazioni utili su ruoli, vantaggi e funzioni del server.\n\nFocus: <#1468540884537573479> e contenuti\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1005814301715603556": {
+        "lastSignature": "Canale media||Condividi contenuti in modo pulito: qualità > quantità, sempre.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: lascia un feedback chiaro e utile.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1398671949097336867": {
+        "lastSignature": "Canale suggerimenti||Hai un'idea per migliorare il server? Scrivila in <#1442569147559973094>.\n\nFocus: +rank / +classifica weekly\nAzione della settimana: controlla i tuoi progressi e obiettivi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1416072869661900880": {
+        "lastSignature": "Crescita livelli 21||Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.\nAzione consigliata: contribuisci con un messaggio utile o un feedback concreto.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569115972669541> e aggiornamenti\nAzione della settimana: prova un comando che di solito non usi.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1471151184004776080": {
+        "lastSignature": "Staff pagato 101||Per il percorso staff pagato leggi i requisiti in <#1442579412280410194>.\nFocus utile: qualità prima della quantità nelle interazioni.\nSe vuoi, questa settimana prova a seguire questo punto per primo.\n\nFocus: <#1442569179743125554> e attività\nAzione della settimana: partecipa a una discussione costruttiva.",
+        "plannedAt": 1771590233873,
+        "lastSentAt": 1771590233873,
+        "cooldownDays": 7
+      },
+      "1397729516079546469": {
+        "lastSignature": "Quote e contenuti •||Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in <#1468540884537573479>.\nTip operativo: controlla periodicamente aggiornamenti e funzioni nuove.\nAnche un solo contributo utile al giorno fa differenza.",
+        "plannedAt": 1772195107290,
+        "cooldownDays": 3,
+        "lastSentAt": 0
+      },
+      "1332797979299545209": {
+        "lastSignature": "Poll ed eventi •||Partecipare in <#1442569128706838528> aiuta il server a scegliere meglio.\nConsiglio: una presenza costante vale più di attività casuale concentrata in un giorno.\nSe vuoi, questa settimana prova a seguire questo punto per primo.",
+        "plannedAt": 1772195107292,
+        "cooldownDays": 3,
+        "lastSentAt": 0
+      }
+    },
+    "startupBlastDone": true,
+    "startupBlastRunning": false,
+    "startupBlastAt": 1771590626694,
+    "externalStartupBlastDone": true,
+    "externalStartupBlastRunning": false,
+    "externalStartupBlastAt": 1771590293844,
+    "externalReminderHistory": {}
+  }
+}

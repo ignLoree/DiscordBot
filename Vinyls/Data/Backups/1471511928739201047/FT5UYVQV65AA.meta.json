@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "backupId": "FT5UYVQV65AA",
+  "guildId": "1471511928739201047",
+  "createdAt": "2026-02-27T23:08:49.251Z",
+  "source": "automatic",
+  "checksum": {
+    "algorithm": "sha256",
+    "payload": "2a78f71f7f8163a8e6e4ed1c593664fb402159f54a6210475a44a6f78400e426",
+    "compressed": "8a3db086dad7d48d0c54b80380adb7b2cb52fd88e6046236de16cef53bc0a3c9"
+  },
+  "file": {
+    "primary": "FT5UYVQV65AA.json.gz",
+    "backup": "FT5UYVQV65AA.json.gz.bak",
+    "sizeBytes": 51289
+  }
+}

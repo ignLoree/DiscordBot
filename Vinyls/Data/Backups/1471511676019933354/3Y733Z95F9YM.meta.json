@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "backupId": "3Y733Z95F9YM",
+  "guildId": "1471511676019933354",
+  "createdAt": "2026-02-27T23:08:44.790Z",
+  "source": "automatic",
+  "checksum": {
+    "algorithm": "sha256",
+    "payload": "f92b05629b156172ee4e79c7cd2cbd8806162b9498073fe1d763125da9a19604",
+    "compressed": "3a04425327f7f610334103e416331e7d44d75b8615ae56c1319a0431b9d77132"
+  },
+  "file": {
+    "primary": "3Y733Z95F9YM.json.gz",
+    "backup": "3Y733Z95F9YM.json.gz.bak",
+    "sizeBytes": 52738
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "backupId": "JGLNEPKLTBXA",
+  "guildId": "1462458562507964584",
+  "createdAt": "2026-02-27T23:08:30.946Z",
+  "source": "automatic",
+  "checksum": {
+    "algorithm": "sha256",
+    "payload": "07f8c468af04022479decdcbd8afda22d5c32c45d0a65823db585a8094880079",
+    "compressed": "ef1a5a63b5d383c0549a73fdfa081dab7599944e3d82b24174348b6acb7ee347"
+  },
+  "file": {
+    "primary": "JGLNEPKLTBXA.json.gz",
+    "backup": "JGLNEPKLTBXA.json.gz.bak",
+    "sizeBytes": 344049
+  }
+}

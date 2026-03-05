@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "backupId": "62BXNYJRRDL2",
+  "guildId": "1471512555762483330",
+  "createdAt": "2026-02-27T23:09:00.567Z",
+  "source": "automatic",
+  "checksum": {
+    "algorithm": "sha256",
+    "payload": "aeb7d75c22a70c4546ad9e2e971eb9575abaa5b29e6efafbc177384da8e176ed",
+    "compressed": "eba78bbaa8198f2c4a594055617c68129828c0ac59644556029f00e64a468215"
+  },
+  "file": {
+    "primary": "62BXNYJRRDL2.json.gz",
+    "backup": "62BXNYJRRDL2.json.gz.bak",
+    "sizeBytes": 52518
+  }
+}
