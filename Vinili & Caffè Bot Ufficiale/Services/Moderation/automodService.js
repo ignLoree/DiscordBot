@@ -1726,7 +1726,7 @@ async function detectViolations(message, state, profile) {
     if (
       !mentionWhitelisted &&
       MENTION_RULES.userMentions.enabled &&
-      userMentionCount > 0
+      userMentionCount >= 2
     ) {
       violations.push({
         key: "mention_user",
@@ -2482,7 +2482,10 @@ async function runAutoModMessage(message) {
     };
   }
 
-  for (const v of violations) addHeat(state, v.heat);
+  const heatThisMessage = violations.length
+    ? Math.max(...violations.map((v) => Number(v.heat || 0)))
+    : 0;
+  addHeat(state, heatThisMessage);
   await markBadUserTrigger(message, violations, state.heat);
 
   if (state.heat >= thresholds.timeout) {
