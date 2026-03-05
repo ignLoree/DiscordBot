@@ -3,12 +3,22 @@ const { listJsFilesRecursive } = require("../../shared/runtime/fsRuntime");
 
 const IDS_SUBFOLDER = path.sep + "ids" + path.sep;
 
+/** File che non sono handler (aggregatori, librerie componenti): da non caricare come button handler. */
+function isNonHandlerFile(relativeKey) {
+  if (relativeKey === "index.js") return true;
+  const sep = path.sep;
+  if (relativeKey === "topChannel" + sep + "components.js" || relativeKey.endsWith(sep + "components.js")) return true;
+  return false;
+}
+
 module.exports = (client) => {
   client.buttonHandlers = client.buttonHandlers || [];
 
   client.loadButtonHandlers = async (basePath) => {
     const dir = basePath || path.resolve(__dirname, "..", "Buttons");
-    const allPaths = listJsFilesRecursive(dir).filter((fullPath) => !fullPath.includes(IDS_SUBFOLDER));
+    const allPaths = listJsFilesRecursive(dir)
+      .filter((fullPath) => !fullPath.includes(IDS_SUBFOLDER))
+      .filter((fullPath) => !isNonHandlerFile(path.relative(dir, fullPath)));
     const loaded = [];
 
     for (const fullPath of allPaths) {
