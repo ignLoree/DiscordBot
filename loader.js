@@ -28,7 +28,13 @@ function normalizeComparableName(value) {
 }
 
 function resolveBotWorkingDir(bot) {
-    const suffix = normalizeComparableName(bot?.folderSuffix || '');
+    const suffix = String(bot?.folderSuffix || '').trim();
+    const suffixNorm = normalizeComparableName(suffix);
+
+    const directPath = path.join(baseDir, suffix);
+    if (fs.existsSync(path.join(directPath, 'index.js'))) {
+        return directPath;
+    }
     const exactCandidates=[`Vinili & CaffÃƒÂ¨ ${bot.folderSuffix}`,`Vinili & Caffe ${bot.folderSuffix}`,`Vinili & CaffÃƒÆ’Ã‚Â¨ ${bot.folderSuffix}`,`Vinili & CaffÃ¯Â¿Â½ ${bot.folderSuffix}`];
 
     for (const folderName of exactCandidates) {
@@ -39,9 +45,9 @@ function resolveBotWorkingDir(bot) {
     }
 
     const entries=fs.readdirSync(baseDir,{withFileTypes:true}).filter((entry)=>entry.isDirectory()).map((entry)=>entry.name);
-    const match=entries.find((name)=>{const normalized=normalizeComparableName(name);return normalized.includes('vinili')&&normalized.includes('caff')&&normalized.includes(suffix);});
+    const match=entries.find((name)=>{const normalized=normalizeComparableName(name);return normalized===suffixNorm||(normalized.includes('vinili')&&normalized.includes('caff')&&normalized.includes(suffixNorm));});
     if (!match) {
-        throw new Error(`Bot directory not found for ${bot.label}`);
+        throw new Error(`Bot directory not found for ${bot.label} (expected folder like "${suffix}")`);
     }
     return path.join(baseDir, match);
 }
