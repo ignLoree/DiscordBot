@@ -229,13 +229,15 @@ async function runVerifyPanelAuto(client) {
 async function runRuoliPanelAuto(client) {
   const { EmbedBuilder, AttachmentBuilder, ActionRowBuilder, StringSelectMenuBuilder, } = require("discord.js");
   const path = require("path");
+  const fs = require("fs");
   const { PersonalityPanel } = require("../Schemas/Community/communitySchemas");
   const IDs = require("../Utils/Config/ids");
   const { upsertPanelMessage } = require("../../shared/discord/panelUpsertRuntime");
 
   const CHANNEL_ID = IDs.channels.ruoliColori;
-  const IMAGE_NAME = "personalita.gif";
+  const IMAGE_NAME = "personalità.gif";
   const IMAGE_PATH = path.join(__dirname, "..", "Photos", IMAGE_NAME);
+  const IMAGE_PATH_ASCII = path.join(__dirname, "..", "Photos", "personalita.gif");
   const MENTIONS_IMAGE_NAME = "menzioni.gif";
   const MENTIONS_IMAGE_PATH = path.join(__dirname, "..", "Photos", MENTIONS_IMAGE_NAME,);
   const COLORS_IMAGE_NAME = "colori.gif";
@@ -247,16 +249,17 @@ async function runRuoliPanelAuto(client) {
   const channel = client.channels.cache.get(CHANNEL_ID) || (await client.channels.fetch(CHANNEL_ID).catch(() => null));
   if (!channel) return;
 
-  const attachment = new AttachmentBuilder(IMAGE_PATH, { name: IMAGE_NAME });
+  const personalityPhotoPath = fs.existsSync(IMAGE_PATH) ? IMAGE_PATH : (fs.existsSync(IMAGE_PATH_ASCII) ? IMAGE_PATH_ASCII : null);
+  const attachment = personalityPhotoPath ? new AttachmentBuilder(personalityPhotoPath, { name: IMAGE_NAME }) : null;
   const embed = new EmbedBuilder().setColor("#6f4e37").setTitle("<:sparkledred:1470064814502973591> Personalità").setDescription(["Scegli in cosa ti identifichi, quanti anni hai e di dove sei. Utilizza i menù a tendina sottostanti.", "", "<a:VC_Exclamation:1448687427836444854> Massimo **1** ruolo per categoria.",].join("\n"),).setImage(DIVIDER_URL);
 
-  const mentionsAttachment = new AttachmentBuilder(MENTIONS_IMAGE_PATH, { name: MENTIONS_IMAGE_NAME, });
+  const mentionsAttachment = fs.existsSync(MENTIONS_IMAGE_PATH) ? new AttachmentBuilder(MENTIONS_IMAGE_PATH, { name: MENTIONS_IMAGE_NAME, }) : null;
   const mentionsEmbed = new EmbedBuilder().setColor("#6f4e37").setTitle("<:sparkledred:1470064814502973591> Personalità").setDescription(["Scegli quali notifiche ricevere dal server in base a cosa ti interessa maggiormente.", "", "<a:VC_Exclamation:1448687427836444854> Le notifiche di **@everyone** le riceveranno tutti.",].join("\n"),).setImage(DIVIDER_URL);
 
-  const colorsAttachment = new AttachmentBuilder(COLORS_IMAGE_PATH, { name: COLORS_IMAGE_NAME, });
+  const colorsAttachment = fs.existsSync(COLORS_IMAGE_PATH) ? new AttachmentBuilder(COLORS_IMAGE_PATH, { name: COLORS_IMAGE_NAME, }) : null;
   const colorsEmbed = new EmbedBuilder().setColor("#6f4e37").setTitle("<:sparkledred:1470064814502973591> Personalità").setDescription(["Scegli il colore per personalizzare il nome del tuo profilo quando scrivi in chat.", "", "<a:VC_Exclamation:1448687427836444854> Verrà mostrato il **colore più in alto** nella lista dei ruoli nel tuo profilo.",].join("\n"),).setImage(DIVIDER_URL);
 
-  const plusColorsAttachment = new AttachmentBuilder(PLUS_COLORS_IMAGE_PATH, { name: PLUS_COLORS_IMAGE_NAME, });
+  const plusColorsAttachment = fs.existsSync(PLUS_COLORS_IMAGE_PATH) ? new AttachmentBuilder(PLUS_COLORS_IMAGE_PATH, { name: PLUS_COLORS_IMAGE_NAME, }) : null;
   const plusColorsEmbed = new EmbedBuilder().setColor("#6f4e37").setTitle("<:sparkledred:1470064814502973591> Personalità").setDescription(['Scegli il colore che più ti piace per il tuo profilo! Utilizza il menù a tendina sottostante. __Rimuovi i colori__ con la "<:vegax:1443934876440068179>" in alto.', "", `⚠️ Questi ruoli sono riservati a coloro con questi ruoli: <@&${IDs.roles.ServerBooster}> e/o <@&${IDs.roles.Level50}>`, "", "<:sparkle:1470064801811140866> **LISTA COLORI:**", `<:VC_1:1444099819680563200> <@&${IDs.roles.redPlus}>`, `<:VC_2:1444099781864722535> <@&${IDs.roles.orangePlus}>`, `<:VC_3:1444099746116534282> <@&${IDs.roles.yellowPlus}>`, `<:VC_4:1444099708292169740> <@&${IDs.roles.greenPlus}>`, `<:VC_5:1444099671894134947> <@&${IDs.roles.bluePlus}>`, `<:VC_6:1444099623714033838> <@&${IDs.roles.purplePlus}>`, `<:VC_7:1444099572916945120> <@&${IDs.roles.pinkPlus}>`, `<:VC_8:1444099520500600998> <@&${IDs.roles.blackPlus}>`, `<:VC_9:1444099441790554182> <@&${IDs.roles.grayPlus}>`, `<:VC_10:1469357839066730627> <@&${IDs.roles.whitePlus}>`, `<:VC_11:1469772033410859173> <@&${IDs.roles.YinYangPlus}>`,].join("\n"),).setImage(DIVIDER_URL);
 
   const pronouns = new ActionRowBuilder().addComponents(new StringSelectMenuBuilder().setCustomId("personality_pronouns").setPlaceholder("⭐ Seleziona i tuoi pronomi").setMinValues(1).setMaxValues(1).addOptions({ label: "Rimuovi i ruoli di sesso", description: "Rimuovi ruoli dal tuo profilo", value: "remove", emoji: "<:vegax:1443934876440068179>", }, { label: "he/him", value: "1442568997848743997", emoji: "<:hehim:1470534612198494258>", description: "Clicca qui per ottenere il ruolo", }, { label: "she/her", value: "1442568999043989565", emoji: "<:sheher:1470534614023143485>", description: "Clicca qui per ottenere il ruolo", }, { label: "they/them", value: "1442569000063074498", emoji: "<:theythem:1470534615818178782>", description: "Clicca qui per ottenere il ruolo", }, { label: "ask me", value: "1442569001367769210", emoji: "<:askme:1470534617458151424>", description: "Clicca qui per ottenere il ruolo", },),);
@@ -291,13 +294,13 @@ async function runRuoliPanelAuto(client) {
 
   const updatePanel = async (personalityMessageId, mentionsMessageId, colorsMessageId, plusColorsMessageId,) => { try { await PersonalityPanel.updateOne({ guildId, channelId: CHANNEL_ID }, { $set: { personalityMessageId, mentionsMessageId, colorsMessageId, plusColorsMessageId, }, },); } catch { } };
 
-  const personalityMessage = await upsertPanelMessage(channel, client, { messageId: panel?.personalityMessageId || null, embeds: [embed], components: [pronouns, age, region, dmStatus, relationship], files: [attachment], attachmentName: IMAGE_NAME, });
+  const personalityMessage = await upsertPanelMessage(channel, client, { messageId: panel?.personalityMessageId || null, embeds: [embed], components: [pronouns, age, region, dmStatus, relationship], files: attachment ? [attachment] : [], attachmentName: attachment ? IMAGE_NAME : undefined, });
 
-  const mentionsMessage = await upsertPanelMessage(channel, client, { messageId: panel?.mentionsMessageId || null, embeds: [mentionsEmbed], components: [mentionsMenu], files: [mentionsAttachment], attachmentName: MENTIONS_IMAGE_NAME, });
+  const mentionsMessage = await upsertPanelMessage(channel, client, { messageId: panel?.mentionsMessageId || null, embeds: [mentionsEmbed], components: [mentionsMenu], files: mentionsAttachment ? [mentionsAttachment] : [], attachmentName: mentionsAttachment ? MENTIONS_IMAGE_NAME : undefined, });
 
-  const colorsMessage = await upsertPanelMessage(channel, client, { messageId: panel?.colorsMessageId || null, embeds: [colorsEmbed], components: [colorsMenu1, colorsMenu2], files: [colorsAttachment], attachmentName: COLORS_IMAGE_NAME, });
+  const colorsMessage = await upsertPanelMessage(channel, client, { messageId: panel?.colorsMessageId || null, embeds: [colorsEmbed], components: [colorsMenu1, colorsMenu2], files: colorsAttachment ? [colorsAttachment] : [], attachmentName: colorsAttachment ? COLORS_IMAGE_NAME : undefined, });
 
-  const plusColorsMessage = await upsertPanelMessage(channel, client, { messageId: panel?.plusColorsMessageId || null, embeds: [plusColorsEmbed], components: [plusColorsMenu], files: [plusColorsAttachment], attachmentName: PLUS_COLORS_IMAGE_NAME, });
+  const plusColorsMessage = await upsertPanelMessage(channel, client, { messageId: panel?.plusColorsMessageId || null, embeds: [plusColorsEmbed], components: [plusColorsMenu], files: plusColorsAttachment ? [plusColorsAttachment] : [], attachmentName: plusColorsAttachment ? PLUS_COLORS_IMAGE_NAME : undefined, });
 
   if (
     personalityMessage ||
