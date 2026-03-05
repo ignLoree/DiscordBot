@@ -99,7 +99,7 @@ async function ensureMember(interaction, user, resolveMember) {
   if (!member) {
     await replyError(
       interaction,
-      "<:vegax:1443934876440068179> Utente non trovato nel server.",
+      "<:attentionfromvega:1443651874032062505> Utente non trovato nel server.",
     );
     return null;
   }
@@ -114,7 +114,7 @@ async function ensureNotSelf(interaction, targetUser) {
 
   await replyError(
     interaction,
-    "<:vegax:1443934876440068179> Non puoi usare questo comando su te stesso!",
+    "<:attentionfromvega:1443651874032062505> Non puoi usare questo comando su te stesso.",
   );
   return false;
 }
@@ -129,25 +129,27 @@ async function getOrCreateStaffDoc(guildId, userId) {
 
 async function sendPartnerManagerWelcome(pmChannel, user) {
   await pmChannel.send({
-    content: `
-${user}
-# Benvenutx nei Partner Manager <:partneredserverowner:1443651871125409812>
-> **Per iniziare al meglio controlla:** <:discordchannelwhite:1443308552536985810>
-<:dot:1443660294596329582> <#1442569199229730836>
-__Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103564238930>`,
+    content: `${user}
+# Benvenutx nei Partner Manager <:partnermanager:1443651916838998099>
+
+> **Per iniziare al meglio controlla:** <:VC_id:1478517313618575419>
+<:VC_Reply:1468262952934314131> <#1442569199229730836>
+
+__Per qualsiasi cosa l'High Staff è disponibile__ <:staff:1443651912179388548>`,
   }).catch(() => null);
 }
 
 async function sendHelperWelcome(staffChannel, user) {
   await staffChannel.send({
-    content: `
-${user}
-# Benvenutx nello staff <:discordstaff:1443651872258003005>
-> **Per iniziare al meglio controlla:** <:discordchannelwhite:1443308552536985810>
-<:dot:1443660294596329582> <#1442569237142044773>
-<:dot:1443660294596329582> <#1442569239063167139>
-<:dot:1443660294596329582> <#1442569243626307634>
-__Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103564238930>`,
+    content: `${user}
+# Benvenutx nello staff <:staff:1443651912179388548>
+
+> **Per iniziare al meglio controlla:** <:VC_id:1478517313618575419>
+<:VC_DoubleReply:1468713981152727120> <#1442569237142044773>
+<:VC_DoubleReply:1468713981152727120> <#1442569239063167139>
+<:VC_Reply:1468262952934314131> <#1442569243626307634>
+
+__Per qualsiasi cosa l'High Staff è disponibile__ <:staff:1443651912179388548>`,
   }).catch(() => null);
 }
 
@@ -368,11 +370,8 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    const group = interaction.options.getSubcommandGroup(false);
     const sub = interaction.options.getSubcommand();
-
     await interaction.deferReply({ flags: PRIVATE_FLAG }).catch(() => { });
-
     const pexDepexChannel = interaction.guild.channels.cache.get(IDs.channels?.pexDepex,);
     const pmChannel = interaction.guild.channels.cache.get(IDs.channels?.partnersChat,);
     const staffChat = interaction.guild.channels.cache.get(IDs.channels?.staffChat,);
@@ -415,9 +414,9 @@ module.exports = {
         await replySuccess(interaction);
 
         await pexDepexChannel.send({
-          content: `**<a:everythingisstable:1444006799643508778> PEX** ${targetUser}
-<:member_role_icon:1330530086792728618> \`${roleBefore.name}\` <a:vegarightarrow:1443673039156936837> \`${roleAfter.name}\`
-<:discordstaff:1443651872258003005> __${reason}__`,
+          content: `**<:success:1461731530333229226> PEX** ${targetUser}
+<:staff:1443651912179388548> \`${roleBefore.name}\` <a:VC_Arrow:1448672967721615452> \`${roleAfter.name}\`
+<:VC_reason:1478517122929004544> __${reason}__`,
         }).catch(() => null);
 
         staffDoc.rolesHistory.push({
@@ -448,7 +447,7 @@ module.exports = {
         if (!member.roles.cache.has(oldRole.id)) {
           return replyError(
             interaction,
-            `<:vegax:1443934876440068179> L'utente ${targetUser} non ha il ruolo che gli vuoi togliere.`,
+            `<:attentionfromvega:1443651874032062505> L'utente ${targetUser} non ha il ruolo che gli vuoi togliere.`,
           );
         }
 
@@ -467,9 +466,9 @@ module.exports = {
         await replySuccess(interaction);
 
         await pexDepexChannel.send({
-          content: `**<a:laydowntorest:1444006796661358673> DEPEX** ${targetUser}
-<:member_role_icon:1330530086792728618> \`${oldRole.name}\` <a:vegarightarrow:1443673039156936837> \`${newRole.name}\`
-<:discordstaff:1443651872258003005> __${reason}__`,
+          content: `**<:cancel:1461730653677551691> DEPEX** ${targetUser}
+<:staff:1443651912179388548> \`${oldRole.name}\` <a:VC_Arrow:1448672967721615452> \`${newRole.name}\`
+<:VC_reason:1478517122929004544> __${reason}__`,
         }).catch(() => null);
         return;
       } catch (err) {
@@ -495,11 +494,15 @@ module.exports = {
         await staffDoc.save();
 
         const warnEmbed = new EmbedBuilder().setAuthor({
-          name: `Warn eseguito da ${interaction.user.username}`,
+          name: `<:success:1461731530333229226> Warn eseguito da ${interaction.user.username}`,
           iconURL: interaction.user.displayAvatarURL(),
         })
-          .setTitle(
-            `<a:laydowntorest:1444006796661358673>•**__WARN STAFF__**\`#${staffDoc.warnCount}\``,).setThumbnail(targetUser.displayAvatarURL()).setDescription(`<:discordstaff:1443651872258003005> <a:vegarightarrow:1443673039156936837> ${targetUser}<:pinnednew:1443670849990430750>__${reason}__<a:loading:1443934440614264924>**ID Valutazione**__\`${staffDoc.idCount}\`__`,).setColor(SUCCESS_COLOR);
+          .setTitle(`<a:VC_Alert:1448670089670037675> • **__WARN STAFF__**\`#${staffDoc.warnCount}\``,)
+          .setThumbnail(targetUser.displayAvatarURL())
+          .setDescription(`<:staff:1443651912179388548> <a:VC_Arrow:1448672967721615452> ${targetUser} 
+            <:VC_reason:1478517122929004544> __${reason}__ 
+            <:VC_id:1478517313618575419> **ID Valutazione:**__\`${staffDoc.idCount}\`__`,)
+          .setColor(SUCCESS_COLOR);
 
         if (warnChannel) {
           await warnChannel.send({

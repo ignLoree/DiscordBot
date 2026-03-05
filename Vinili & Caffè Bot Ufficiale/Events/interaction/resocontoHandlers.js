@@ -1,18 +1,15 @@
-const{EmbedBuilder,ModalBuilder,ActionRowBuilder,TextInputBuilder,TextInputStyle,}=require("discord.js");
-const StaffModel = require("../../Schemas/Staff/staffSchema");
+const { EmbedBuilder, ModalBuilder, ActionRowBuilder, TextInputBuilder, TextInputStyle, } = require("discord.js");
 const IDs = require("../../Utils/Config/ids");
-const{getGuildChannelCached,getGuildMemberCached,}=require("../../Utils/Interaction/interactionEntityCache");
-
+const { getGuildChannelCached, getGuildMemberCached, } = require("../../Utils/Interaction/interactionEntityCache");
+const { getOrCreateStaffDoc, deleteThreadForMessage } = require("../../Utils/Staff/staffDocUtils");
 const RESOCONTO_APPLY_PREFIX = "resoconto_apply";
 const RESOCONTO_REJECT_PREFIX = "resoconto_reject";
 const RESOCONTO_REASON_MODAL_PREFIX = "resoconto_reason";
 const RESOCONTO_REASON_INPUT_ID = "reason";
-
 const STAFF_ACTIONS = new Set(["px", "dp", "vp", "vn", "nl"]);
 const PM_ACTIONS = new Set(["dp", "rc", "nl"]);
-const ROLE_UP={[String(IDs.roles.Helper)]:String(IDs.roles.Mod),[String(IDs.roles.Mod)]:String(IDs.roles.Coordinator),[String(IDs.roles.Coordinator)]:String(IDs.roles.Supervisor),};
-const ROLE_DOWN={[String(IDs.roles.Supervisor)]:String(IDs.roles.Coordinator),[String(IDs.roles.Coordinator)]:String(IDs.roles.Mod),[String(IDs.roles.Mod)]:String(IDs.roles.Member||""),[String(IDs.roles.Helper)]:String(IDs.roles.Member||""),};
-
+const ROLE_UP = { [String(IDs.roles.Helper)]: String(IDs.roles.Mod), [String(IDs.roles.Mod)]: String(IDs.roles.Coordinator), [String(IDs.roles.Coordinator)]: String(IDs.roles.Supervisor), };
+const ROLE_DOWN = { [String(IDs.roles.Supervisor)]: String(IDs.roles.Coordinator), [String(IDs.roles.Coordinator)]: String(IDs.roles.Mod), [String(IDs.roles.Mod)]: String(IDs.roles.Member || ""), [String(IDs.roles.Helper)]: String(IDs.roles.Member || ""), };
 const ROLE_PARTNER_MANAGER = String(IDs.roles.PartnerManager);
 const ROLE_MEMBER = String(IDs.roles.Member || "");
 const ROLE_STAFF = String(IDs.roles.Staff);
@@ -25,6 +22,7 @@ const ROLE_ADMIN = String(IDs.roles.Admin);
 const ROLE_MANAGER = String(IDs.roles.Manager);
 const ROLE_CO_OWNER = String(IDs.roles.CoFounder);
 const ROLE_OWNER = String(IDs.roles.Founder);
+
 function parseResocontoButtonCustomId(customId) {
   const raw = String(customId || "");
   const isApply = raw.startsWith(`${RESOCONTO_APPLY_PREFIX}:`);
@@ -80,26 +78,6 @@ function parseResocontoModalCustomId(customId) {
   return { kind, userId, roleId, actionKey, messageId };
 }
 
-function disableMessageComponents(message) {
-  const rows = Array.isArray(message?.components) ? message.components : [];
-  return rows.map((row) => ({
-    type: 1,
-    components: (Array.isArray(row?.components) ? row.components : []).map(
-      (component) => {
-        const json = component?.toJSON ? component.toJSON() : component;
-        if (!json || typeof json !== "object") return json;
-        return { ...json, disabled: true };
-      },
-    ),
-  }));
-}
-
-async function getOrCreateStaffDoc(guildId, userId) {
-  let doc = await StaffModel.findOne({ guildId, userId });
-  if (!doc) doc = new StaffModel({ guildId, userId });
-  return doc;
-}
-
 async function hasRoleAfterRefresh(guild, userId, roleId) {
   if (!roleId) return false;
   const freshMember = await getGuildMemberCached(guild, userId, { preferFresh: true }).catch(() => null);
@@ -125,14 +103,16 @@ async function sendValutazioneLogEmbed(guild, actor, targetUser, reason, positiv
   const channel = await getGuildChannelCached(guild, IDs.channels.valutazioniStaff);
   if (!channel?.isTextBased?.()) return;
 
-  const title=positive?"<a:laydowntorest:1444006796661358673> **__VALUTAZIONE POSITIVA__**":"<a:laydowntorest:1444006796661358673> **__VALUTAZIONE NEGATIVA__**";
-  const embed=new EmbedBuilder().setAuthor({name:`Valutazione eseguita da ${actor.username}`,
-      iconURL: actor.displayAvatarURL(),
-    })
+  const title = positive ? "<:thumbsup:1471292172145004768> **__VALUTAZIONE POSITIVA__**" : "<:thumbsdown:1471292163957457013> **__VALUTAZIONE NEGATIVA__**";
+  const embed = new EmbedBuilder().setAuthor({
+    name: `Valutazione eseguita da ${actor.username}`,
+    iconURL: actor.displayAvatarURL(),
+  })
     .setTitle(title)
     .setThumbnail(targetUser.displayAvatarURL())
     .setDescription(
-      `<:discordstaff:1443651872258003005><a:vegarightarrow:1443673039156936837><@${targetUser.id}><:pinnednew:1443670849990430750>__${reason}__`,
+      `<:staff:1443651912179388548> <a:VC_Arrow:1448672967721615452> <@${targetUser.id}>`,
+      `<:VC_reason:1478517122929004544> __${reason}__`,
     )
     .setColor("#6f4e37");
 
@@ -196,21 +176,14 @@ async function sendPexDepexLog(guild, type, targetUser, oldRoleId, newRoleId, re
   if (!channel?.isTextBased?.()) return;
   const oldRole = guild.roles.cache.get(String(oldRoleId || ""));
   const newRole = guild.roles.cache.get(String(newRoleId || ""));
-  const typeLabel=type==="pex"?"**<a:everythingisstable:1444006799643508778> PEX**":"**<a:laydowntorest:1444006796661358673> DEPEX**";
+  const typeLabel = type === "pex" ? "**<:success:1461731530333229226> PEX**" : "**<:cancel:1461730653677551691> DEPEX**";
   await channel
     .send({
       content: `${typeLabel} <@${targetUser.id}>
-<:member_role_icon:1330530086792728618> \`${oldRole?.name || oldRoleId}\` <a:vegarightarrow:1443673039156936837> \`${newRole?.name || newRoleId || "Nessuno"}\`
-<:discordstaff:1443651872258003005> __${reason}__`,
+<:staff:1443651912179388548> \`${oldRole?.name || oldRoleId}\` <a:VC_Arrow:1448672967721615452> \`${newRole?.name || newRoleId || "Nessuno"}\`
+<:VC_reason:1478517122929004544> __${reason}__`,
     })
     .catch(() => null);
-}
-
-async function deleteThreadForMessage(guild, messageId) {
-  const thread = await getGuildChannelCached(guild, String(messageId || ""));
-  if (thread?.isThread?.()) {
-    await thread.delete().catch(() => null);
-  }
 }
 
 async function fetchActiveResocontoMessage(guild, channelId, messageId) {
@@ -229,8 +202,8 @@ async function appendOutcomeToMessage(guild, channelId, messageId, actorId, acce
   const message = await channel.messages.fetch(messageId).catch(() => null);
   if (!message) return;
   const existingContent = String(message.content || "");
-  const line=accepted?`\n\n✅ Azione confermata da <@${actorId}>:${statusText}`
-    : `\n\n❌Azione negata da<@${actorId}>`;
+  const line = accepted ? `\n\n<:success:1461731530333229226> Azione confermata da <@${actorId}>:${statusText}`
+    : `\n\n<:cancel:1461730653677551691> Azione negata da<@${actorId}>`;
   const content = `${existingContent}${line}`.slice(0, 1900);
   await message.edit({ content, components: [] }).catch(() => null);
   await deleteThreadForMessage(guild, messageId);
@@ -238,48 +211,48 @@ async function appendOutcomeToMessage(guild, channelId, messageId, actorId, acce
 
 async function applyStaffAction(guild, actor, payload, reasonOverride = null) {
   const member = await getGuildMemberCached(guild, payload.userId);
-  if (!member) return "Utente non trovato nel server.";
+  if (!member) return "<a:VC_Alert:1448670089670037675> Utente non trovato nel server.";
 
-  if (payload.actionKey === "nl") return "Nessuna azione applicata (Nulla).";
+  if (payload.actionKey === "nl") return "<a:VC_Alert:1448670089670037675> Nessuna azione applicata.";
 
   const targetUser = member.user;
   if (payload.actionKey === "vp") {
     const staffDoc = await getOrCreateStaffDoc(guild.id, payload.userId);
-    const reason = String(reasonOverride || "").trim() || "Limiti settimanali rispettati";
+    const reason = String(reasonOverride || "").trim() || "<:success:1461731530333229226> Limiti settimanali rispettati";
     staffDoc.valutazioniCount = Math.max(0, Number(staffDoc.valutazioniCount || 0)) + 1;
     staffDoc.positiveCount = Math.max(0, Number(staffDoc.positiveCount || 0)) + 1;
     if (!Array.isArray(staffDoc.positiveReasons)) staffDoc.positiveReasons = [];
     staffDoc.positiveReasons.push(reason);
     await staffDoc.save();
     await sendValutazioneLogEmbed(guild, actor, targetUser, reason, true);
-    return "Registrata Valutazione Positiva.";
+    return "<:thumbsup:1471292172145004768> Registrata Valutazione Positiva.";
   }
 
   if (payload.actionKey === "vn") {
     const staffDoc = await getOrCreateStaffDoc(guild.id, payload.userId);
-    const reason = String(reasonOverride || "").trim() || "Limiti settimanali non rispettati";
+    const reason = String(reasonOverride || "").trim() || "<:cancel:1461730653677551691> Limiti settimanali non rispettati";
     staffDoc.valutazioniCount = Math.max(0, Number(staffDoc.valutazioniCount || 0)) + 1;
     staffDoc.negativeCount = Math.max(0, Number(staffDoc.negativeCount || 0)) + 1;
     if (!Array.isArray(staffDoc.negativeReasons)) staffDoc.negativeReasons = [];
     staffDoc.negativeReasons.push(reason);
     await staffDoc.save();
     await sendValutazioneLogEmbed(guild, actor, targetUser, reason, false);
-    return "Registrata Valutazione Negativa.";
+    return "<:thumbsdown:1471292163957457013> Registrata Valutazione Negativa.";
   }
 
   const roleBeforeId = String(payload.roleId || "");
   const reason = String(reasonOverride || "").trim();
-  if (!reason) return "Motivazione mancante.";
+  if (!reason) return "<a:VC_Alert:1448670089670037675> Motivazione mancante.";
 
   if (payload.actionKey === "px") {
     const roleAfterId = ROLE_UP[roleBeforeId] || null;
-    if (!roleAfterId) return "Pex non applicato: nessun ruolo successivo configurato.";
-    if (member.roles.cache.has(roleAfterId)) return "Pex non applicato: utente ha già il ruolo successivo.";
+    if (!roleAfterId) return "<a:VC_Alert:1448670089670037675> Pex non applicato: nessun ruolo successivo configurato.";
+    if (member.roles.cache.has(roleAfterId)) return "<a:VC_Alert:1448670089670037675> Pex non applicato: utente ha già il ruolo successivo.";
 
     const roleAdded = await ensureRoleAdded(guild, member, roleAfterId);
-    if (!roleAdded) return "Pex non applicato: impossibile assegnare il ruolo successivo.";
+    if (!roleAdded) return "<a:VC_Alert:1448670089670037675> Pex non applicato: impossibile assegnare il ruolo successivo.";
     const sideEffectsApplied = await applyPexSideEffects(guild, member, roleAfterId);
-    if (!sideEffectsApplied) return "Pex applicato parzialmente: side-effect ruoli non completati.";
+    if (!sideEffectsApplied) return "<a:VC_Alert:1448670089670037675> Pex applicato parzialmente: side-effect ruoli non completati.";
     const staffDoc = await getOrCreateStaffDoc(guild.id, payload.userId);
     if (!Array.isArray(staffDoc.rolesHistory)) staffDoc.rolesHistory = [];
     staffDoc.rolesHistory.push({
@@ -290,35 +263,35 @@ async function applyStaffAction(guild, actor, payload, reasonOverride = null) {
     });
     await staffDoc.save();
     await sendPexDepexLog(guild, "pex", targetUser, roleBeforeId, roleAfterId, reason);
-    return "Pex applicato.";
+    return "<:success:1461731530333229226> Pex applicato.";
   }
 
   if (payload.actionKey === "dp") {
     const roleAfterId = ROLE_DOWN[roleBeforeId];
-    if (!member.roles.cache.has(roleBeforeId)) return "Depex non applicato: ruolo corrente non presente.";
+    if (!member.roles.cache.has(roleBeforeId)) return "<a:VC_Alert:1448670089670037675> Depex non applicato: ruolo corrente non presente.";
 
     const roleRemoved = await ensureRoleRemoved(guild, member, roleBeforeId);
-    if (!roleRemoved) return "Depex non applicato: impossibile rimuovere il ruolo corrente.";
+    if (!roleRemoved) return "<a:VC_Alert:1448670089670037675> Depex non applicato: impossibile rimuovere il ruolo corrente.";
     const sideEffectsApplied = await applyDepexSideEffects(guild, member, roleBeforeId);
-    if (!sideEffectsApplied) return "Depex applicato parzialmente: side-effect ruoli non completati.";
+    if (!sideEffectsApplied) return "<a:VC_Alert:1448670089670037675> Depex applicato parzialmente: side-effect ruoli non completati.";
     await StaffModel.deleteOne({ guildId: guild.id, userId: payload.userId }).catch(() => null);
     await sendPexDepexLog(guild, "depex", targetUser, roleBeforeId, roleAfterId, reason);
-    return "Depex applicato.";
+    return "<:success:1461731530333229226> Depex applicato.";
   }
 
-  return "Nessuna operazione eseguita.";
+  return "<a:VC_Alert:1448670089670037675> Nessuna operazione eseguita.";
 }
 
 async function applyPmAction(guild, payload) {
   const member = await getGuildMemberCached(guild, payload.userId);
-  if (!member) return "Utente non trovato nel server.";
+  if (!member) return "<a:VC_Alert:1448670089670037675> Utente non trovato nel server.";
 
-  if (payload.actionKey === "nl") return "Nessuna azione applicata (Nulla).";
-  if (payload.actionKey === "rc") return "Richiamo non applica modifiche automatiche.";
-  if (payload.actionKey !== "dp") return "Nessuna operazione eseguita.";
+  if (payload.actionKey === "nl") return "<a:VC_Alert:1448670089670037675> Nessuna azione applicata.";
+  if (payload.actionKey === "rc") return "<a:VC_Alert:1448670089670037675> Richiamo non applica modifiche automatiche.";
+  if (payload.actionKey !== "dp") return "<a:VC_Alert:1448670089670037675> Nessuna operazione eseguita.";
 
   const partnerRoleRemoved = await ensureRoleRemoved(guild, member, ROLE_PARTNER_MANAGER);
-  if (!partnerRoleRemoved) return "Depex PM non applicato: impossibile rimuovere il ruolo Partner Manager.";
+  if (!partnerRoleRemoved) return "<a:VC_Alert:1448670089670037675> Depex PM non applicato: impossibile rimuovere il ruolo Partner Manager.";
   await member.roles.remove(ROLE_HELPER).catch(() => null);
   await member.roles.remove(ROLE_MODERATOR).catch(() => null);
   await member.roles.remove(ROLE_COORDINATOR).catch(() => null);
@@ -327,22 +300,22 @@ async function applyPmAction(guild, payload) {
   await member.roles.remove(ROLE_HIGH_STAFF).catch(() => null);
   if (ROLE_MEMBER) {
     const memberRoleAdded = await ensureRoleAdded(guild, member, ROLE_MEMBER);
-    if (!memberRoleAdded) return "Depex PM applicato parzialmente: impossibile ripristinare il ruolo Member.";
+    if (!memberRoleAdded) return "<a:VC_Alert:1448670089670037675> Depex PM applicato parzialmente: impossibile ripristinare il ruolo Member.";
   }
   const staffDoc = await getOrCreateStaffDoc(guild.id, payload.userId);
   staffDoc.partnerCount = 0;
   staffDoc.managerId = null;
   staffDoc.partnerActions = [];
   await staffDoc.save();
-  return "Depex PM applicato e dati partner rimossi.";
+  return "<:success:1461731530333229226> Depex PM applicato e dati partner rimossi.";
 }
 
 async function showReasonModal(interaction, payload) {
-  const modalId=[RESOCONTO_REASON_MODAL_PREFIX,payload.kind,payload.userId,payload.roleId,payload.actionKey,interaction.message.id,].join(":");
+  const modalId = [RESOCONTO_REASON_MODAL_PREFIX, payload.kind, payload.userId, payload.roleId, payload.actionKey, interaction.message.id,].join(":");
 
-  const titleByAction={px:"Motivo Pex",dp:"Motivo Depex",vp:"Motivo Valutazione Positiva",vn:"Motivo Valutazione Negativa",};
-  const modal=new ModalBuilder().setCustomId(modalId).setTitle(titleByAction[payload.actionKey]||"Motivo Azione");
-  const input=new TextInputBuilder().setCustomId(RESOCONTO_REASON_INPUT_ID).setLabel("Inserisci il motivo").setStyle(TextInputStyle.Paragraph).setRequired(true).setMaxLength(500);
+  const titleByAction = { px: "Motivo Pex", dp: "Motivo Depex", vp: "Motivo Valutazione Positiva", vn: "Motivo Valutazione Negativa", };
+  const modal = new ModalBuilder().setCustomId(modalId).setTitle(titleByAction[payload.actionKey] || "Motivo Azione");
+  const input = new TextInputBuilder().setCustomId(RESOCONTO_REASON_INPUT_ID).setLabel("Inserisci il motivo").setStyle(TextInputStyle.Paragraph).setRequired(true).setMaxLength(500);
   if (payload.actionKey === "vp") {
     input.setPlaceholder("Es: Limiti settimanali rispettati");
   }
@@ -360,7 +333,7 @@ async function handleResocontoButton(interaction) {
   if (!hasResocontoHighStaffAccess(interaction)) {
     await interaction
       .reply({
-        content: "Questo controllo è riservato all'High Staff.",
+        content: "<a:VC_Alert:1448670089670037675> Questo controllo è riservato all'High Staff.",
         flags: 1 << 6,
       })
       .catch(() => null);
@@ -374,7 +347,7 @@ async function handleResocontoButton(interaction) {
   if (!activeMessage) {
     await interaction
       .reply({
-        content: "Questo controllo è già stato gestito.",
+        content: "<a:VC_Alert:1448670089670037675> Questo controllo è già stato gestito.",
         flags: 1 << 6,
       })
       .catch(() => null);
@@ -388,7 +361,7 @@ async function handleResocontoButton(interaction) {
       interaction.message.id,
       interaction.user.id,
       false,
-      "Negato",
+      "<:cancel:1461730653677551691> Negato",
     );
     await interaction.deferUpdate().catch(() => null);
     return true;
@@ -399,7 +372,7 @@ async function handleResocontoButton(interaction) {
     return true;
   }
 
-  const statusText=parsed.kind==="s"?await applyStaffAction(interaction.guild,interaction.user,parsed,null):await applyPmAction(interaction.guild,parsed);
+  const statusText = parsed.kind === "s" ? await applyStaffAction(interaction.guild, interaction.user, parsed, null) : await applyPmAction(interaction.guild, parsed);
 
   await appendOutcomeToMessage(
     interaction.guild,
@@ -420,7 +393,7 @@ async function handleResocontoModal(interaction) {
   if (!hasResocontoHighStaffAccess(interaction)) {
     await interaction
       .reply({
-        content: "Questo modulo è riservato all'High Staff.",
+        content: "<a:VC_Alert:1448670089670037675> Questo modulo è riservato all'High Staff.",
         flags: 1 << 6,
       })
       .catch(() => null);
@@ -434,17 +407,17 @@ async function handleResocontoModal(interaction) {
   if (!activeMessage) {
     await interaction
       .reply({
-        content: "Questo controllo è già stato gestito.",
+        content: "<a:VC_Alert:1448670089670037675> Questo controllo è già stato gestito.",
         flags: 1 << 6,
       })
       .catch(() => null);
     return true;
   }
-  const reason=String(interaction.fields?.getTextInputValue(RESOCONTO_REASON_INPUT_ID)||"",).trim().slice(0,500);
+  const reason = String(interaction.fields?.getTextInputValue(RESOCONTO_REASON_INPUT_ID) || "",).trim().slice(0, 500);
   if (!reason) {
     await interaction
       .reply({
-        content: "Motivazione non valida.",
+        content: "<a:VC_Alert:1448670089670037675> Motivazione non valida.",
         flags: 1 << 6,
       })
       .catch(() => null);
@@ -462,7 +435,7 @@ async function handleResocontoModal(interaction) {
   );
   await interaction
     .reply({
-      content: `Azione eseguita: ${statusText}`,
+      content: `<:success:1461731530333229226> Azione eseguita: ${statusText}`,
       flags: 1 << 6,
     })
     .catch(() => null);
@@ -479,8 +452,4 @@ async function handleResocontoActionInteraction(interaction) {
   return false;
 }
 
-module.exports = {
-  RESOCONTO_APPLY_PREFIX,
-  RESOCONTO_REJECT_PREFIX,
-  handleResocontoActionInteraction,
-};
+module.exports = { RESOCONTO_APPLY_PREFIX, RESOCONTO_REJECT_PREFIX, handleResocontoActionInteraction };

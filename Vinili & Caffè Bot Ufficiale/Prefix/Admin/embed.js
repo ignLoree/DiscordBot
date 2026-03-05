@@ -1,15 +1,5 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
-
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const DIVIDER_URL="https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
-
-function normalizeColor(input) {
-  const raw = String(input ?? "").trim();
-  if (!raw) return null;
-  const hex = raw.startsWith("#") ? raw : `#${raw}`;
-  if (/^#[0-9a-f]{6}$/i.test(hex)) return hex.toUpperCase();
-  return null;
-}
 
 function clampText(input, maxLen) {
   const text = String(input ?? "").trim();
@@ -24,46 +14,55 @@ function buildPreviewEmbed(data = {}) {
   if (data.footer) embed.setFooter({ text: clampText(data.footer, 2048) });
   if (data.author) embed.setAuthor({ name: clampText(data.author, 256) });
   if (data.thumbnail) embed.setThumbnail(String(data.thumbnail).trim());
-  embed.setImage(DIVIDER_URL);
+  if (data.image) embed.setImage(String(data.image).trim());
   return embed;
 }
 
 function buildRows(userId) {
-  const row1=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`eb:title:${userId}`)
-      .setLabel("Titolo")
-      .setStyle(ButtonStyle.Secondary),
+  const row1 = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`eb:title:${userId}`)
+    .setLabel("Titolo")
+    .setEmoji(`<:VC_Modifica:1478859646587633717>`)
+    .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`eb:description:${userId}`)
       .setLabel("Descrizione")
+      .setEmoji(`<:VC_Modifica:1478859646587633717>`)
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`eb:color:${userId}`)
       .setLabel("Colore")
+      .setEmoji(`<:VC_Modifica:1478859646587633717>`)
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`eb:footer:${userId}`)
       .setLabel("Footer")
+      .setEmoji(`<:VC_Modifica:1478859646587633717>`)
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`eb:author:${userId}`)
       .setLabel("Autore")
+      .setEmoji(`<:VC_Modifica:1478859646587633717>`)
       .setStyle(ButtonStyle.Secondary),
   );
 
-  const row2=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`eb:thumbnail:${userId}`)
-      .setLabel("Thumbnail URL")
-      .setStyle(ButtonStyle.Secondary),
+  const row2 = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`eb:thumbnail:${userId}`)
+    .setLabel("Thumbnail URL")
+    .setEmoji(`<:VC_Modifica:1478859646587633717>`)
+    .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`eb:image:${userId}`)
       .setLabel("Image URL")
+      .setEmoji(`<:VC_Modifica:1478859646587633717>`)
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`eb:content:${userId}`)
       .setLabel("Testo")
+      .setEmoji(`<:VC_Modifica:1478859646587633717>`)
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`eb:send:${userId}`)
       .setLabel("Invia")
+      .setEmoji(`<:VC_Invia:1478859646587633717>`)
       .setStyle(ButtonStyle.Success),
   );
 
@@ -94,7 +93,7 @@ module.exports = {
     const userId = message.author.id;
     const initial = { color: "#6f4e37" };
 
-    const preview=await message.channel.send({embeds:[buildPreviewEmbed(initial)],components:buildRows(userId),}).catch(() => null);
+    const preview = await message.channel.send({ embeds: [buildPreviewEmbed(initial)], components: buildRows(userId), }).catch(() => null);
 
     if (!preview) {
       return safeMessageReply(message, {

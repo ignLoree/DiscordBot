@@ -6,7 +6,6 @@ const IDs = require("../../Utils/Config/ids");
 const { getNoDmSet } = require("../../Utils/noDmList");
 const { ActivityUser } = require("../../Schemas/Community/communitySchemas");
 const { getClientGuildCached, getUserCached, } = require("../../Utils/Interaction/interactionEntityCache");
-
 const STATE_PATH = path.join(__dirname, "..", "..", "Data", "weeklyDmReminderState.json",);
 const TICK_EVERY_MS = 60 * 1000;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -610,16 +609,16 @@ function createExternalReturnEmbed(guild) {
   const guildName = String(guild?.name || "il server");
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle(`Ti aspettiamo su ${guildName}`)
+    .setTitle(`<:VC_Info:1448670089670037675> Ti aspettiamo su ${guildName}`)
     .setDescription(
       [
-        "Se vuoi rientrare, sei il benvenuto: il server è sempre attivo.",
+        "<:VC_PepeWave:1331589315175907412> Se vuoi rientrare, sei il benvenuto: il server è sempre attivo.",
         "",
-        "Trovi eventi, attività e contenuti nuovi con continuità.",
-        "Se ti interessa, puoi anche candidarti e valutare il percorso staff pagato.",
-        "Se vuoi richiedere una partnership, resta nel server: in caso contrario la partnership verrà annullata.",
+        "<a:VC_Events:1448688007438667796> Trovi eventi, attività e contenuti nuovi con continuità.",
+        "<:staff:1443651912179388548> Se ti interessa, puoi anche candidarti e valutare il percorso staff pagato.",
+        "<:partneredserverowner:1443651871125409812> Se vuoi richiedere una partnership, resta nel server: in caso contrario la partnership verrà annullata.",
         "",
-        "Se rientri, troverai tutto pronto.",
+        "<a:VC_Kiss:1448673021031223428> Se rientri, troverai tutto pronto.",
       ].join("\n"),
     )
     .setTimestamp();

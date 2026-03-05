@@ -1,7 +1,6 @@
 ﻿const cron = require("node-cron");
 const IDs = require("../../Utils/Config/ids");
 const BirthdayProfile = require("../../Schemas/Community/birthdayProfileSchema");
-
 const DEFAULT_TIME_ZONE = "Europe/Rome";
 const BIRTHDAY_ROLE_ID = "1474729085719548048";
 const BIRTHDAY_REACTIONS = ["<a:VC_Events:1448688007438667796>", "<a:VC_HelloKittyGift:1329447876857958471>",];
@@ -40,17 +39,17 @@ function joinMentionsNicely(mentions) {
 function buildBirthdayAnnouncement(docs, currentYear) {
   const mentions = docs.map((doc) => `<@${doc.userId}>`);
   const who = joinMentionsNicely(mentions);
-  const intro = `Oggi è il compleanno di ${who}.`;
+  const intro = `<:creation:1461732905016492220> Oggi è il compleanno di ${who}.`;
 
   const visibleAges = docs.filter((doc) => doc.showAge && Number.isFinite(Number(doc.birthYear))).map((doc) => Math.max(1, currentYear - Number(doc.birthYear)));
 
   if (!visibleAges.length) {
-    return `${intro}\nFate gli auguri.`;
+    return `${intro}\n<a:VC_Events:1448688007438667796> Fate gli auguri.`;
   }
   if (visibleAges.length === 1) {
-    return `${intro}\nOggi compie ${visibleAges[0]} anni. Tantissimi auguri.`;
+    return `${intro}\n<a:VC_Events:1448688007438667796> Oggi compie ${visibleAges[0]} anni. Tantissimi auguri.`;
   }
-  return `${intro}\nOggi compiono ${visibleAges.join(", ")} anni. Tantissimi auguri.`;
+  return `${intro}\n<a:VC_Events:1448688007438667796> Oggi compiono ${visibleAges.join(", ")} anni. Tantissimi auguri.`;
 }
 
 async function assignBirthdayRole(guild, userId) {
@@ -152,10 +151,4 @@ function getBirthdayLoopStatus() {
   };
 }
 
-module.exports = {
-  startBirthdayLoop,
-  runBirthdayTick,
-  getRomeDateParts,
-  inferBirthYearFromAge,
-  getBirthdayLoopStatus,
-};
+module.exports = { startBirthdayLoop, runBirthdayTick, getRomeDateParts, inferBirthYearFromAge, getBirthdayLoopStatus };

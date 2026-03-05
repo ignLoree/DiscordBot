@@ -154,7 +154,7 @@ async function getEventWeekTopThreeTextAndVoice(guild, eventWeekNum) {
 }
 
 function buildEmptyLine(kind) {
-  return ` - Nessun dato disponibile per ${kind}.`;
+  return `<:VC_Info:1448670089670037675> - Nessun dato disponibile per ${kind}.`;
 }
 
 function formatRankLine(index, userMention, value, unit) {
@@ -329,25 +329,25 @@ async function sendEventWeekAnnouncementToNews(client, guild, eventWeek, topMess
   const newsChannel = client.channels.cache.get(NEWS_CHANNEL_ID) || (await client.channels.fetch(NEWS_CHANNEL_ID).catch(() => null));
   if (!newsChannel?.guild) return;
   const msgLines = topMessages.length ? topMessages.map((item, i) => {
-    const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}>—**${item.messageCount}**messaggi`;
+    const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}>—**${item.messageCount}** <:VC_Message:1448670089670037675>`;
   })
-    : [" - Nessun dato per la classifica testuale."];
+    : ["<:VC_Info:1448670089670037675> - Nessun dato per la classifica testuale."];
   const voiceLines = topVoice.length ? topVoice.map((item, i) => {
-    const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}>—**${formatVoiceDuration(item.voiceSeconds)}**`;
+    const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}>—**${formatVoiceDuration(item.voiceSeconds)}** <:VC_Voice:1448670089670037675>`;
   })
-    : [" - Nessun dato per la classifica vocale."];
+    : ["<:VC_Info:1448670089670037675> - Nessun dato per la classifica vocale."];
   const embed = new EmbedBuilder().setColor("#6f4e37").setTitle(`<:VC_Leaderboard:1469659357678669958> Evento Activity EXP — Settimana ${eventWeek}`)
     .setDescription(
       [
-        "<a:VC_HeartsPink:1468685897389052008> **Top 3 testuale** (settimana evento):",
+        "<a:VC_HeartsPink:1468685897389052008> **Top 3 testuale**:",
         ...msgLines,
         "",
-        "<a:VC_HeartsBlue:1468686100045369404> **Top 3 vocale** (settimana evento):",
+        "<a:VC_HeartsBlue:1468686100045369404> **Top 3 vocale**:",
         ...voiceLines,
       ].join("\n"),
     )
     .setThumbnail(guild.iconURL({ size: 256 }) || null)
-    .setFooter({ text: `Settimana ${eventWeek}dell 'evento • Premi assegnati ai vincitori` }).setTimestamp();
+    .setFooter({ text: `Settimana ${eventWeek} di ${eventWeek === 1 ? "evento" : "evento"} • Premi assegnati ai vincitori` }).setTimestamp();
   await newsChannel.send({ embeds: [embed] }).catch((err) => {
     global.logger?.error?.("[WEEKLY ACTIVITY] Event week announcement to news failed:", err);
   });
@@ -368,9 +368,9 @@ async function trySendEventEndAnnouncementToNews(client) {
   if (sentFor !== null && sentFor === expiresAt) return;
   const top3 = await getTop3ExpDuringEventExcludingStaff(guild);
   const lines = top3.length ? top3.map((item, i) => {
-    const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}>—**${item.expDuringEvent.toLocaleString("it-IT")}**EXP`;
+    const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}>—**${item.expDuringEvent.toLocaleString("it-IT")}** <:VC_EXP:1468714279673925883>`;
   })
-    : [" - Nessun dato."];
+    : ["<:VC_Info:1448670089670037675> - Nessun dato."];
   const embed = new EmbedBuilder().setColor("#6f4e37").setTitle("<:VC_Leaderboard:1469659357678669958> Top 3 EXP totale — Evento Activity EXP").setDescription(["**Classifica per EXP guadagnata durante l'evento:**", "", ...lines].join("\n")).setThumbnail(guild.iconURL({ size: 256 }) || null).setFooter({ text: "Evento terminato • Grazie per la partecipazione!" }).setTimestamp();
   const newsChannel = client.channels.cache.get(NEWS_CHANNEL_ID) || (await client.channels.fetch(NEWS_CHANNEL_ID).catch(() => null));
   if (!newsChannel?.guild) return;
@@ -398,8 +398,8 @@ async function trySendEventEndAnnouncementToNews(client) {
     const first = filtered[0];
     const last = filtered.length > 1 ? filtered[filtered.length - 1] : null;
     const staffEndLines = [];
-    if (first) staffEndLines.push(`<:VC_Podio1:1469659449974329598> **Miglior punteggio:** <@${first.userId}> — **${first.points}** punti`);
-    if (last && last.userId !== first?.userId) staffEndLines.push(`**Peggior punteggio:** <@${last.userId}> — **${last.points}** punti`);
+    if (first) staffEndLines.push(`<:VC_Podio1:1469659449974329598> **Miglior punteggio:** <@${first.userId}> <a:VC_Arrow:1448672967721615452> **${first.points}** punti`);
+    if (last && last.userId !== first?.userId) staffEndLines.push(`**Peggior punteggio:** <@${last.userId}> <a:VC_Arrow:1448672967721615452> **${last.points}** punti`);
     const staffEndContent = ["## <a:VC_Announce:1448687280381235443> **EVENTO STAFF — Terminato**", "", "<:VC_Attention:1443933073438675016> Risultati evento staff:", ...(staffEndLines.length ? staffEndLines : [" - Nessun dato."]), "", `<:VC_Mention:1443994358201323681>︲<@&${IDs.roles.Staff}>`,
     ].join("\n");
     const newsStaffChannel = NEWS_STAFF_CHANNEL_ID && (client.channels.cache.get(NEWS_STAFF_CHANNEL_ID) || (await client.channels.fetch(NEWS_STAFF_CHANNEL_ID).catch(() => null)));
@@ -535,10 +535,10 @@ async function publishWeeklyActivityWinners(client, options = {}) {
 
   const embed = new EmbedBuilder().setColor("#6f4e37").setDescription([`<:VC_Leaderboard:1469659357678669958> // I vantaggi che avete sbloccato sono in "badge" nel canale <#${INFO_CHANNEL_ID}>`,
     "",
-    `<a:VC_HeartsBlue:1468686100045369404>•**Classifica testuale:**`,
+    `<a:VC_HeartsPink:1468685897389052008> • **Classifica testuale:**`,
   ...messageRows,
     "",
-    `<a:VC_HeartsBlue:1468686100045369404>•**Classifica vocale:**`,
+    `<a:VC_HeartsBlue:1468686100045369404> • **Classifica vocale:**`,
   ...voiceRows,
   ].join("\n"),
   )
@@ -636,10 +636,4 @@ function startWeeklyActivityWinnersLoop(client) {
   );
 
   const runRecoveryIfNeeded = async () => { const now = new Date(); const weekday = getWeekdayRome(now); if (weekday !== "Mon" && weekday !== "Tue") return; const channel = client.channels.cache.get(TARGET_CHANNEL_ID) || (await client.channels.fetch(TARGET_CHANNEL_ID).catch(() => null)); const guildId = channel?.guild?.id; if (!guildId) return; const currentWeekKey = getWeekKey(now); const alreadyReset = await ActivityUser.exists({ guildId, "messages.weeklyKey": currentWeekKey, }).catch(() => false); if (alreadyReset) return; const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000); const previousWeekKey = getWeekKey(yesterday); if (previousWeekKey === currentWeekKey) return; try { global.logger.info("[WEEKLY ACTIVITY] Recovery: running missed weekly winners (bot was likely offline Sunday 21:00).",); await publishWeeklyActivityWinners(client, { weekKey: previousWeekKey }); await resetWeeklyActivityCounters(client, { nextWeekKey: currentWeekKey, }); } catch (error) { global.logger.error("[WEEKLY ACTIVITY] Recovery run failed:", error); } }; runRecoveryIfNeeded();
-} module.exports = {
-  startWeeklyActivityWinnersLoop,
-  publishWeeklyActivityWinners,
-  resetWeeklyActivityCounters,
-  getEventWeekDateKeys,
-  loadActivityRowsFromDateKeys,
-};
+} module.exports = { startWeeklyActivityWinnersLoop, publishWeeklyActivityWinners, resetWeeklyActivityCounters, getEventWeekDateKeys, loadActivityRowsFromDateKeys };

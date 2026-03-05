@@ -144,7 +144,7 @@ module.exports = {
     const MAX_AMOUNT_PER_OP = 10000;
     if (amount > MAX_AMOUNT_PER_OP) {
       return safeEditReply(interaction, {
-        content: `<:vegax:1443934876440068179> Puoi aggiungere/rimuovere al massimo \`${MAX_AMOUNT_PER_OP}\` punti per operazione.`,
+        content: `<:vegax:1443934876440068179> Puoi aggiungere o rimuovere al massimo \`${MAX_AMOUNT_PER_OP}\` punti per operazione.`,
         flags: PRIVATE_FLAG,
       });
     }
@@ -154,7 +154,7 @@ module.exports = {
     if (sub === "add") {
       const staffData = await addPartnerPoints(guildId, targetUser.id, amount);
       const changeLabel = formatPartnerPointsChange("add", amount);
-      const embed = buildResultEmbed(interaction, `<:vegacheckmark:1443666279058772028> **Successo**: ${changeLabel} a <@${targetUser.id}>. Totale Punti:\`${staffData.partnerCount}\``,);
+      const embed = buildResultEmbed(interaction, `<:vegacheckmark:1443666279058772028> **Successo**: ${changeLabel} a <@${targetUser.id}>. <:VC_Info:1460670816214585481> Totale Punti:\`${staffData.partnerCount}\``,);
 
       return safeEditReply(interaction, { embeds: [embed] });
     }
@@ -162,14 +162,14 @@ module.exports = {
     if (sub === "remove") {
       const staffData = await removePartnerPoints(guildId, targetUser.id, amount);
       const changeLabel = formatPartnerPointsChange("remove", amount);
-      const embed = buildResultEmbed(interaction, `<:vegacheckmark:1443666279058772028> **Successo**: ${changeLabel} a <@${targetUser.id}>. Totale Punti:\`${staffData.partnerCount}\``,);
+      const embed = buildResultEmbed(interaction, `<:vegacheckmark:1443666279058772028> **Successo**: ${changeLabel} a <@${targetUser.id}>. <:VC_Info:1460670816214585481> Totale Punti:\`${staffData.partnerCount}\``,);
 
       if (removedPointsChannel) {
         await removedPointsChannel.send({
           content: `
-<:partneredserverowner:1443651871125409812> ${targetUser}
+<:partnermanager:1443651916838998099> ${targetUser}
 <:VC_reason:1478517122929004544> ${reason}
-<:link:1470064815899803668> ${messageLink}`,
+<:VC_Link:1448688587133685895> ${messageLink}`,
         }).catch(() => null);
       }
 

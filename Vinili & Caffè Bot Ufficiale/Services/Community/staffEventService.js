@@ -138,12 +138,4 @@ async function giveWeekly20PointsIfEligible(guild, eventWeekNum, _settings) {
   }
 }
 
-module.exports = {
-  isStaffEventActive,
-  isStaffButNotHighStaff,
-  addStaffEventPoints,
-  getStaffEventLeaderboard,
-  givePmStaff15PointsAtStart,
-  giveExistingInvitesPointsAtStart,
-  giveWeekly20PointsIfEligible,
-};
+module.exports = { isStaffEventActive, isStaffButNotHighStaff, addStaffEventPoints, getStaffEventLeaderboard, givePmStaff15PointsAtStart, giveExistingInvitesPointsAtStart, giveWeekly20PointsIfEligible };

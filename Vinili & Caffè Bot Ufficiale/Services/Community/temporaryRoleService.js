@@ -1,15 +1,8 @@
 const TemporaryRoleGrant = require("../../Schemas/Moderation/temporaryRoleGrantSchema");
-
 const CHECK_INTERVAL_MS = 60 * 1000;
 let cleanupLoopHandle = null;
 
-async function grantTemporaryRole({
-  guild,
-  userId,
-  roleId,
-  grantedBy = null,
-  durationMs,
-}) {
+async function grantTemporaryRole( guild, userId, roleId, grantedBy = null, durationMs ) {
   if (!guild || !userId || !roleId) {
     return { ok: false, reason: "invalid_input" };
   }
@@ -170,11 +163,4 @@ function startTemporaryRoleCleanupLoop(client) {
   return cleanupLoopHandle;
 }
 
-module.exports = {
-  grantTemporaryRole,
-  revokeTemporaryRole,
-  clearTemporaryRolesForUser,
-  listTemporaryRolesForUser,
-  removeExpiredTemporaryRoles,
-  startTemporaryRoleCleanupLoop,
-};
+module.exports = { grantTemporaryRole, revokeTemporaryRole, clearTemporaryRolesForUser, listTemporaryRolesForUser, removeExpiredTemporaryRoles, startTemporaryRoleCleanupLoop };

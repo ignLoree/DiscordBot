@@ -10,7 +10,6 @@ const AutoModBadUser = require("../../Schemas/Moderation/autoModBadUserSchema");
 const { isChannelInTicketCategory } = require("../../Utils/Ticket/ticketCategoryUtils");
 const { createModCase, getModConfig, logModCase, formatDuration } = require("../../Utils/Moderation/moderation");
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
-
 const USER_STATE = new Map();
 const ACTION_COOLDOWN = new Map();
 const ACTION_CHANNEL_LOG_COOLDOWN = new Map();
@@ -21,7 +20,6 @@ const URL_EXPANSION_CACHE = new Map();
 const EXTERNAL_PANIC_SIGNAL_COOLDOWN = new Map();
 const AUTO_TIMEOUT_PROFILE = new Map();
 const VERIFIED_BOT_USER_CACHE = new Map();
-
 let DECAY_PER_SEC = 2;
 let MAX_HEAT = 100;
 let WARN_THRESHOLD = 35;
@@ -51,13 +49,10 @@ const PANIC_MODE = { enabled: true, considerActivityHistory: true, useGlobalBadU
 const PANIC_TRIGGER_KEYS = new Set(["invite", "scam_pattern", "nsfw_link", "word_blacklist", "link_blacklist", "mention_everyone", "mentions_lockdown", "mention_hour_cap", "unwhitelisted_webhook",]);
 const MENTION_RULES = { enabled: true, timeoutMs: 45 * 60_000, hourCap: 20, userMentions: { enabled: true, heat: 15, }, roleMentions: { enabled: true, heat: 20, }, everyoneMentions: { enabled: true, heat: 100, }, };
 const ATTACHMENT_RULES = { enabled: true, timeoutMs: 0, embeds: { enabled: true, heat: 15 }, images: { enabled: true, heat: 20 }, files: { enabled: true, heat: 15 }, links: { enabled: true, heat: 10 }, stickers: { enabled: true, heat: 15 }, };
-
 const TEXT_RULES = { regularMessage: { enabled: true, heat: 15, timeoutMs: 15 * 60_000, }, suspiciousAccount: { enabled: true, heat: 7, timeoutMs: 15 * 60_000, }, similarMessage: { enabled: true, heat: 22, ratio: 0.8, timeoutMs: 15 * 60_000, }, emojis: { enabled: true, heat: 9, minCount: 8, timeoutMs: 15 * 60_000, }, newLines: { enabled: true, heat: 5, minCount: 6, timeoutMs: 15 * 60_000, }, zalgo: { enabled: true, heat: 1.5, minCount: 6, timeoutMs: 15 * 60_000, }, characters: { enabled: true, lowercaseHeat: 0.08, uppercaseHeat: 0.12, minChars: 40, timeoutMs: 15 * 60_000, }, inviteLinks: { enabled: true, heat: 100, timeoutMs: 60 * 60_000, }, maliciousLinks: { enabled: true, heat: 100, timeoutMs: 60 * 60_000, }, nsfwLinks: { enabled: true, crawlShorteners: true, heat: 100, timeoutMs: 30 * 60_000, }, wordBlacklist: { enabled: true, useProfaneList: false, useVulgarList: false, useRacistList: true, heat: 100, timeoutMs: 45 * 60_000, }, linkBlacklist: { enabled: true, heat: 100, timeoutMs: 45 * 60_000, domains: ["dsc.gg"], }, };
-
 const AUTOMOD_CONFIG_PATH = path.resolve(__dirname, "../../Utils/Config/automodConfig.json",);
 const AUTOMOD_METRICS_PATH = path.resolve(__dirname, "../../Utils/Config/automodMetrics.json",);
 const SHORTENER_HOSTS = new Set(["bit.ly", "tinyurl.com", "t.co", "cutt.ly", "is.gd", "rebrand.ly", "tiny.cc", "shorturl.at", "goo.gl", "ow.ly", "buff.ly",]);
-
 const DEFAULT_AUTOMOD_RUNTIME = { status: { enabled: true, antiSpamEnabled: true, monitorUnwhitelistedWebhooks: true, }, thresholds: { warn: 35, delete: 65, timeout: 100, }, heatSystem: { maxHeat: 100, decayPerSec: 2, resetOnPunishment: true, }, autoTimeouts: { enabled: true, regularStrikeDurationMs: 60_000, capStrikeDurationMs: 11 * 60_000, capStrike: 3, multiplierEnabled: true, multiplierPercent: 200, profileResetMs: 6 * 60 * 60_000, }, autoLockdown: { enabled: true, mentionTrigger: 50, mentionWindowMs: 3_000, mentionHourCap: 20, }, heatFilters: { regularMessage: true, suspiciousAccount: true, similarMessage: true, emojis: true, newLines: true, zalgo: true, characters: true, inviteLinks: true, maliciousLinks: true, nsfwLinks: true, wordBlacklist: true, linkBlacklist: true, mentions: true, attachments: true, webhookMessages: true, }, heatFactors: { regularMessage: 1, suspiciousAccount: 1, similarMessage: 1, emojis: 1, newLines: 1, zalgo: 1, characters: 1, inviteLinks: 1, maliciousLinks: 1, nsfwLinks: 1, wordBlacklist: 1, linkBlacklist: 1, mentions: 1, attachments: 1, }, heatCaps: { maxPerMessage: 85, charactersMax: 40, textClusterMax: 35, attachmentClusterMax: 28, mentionClusterMax: 70, }, panic: { enabled: true, considerActivityHistory: true, useGlobalBadUsersDb: true, triggerCount: 3, triggerWindowMs: 10 * 60_000, durationMs: 10 * 60_000, raidWindowMs: 120_000, raidUserThreshold: 6, raidYoungThreshold: 4, }, shorteners: { crawl: true, timeoutMs: 2200, maxHops: 3, }, profiles: { default: { exempt: false, heatMultiplier: 1, mentionsEnabled: true, attachmentsEnabled: true, inviteLinksEnabled: true, }, media: { exempt: false, heatMultiplier: 0.85, mentionsEnabled: true, attachmentsEnabled: false, inviteLinksEnabled: true, }, ticket: { exempt: true, heatMultiplier: 0.6, mentionsEnabled: false, attachmentsEnabled: false, inviteLinksEnabled: false, }, staff: { exempt: true, heatMultiplier: 0.25, mentionsEnabled: false, attachmentsEnabled: false, inviteLinksEnabled: false, }, }, };
 
 function deepMerge(base, override) {
@@ -526,11 +521,7 @@ const WHITELISTED_WEBHOOK_IDS = new Set((Array.isArray(IDs.webhooks?.whitelist) 
 const VERIFIED_BOT_IDS = new Set(Object.values(IDs?.bots || {}).filter(Boolean).map(String),);
 const CORE_EXEMPT_USER_IDS = new Set(["1466495522474037463", "1329118940110127204",]);
 const TRUSTED_WEBHOOK_AUTHOR_IDS = new Set([IDs.bots?.DISBOARD, IDs.bots?.Discadia, IDs.bots?.VoteManager, IDs.bots?.Dyno, IDs.bots?.Wick, ...CORE_EXEMPT_USER_IDS,].filter(Boolean).map(String),);
-
-const STAFF_ROLE_IDS = new Set([IDs.roles.Founder, IDs.roles.CoFounder, IDs.roles.Manager, IDs.roles.Admin, IDs.roles.HighStaff,].filter(Boolean).map(String),);
-
 const EXEMPT_CHANNEL_IDS = new Set([IDs.channels.staffChat, IDs.channels.staffCmds, IDs.channels.highCmds, IDs.channels.modLogs, IDs.channels.activityLogs, IDs.channels.highChat, IDs.channels.midChat,].filter(Boolean).map(String),);
-
 const EXEMPT_CATEGORY_IDS = new Set(["1442569074310643845"]);
 const SPAM_WHITELIST_CATEGORY_IDS = new Set([IDs?.categories?.categoryGames, "1442569074310643845",].filter(Boolean).map(String),);
 const INVITE_WHITELIST_CHANNEL_IDS = new Set([IDs?.channels?.partnerships, "1442569193470824448",].filter(Boolean).map(String),);
@@ -613,7 +604,6 @@ function getProfileConfig(message) {
   return { key, ...defaults, ...configured };
 }
 
-/** Converte una percentuale (da config UI) in heat effettivo: percent = 7 → 7% di MAX_HEAT. */
 function percentToHeat(percent) {
   return (Number(percent) / 100) * MAX_HEAT;
 }
@@ -818,7 +808,6 @@ function isPanicModeActive(guildId, at = nowMs()) {
   return state.activeUntil > at;
 }
 
-/** Come Wick: durante il panic solo i “raider” (account che hanno contribuito al trigger) ricevono timeout istantaneo; i normali utenti seguono i filtri heat. */
 function isRaiderInPanic(guildId, userId, at = nowMs()) {
   if (!PANIC_MODE.enabled || !guildId || !userId) return false;
   const state = getPanicState(guildId);
@@ -956,13 +945,6 @@ function isBadUserProfileStale(profile, at = nowMs()) {
   const lastActionAt = profile?.lastActionAt ? new Date(profile.lastActionAt).getTime() : 0;
   if (!Number.isFinite(lastActionAt) || lastActionAt <= 0) return false;
   return at - lastActionAt > AUTO_TIMEOUT_PROFILE_RESET_MS;
-}
-
-function isBadUserSuspicious(profile, at = nowMs()) {
-  if (!profile) return false;
-  if (isBadUserProfileStale(profile, at)) return false;
-  const activeStrikes = Math.max(0, Number(profile?.activeStrikes || 0));
-  return activeStrikes >= 3;
 }
 
 async function getBadUserProfile(userId, guildId = "") {
@@ -2115,12 +2097,7 @@ async function registerAutoModCase(message, action, violations = [], context = {
   }
 }
 
-async function sendAutomodActionInChannel(
-  message,
-  action,
-  violations,
-  context = {},
-) {
+async function sendAutomodActionInChannel(message, action, violations, context = {}) {
   if (!message?.channel?.isTextBased?.()) return;
   const reason = firstViolationLabel(violations);
   const cooldownKey = [String(message.guildId || "noguild"), String(message.channelId || "nochannel"), String(message.author?.id || "nouser"), String(action || "action"), reason,].join(":");
@@ -2148,13 +2125,7 @@ async function sendAutomodActionInChannel(
   return sent;
 }
 
-async function sendAutomodLog(
-  message,
-  action,
-  violations,
-  heatValue,
-  context = {},
-) {
+async function sendAutomodLog(message, action, violations, heatValue, context = {}) {
   const channel = await resolveLogChannel(message.guild);
   if (!channel?.isTextBased?.()) return;
   const primaryFilter = firstViolationLabel(violations);
@@ -2163,28 +2134,32 @@ async function sendAutomodLog(
   const shouldShowFullMessage = Boolean(fullMessage) && String(fullMessage) !== String(preview) && String(message.content || "").trim().length > 160;
   const timeoutLabel = context.timeoutMs ? ` for ${formatDurationShort(context.timeoutMs)}`
     : "";
-  const actionHeadline = action === "timeout" ? `${message.author.username}has been timed out${timeoutLabel}!`
+  const actionHeadline = action === "timeout" ? `${message.author.username} has been timed out${timeoutLabel}!`
     : action === "delete" || action === "delete_webhook"
-      ? `${message.author.username}'s message has been removed!` : `${message.author.username}triggered AutoMod!`;
+      ? `${message.author.username}'s message has been removed!` : `${message.author.username} has triggered AutoMod!`;
 
-  const embed = new EmbedBuilder().setColor(action === "timeout" ? "#ED4245" : action === "delete" || action === "delete_webhook" ? "#F59E0B" : "#5865F2",).setTitle(actionHeadline).setDescription([`<:VC_right_arrow:1473441155055096081> **Automod Filter:** ${primaryFilter}`,
-  `<:VC_right_arrow:1473441155055096081>**Channel:**${message.channel}[\`${message.channelId}\`]`, preview ? `<:VC_right_arrow:1473441155055096081> **Message:** ${preview}`
-    : null,
-    "",
-  shouldShowFullMessage ? `*${fullMessage}*` : null,
-    "",
-  `<:VC_right_arrow:1473441155055096081>**Member:**${message.author}[\`${message.author.id}\`]`, `<:VC_right_arrow:1473441155055096081> **Heat:** ${Number(heatValue || 0).toFixed(1)}`,
-  context.timeoutMs
-    ? `<:VC_right_arrow:1473441155055096081>**Timeout:**${formatDurationShort(context.timeoutMs,)}`
-    : null,
-  `<:VC_right_arrow:1473441155055096081>**Decision:**${buildAutoModDecisionExplain(action, heatValue, violations, context,)}`,
-  violations?.length
-    ? `<:VC_right_arrow:1473441155055096081>**Rules:**${violations.map((v) => `\`${v.key}\`${v.info ? ` (${v.info})` : ""}`).join(", ")}`
-    : null,
-  ]
-    .filter(Boolean)
-    .join("\n"),
-  )
+  const embed = new EmbedBuilder()
+    .setColor(action === "timeout" ? "#ED4245" : action === "delete" || action === "delete_webhook" ? "#F59E0B" : "#5865F2",)
+    .setTitle(actionHeadline)
+    .setDescription([
+      `<:VC_Alert:1448670089670037675> **Automod Filter:** ${primaryFilter}`,
+      `<:channeltext:1443247596922470551> **Channel:**${message.channel}[\`${message.channelId}\`]`, preview ? `<:VC_Chat:1448694742237053061> **Message:** ${preview}`
+        : null,
+      "",
+      shouldShowFullMessage ? `*${fullMessage}*` : null,
+      "",
+      `<:member_role_icon:1330530086792728618> **Member:**${message.author}[\`${message.author.id}\`]`, `<a:VC_Alarm:1448670164173328398> **Heat:** ${Number(heatValue || 0).toFixed(1)}`,
+      context.timeoutMs
+        ? `<:VC_Clock:1473359204189474886> **Timeout:**${formatDurationShort(context.timeoutMs,)}`
+        : null,
+      `<:VC_BanHammer:1443933132645732362> **Decision:**${buildAutoModDecisionExplain(action, heatValue, violations, context,)}`,
+      violations?.length
+        ? `<:VC_reason:1478517122929004544> **Rules:**${violations.map((v) => `\`${v.key}\`${v.info ? ` (${v.info})` : ""}`).join(", ")}`
+        : null,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+    )
     .setTimestamp();
   await channel.send({ embeds: [embed] }).catch(() => { });
 }
@@ -2195,15 +2170,19 @@ async function sendPanicModeLog(message, event, count, activeUntil) {
   const when = Math.floor(activeUntil / 1000);
   const state = getPanicState(message.guildId);
   const triggerAccountIds = Array.from(state?.triggerAccounts?.keys?.() || []).filter(Boolean).slice(-10);
-  const embed = new EmbedBuilder().setColor(event === "panic_enabled" ? "#ED4245" : "#5865F2").setTitle(event === "panic_enabled" ? "AutoMod Panic Mode enabled!" : "AutoMod Panic Mode update",).setDescription([`<:VC_right_arrow:1473441155055096081> **Automod Filter:** Panic Mode`, `<:VC_right_arrow:1473441155055096081> **Channel:** ${message.channel}[\`${message.channelId}\`]`, `<:VC_right_arrow:1473441155055096081> **Member:** ${message.author}[\`${message.author.id}\`]`, `<:VC_right_arrow:1473441155055096081> **Event:** ${event}`,
-    `<:VC_right_arrow:1473441155055096081>**Trigger Accounts:**${count}/${PANIC_MODE.triggerCount}`,
-    triggerAccountIds.length
-      ? `<:VC_right_arrow:1473441155055096081>**Trigger IDs:**${triggerAccountIds.map((id) => `\`${id}\``).join(", ")}`
-      : null,
-    `<:VC_right_arrow:1473441155055096081>**Duration:**${Math.round(PANIC_MODE.durationMs / 60_000)}minutes`,
-    `<:VC_right_arrow:1473441155055096081>**Active Until:**<t:${when}:F>`,
-  ].join("\n"),
-  )
+  const embed = new EmbedBuilder()
+    .setColor(event === "panic_enabled" ? "#ED4245" : "#5865F2")
+    .setTitle(event === "panic_enabled" ? "AutoMod Panic Mode enabled!" : "AutoMod Panic Mode update",)
+    .setDescription([
+      `<:VC_Alert:1448670089670037675> **Automod Filter:** Panic Mode`, `<:channeltext:1443247596922470551> **Channel:** ${message.channel}[\`${message.channelId}\`]`, `<:member_role_icon:1330530086792728618> **Member:** ${message.author}[\`${message.author.id}\`]`, `<:VC_Alert:1448670089670037675> **Event:** ${event}`,
+      `<:VC_Alert:1448670089670037675> **Trigger Accounts:**${count}/${PANIC_MODE.triggerCount}`,
+      triggerAccountIds.length
+        ? `<:VC_Alert:1448670089670037675> **Trigger IDs:**${triggerAccountIds.map((id) => `\`${id}\``).join(", ")}`
+        : null,
+      `<:VC_Alert:1448670089670037675> **Duration:**${Math.round(PANIC_MODE.durationMs / 60_000)}minutes`,
+      `<:VC_Alert:1448670089670037675> **Active Until:**<t:${when}:F>`,
+    ].join("\n"),
+    )
     .setTimestamp();
   await channel.send({ embeds: [embed] }).catch(() => { });
   if (event === "panic_enabled") {
@@ -2715,19 +2694,4 @@ function updateAutoModConfig(pathExpr, value) {
   return { ok: true, config: getAutoModConfigSnapshot() };
 }
 
-module.exports = {
-  runAutoModMessage,
-  getAutoModMemberSnapshot,
-  isAutoModRoleExemptMember,
-  getAutoModDashboardData,
-  getAutoModConfigSnapshot,
-  getAutoModRulesSnapshot,
-  updateAutoModConfig,
-  isPanicModeActiveForGuild: isPanicModeActive,
-  getAutoModPanicSnapshot,
-  triggerAutoModPanicExternal,
-  __test: {
-    isLikelyCommandMessage,
-    buildAutoModDecisionExplain,
-  },
-};
+module.exports = { runAutoModMessage, getAutoModMemberSnapshot, isAutoModRoleExemptMember, getAutoModDashboardData, getAutoModConfigSnapshot, getAutoModRulesSnapshot, updateAutoModConfig, isPanicModeActiveForGuild: isPanicModeActive, getAutoModPanicSnapshot, triggerAutoModPanicExternal, __test: { isLikelyCommandMessage, buildAutoModDecisionExplain } };

@@ -3,11 +3,9 @@ const path = require("path");
 const zlib = require("zlib");
 const crypto = require("crypto");
 const { promisify } = require("util");
-
 const IDs = require("../../Utils/Config/ids");
 const gzipAsync = promisify(zlib.gzip);
 const gunzipAsync = promisify(zlib.gunzip);
-
 const SECURITY_SNAPSHOT_PREFIX = "SEC-";
 const FETCH_DELAY_MS = 250;
 const MAX_ASSET_BYTES = 10 * 1024 * 1024;
@@ -491,7 +489,7 @@ async function readGuildBackup(guildId, backupId) {
     return fromBackup;
   }
 
-  const err = new Error(`Backup ${String(backupId || "").toUpperCase()}non leggibile(primary+backup).${String(primaryError?.message || "",)}`,
+  const err = new Error(`Backup ${String(backupId || "").toUpperCase()} non leggibile (primary+backup).${String(primaryError?.message || "",)}`,
   );
   err.code = primaryError?.code || "EBADBACKUP";
   throw err;
@@ -515,7 +513,7 @@ function parseBackupIdFromFileName(fileName) {
 
 function toSafeDateLabel(value) {
   const date = new Date(value || Date.now());
-  if (Number.isNaN(date.getTime())) return "Data sconosciuta";
+  if (Number.isNaN(date.getTime())) return "<:VC_Alert:1448670089670037675> Data sconosciuta";
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
@@ -556,10 +554,7 @@ function parseBackupRef(value) {
   return { guildId: null, backupId: raw.toUpperCase() };
 }
 
-async function listGuildBackupMetas(
-  guildId,
-  { search = "", limit = 25, offset = 0 } = {},
-) {
+async function listGuildBackupMetas(guildId, { search = "", limit = 25, offset = 0 } = {}) {
   const folder = getBackupFolder(guildId);
   const normalizedSearch = String(search || "").trim().toLowerCase();
   const safeLimit = Math.max(1, Math.min(250, Number(limit || 25)));
@@ -584,7 +579,7 @@ async function listGuildBackupMetas(
     const meta = await readBackupMeta(guildId, backupId).catch(() => null);
     if (!meta) continue;
 
-    const guildName = meta.guildName || "Server sconosciuto";
+    const guildName = meta.guildName || "<:VC_Alert:1448670089670037675> Server sconosciuto";
     const dateLabel = toSafeDateLabel(meta.createdAt || file.mtimeMs);
     const label = `${guildName} | ${dateLabel} (${meta.backupId})`;
     const haystack = `${label} ${meta.backupId}`.toLowerCase();
@@ -649,7 +644,7 @@ async function listAllBackupMetas({ search = "", limit = 25, offset = 0 } = {}) 
     const meta = await readBackupMeta(entry.guildId, entry.backupId).catch(() => null);
     if (!meta) continue;
 
-    const guildName = meta.guildName || "Server sconosciuto";
+    const guildName = meta.guildName || "<:VC_Alert:1448670089670037675> Server sconosciuto";
     const dateLabel = toSafeDateLabel(meta.createdAt || entry.mtimeMs);
     const label = `${guildName} | ${dateLabel} (${meta.backupId})`;
     const haystack = `${label} ${meta.backupId} ${entry.guildId}`.toLowerCase();
@@ -674,9 +669,7 @@ async function listAllBackupMetas({ search = "", limit = 25, offset = 0 } = {}) 
   return out;
 }
 
-async function listAllBackupMetasPaginated(
-  { search = "", page = 1, pageSize = 10 } = {},
-) {
+async function listAllBackupMetasPaginated({ search = "", page = 1, pageSize = 10 } = {}) {
   const safePageSize = Math.max(1, Math.min(25, Number(pageSize || 10)));
   const safePage = Math.max(1, Number(page || 1));
   const all = await listAllBackupMetas({ search, limit: 2000, offset: 0 });
@@ -712,7 +705,7 @@ async function readBackupByIdGlobal(backupRef) {
   const all = await listAllBackupMetas({ search: backupId, limit: 2000, offset: 0 });
   const hit = all.find((meta) => String(meta.backupId || "").toUpperCase() === backupId);
   if (!hit?.guildId) {
-    const err = new Error(`Backup \`${backupId}\` non trovato.`);
+    const err = new Error(`<:VC_Alert:1448670089670037675> Backup \`${backupId}\` non trovato.`);
     err.code = "ENOENT";
     throw err;
   }
@@ -726,10 +719,7 @@ async function deleteBackupByIdGlobal(backupRef) {
   return { guildId, backupId };
 }
 
-async function listGuildBackupMetasPaginated(
-  guildId,
-  { search = "", page = 1, pageSize = 10 } = {},
-) {
+async function listGuildBackupMetasPaginated(guildId, { search = "", page = 1, pageSize = 10 } = {}) {
   const safePageSize = Math.max(1, Math.min(25, Number(pageSize || 10)));
   const safePage = Math.max(1, Number(page || 1));
 
@@ -762,15 +752,7 @@ async function verifyBackupByIdGlobal(backupRef) {
   };
 }
 
-async function pruneGuildBackups(
-  guildId,
-  {
-    maxManual = 20,
-    maxAutomatic = 1,
-    maxManualAgeDays = 30,
-    minManualToKeep = 5,
-  } = {},
-) {
+async function pruneGuildBackups(guildId, { maxManual = 20, maxAutomatic = 1, maxManualAgeDays = 30, minManualToKeep = 5 } = {}) {
   const safeManual = Math.max(1, Math.min(500, Number(maxManual || 20)));
   const safeAutomatic = Math.max(1, Math.min(100, Number(maxAutomatic || 1)));
   const safeMaxAgeDays = Math.max(1, Math.min(3650, Number(maxManualAgeDays || 30)));
@@ -908,7 +890,7 @@ async function readSecuritySnapshot(guildId, snapshotId) {
   const effectiveGuildId = getEffectiveGuildIdForSecurity(guildId);
   const normalizedId = String(snapshotId || "").trim();
   if (!normalizedId.startsWith(SECURITY_SNAPSHOT_PREFIX)) {
-    const err = new Error("Invalid security snapshot id");
+    const err = new Error("<:VC_Alert:1448670089670037675> Invalid security snapshot id");
     err.code = "EBADSEC";
     throw err;
   }
@@ -935,22 +917,4 @@ async function deleteSecuritySnapshot(guildId, snapshotId) {
   return { guildId: effectiveGuildId, snapshotId };
 }
 
-module.exports = {
-  createGuildBackup,
-  readGuildBackup,
-  deleteGuildBackup,
-  listGuildBackupMetas,
-  listGuildBackupMetasPaginated,
-  listAllBackupMetas,
-  listAllBackupMetasPaginated,
-  readBackupByIdGlobal,
-  deleteBackupByIdGlobal,
-  verifyBackupByIdGlobal,
-  pruneGuildBackups,
-  validateAndHealGuildBackups,
-  writeSecuritySnapshot,
-  listSecuritySnapshots,
-  readSecuritySnapshot,
-  deleteSecuritySnapshot,
-  getEffectiveGuildIdForSecurity,
-};
+module.exports = { createGuildBackup, readGuildBackup, deleteGuildBackup, listGuildBackupMetas, listGuildBackupMetasPaginated, listAllBackupMetas, listAllBackupMetasPaginated, readBackupByIdGlobal, deleteBackupByIdGlobal, verifyBackupByIdGlobal, pruneGuildBackups, validateAndHealGuildBackups, writeSecuritySnapshot, listSecuritySnapshots, readSecuritySnapshot, deleteSecuritySnapshot, getEffectiveGuildIdForSecurity };

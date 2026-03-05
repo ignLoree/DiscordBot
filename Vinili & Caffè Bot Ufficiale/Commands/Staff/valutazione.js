@@ -2,7 +2,6 @@ const { safeEditReply } = require("../../Utils/Moderation/reply");
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const Staff = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../../Utils/Config/ids");
-
 const EPHEMERAL_FLAG = 1 << 6;
 
 function errorEmbed(description) {
@@ -43,13 +42,15 @@ function makeLogEmbed(
 ) {
   return new EmbedBuilder()
     .setAuthor({
-      name: `Valutazione eseguita da ${interaction.user.username}`,
+      name: `<:success:1461731530333229226> Valutazione eseguita da ${interaction.user.username}`,
       iconURL: interaction.user.displayAvatarURL(),
     })
     .setTitle(title)
     .setThumbnail(user.displayAvatarURL())
     .setDescription(
-      `<:discordstaff:1443651872258003005> <a:vegarightarrow:1443673039156936837> ${user} <:pinnednew:1443670849990430750> __${reason}__ <a:loading:1443934440614264924> **ID Valutazione** __\`${idValue}\`__`,
+      `<:staff:1443651912179388548> <a:VC_Arrow:1448672967721615452> ${user} 
+      <:VC_reason:1478517122929004544> __${reason}__ 
+      <:VC_id:1478517313618575419> **ID Valutazione** __\`${idValue}\`__`,
     )
     .setColor(color);
 }
@@ -65,13 +66,13 @@ function makeRemovalEmbed(
 ) {
   return new EmbedBuilder()
     .setAuthor({
-      name: `Valutazione rimossa da ${interaction.user.username}`,
+      name: `<:cancel:1461730653677551691> Valutazione rimossa da ${interaction.user.username}`,
       iconURL: interaction.user.displayAvatarURL(),
     })
     .setTitle(title)
     .setDescription(description.replace("{user}", user.toString()))
     .addFields(
-      { name: "Motivazione:", value: `${reason}`, inline: false },
+      { name: "<:VC_reason:1478517122929004544> Motivazione:", value: `${reason}`, inline: false },
       { name: updatedLabel, value: updatedValue, inline: false },
     )
     .setColor("#6f4e37");
@@ -95,7 +96,7 @@ async function handlePositiveAdd(
   staffDoc.positiveReasons.push(reason);
   await staffDoc.save();
 
-  const embed=makeLogEmbed(interaction,staffUser,`<a:laydowntorest:1444006796661358673> **__VALUTAZIONE POSITIVA__** #${staffDoc.positiveCount}\``,reason,staffDoc.valutazioniCount,);
+  const embed = makeLogEmbed(interaction, staffUser, `<:thumbsup:1471292172145004768> **__VALUTAZIONE POSITIVA__** #${staffDoc.positiveCount}\``, reason, staffDoc.valutazioniCount,);
 
   await sendChannelEmbed(channel, { content: `${staffUser}`, embeds: [embed] });
   return safeEditReply(interaction, {
@@ -121,7 +122,7 @@ async function handlePositiveRemove(
     !staffDoc.positiveReasons?.[removeId - 1]
   ) {
     return safeEditReply(interaction, {
-      embeds: [errorEmbed("<:vegax:1443934876440068179> ID non valido")],
+      embeds: [errorEmbed("<:attentionfromvega:1443651874032062505> ID non valido")],
       flags: EPHEMERAL_FLAG,
     });
   }
@@ -131,7 +132,12 @@ async function handlePositiveRemove(
   staffDoc.valutazioniCount = Math.max(0, staffDoc.valutazioniCount - 1);
   await staffDoc.save();
 
-  const embed=makeRemovalEmbed(interaction,staffUser,"**__VALUTAZIONE POSITIVA RIMOSSA__**","<:reportmessage:1443670575376765130> A __{user}__ è stata **rimossa** una _Valutazione Positiva!_",reason,"__Numero Valutazioni Positive Aggiornato__",`Ora sei a \`${staffDoc.positiveCount}\` valutazioni!`,);
+  const embed = makeRemovalEmbed(interaction, staffUser, "<:cancel:1461730653677551691> **__VALUTAZIONE POSITIVA RIMOSSA__**",
+    "",
+    `<:VC_reason:1478517122929004544> A __${staffUser.username}__ è stata **rimossa** una _Valutazione Positiva!_`, reason,
+    "",
+    "<:VC_update:1478721333096349817> __Valutazione Positive Totali__",
+    `<:VC_OnlineStatus:1472011187569950751> Ora sei a \`${staffDoc.positiveCount}\` valutazioni positive!`);
 
   await sendChannelEmbed(channel, { embeds: [embed] });
   return safeEditReply(interaction, {
@@ -156,7 +162,7 @@ async function handleNegativeAdd(
   staffDoc.negativeReasons.push(reason);
   await staffDoc.save();
 
-  const embed=makeLogEmbed(interaction,staffUser,`<a:laydowntorest:1444006796661358673> **__VALUTAZIONE NEGATIVA__** #${staffDoc.negativeCount}\``,reason,staffDoc.valutazioniCount,);
+  const embed = makeLogEmbed(interaction, staffUser, `<:thumbsdown:1471292163957457013> **__VALUTAZIONE NEGATIVA__** #${staffDoc.negativeCount}\``, reason, staffDoc.valutazioniCount,);
 
   await sendChannelEmbed(channel, { content: `${staffUser}`, embeds: [embed] });
   return safeEditReply(interaction, {
@@ -182,7 +188,7 @@ async function handleNegativeRemove(
     !staffDoc.negativeReasons?.[removeId - 1]
   ) {
     return safeEditReply(interaction, {
-      embeds: [errorEmbed("<:vegax:1443934876440068179> ID non valido")],
+      embeds: [errorEmbed("<:attentionfromvega:1443651874032062505> ID non valido")],
       flags: EPHEMERAL_FLAG,
     });
   }
@@ -192,7 +198,12 @@ async function handleNegativeRemove(
   staffDoc.valutazioniCount = Math.max(0, staffDoc.valutazioniCount - 1);
   await staffDoc.save();
 
-  const embed=makeRemovalEmbed(interaction,staffUser,"**__VALUTAZIONE NEGATIVA RIMOSSA__**","<:reportmessage:1443670575376765130> A __{user}__ è stata **rimossa** una _Valutazione Negativa!_",reason,"__Numero Valutazioni Negativa Aggiornato__",`Ora sei a \`${staffDoc.negativeCount}\` valutazioni!`,);
+  const embed = makeRemovalEmbed(interaction, staffUser, "<:cancel:1461730653677551691> **__VALUTAZIONE NEGATIVA RIMOSSA__**",
+    "",
+    `<:VC_reason:1478517122929004544> A __${staffUser.username}__ è stata **rimossa** una _Valutazione Negativa!_`, reason,
+    "",
+    "<:VC_update:1478721333096349817> __Valutazione Negative Totali__",
+    `<:VC_OnlineStatus:1472011187569950751> Ora sei a \`${staffDoc.negativeCount}\` valutazioni negative!`);
 
   await sendChannelEmbed(channel, { embeds: [embed] });
   return safeEditReply(interaction, {
@@ -208,35 +219,30 @@ async function handleMedia(interaction, staffUser, doc) {
   if (!doc) {
     return safeEditReply(interaction, {
       embeds: [
-        errorEmbed("<:vegax:1443934876440068179> Nessuna valutazione trovata."),
+        errorEmbed("<:attentionfromvega:1443651874032062505> Nessuna valutazione trovata."),
       ],
       flags: EPHEMERAL_FLAG,
     });
   }
 
-  const embed=new EmbedBuilder().setTitle(`Valutazioni di ${staffUser.username}`)
+  const embed = new EmbedBuilder().setTitle(`<:VC_Info:1460670816214585481> Valutazioni di ${staffUser.username}`)
     .setColor("#6f4e37")
     .addFields(
       {
-        name: "Positive",
+        name: "<:thumbsup:1471292172145004768> Positive",
         value:
           (doc.positiveReasons || [])
-            .map((entry, index) => `\`${index+1}\` " ${entry}`)
+            .map((entry, index) => `\`${index + 1}\` " ${entry}`)
             .join("\n") || "Nessuna",
-        inline: false,
+        inline: true,
       },
       {
-        name: "Negative",
+        name: "<:thumbsdown:1471292163957457013> Negative",
         value:
           (doc.negativeReasons || [])
-            .map((entry, index) => `\`${index+1}\` " ${entry}`)
+            .map((entry, index) => `\`${index + 1}\` " ${entry}`)
             .join("\n") || "Nessuna",
-        inline: false,
-      },
-      {
-        name: "Totale",
-        value: `Totali:${doc.valutazioniCount}`,
-        inline: false,
+        inline: true,
       },
     );
 
@@ -342,7 +348,9 @@ module.exports = {
         .setName("media")
         .setDescription("Vedi le valutazioni di uno staffer")
         .addUserOption((opt) =>
-          opt.setName("staffer").setDescription("Staffer").setRequired(true),
+          opt.setName("staffer")
+            .setDescription("Staffer")
+            .setRequired(true),
         ),
     ),
 
@@ -352,17 +360,17 @@ module.exports = {
     const staffUser = interaction.options.getUser("staffer");
     const reason = interaction.options.getString("motivo");
     const guildId = interaction.guild.id;
-    const channel=interaction.guild.channels.cache.get(IDs.channels?.valutazioniStaff,);
+    const channel = interaction.guild.channels.cache.get(IDs.channels?.valutazioniStaff,);
 
-    await interaction.deferReply({ flags: EPHEMERAL_FLAG }).catch(() => {});
+    await interaction.deferReply({ flags: EPHEMERAL_FLAG }).catch(() => { });
 
     try {
-      const existingStaffDoc=sub==="media"?await getStaffDoc(guildId,staffUser.id):null;
+      const existingStaffDoc = sub === "media" ? await getStaffDoc(guildId, staffUser.id) : null;
       if (sub === "media") {
         return handleMedia(interaction, staffUser, existingStaffDoc);
       }
 
-      const staffDoc=ensureStaffDoc(existingStaffDoc||(await getStaffDoc(guildId,staffUser.id)),guildId,staffUser.id,);
+      const staffDoc = ensureStaffDoc(existingStaffDoc || (await getStaffDoc(guildId, staffUser.id)), guildId, staffUser.id,);
 
       if (group === "positiva" && sub === "add") {
         return handlePositiveAdd(

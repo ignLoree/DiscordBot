@@ -14,7 +14,6 @@ const VERIFICATION_TENURE_SWEEP_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const SPONSOR_VERIFY_NICKNAME = ".gg/viniliecaffe";
 const STAGE_1_DAYS = 30;
 const STAGE_2_DAYS = 365;
-
 const SUPERSCRIPT_MAP = { 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹", };
 const INDEX_PREFIX_RE = /^[⁰¹²³⁴⁵⁶⁷⁸⁹]+/;
 const guildTimers = new Map();
@@ -22,8 +21,7 @@ let numberingLoopHandle = null;
 let voteCleanupLoopHandle = null;
 let verificationTenureLoopHandle = null;
 let sponsorKickLoopHandle = null;
-
-const SPONSOR_KICK_REASON = "Non sei più nel server principale da 24 ore. Rientra nel server principale per accedere di nuovo agli server sponsor.";
+const SPONSOR_KICK_REASON = "<:VC_Alert:1448670089670037675> Non sei più nel server principale da 24 ore. Rientra nel server principale per accedere di nuovo agli server sponsor.";
 const SPONSOR_KICK_INTERVAL_MS = 15 * 60 * 1000;
 
 async function upsertVoteRole(guildId, userId, expiresAt) {
@@ -336,17 +334,4 @@ function startSponsorKickLoop(client) {
   return sponsorKickLoopHandle;
 }
 
-module.exports = {
-  upsertVoteRole,
-  removeExpiredVoteRoles,
-  startVoteRoleCleanupLoop,
-  upsertVerifiedMember,
-  applyTenureForMember,
-  startVerificationTenureLoop,
-  backfillVerificationTenure,
-  queueCategoryRenumber,
-  runAllGuilds,
-  startCategoryNumberingLoop,
-  runSponsorKickAfter24h,
-  startSponsorKickLoop,
-};
+module.exports = { upsertVoteRole, removeExpiredVoteRoles, startVoteRoleCleanupLoop, upsertVerifiedMember, applyTenureForMember, startVerificationTenureLoop, backfillVerificationTenure, queueCategoryRenumber, runAllGuilds, startCategoryNumberingLoop, runSponsorKickAfter24h, startSponsorKickLoop };

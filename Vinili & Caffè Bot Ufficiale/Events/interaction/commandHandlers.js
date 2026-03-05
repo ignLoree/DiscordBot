@@ -13,7 +13,6 @@ const{getCommandExecutionGate,inferModuleKeyFromSlashCommand,}=require("../../Se
 const SLASH_COOLDOWN_BYPASS_ROLE_ID = IDs.roles?.Staff || null;
 const STAFF_BYPASS_PERMISSIONS=[PermissionFlagsBits.Administrator,PermissionFlagsBits.ManageGuild,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.ManageRoles,PermissionFlagsBits.ManageMessages,PermissionFlagsBits.KickMembers,PermissionFlagsBits.BanMembers,PermissionFlagsBits.ModerateMembers,];
 const SLASH_EXECUTION_TIMEOUT_MS=Math.max(15_000,Number(process.env.SLASH_EXECUTION_TIMEOUT_MS||120_000),);
-
 const getCommandKey = (name, type) => `${name}:${type || 1}`;
 
 function sanitizeEditPayload(payload) {
@@ -48,8 +47,8 @@ async function handleSlashCommand(interaction, client) {
     return interaction.reply({
       content:
         dashboardGate.reason === "module_disabled" || dashboardGate.reason === "command_disabled"
-          ? "Comando disattivato dalla dashboard."
-          : "Comando in manutenzione dalla dashboard.",
+          ? "<:VC_OfflineStatus:1472011150081130751> Comando disattivato dalla dashboard."
+          : "<:VC_InactiveStatus:1472011031709745307> Comando in manutenzione dalla dashboard.",
       flags: 1 << 6,
     });
   }
@@ -61,7 +60,7 @@ async function handleSlashCommand(interaction, client) {
   ) {
     return interaction.reply({
       content:
-        `Server in lockdown di sicurezza: comandi temporaneamente bloccati.${securityLockState.sources.length ? ` (${securityLockState.sources.join(", ")})` : ""}`,
+        `<:attentionfromvega:1443651874032062505> Server in lockdown di sicurezza: comandi temporaneamente bloccati.${securityLockState.sources.length ? ` (${securityLockState.sources.join(", ")})` : ""}`,
       flags: 1 << 6,
     });
   }
@@ -76,7 +75,7 @@ async function handleSlashCommand(interaction, client) {
   ) {
     return interaction.reply({
       content:
-        "Comandi di moderazione temporaneamente bloccati (panic mode sicurezza attiva).",
+        "<a:VC_Alert:1448670089670037675> Comandi di moderazione temporaneamente bloccati.",
       flags: 1 << 6,
     });
   }
@@ -99,7 +98,7 @@ async function handleSlashCommand(interaction, client) {
       });
     }
     const requiredRoles = getSlashRequiredRoles(interaction);
-    const embed=interaction.commandName==="dmbroadcast"?buildGlobalPermissionDeniedEmbed([],"comando","Solo i developer del bot possono usare questo comando.",):buildGlobalPermissionDeniedEmbed(requiredRoles);
+    const embed=interaction.commandName==="dmbroadcast"?buildGlobalPermissionDeniedEmbed([],"comando","<:attentionfromvega:1443651874032062505> Solo i developer del bot possono usare questo comando.",):buildGlobalPermissionDeniedEmbed(requiredRoles);
     return interaction.reply({
       embeds: [embed],
       flags: 1 << 6,
@@ -194,8 +193,6 @@ async function handleSlashCommand(interaction, client) {
     wrappedInteraction.channel = wrappedChannel;
   }
 
-  const getTimestamp=() => {const d=new Date();return d.toISOString().replace("T"," ").split(".")[0];};
-
   const safeReply = async (payload) => safeReplyHelper(interaction, payload);
 
   let deferTimer;
@@ -235,7 +232,7 @@ async function handleSlashCommand(interaction, client) {
         : null,
     });
     const errorText=(error?.stack||error?.message||String(error))?.slice(0,1000)||"<:vegax:1443934876440068179> Errore sconosciuto";
-    const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("error_pending").setLabel("In risoluzione").setStyle(ButtonStyle.Primary),new ButtonBuilder().setCustomId("error_solved").setLabel("Risolto").setStyle(ButtonStyle.Success),new ButtonBuilder().setCustomId("error_unsolved").setLabel("Irrisolto").setStyle(ButtonStyle.Danger),);
+    const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("error_pending").setEmoji("<:VC_InactiveStatus:1472011031709745307>").setStyle(ButtonStyle.Primary),new ButtonBuilder().setCustomId("error_solved").setEmoji("<:VC_OnlineStatus:1472011187569950751>").setStyle(ButtonStyle.Success),new ButtonBuilder().setCustomId("error_unsolved").setEmoji("<:VC_OfflineStatus:1472011150081130751>").setStyle(ButtonStyle.Danger),);
     let msg;
     if (errorChannel) {
       try {

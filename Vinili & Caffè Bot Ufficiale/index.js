@@ -90,7 +90,11 @@ client.reloadScope = async (scope) => {
   if (scope === "commands") return reloadCommands();
   if (scope === "prefix") return reloadPrefix();
   if (scope === "events") return reloadEvents();
+
+  const reloadButtons = async () => { clearCacheByDir("Buttons"); await client.loadButtonHandlers(path.join(APP_ROOT, "Buttons")); };
+
   if (scope === "triggers") return reloadTriggers();
+  if (scope === "buttons") return reloadButtons();
   if (scope === "services") return clearCacheByDir("Services");
   if (scope === "utils") return clearCacheByDir("Utils");
   if (scope === "schemas") return clearCacheByDir("Schemas");
@@ -100,6 +104,7 @@ client.reloadScope = async (scope) => {
     await reloadPrefix();
     reloadEvents();
     reloadTriggers();
+    await reloadButtons();
     return;
   }
 
@@ -111,6 +116,7 @@ client.reloadScope = async (scope) => {
     await reloadPrefix();
     reloadEvents();
     reloadTriggers();
+    await reloadButtons();
   }
 };
 
@@ -124,6 +130,7 @@ initializeCommandCollections(client, { includeSnipes: true });
     client.handleTriggers(APP_ROOT);
     await client.handleCommands(commandFolders, path.join(APP_ROOT, "Commands"));
     await client.prefixCommands(pcommandFolders, path.join(APP_ROOT, "Prefix"));
+    await client.loadButtonHandlers(path.join(APP_ROOT, "Buttons"));
     if (shouldStartDashboard(client)) {
       startDashboardServer(client);
     }

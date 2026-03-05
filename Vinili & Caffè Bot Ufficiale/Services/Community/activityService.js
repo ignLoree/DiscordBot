@@ -447,47 +447,6 @@ function safeTopRank(map, targetId) {
   return index >= 0 ? index + 1 : null;
 }
 
-function aggregateUserRows(rows = [], dateKeys = []) {
-  const dateSet = new Set(Array.isArray(dateKeys) ? dateKeys : []);
-  const channelText = new Map();
-  const channelVoice = new Map();
-  const chartByDay = new Map();
-  let text = 0;
-  let voiceSeconds = 0;
-
-  for (const row of rows) {
-    const dayKey = String(row?.dateKey || "");
-    if (!dateSet.has(dayKey)) continue;
-    const rowText = Number(row?.textCount || 0);
-    const rowVoice = Number(row?.voiceSeconds || 0);
-    text += rowText;
-    voiceSeconds += rowVoice;
-
-    const textChannels = row?.textChannels || {};
-    for (const [channelId, value] of Object.entries(textChannels)) {
-      pushMapValue(channelText, String(channelId || ""), Number(value || 0));
-    }
-
-    const voiceChannels = row?.voiceChannels || {};
-    for (const [channelId, value] of Object.entries(voiceChannels)) {
-      pushMapValue(channelVoice, String(channelId || ""), Number(value || 0));
-    }
-
-    const current = chartByDay.get(dayKey) || { text: 0, voiceSeconds: 0 };
-    current.text += rowText;
-    current.voiceSeconds += rowVoice;
-    chartByDay.set(dayKey, current);
-  }
-
-  return {
-    text,
-    voiceSeconds,
-    topChannelsText: topNFromMap(channelText, 3),
-    topChannelsVoice: topNFromMap(channelVoice, 3),
-    chartByDay,
-  };
-}
-
 function pushMapValue(target, key, amount) {
   if (!key || !Number.isFinite(amount) || amount <= 0) return;
   target.set(key, (target.get(key) || 0) + amount);
@@ -549,63 +508,6 @@ async function getLiveVoiceOverlay(guildId, days = null) {
   }
 
   return { userVoice, channelVoice, totalVoiceSeconds };
-}
-
-function aggregateFromRows(rows = [], dateKeys = []) {
-  const dateSet = new Set(Array.isArray(dateKeys) ? dateKeys : []);
-  const userText = new Map();
-  const userVoice = new Map();
-  const channelText = new Map();
-  const channelVoice = new Map();
-  const contributors = new Set();
-  const chartByDay = new Map();
-
-  for (const row of rows) {
-    if (!dateSet.has(String(row?.dateKey || ""))) continue;
-
-    const userId = String(row?.userId || "");
-    const textCount = Number(row?.textCount || 0);
-    const voiceSeconds = Number(row?.voiceSeconds || 0);
-
-    if (textCount > 0 || voiceSeconds > 0) contributors.add(userId);
-    pushMapValue(userText, userId, textCount);
-    pushMapValue(userVoice, userId, voiceSeconds);
-
-    const textChannels = row?.textChannels || {};
-    for (const [channelId, value] of Object.entries(textChannels)) {
-      pushMapValue(channelText, String(channelId || ""), Number(value || 0));
-    }
-
-    const voiceChannels = row?.voiceChannels || {};
-    for (const [channelId, value] of Object.entries(voiceChannels)) {
-      pushMapValue(channelVoice, String(channelId || ""), Number(value || 0));
-    }
-
-    const dayKey = String(row?.dateKey || "");
-    const current = chartByDay.get(dayKey) || { text: 0, voiceSeconds: 0 };
-    current.text += textCount;
-    current.voiceSeconds += voiceSeconds;
-    chartByDay.set(dayKey, current);
-  }
-
-  return {
-    totals: {
-      text: Array.from(userText.values()).reduce(
-        (sum, value) => sum + value,
-        0,
-      ),
-      voiceSeconds: Array.from(userVoice.values()).reduce(
-        (sum, value) => sum + value,
-        0,
-      ),
-    },
-    contributors: contributors.size,
-    topUsersText: topNFromMap(userText, 3),
-    topUsersVoice: topNFromMap(userVoice, 3),
-    topChannelsText: topNFromMap(channelText, 3),
-    topChannelsVoice: topNFromMap(channelVoice, 3),
-    chartByDay,
-  };
 }
 
 function aggregateFromHourlyRows(rows = [], hourKeys = [], topLimit = 3) {
@@ -684,12 +586,7 @@ function aggregateUserHourlyRows(rows = [], hourKeys = []) {
     }
   }
 
-  return {
-    text,
-    voiceSeconds,
-    topChannelsText: topNFromMap(channelText, 3),
-    topChannelsVoice: topNFromMap(channelVoice, 3),
-  };
+  return { text, voiceSeconds, topChannelsText: topNFromMap(channelText, 3), topChannelsVoice: topNFromMap(channelVoice, 3) };
 }
 
 function buildChartByDayFromHourlyRows(rows = [], hourKeys = []) {
@@ -803,7 +700,6 @@ async function getServerOverviewStats(guildId, lookbackDays = 14, topLimit = 3) 
   const safeTopLimit = Math.max(1, Math.min(500, Number(topLimit || 3)));
   const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays)) ? Number(lookbackDays) : 14;
   await ensureHourlyBackfillForGuild(guildId);
-  const lookbackKey = `d${safeLookback}`;
   const hourKeys1 = getLastNHourKeys(24);
   const hourKeys7 = getLastNHourKeys(24 * 7);
   const hourKeys14 = getLastNHourKeys(24 * 14);
@@ -812,9 +708,7 @@ async function getServerOverviewStats(guildId, lookbackDays = 14, topLimit = 3) 
   const hourKeysLookback = getLastNHourKeys(24 * safeLookback);
   const allHourKeys = Array.from(new Set([...hourKeys1, ...hourKeys7, ...hourKeys14, ...hourKeys21, ...hourKeys30, ...hourKeysLookback,]),);
   const dayKeysLookback = getLastNDaysKeys(safeLookback);
-
   const hourlyRows = await ActivityHourly.find({ guildId, hourKey: { $in: allHourKeys }, }).lean().catch(() => []);
-
   const agg1 = aggregateFromHourlyRows(hourlyRows, hourKeys1, safeTopLimit);
   const agg7 = aggregateFromHourlyRows(hourlyRows, hourKeys7, safeTopLimit);
   const agg14 = aggregateFromHourlyRows(hourlyRows, hourKeys14, safeTopLimit);
@@ -1178,15 +1072,4 @@ function startLiveVoiceExpLoop(client, intervalMs = 5000) {
   return client._liveVoiceExpInterval;
 }
 
-module.exports = {
-  recordMessageActivity,
-  handleVoiceActivity,
-  getUserActivityStats,
-  getServerActivityStats,
-  getServerOverviewStats,
-  getUserOverviewStats,
-  getLiveVoiceOverlay,
-  syncLiveVoiceSessionsFromGateway,
-  runLiveVoiceExpTick,
-  startLiveVoiceExpLoop,
-};
+module.exports = { recordMessageActivity, handleVoiceActivity, getUserActivityStats, getServerActivityStats, getServerOverviewStats, getUserOverviewStats, getLiveVoiceOverlay, syncLiveVoiceSessionsFromGateway, runLiveVoiceExpTick, startLiveVoiceExpLoop };

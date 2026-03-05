@@ -6,7 +6,6 @@ const { getNoDmSet } = require("../../Utils/noDmList");
 const { getClientGuildCached, getGuildMemberCached, getUserCached, } = require("../../Utils/Interaction/interactionEntityCache");
 const discadiaVoteTimers = new Map();
 const STAFF_BYPASS_ROLE_IDS = new Set([IDs.roles.Staff, IDs.roles.Helper, IDs.roles.Mod, IDs.roles.PartnerManager, IDs.roles.Coordinator, IDs.roles.Supervisor, IDs.roles.HighStaff, IDs.roles.Admin, IDs.roles.Manager, IDs.roles.CoFounder, IDs.roles.Founder,].filter(Boolean),);
-
 const BUMP_REMINDER_CHANNEL_BY_KEY = { disboard: IDs.channels.commands, discadia: IDs.channels.commands, };
 
 function createBumpReminderService(options) {
@@ -153,16 +152,12 @@ function createBumpReminderService(options) {
     }
   }
 
-  return {
-    recordBump,
-    setBumpAt,
-    restorePendingReminders,
-  };
+  return { recordBump, setBumpAt, restorePendingReminders };
 }
 
-const disboardService = createBumpReminderService({ model: DisboardBump, configKey: "disboard", defaultCooldownMinutes: 120, mentionContent: "<@&1442569013074071644>", title: "<:VC_Eye:1331619214410383381> **È L'ORA DEL `BUMP`!**", url: "https://disboard.org/it/server/1329080093599076474", description: "<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!", errorTag: "[DISBOARD REMINDER ERROR]", logTag: "[DISBOARD REMINDER]", suppressInfoLogs: true, });
+const disboardService = createBumpReminderService({ model: DisboardBump, configKey: "disboard", defaultCooldownMinutes: 120, mentionContent: "<@&1442569013074071644>", title: "<:VC_Eye:1331619214410383381> **È L'ORA DEL `BUMP`!**", url: "https://disboard.org/it/server/1329080093599076474", description: "<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!", errorTag: "<:VC_Alert:1448670089670037675> [DISBOARD REMINDER ERROR]", logTag: "<:VC_Alert:1448670089670037675> [DISBOARD REMINDER]", suppressInfoLogs: true, });
 
-const discadiaBumpService = createBumpReminderService({ model: DiscadiaBump, configKey: "discadia", defaultCooldownMinutes: 1440, mentionContent: "<@&1442569013074071644>", title: "<:VC_Eye:1331619214410383381> **È L'ORA DEL `BUMP` SU DISCADIA!**", url: "https://discadia.com/server/viniliecaffe/", description: "<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!", errorTag: "[DISCADIA REMINDER ERROR]", logTag: "[DISCADIA REMINDER]", suppressInfoLogs: true, });
+const discadiaBumpService = createBumpReminderService({ model: DiscadiaBump, configKey: "discadia", defaultCooldownMinutes: 1440, mentionContent: "<@&1442569013074071644>", title: "<:VC_Eye:1331619214410383381> **È L'ORA DEL `BUMP` SU DISCADIA!**", url: "https://discadia.com/server/viniliecaffe/", description: "<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!", errorTag: "<:VC_Alert:1448670089670037675> [DISCADIA REMINDER ERROR]", logTag: "<:VC_Alert:1448670089670037675> [DISCADIA REMINDER]", suppressInfoLogs: true, });
 let discadiaVoteReminderLoopHandle = null;
 
 function getVoteCooldownMs(client) {
@@ -182,7 +177,7 @@ function getVoteCheckIntervalMs(client) {
 function getVoteReminderText(client) {
   return (
     client?.config?.discadiaVoteReminder?.message ||
-    "Hey! Sono passate 24 ore: puoi votare di nuovo su Discadia. Grazie per il supporto!"
+    "<:VC_bump:1330185435401424896> Hey! Sono passate 24 ore: puoi votare di nuovo su Discadia. Grazie per il supporto!"
   );
 }
 
@@ -190,7 +185,7 @@ function buildVoteReminderEmbed(client) {
   const text = getVoteReminderText(client);
   return new EmbedBuilder()
     .setColor(client?.config?.embedInfo || "#6f4e37")
-    .setTitle("Reminder voto Discadia")
+    .setTitle("<:VC_update:1478721333096349817> Reminder voto Discadia")
     .setDescription(text)
     .setFooter({
       text: "Per non ricevere più DM automatici usa +dm-disable (blocca anche avvisi importanti).",
@@ -267,30 +262,6 @@ function scheduleDiscadiaVoteReminder(client, guildId, userId, lastVoteAt) {
   const delay = targetTime - Date.now();
 
   const run = async () => { try { const doc = await DiscadiaVoter.findOne({ guildId, userId }).lean(); if (!doc?.lastVoteAt) return; const cooldownMsRun = getVoteCooldownMs(client); if (Date.now() - new Date(doc.lastVoteAt).getTime() < cooldownMsRun) return; if (doc.lastRemindedAt && new Date(doc.lastRemindedAt).getTime() >= new Date(doc.lastVoteAt).getTime()) return; if (await shouldSkipVoteDmByNoDm(client, guildId, userId)) return; const user = await getUserCached(client, userId); if (!user) return; const embed = buildVoteReminderEmbed(client); try { await user.send({ embeds: [embed] }); } catch { await sendVoteFallbackChannelReminder(client, guildId, userId); } await DiscadiaVoter.updateOne({ guildId, userId }, { $set: { lastRemindedAt: new Date() } },).catch(() => { }); } finally { discadiaVoteTimers.delete(key); } };
-
-  if (delay <= 0) {
-    void run();
-    return;
-  }
-
-  const timer = setTimeout(() => run().catch(() => { }), delay);
-  timer.unref?.();
-  discadiaVoteTimers.set(key, timer);
-}
-
-function scheduleVoteReminder(client, guildId, userId, lastVoteAt) {
-  const enabled = client?.config?.discadiaVoteReminder?.enabled;
-  if (!enabled) return;
-
-  const key = `${guildId}:${userId}`;
-  const existing = discadiaVoteTimers.get(key);
-  if (existing) clearTimeout(existing);
-
-  const cooldownMs = getVoteCooldownMs(client);
-  const target = new Date(lastVoteAt).getTime() + cooldownMs;
-  const delay = target - Date.now();
-
-  const run = async () => { try { const doc = await DiscadiaVoter.findOne({ guildId, userId }).lean(); if (!doc?.lastVoteAt) return; if (Date.now() - new Date(doc.lastVoteAt).getTime() < cooldownMs) return; if (doc.lastRemindedAt && Date.now() - new Date(doc.lastRemindedAt).getTime() < cooldownMs - 60_000) return; if (await shouldSkipVoteDmByNoDm(client, guildId, userId)) return; const user = await getUserCached(client, userId); if (!user) return; const embed = buildVoteReminderEmbed(client); try { await user.send({ embeds: [embed] }); } catch { await sendVoteFallbackChannelReminder(client, guildId, userId); } await DiscadiaVoter.updateOne({ guildId, userId }, { $set: { lastRemindedAt: new Date() } },).catch(() => { }); } finally { discadiaVoteTimers.delete(key); } };
 
   if (delay <= 0) {
     void run();
@@ -397,14 +368,4 @@ function startDiscadiaVoteReminderLoop(client) {
   return discadiaVoteReminderLoopHandle;
 }
 
-module.exports = {
-  createBumpReminderService,
-  recordBump: disboardService.recordBump,
-  restorePendingReminders: disboardService.restorePendingReminders,
-  recordDiscadiaBump: discadiaBumpService.recordBump,
-  restorePendingDiscadiaReminders: discadiaBumpService.restorePendingReminders,
-  recordDiscadiaVote,
-  sendDueReminders: sendDueDiscadiaVoteReminders,
-  startDiscadiaVoteReminderLoop,
-  restorePendingVoteReminders,
-};
+module.exports = { createBumpReminderService, recordBump: disboardService.recordBump, restorePendingReminders: disboardService.restorePendingReminders, recordDiscadiaBump: discadiaBumpService.recordBump, restorePendingDiscadiaReminders: discadiaBumpService.restorePendingReminders, recordDiscadiaVote, sendDueReminders: sendDueDiscadiaVoteReminders, startDiscadiaVoteReminderLoop, restorePendingVoteReminders };

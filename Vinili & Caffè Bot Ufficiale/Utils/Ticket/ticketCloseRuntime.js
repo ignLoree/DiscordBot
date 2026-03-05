@@ -166,7 +166,9 @@ async function closeTicket(targetInteraction, motivo, helpers) {
     const closeEmbedData ={...ticket.toObject(),ticketNumber,closeReason:motivo || null,closedBy:closedByUserId,closedAt:new Date(),guildName:targetInteraction.guild ?. name || "Ticket System",guildIconURL:targetInteraction.guild ?. iconURL ?.({size:128})|| null,};
     const closeEmbed = buildTicketClosedEmbed(closeEmbedData);
     const ratingRows = buildTicketRatingRows(String(ticket._id));
-    const transcriptRows = transcriptHtmlPath ?[new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`ticket_transcript:${ticket._id}`).setLabel("View Transcript").setStyle(ButtonStyle.Secondary).setEmoji("📁"),),]:[];
+    const transcriptRows = transcriptHtmlPath
+      ? [new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`ticket_transcript:${ticket._id}`).setLabel("View Transcript").setStyle(ButtonStyle.Secondary).setEmoji("📁"))]
+      : [];
 
     let logSentMessage = null;
     if (logChannel?.isTextBased?.()) {
@@ -174,7 +176,7 @@ async function closeTicket(targetInteraction, motivo, helpers) {
         logChannel,
         { embeds: [closeEmbed] },
         false,
-        transcriptRows,
+        [...transcriptRows, ...ratingRows],
       );
     }
 

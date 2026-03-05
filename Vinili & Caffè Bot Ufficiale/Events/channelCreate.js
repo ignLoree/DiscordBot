@@ -5,7 +5,6 @@ const{upsertChannelSnapshot,}=require("../Utils/Community/channelSnapshotUtils")
 const { ARROW, toDiscordTimestamp, channelDisplay, channelTypeLabel, yesNo, formatAuditActor, buildAuditExtraLines, resolveChannelRolesLogChannel, resolveResponsible, } = require("../Utils/Logging/channelRolesLogUtils");
 const{handleChannelCreationAction:antiNukeHandleChannelCreationAction,}=require("../Services/Moderation/antiNukeService");
 const IDs = require("../Utils/Config/ids");
-
 const CHANNEL_CREATE_ACTION = AuditLogEvent?.ChannelCreate ?? 10;
 const AUDIT_RETRY_ATTEMPTS = 3;
 const AUDIT_RETRY_DELAY_MS = 700;
@@ -33,7 +32,7 @@ async function forceQuarantineOverwrite(channel) {
         CreatePublicThreads: false,
         CreatePrivateThreads: false,
       },
-      { reason: "Force quarantine deny permissions on new channel" },
+      { reason: "<:vegax:1443934876440068179> Forza la quarantena per negare le autorizzazioni sul nuovo canale" },
     )
     .catch(() => {});
 }

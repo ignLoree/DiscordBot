@@ -1,10 +1,10 @@
 const fs = require("fs");
 const path = require("path");
-const{ModalBuilder,TextInputBuilder,TextInputStyle,ActionRowBuilder,EmbedBuilder,ButtonBuilder,ButtonStyle,}=require("discord.js");
+const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const IDs = require("../../Utils/Config/ids");
-const{getGuildChannelCached,getGuildMemberCached,}=require("../../Utils/Interaction/interactionEntityCache");
+const { getGuildChannelCached, getGuildMemberCached, } = require("../../Utils/Interaction/interactionEntityCache");
+const { getOrCreateStaffDoc, deleteThreadForMessage } = require("../../Utils/Staff/staffDocUtils");
 const BOT_ROOT = path.resolve(__dirname, "..", "..");
-
 const APPLY_HELPER_BUTTON = "apply_helper";
 const APPLY_PM_BUTTON = "apply_partnermanager";
 const APPLY_START_PREFIX = "apply_start";
@@ -17,25 +17,21 @@ const APPLY_PEX_REASON_INPUT_ID = "apply_pex_reason";
 const STATE_TTL_MS = 30 * 60 * 1000;
 const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const APPLICATION_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
-const APPLICATION_REACTIONS=["<:thumbsup:1471292172145004768>","<:thumbsdown:1471292163957457013>",];
-
+const APPLICATION_REACTIONS = ["<:thumbsup:1471292172145004768>", "<:thumbsdown:1471292163957457013>",];
 const NOMODULI_ROLE_ID = IDs.roles.blacklistModuli;
 const MEMBER_ROLE_ID = IDs.roles.Member;
 const HELPER_ROLE_ID = IDs.roles.Helper;
 const PARTNER_MANAGER_ROLE_ID = IDs.roles.PartnerManager;
-const HELPER_REAPPLY_BLOCK_ROLE_IDS=[IDs.roles.Staff,IDs.roles.Helper,IDs.roles.Mod,IDs.roles.Coordinator,IDs.roles.Supervisor,IDs.roles.HighStaff,IDs.roles.Admin,IDs.roles.Manager,IDs.roles.CoFounder,IDs.roles.Founder,].filter(Boolean);
-
-const APPLICATION_COOLDOWN_PATH=path.join(BOT_ROOT,"Data","applicationCooldowns.json",);
-const APPLICATION_COUNTERS_PATH=path.join(BOT_ROOT,"Data","applicationCounters.json",);
-const APPLICATION_DRAFTS_PATH=path.join(BOT_ROOT,"Data","applicationDrafts.json",);
-
+const HELPER_REAPPLY_BLOCK_ROLE_IDS = [IDs.roles.Staff, IDs.roles.Helper, IDs.roles.Mod, IDs.roles.Coordinator, IDs.roles.Supervisor, IDs.roles.HighStaff, IDs.roles.Admin, IDs.roles.Manager, IDs.roles.CoFounder, IDs.roles.Founder,].filter(Boolean);
+const APPLICATION_COOLDOWN_PATH = path.join(BOT_ROOT, "Data", "applicationCooldowns.json",);
+const APPLICATION_COUNTERS_PATH = path.join(BOT_ROOT, "Data", "applicationCounters.json",);
+const APPLICATION_DRAFTS_PATH = path.join(BOT_ROOT, "Data", "applicationDrafts.json",);
 const pendingApplications = new Map();
 const cooldownByUser = new Map();
 const draftByStateKey = new Map();
 const candidatePexLocks = new Set();
-const applicationCounters={helper:0,partnermanager:0,};
-
-const APPLICATIONS={helper:{label:"Helper",questions:[{id:"id_discord",text:"1. ID",modalLabel:"1. ID",placeholder:"Copia e incolla il tuo ID di Discord",style:TextInputStyle.Short,},{id:"eta",text:"2. Età",modalLabel:"2. Età",placeholder:"Scrivi la tua età",style:TextInputStyle.Short,},{id:"staff_server",text:"3. Nomina tutti i server dove sei stato staff, per quanto tempo e che ruolo avevi",modalLabel:"3. Esperienze staff",style:TextInputStyle.Paragraph,},{id:"motivo_candidatura",text:"4. Come mai ti sei voluto candidare su Vinili & Caffè?",modalLabel:"4. Motivo candidatura",style:TextInputStyle.Paragraph,},{id:"aiuto_economico",text:"5. Saresti disposto ad aiutare il server economicamente?",modalLabel:"5. Aiuto economico",placeholder:"Si / No",style:TextInputStyle.Paragraph,},{id:"flame_testuale",text:"6. Se due utenti si flammano a vicenda su un determinato argomento, come ti comporti? (in testuale)",modalLabel:"6. Gestione flame",style:TextInputStyle.Paragraph,},{id:"comandi_dyno",text:"7. Elenca i comandi di moderazioni più importanti di Dyno",modalLabel:"7. Comandi Dyno",style:TextInputStyle.Paragraph,},{id:"critica_staff",text:"8. Se una persona critica il server o lo staff in maniera non idonea, come ti comporti?",modalLabel:"8. Gestione critica",style:TextInputStyle.Paragraph,},{id:"vocale",text:"9. Potrai stare in vocale? In caso di risposta positiva, potrai parlare?",modalLabel:"9. Disponibilità vocale",style:TextInputStyle.Paragraph,},{id:"definizione_flame",text:"10. Definizione di flame",modalLabel:"10. Definizione flame",style:TextInputStyle.Paragraph,},{id:"troll_pubblico",text:"11. Se due utenti iniziassero a trollare in pubblico, come agiresti?",modalLabel:"11. Gestione troll",style:TextInputStyle.Paragraph,},],},partnermanager:{label:"Partner Manager",questions:[{id:"id_discord",text:"1. ID",modalLabel:"1. ID",placeholder:"Scrivi il tuo ID di Discord",style:TextInputStyle.Short,},{id:"luminous_nova",text:"2. Conosci il bot Luminous Nova/SkyForce?",modalLabel:"2. Luminous Nova/SkyForce",placeholder:"Si / No",style:TextInputStyle.Short,},{id:"partner_giorno",text:"3. Quante partner fai al giorno?",modalLabel:"3. Partner al giorno",placeholder:"<15 / 15+",style:TextInputStyle.Short,},],},};
+const applicationCounters = { helper: 0, partnermanager: 0, };
+const APPLICATIONS = { helper: { label: "Helper", questions: [{ id: "id_discord", text: "1. ID", modalLabel: "1. ID", placeholder: "Copia e incolla il tuo ID di Discord", style: TextInputStyle.Short, }, { id: "eta", text: "2. Età", modalLabel: "2. Età", placeholder: "Scrivi la tua età", style: TextInputStyle.Short, }, { id: "staff_server", text: "3. Nomina tutti i server dove sei stato staff, per quanto tempo e che ruolo avevi", modalLabel: "3. Esperienze staff", style: TextInputStyle.Paragraph, }, { id: "motivo_candidatura", text: "4. Come mai ti sei voluto candidare su Vinili & Caffè?", modalLabel: "4. Motivo candidatura", style: TextInputStyle.Paragraph, }, { id: "aiuto_economico", text: "5. Saresti disposto ad aiutare il server economicamente?", modalLabel: "5. Aiuto economico", placeholder: "Si / No", style: TextInputStyle.Paragraph, }, { id: "flame_testuale", text: "6. Se due utenti si flammano a vicenda su un determinato argomento, come ti comporti? (in testuale)", modalLabel: "6. Gestione flame", style: TextInputStyle.Paragraph, }, { id: "comandi_dyno", text: "7. Elenca i comandi di moderazioni più importanti di Dyno", modalLabel: "7. Comandi Dyno", style: TextInputStyle.Paragraph, }, { id: "critica_staff", text: "8. Se una persona critica il server o lo staff in maniera non idonea, come ti comporti?", modalLabel: "8. Gestione critica", style: TextInputStyle.Paragraph, }, { id: "vocale", text: "9. Potrai stare in vocale? In caso di risposta positiva, potrai parlare?", modalLabel: "9. Disponibilità vocale", style: TextInputStyle.Paragraph, }, { id: "definizione_flame", text: "10. Definizione di flame", modalLabel: "10. Definizione flame", style: TextInputStyle.Paragraph, }, { id: "troll_pubblico", text: "11. Se due utenti iniziassero a trollare in pubblico, come agiresti?", modalLabel: "11. Gestione troll", style: TextInputStyle.Paragraph, },], }, partnermanager: { label: "Partner Manager", questions: [{ id: "id_discord", text: "1. ID", modalLabel: "1. ID", placeholder: "Scrivi il tuo ID di Discord", style: TextInputStyle.Short, }, { id: "luminous_nova", text: "2. Conosci il bot Luminous Nova/SkyForce?", modalLabel: "2. Luminous Nova/SkyForce", placeholder: "Si / No", style: TextInputStyle.Short, }, { id: "partner_giorno", text: "3. Quante partner fai al giorno?", modalLabel: "3. Partner al giorno", placeholder: "<15 / 15+", style: TextInputStyle.Short, },], }, };
 
 function loadCooldownMap() {
   try {
@@ -48,7 +44,7 @@ function loadCooldownMap() {
       const ts = Number(until || 0);
       if (Number.isFinite(ts) && ts > now) cooldownByUser.set(String(userId), ts);
     }
-  } catch {}
+  } catch { }
 }
 
 function persistCooldownMap() {
@@ -61,7 +57,7 @@ function persistCooldownMap() {
       if (Number(until) > now) out[userId] = Number(until);
     }
     fs.writeFileSync(APPLICATION_COOLDOWN_PATH, JSON.stringify(out, null, 2), "utf8");
-  } catch {}
+  } catch { }
 }
 
 loadCooldownMap();
@@ -77,7 +73,7 @@ function loadApplicationCounters() {
     applicationCounters.helper = Number.isFinite(helper) && helper > 0 ? Math.floor(helper) : 0;
     applicationCounters.partnermanager =
       Number.isFinite(pm) && pm > 0 ? Math.floor(pm) : 0;
-  } catch {}
+  } catch { }
 }
 
 function persistApplicationCounters() {
@@ -89,7 +85,7 @@ function persistApplicationCounters() {
       JSON.stringify(applicationCounters, null, 2),
       "utf8",
     );
-  } catch {}
+  } catch { }
 }
 
 function nextApplicationNumber(type) {
@@ -122,7 +118,7 @@ function loadDraftMap() {
         updatedAt,
       });
     }
-  } catch {}
+  } catch { }
 }
 
 function persistDraftMap() {
@@ -143,7 +139,7 @@ function persistDraftMap() {
       };
     }
     fs.writeFileSync(APPLICATION_DRAFTS_PATH, JSON.stringify(out, null, 2), "utf8");
-  } catch {}
+  } catch { }
 }
 
 function setDraftState(stateKey, answers, nextStep) {
@@ -226,7 +222,7 @@ function hasAnyRole(interaction, roleIds) {
 function getHighestRoleId(interaction, roleIds) {
   const cache = getRoleCache(interaction);
   if (!cache || !Array.isArray(roleIds) || roleIds.length === 0) return null;
-  const roles=roleIds.map((id) => cache.get(id)).filter(Boolean).sort((a,b) => Number(b.position||0)-Number(a.position||0));
+  const roles = roleIds.map((id) => cache.get(id)).filter(Boolean).sort((a, b) => Number(b.position || 0) - Number(a.position || 0));
   return roles[0]?.id || null;
 }
 
@@ -241,7 +237,7 @@ function hasNoModuliRole(interaction) {
 }
 
 function hasHighStaffRole(interaction) {
-  const highStaffRoleId=IDs?.roles?.HighStaff?String(IDs.roles.HighStaff):null;
+  const highStaffRoleId = IDs?.roles?.HighStaff ? String(IDs.roles.HighStaff) : null;
   if (!highStaffRoleId) return false;
   return Boolean(interaction?.member?.roles?.cache?.has(highStaffRoleId));
 }
@@ -266,7 +262,7 @@ function buildRoleDeniedEmbed() {
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> Accesso negato")
     .setDescription(
-      "<:vegax:1443934876440068179> Le candidature sono disponibili solo agli utenti con ruolo Member.",
+      "<a:VC_Alert:1448670089670037675> Le candidature sono disponibili solo agli utenti con ruolo Member.",
     );
 }
 
@@ -276,7 +272,7 @@ function buildAlreadyRoleEmbed(roleId) {
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> Accesso negato")
     .setDescription(
-      `Sei già ${roleText}, perché dovresti ricandidarti?`,
+      `<:VC_Info:1460670816214585481> Sei già ${roleText}, perché dovresti ricandidarti?`,
     );
 }
 
@@ -285,7 +281,9 @@ function buildNoModuliDeniedEmbed() {
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> Accesso negato")
     .setDescription(
-      "<:vegax:1443934876440068179> Non puoi inviare candidature: sei blacklistato dai moduli.",
+      "<a:VC_Alert:1448670089670037675> Sei blacklistato dalle candidature.",
+      "",
+      "<:vsl_ticket:1329520261053022208> Se pensi sia un errore apri un ticket.",
     );
 }
 
@@ -296,10 +294,10 @@ function buildCooldownDeniedEmbed(untilTs) {
     .setTitle("<:VC_Lock:1468544444113617063> Candidatura non disponibile")
     .setDescription(
       [
-        "Hai già inviato una candidatura recentemente.",
+        "<:VC_Clock:1473359204189474886> Hai già inviato una candidatura recentemente.",
         "",
-        `Potrai inviarne una nuova dopo: <t:${unix}:F> (<t:${unix}:R>).`,
-        "Devi attendere 7 giorni prima di riprovare.",
+        `<:VC_update:1478721333096349817> Potrai inviarne una nuova dopo: <t:${unix}:F> (<t:${unix}:R>).`,
+        "<a:VC_Timer:1462779065625739344> Devi attendere 7 giorni prima di riprovare.",
       ].join("\n"),
     );
 }
@@ -308,16 +306,23 @@ function buildIntroEmbed(type) {
   if (type === "partnermanager") {
     return new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle("Candidatura Partner Manager")
+      .setTitle("<:partnermanager:1443651916838998099> Candidatura Partner Manager")
       .setDescription(
-        "Compilando questo modulo potrai candidarti come Partner Manager del server.\nSe hai dei dubbi apri un ticket terza categoria.\n\n**__LEGGI BENE ALL'INTERNO DEI RIQUADRI LA DOMANDA E POI RISPONDI__**",
-      );
+        "<:VC_Poll:1448695754972729436> Compilando questo modulo potrai candidarti come Partner Manager del server.",
+        "<a:VC_Timer:1462779065625739344> In caso verrete accettati farete una prova di 1/2 settimane",
+        "<:vsl_ticket:1329520261053022208> Se hai dei dubbi apri un ticket terza categoria.",
+        "",
+        "<a:VC_Alert:1448670089670037675> **__LEGGI BENE ALL'INTERNO DEI RIQUADRI LA DOMANDA E POI RISPONDI__**",);
   }
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Candidatura Helper")
+    .setTitle("<:helper:1443651909448630312> Candidatura Helper")
     .setDescription(
-      "Compilando questo modulo potrai candidarti come Helper del server.\nIn caso verrete accettati farete una prova di 1/2 settimane\nSe hai dei dubbi apri un ticket terza categoria.\n\n**__LEGGI BENE ALL'INTERNO DEI RIQUADRI LA DOMANDA E POI RISPONDI__**",
+      "<:VC_Poll:1448695754972729436> Compilando questo modulo potrai candidarti come Helper del server.",
+      "<a:VC_Timer:1462779065625739344> In caso verrete accettati farete una prova di 1/2 settimane",
+      "<:vsl_ticket:1329520261053022208> Se hai dei dubbi apri un ticket terza categoria.",
+      "",
+      "<a:VC_Alert:1448670089670037675> **__LEGGI BENE ALL'INTERNO DEI RIQUADRI LA DOMANDA E POI RISPONDI__**",
     );
 }
 
@@ -328,11 +333,11 @@ function buildFinalThanksEmbed(untilTs) {
     .setTitle("<:vegacheckmark:1443666279058772028> Candidatura inviata")
     .setDescription(
       [
-        "Grazie per esserti candidato.",
+        "<a:VC_ThankYou:1330186319673950401> Grazie per esserti candidato.",
         "",
-        `Non potrai inviare una nuova candidatura prima di: <t:${unix}:F> (<t:${unix}:R>).`,
+        `<:VC_update:1478721333096349817> Non potrai inviare una nuova candidatura prima di: <t:${unix}:F> (<t:${unix}:R>).`,
         "",
-        "Non aprire ticket e non pingare lo staff per chiedere l'esito, altrimenti la candidatura verrà automaticamente scartata.",
+        "<a:VC_Alert:1448670089670037675> Non aprire ticket e non pingare lo staff per chiedere l'esito, altrimenti la candidatura verrà automaticamente scartata.",
       ].join("\n"),
     );
 }
@@ -341,7 +346,7 @@ function buildCandidatePexRow(type, userId) {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(`${APPLY_PEX_PREFIX}:${type}:${userId}`)
-      .setEmoji("<:vegacheckmark:1443666279058772028>")
+      .setEmoji("<:success:1461731530333229226>")
       .setStyle(ButtonStyle.Success),
   );
 }
@@ -376,7 +381,7 @@ async function enforceEligibility(interaction, type) {
     return false;
   }
   if (type === "helper" && hasAnyRole(interaction, HELPER_REAPPLY_BLOCK_ROLE_IDS)) {
-    const highestRoleId=getHighestRoleId(interaction,HELPER_REAPPLY_BLOCK_ROLE_IDS)||HELPER_ROLE_ID;
+    const highestRoleId = getHighestRoleId(interaction, HELPER_REAPPLY_BLOCK_ROLE_IDS) || HELPER_ROLE_ID;
     await interaction.reply({
       embeds: [buildAlreadyRoleEmbed(highestRoleId)],
       flags: 1 << 6,
@@ -401,14 +406,15 @@ function buildModal(type, step, prefillAnswers = {}) {
   const selected = chunks[step - 1];
   if (!selected) return null;
 
-  const modal=new ModalBuilder().setCustomId(`${MODAL_PREFIX}:${type}:${step}`)
-    .setTitle(`${cfg.label}-Modulo ${step}/${chunks.length}`);
+  const modal = new ModalBuilder().setCustomId(`${MODAL_PREFIX}:${type}:${step}`)
+    .setTitle(`${cfg.label}- Modulo ${step}/${chunks.length}`);
 
-  const rows=selected.map((q) => {const maxLen=q.style===TextInputStyle.Short?120:1000;const input=new TextInputBuilder().setCustomId(q.id).setLabel(String(q.modalLabel||q.text||"Domanda").replace(/\s+/g," ").trim().slice(0,45)).setStyle(q.style||TextInputStyle.Paragraph).setRequired(true).setPlaceholder(`${String(q.text||q.modalLabel||"Domanda").replace(/\s+/g," ").trim()}|${String(q.placeholder||"Rispondi qui").replace(/\s+/g," ").trim()}`
-          .replace(/\s+/g, " ")
-          .trim()
-          .slice(0, 100),
-      )
+  const rows = selected.map((q) => {
+    const maxLen = q.style === TextInputStyle.Short ? 120 : 1000; const input = new TextInputBuilder().setCustomId(q.id).setLabel(String(q.modalLabel || q.text || "Domanda").replace(/\s+/g, " ").trim().slice(0, 45)).setStyle(q.style || TextInputStyle.Paragraph).setRequired(true).setPlaceholder(`${String(q.text || q.modalLabel || "Domanda").replace(/\s+/g, " ").trim()}|${String(q.placeholder || "Rispondi qui").replace(/\s+/g, " ").trim()}`
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 100),
+    )
       .setMaxLength(maxLen);
     const saved = String(prefillAnswers?.[q.id] || "").trim();
     if (saved) input.setValue(saved.slice(0, maxLen));
@@ -438,8 +444,8 @@ function formatApplicationDescription(type, answers) {
   const cfg = APPLICATIONS[type];
   const blocks = [];
   for (const q of cfg.questions) {
-    const answer=String(answers?.[q.id]||"Nessuna risposta").replace(/\r/g,"").replace(/\n{3,}/g,"\n\n").trim()||"Nessuna risposta";
-    const question=String(q.text||"").replace(/^(\d+)\./,"$1\\.").trim();
+    const answer = String(answers?.[q.id] || "Nessuna risposta").replace(/\r/g, "").replace(/\n{3,}/g, "\n\n").trim() || "Nessuna risposta";
+    const question = String(q.text || "").replace(/^(\d+)\./, "$1\\.").trim();
     blocks.push(`**${question}**\n${answer}`);
   }
   return blocks.join("\n\n").trim();
@@ -458,9 +464,10 @@ async function resolveSubmissionChannel(interaction) {
 async function sendIntro(interaction, type) {
   const userId = String(interaction.user?.id || "");
   const embed = buildIntroEmbed(type);
-  const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`${APPLY_START_PREFIX}:${type}:${userId}`)
-      .setLabel("Inizia modulo")
-      .setStyle(ButtonStyle.Primary),
+  const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`${APPLY_START_PREFIX}:${type}:${userId}`)
+    .setLabel("Inizia")
+    .setStyle(ButtonStyle.Primary)
+    .setEmoji("<:success:1461731530333229226>")
   );
   await interaction.reply({
     embeds: [embed],
@@ -476,14 +483,15 @@ async function handleStartButton(interaction, type, step = 1, forceStep = false)
     const draft = getDraftState(stateKey);
     if (draft?.nextStep > 1) {
       const totalSteps = splitQuestions(APPLICATIONS[type]?.questions || [], 4).length || 1;
-      const row1=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`${APPLY_START_PREFIX}:${type}:${interaction.user.id}:${draft.nextStep}`)
-          .setLabel(`Riprendi dalla pagina ${draft.nextStep}`)
-          .setStyle(ButtonStyle.Primary),
+      const row1 = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`${APPLY_START_PREFIX}:${type}:${interaction.user.id}:${draft.nextStep}`)
+        .setLabel(`Riprendi dalla pagina ${draft.nextStep}`)
+        .setStyle(ButtonStyle.Primary)
+        .setEmoji("<:VC_Refresh:1473359252276904203>"),
       );
       const row2 = buildPagePickerRow(type, interaction.user.id, totalSteps, draft.nextStep);
       await interaction.reply({
         content:
-          "Hai una candidatura in bozza. Puoi riprendere dall'ultima pagina o aprire una pagina specifica per correggere.",
+          "<:VC_update:1478721333096349817> Hai una candidatura in bozza. Puoi riprendere dall'ultima pagina o aprire una pagina specifica per correggere.",
         components: [row1, row2],
         flags: 1 << 6,
       }).catch(() => null);
@@ -498,7 +506,7 @@ async function handleStartButton(interaction, type, step = 1, forceStep = false)
       if (!draft?.answers) {
         await interaction.reply({
           content:
-            "<:vegax:1443934876440068179> Sessione candidatura scaduta. Clicca di nuovo il bottone candidatura.",
+            "<a:VC_Alert:1448670089670037675> Sessione candidatura scaduta. Clicca di nuovo il bottone candidatura.",
           flags: 1 << 6,
         }).catch(() => null);
         return true;
@@ -525,7 +533,7 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
   if (!channel?.isTextBased?.()) {
     await interaction.reply({
       content:
-        "<:vegax:1443934876440068179> Non trovo il canale `visioneModuli` per inviare la candidatura.",
+        "<a:VC_Alert:1448670089670037675> Non trovo il canale `visioneModuli` per inviare la candidatura.",
       flags: 1 << 6,
     }).catch(() => null);
     return true;
@@ -533,7 +541,7 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
 
   const user = interaction.user;
   const applicationNumber = nextApplicationNumber(type);
-  const embed=new EmbedBuilder().setColor("#3498DB").setAuthor({name:user.username,iconURL:user.displayAvatarURL({size:128}),}).setTitle(`CANDIDATURA ${cfg.label.toUpperCase()}(#${applicationNumber})`)
+  const embed = new EmbedBuilder().setColor("#3498DB").setAuthor({ name: user.username, iconURL: user.displayAvatarURL({ size: 128 }), }).setTitle(`<:VC_Poll:1448695754972729436> CANDIDATURA ${cfg.label.toUpperCase()}(#${applicationNumber})`)
     .setDescription(formatApplicationDescription(type, state.answers))
     .setFooter({
       text: `User ID:${user.id}\u2022${new Date().toLocaleString("it-IT")}`,
@@ -542,31 +550,32 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
 
   const highStaffRoleId = IDs.roles.HighStaff;
   const mention = highStaffRoleId ? `<@&${highStaffRoleId}>` : null;
-  const sent=await channel.send({content:mention||undefined,embeds:[embed],components:[buildCandidatePexRow(type,user.id)],}).catch(() => null);
+  const sent = await channel.send({ content: mention || undefined, embeds: [embed], components: [buildCandidatePexRow(type, user.id)], }).catch(() => null);
   if (!sent) {
     await interaction.reply({
       content:
-        "<:vegax:1443934876440068179> Non sono riuscito a inviare la candidatura. Riprova più tardi.",
+        "<a:VC_Alert:1448670089670037675> Non sono riuscito a inviare la candidatura. Riprova più tardi.",
       flags: 1 << 6,
     }).catch(() => null);
     return true;
   }
 
   if (typeof sent.startThread === "function") {
-    const threadUserLabel=String(user.globalName||user.username||user.id).replace(/[\r\n#:@<>`]/g, " ")
+    const threadUserLabel = String(user.globalName || user.username || user.id).replace(/[\r\n#:@<>`]/g, " ")
       .replace(/\s+/g, " ")
       .trim()
       .slice(0, 70) || user.id;
-    const thread=await sent.startThread({name:`Candidatura ${threadUserLabel}`,
-        autoArchiveDuration: 1440,
-        reason: `Thread candidatura ${cfg.label}per ${user.tag}`,
-      })
+    const thread = await sent.startThread({
+      name: `Candidatura ${threadUserLabel}`,
+      autoArchiveDuration: 1440,
+      reason: `Thread candidatura ${cfg.label}per ${user.tag}`,
+    })
       .catch(() => null);
     if (thread?.isTextBased?.() && highStaffRoleId) {
       const pingMsg = await thread.send({ content: `<@&${highStaffRoleId}>` }).catch(() => null);
       if (pingMsg) {
         const pingCleanupTimer = setTimeout(() => {
-          pingMsg.delete().catch(() => {});
+          pingMsg.delete().catch(() => { });
         }, 2500);
         pingCleanupTimer.unref?.();
       }
@@ -574,7 +583,7 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
   }
 
   for (const emoji of APPLICATION_REACTIONS) {
-    await sent.react(emoji).catch(() => {});
+    await sent.react(emoji).catch(() => { });
   }
 
   const nextAllowedAt = Date.now() + APPLICATION_COOLDOWN_MS;
@@ -588,53 +597,39 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
   return true;
 }
 
-async function getOrCreateStaffDoc(guildId, userId) {
-  const StaffModel = require("../../Schemas/Staff/staffSchema");
-  let doc = await StaffModel.findOne({ guildId, userId });
-  if (!doc) doc = new StaffModel({ guildId, userId });
-  return doc;
-}
-
 async function sendPartnerManagerWelcome(pmChannel, user) {
   if (!pmChannel?.isTextBased?.()) return;
   await pmChannel.send({
-    content: `
-${user}
-# Benvenutx nei Partner Manager <:partneredserverowner:1443651871125409812>
-> **Per iniziare al meglio controlla:** <:discordchannelwhite:1443308552536985810>
-<:dot:1443660294596329582> <#1442569199229730836>
-__Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103564238930>`,
+    content: `${user}
+# Benvenutx nei Partner Manager <:partnermanager:1443651916838998099>
+
+> **Per iniziare al meglio controlla:** <:VC_id:1478517313618575419>
+<:VC_Reply:1468262952934314131> <#1442569199229730836>
+
+__Per qualsiasi cosa l'High Staff è disponibile__ <:staff:1443651912179388548>`,
   }).catch(() => null);
 }
 
 async function sendHelperWelcome(staffChannel, user) {
   if (!staffChannel?.isTextBased?.()) return;
   await staffChannel.send({
-    content: `
-${user}
-# Benvenutx nello staff <:discordstaff:1443651872258003005>
-> **Per iniziare al meglio controlla:** <:discordchannelwhite:1443308552536985810>
-<:dot:1443660294596329582> <#1442569237142044773>
-<:dot:1443660294596329582> <#1442569239063167139>
-<:dot:1443660294596329582> <#1442569243626307634>
-__Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103564238930>`,
-  }).catch(() => null);
-}
+    content: `${user}
+# Benvenutx nello staff <:staff:1443651912179388548>
 
-async function deleteThreadForStarterMessage(guild, starterMessage) {
-  const starterId = String(starterMessage?.id || "");
-  if (!/^\d{16,20}$/.test(starterId)) return;
-  const thread=guild.channels.cache.get(starterId)||(await getGuildChannelCached(guild,starterId));
-  if (thread?.isThread?.()) {
-    await thread.delete().catch(() => null);
-  }
+> **Per iniziare al meglio controlla:** <:VC_id:1478517313618575419>
+<:VC_DoubleReply:1468713981152727120> <#1442569237142044773>
+<:VC_DoubleReply:1468713981152727120> <#1442569239063167139>
+<:VC_Reply:1468262952934314131> <#1442569243626307634>
+
+__Per qualsiasi cosa l'High Staff è disponibile__ <:staff:1443651912179388548>`,
+  }).catch(() => null);
 }
 
 async function applyCandidatePex(guild, actor, type, userId, reason, sourceMessage) {
   const targetRoleId = type === "partnermanager" ? PARTNER_MANAGER_ROLE_ID : HELPER_ROLE_ID;
   if (!targetRoleId) return "Ruolo target non configurato.";
 
-  const member=guild.members.cache.get(String(userId))||(await getGuildMemberCached(guild,String(userId)));
+  const member = guild.members.cache.get(String(userId)) || (await getGuildMemberCached(guild, String(userId)));
   if (!member) return "Utente non trovato nel server.";
   if (member.roles.cache.has(String(targetRoleId))) return "Utente già pexato su quel ruolo.";
 
@@ -663,11 +658,11 @@ async function applyCandidatePex(guild, actor, type, userId, reason, sourceMessa
         return "Ruolo Helper assegnato, ma non sono riuscito ad aggiungere il ruolo Staff.";
       }
     }
-    const staffChat=guild.channels.cache.get(IDs.channels.staffChat)||(await getGuildChannelCached(guild,IDs.channels.staffChat));
+    const staffChat = guild.channels.cache.get(IDs.channels.staffChat) || (await getGuildChannelCached(guild, IDs.channels.staffChat));
     await sendHelperWelcome(staffChat, member.user);
   }
   if (String(targetRoleId) === String(PARTNER_MANAGER_ROLE_ID)) {
-    const pmChannel=guild.channels.cache.get(IDs.channels.partnersChat)||(await getGuildChannelCached(guild,IDs.channels.partnersChat));
+    const pmChannel = guild.channels.cache.get(IDs.channels.partnersChat) || (await getGuildChannelCached(guild, IDs.channels.partnersChat));
     await sendPartnerManagerWelcome(pmChannel, member.user);
   }
 
@@ -682,20 +677,20 @@ async function applyCandidatePex(guild, actor, type, userId, reason, sourceMessa
   });
   await staffDoc.save();
 
-  const pexDepexChannel=guild.channels.cache.get(IDs.channels.pexDepex)||(await getGuildChannelCached(guild,IDs.channels.pexDepex));
+  const pexDepexChannel = guild.channels.cache.get(IDs.channels.pexDepex) || (await getGuildChannelCached(guild, IDs.channels.pexDepex));
   if (pexDepexChannel?.isTextBased?.()) {
     const oldRole = guild.roles.cache.get(roleBeforeId);
     const newRole = guild.roles.cache.get(String(targetRoleId));
     await pexDepexChannel.send({
-      content: `**<a:everythingisstable:1444006799643508778> PEX** <@${member.id}>
-<:member_role_icon:1330530086792728618> \`${oldRole?.name || roleBeforeId || "N/A"}\` <a:vegarightarrow:1443673039156936837> \`${newRole?.name || targetRoleId}\`
-<:discordstaff:1443651872258003005> __${reason}__`,
+      content: `**<:success:1461731530333229226> PEX** <@${member.id}>
+<:staff:1443651912179388548> \`${oldRole?.name || roleBeforeId || "N/A"}\` <a:VC_Arrow:1448672967721615452> \`${newRole?.name || targetRoleId}\`
+<:VC_reason:1478517122929004544> __${reason}__`,
     }).catch(() => null);
   }
 
   if (sourceMessage) {
     await sourceMessage.edit({ components: [] }).catch(() => null);
-    await deleteThreadForStarterMessage(guild, sourceMessage);
+    await deleteThreadForMessage(guild, sourceMessage);
   }
 
   return `Pex completato per <@${member.id}>.`;
@@ -753,7 +748,7 @@ async function handleModalSubmit(interaction, type, stepRaw) {
   if (type === "helper" && hasAnyRole(interaction, HELPER_REAPPLY_BLOCK_ROLE_IDS)) {
     pendingApplications.delete(stateKey);
     clearDraftState(stateKey);
-    const highestRoleId=getHighestRoleId(interaction,HELPER_REAPPLY_BLOCK_ROLE_IDS)||HELPER_ROLE_ID;
+    const highestRoleId = getHighestRoleId(interaction, HELPER_REAPPLY_BLOCK_ROLE_IDS) || HELPER_ROLE_ID;
     await interaction.reply({
       embeds: [buildAlreadyRoleEmbed(highestRoleId)],
       flags: 1 << 6,
@@ -776,7 +771,7 @@ async function handleModalSubmit(interaction, type, stepRaw) {
     if (!draft?.answers) {
       await interaction.reply({
         content:
-          "<:vegax:1443934876440068179> Sessione candidatura non valida. Clicca di nuovo il bottone candidatura.",
+          "<:VC_Refresh:1473359252276904203> Sessione candidatura non valida. Clicca di nuovo il bottone candidatura.",
         flags: 1 << 6,
       }).catch(() => null);
       return true;
@@ -797,22 +792,24 @@ async function handleModalSubmit(interaction, type, stepRaw) {
   if (nextStep <= chunks.length) {
     pendingApplications.set(stateKey, activeState);
     setDraftState(stateKey, activeState.answers, nextStep);
-    const controls=[new ButtonBuilder().setCustomId(`${APPLY_START_PREFIX}:${type}:${interaction.user.id}:${nextStep}`)
-        .setLabel(`Continua modulo(${nextStep}/${chunks.length})`)
-        .setStyle(ButtonStyle.Primary),
+    const controls = [new ButtonBuilder().setCustomId(`${APPLY_START_PREFIX}:${type}:${interaction.user.id}:${nextStep}`)
+      .setLabel(`Continua (${nextStep}/${chunks.length})`)
+      .setStyle(ButtonStyle.Primary)
+      .setEmoji("<:VC_Refresh:1473359252276904203>")
     ];
     if (step >= 1) {
       controls.push(
         new ButtonBuilder()
           .setCustomId(`${APPLY_BACK_PREFIX}:${type}:${interaction.user.id}:${step}`)
           .setLabel(`Indietro (${step}/${chunks.length})`)
-          .setStyle(ButtonStyle.Secondary),
+          .setStyle(ButtonStyle.Secondary)
+          .setEmoji("<a:vegaleftarrow:1462914743416131816>")
       );
     }
     const row = new ActionRowBuilder().addComponents(...controls);
     const pageRow = buildPagePickerRow(type, interaction.user.id, chunks.length, nextStep);
     await interaction.reply({
-      content: "Puoi continuare oppure tornare indietro per correggere le risposte.",
+      content: "<:PinkQuestionMark:1471892611026391306> Puoi continuare oppure tornare indietro per correggere le risposte.",
       components: [row, pageRow],
       flags: 1 << 6,
     }).catch(() => null);
@@ -830,14 +827,14 @@ async function handleCandidatureApplicationInteraction(interaction) {
       if (!parsed) return false;
       if (!hasHighStaffRole(interaction)) {
         await interaction.reply({
-          content: "<:vegax:1443934876440068179> Questo bottone è riservato all'High Staff.",
+          content: "<a:VC_Alert:1448670089670037675> Questo bottone è riservato all'High Staff.",
           flags: 1 << 6,
         }).catch(() => null);
         return true;
       }
-      const modal=new ModalBuilder().setCustomId(`${APPLY_PEX_MODAL_PREFIX}:${parsed.type}:${parsed.userId}:${interaction.message.id}`)
+      const modal = new ModalBuilder().setCustomId(`${APPLY_PEX_MODAL_PREFIX}:${parsed.type}:${parsed.userId}:${interaction.message.id}`)
         .setTitle("Motivo Pex Candidatura");
-      const reasonInput=new TextInputBuilder().setCustomId(APPLY_PEX_REASON_INPUT_ID).setLabel("Motivo").setStyle(TextInputStyle.Paragraph).setRequired(true).setMinLength(3).setMaxLength(500);
+      const reasonInput = new TextInputBuilder().setCustomId(APPLY_PEX_REASON_INPUT_ID).setLabel("Motivo").setStyle(TextInputStyle.Paragraph).setRequired(true).setMinLength(3).setMaxLength(500);
       modal.addComponents(new ActionRowBuilder().addComponents(reasonInput));
       await interaction.showModal(modal).catch(() => null);
       return true;
@@ -863,7 +860,7 @@ async function handleCandidatureApplicationInteraction(interaction) {
       if (String(ownerId) !== String(interaction.user?.id || "")) {
         await interaction.reply({
           content:
-            "<:vegax:1443934876440068179> Questo modulo non è associato al tuo click iniziale.",
+            "<a:VC_Alert:1448670089670037675> Questo modulo non è associato al tuo click iniziale.",
           flags: 1 << 6,
         }).catch(() => null);
         return true;
@@ -880,7 +877,7 @@ async function handleCandidatureApplicationInteraction(interaction) {
       if (String(ownerId) !== String(interaction.user?.id || "")) {
         await interaction.reply({
           content:
-            "<:vegax:1443934876440068179> Questo modulo non è associato al tuo click iniziale.",
+            "<a:VC_Alert:1448670089670037675> Questo modulo non è associato al tuo click iniziale.",
           flags: 1 << 6,
         }).catch(() => null);
         return true;
@@ -897,7 +894,7 @@ async function handleCandidatureApplicationInteraction(interaction) {
       if (String(ownerId) !== String(interaction.user?.id || "")) {
         await interaction.reply({
           content:
-            "<:vegax:1443934876440068179> Questo modulo non è associato al tuo click iniziale.",
+            "<a:VC_Alert:1448670089670037675> Questo modulo non è associato al tuo click iniziale.",
           flags: 1 << 6,
         }).catch(() => null);
         return true;
@@ -916,7 +913,7 @@ async function handleCandidatureApplicationInteraction(interaction) {
     if (!parsed) return false;
     if (!hasHighStaffRole(interaction)) {
       await interaction.reply({
-        content: "<:vegax:1443934876440068179> Questo modulo è riservato all'High Staff.",
+        content: "<a:VC_Alert:1448670089670037675> Questo modulo è riservato all'High Staff.",
         flags: 1 << 6,
       }).catch(() => null);
       return true;
@@ -925,28 +922,28 @@ async function handleCandidatureApplicationInteraction(interaction) {
     if (candidatePexLocks.has(pexLockKey)) {
       await interaction.reply({
         content:
-          "<:attentionfromvega:1443651874032062505> Questa candidatura è già in elaborazione.",
+          "<a:VC_Alert:1448670089670037675> Questa candidatura è già in elaborazione.",
         flags: 1 << 6,
       }).catch(() => null);
       return true;
     }
     candidatePexLocks.add(pexLockKey);
     try {
-    const reason=String(interaction.fields.getTextInputValue(APPLY_PEX_REASON_INPUT_ID)||"",).trim();
-    if (!reason) {
+      const reason = String(interaction.fields.getTextInputValue(APPLY_PEX_REASON_INPUT_ID) || "",).trim();
+      if (!reason) {
+        await interaction.reply({
+          content: "<a:VC_Alert:1448670089670037675> Devi inserire un motivo valido.",
+          flags: 1 << 6,
+        }).catch(() => null);
+        return true;
+      }
+      const srcMessage = await interaction.channel?.messages?.fetch(parsed.messageId).catch(() => null);
+      const status = await applyCandidatePex(interaction.guild, interaction.user, parsed.type, parsed.userId, reason, srcMessage,);
       await interaction.reply({
-        content: "<:vegax:1443934876440068179> Devi inserire un motivo valido.",
+        content: status,
         flags: 1 << 6,
       }).catch(() => null);
       return true;
-    }
-    const srcMessage=await interaction.channel?.messages?.fetch(parsed.messageId).catch(() => null);
-    const status=await applyCandidatePex(interaction.guild,interaction.user,parsed.type,parsed.userId,reason,srcMessage,);
-    await interaction.reply({
-      content: status,
-      flags: 1 << 6,
-    }).catch(() => null);
-    return true;
     } finally {
       candidatePexLocks.delete(pexLockKey);
     }
@@ -960,6 +957,4 @@ async function handleCandidatureApplicationInteraction(interaction) {
   return handleModalSubmit(interaction, type, step);
 }
 
-module.exports = {
-  handleCandidatureApplicationInteraction,
-};
+module.exports = { handleCandidatureApplicationInteraction };

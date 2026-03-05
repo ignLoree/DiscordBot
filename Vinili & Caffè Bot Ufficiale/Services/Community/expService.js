@@ -2,7 +2,6 @@ const { ExpUser, GlobalSettings, LevelHistory, EventUserExpSnapshot, } = require
 const IDs = require("../../Utils/Config/ids");
 const { getNoDmSet } = require("../../Utils/noDmList");
 const EXP_EXCLUDED_CATEGORY_IDS = new Set([IDs.categories.categoryGames].filter(Boolean).map((id) => String(id)),);
-
 const TIME_ZONE = "Europe/Rome";
 const MESSAGE_EXP = 2;
 const VOICE_EXP_PER_MINUTE = 5;
@@ -16,7 +15,6 @@ const PERK_ROLE_ID = IDs.roles.PicPerms;
 const LEVEL_ROLE_MAP = new Map([[10, IDs.roles.Level10], [20, IDs.roles.Level20], [30, IDs.roles.Level30], [50, IDs.roles.Level50], [70, IDs.roles.Level70], [100, IDs.roles.Level100],]);
 const PERK_NEAR_LEVEL_DISTANCE = 2;
 const ROLE_MULTIPLIERS = new Map([[IDs.roles.Donator, 3], [IDs.roles.VIP, 4], [IDs.roles.ServerBooster, 2],]);
-
 const EVENT_STAFF_ROLE_IDS = new Set([IDs.roles.Staff, IDs.roles.HighStaff,].filter(Boolean).map((id) => String(id)),);
 
 function isEventStaffMember(member) {
@@ -268,7 +266,6 @@ async function snapshotExpForEvent(guildId) {
   }
 }
 
-/** Disattiva l'evento Activity EXP e ripristina i moltiplicatori. L'evento staff è indipendente e non viene toccato. */
 async function clearActivityEvent(guildId) {
   if (!guildId) return;
   await GlobalSettings.findOneAndUpdate(
@@ -328,15 +325,7 @@ async function getStaffEventSettings(guildId) {
   };
 }
 
-async function recordLevelHistory({
-  guildId,
-  userId,
-  actorId = null,
-  action = "update",
-  beforeExp = 0,
-  afterExp = 0,
-  note = null,
-}) {
+async function recordLevelHistory(guildId, userId, actorId = null, action = "update", beforeExp = 0, afterExp = 0, note = null) {
   if (!guildId || !userId) return null;
   const beforeLevel = getLevelInfo(beforeExp).level;
   const afterLevel = getLevelInfo(afterExp).level;
@@ -354,13 +343,7 @@ async function recordLevelHistory({
   }).catch(() => null);
 }
 
-async function addExp(
-  guildId,
-  userId,
-  amount,
-  applyMultiplier = false,
-  weeklyAmountOverride = null,
-) {
+async function addExp(guildId, userId, amount, applyMultiplier = false, weeklyAmountOverride = null) {
   if (!guildId || !userId || !Number.isFinite(amount)) return null;
   const now = new Date();
   let doc = await ExpUser.findOne({ guildId, userId });
@@ -465,22 +448,22 @@ async function sendPerksLevelMessage(guild, member, level) {
 }
 
 function buildPerkNearDmEmbed(member, targetLevel, roleLabel, missingExp) {
-  const safeRoleLabel = String(roleLabel || "ruolo sconosciuto").trim();
+  const safeRoleLabel = String(roleLabel || "<:VC_Role:1448670089670037675> Ruolo sconosciuto").trim();
   return {
     embeds: [
       {
         color: 0x6f4e37,
-        title: "Sei vicino a un nuovo perk!",
+        title: "<:VC_Info:1448670089670037675> Sei vicino a un nuovo perk!",
         thumbnail: {
           url: member?.user?.displayAvatarURL({ size: 256 }),
         },
         description: [
           `<a:VC_PandaClap:1331620157398712330> ${member}, ci sei quasi!`,
-          `Sei vicino al ruolo **${safeRoleLabel}** (livello \`${targetLevel}\`).`,
-          `Ti mancano **${Math.max(0, Number(missingExp || 0))} EXP**.`,
+          `<:VC_Role:1448670089670037675> Sei vicino al ruolo **${safeRoleLabel}** (livello \`${targetLevel}\`).`,
+          `<:VC_EXP:1468714279673925883> Ti mancano **${Math.max(0, Number(missingExp || 0))} EXP**.`,
           PERKS_CHANNEL_ID
-            ? `Info perks: <#${PERKS_CHANNEL_ID}>`
-            : "Controlla il canale info del server.",
+            ? `<:VC_Info:1448670089670037675> Info perks: <#${PERKS_CHANNEL_ID}>`
+            : "<:VC_Info:1448670089670037675> Controlla il canale info del server.",
         ].join("\n"),
       },
     ],
@@ -549,7 +532,7 @@ async function sendLevelUpPayload(channel, member, payload) {
   if (!channel || !member || !payload) return;
   await channel
     .send({
-      content: `${member} sei salito/a di livello! <a:VC_LevelUp:1469046204582068376>`,
+      content: `<:VC_LevelUp:1443701876892762243> ${member} sei salito/a di livello!`,
       ...payload,
     })
     .catch(() => { });
@@ -611,13 +594,7 @@ async function syncLevelRolesForMember(guild, userId, level) {
   return awarded;
 }
 
-async function addExpWithLevel(
-  guild,
-  userId,
-  amount,
-  applyMultiplier = false,
-  includeWeekly = true,
-) {
+async function addExpWithLevel(guild, userId, amount, applyMultiplier = false, includeWeekly = true) {
   if (!guild || !userId) return null;
   let effectiveAmount = amount;
   if (applyMultiplier) {
@@ -927,36 +904,4 @@ async function retroSyncGuildLevels(guild, { syncRoles = true } = {}) {
   return { scanned, changed, raised, lowered, roleSynced };
 }
 
-module.exports = {
-  MESSAGE_EXP,
-  VOICE_EXP_PER_MINUTE,
-  addExp,
-  addExpWithLevel,
-  getUserExpStats,
-  getUserRanks,
-  getLevelInfo,
-  getTotalExpForLevel,
-  getGlobalMultiplier,
-  setGlobalMultiplier,
-  setTemporaryEventMultiplier,
-  setActivityEvent,
-  clearActivityEvent,
-  clearStaffEvent,
-  setStaffEvent,
-  getStaffEventSettings,
-  getGuildExpSettings,
-  invalidateSettingsCache,
-  setLevelChannelLocked,
-  setRoleIgnored,
-  shouldIgnoreExpForMember,
-  recordLevelHistory,
-  getRecentLevelHistory,
-  getLevelHistoryPage,
-  syncLevelRolesForMember,
-  retroSyncGuildLevels,
-  getRoleMultiplier,
-  getCurrentWeekKey,
-  ROLE_MULTIPLIERS,
-  isEventStaffMember,
-  scheduleEventLevelUpMessage,
-};
+module.exports = { MESSAGE_EXP, VOICE_EXP_PER_MINUTE, addExp, addExpWithLevel, getUserExpStats, getUserRanks, getLevelInfo, getTotalExpForLevel, getGlobalMultiplier, setGlobalMultiplier, setTemporaryEventMultiplier, setActivityEvent, clearActivityEvent, clearStaffEvent, setStaffEvent, getStaffEventSettings, getGuildExpSettings, invalidateSettingsCache, setLevelChannelLocked, setRoleIgnored, shouldIgnoreExpForMember, recordLevelHistory, getRecentLevelHistory, getLevelHistoryPage, syncLevelRolesForMember, retroSyncGuildLevels, getRoleMultiplier, getCurrentWeekKey, ROLE_MULTIPLIERS, isEventStaffMember, scheduleEventLevelUpMessage };

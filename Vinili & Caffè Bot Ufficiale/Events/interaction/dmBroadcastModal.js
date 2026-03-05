@@ -2,57 +2,19 @@ const { EmbedBuilder } = require("discord.js");
 const { getNoDmSet } = require("../../Utils/noDmList");
 const IDs = require("../../Utils/Config/ids");
 const { getUserCached } = require("../../Utils/Interaction/interactionEntityCache");
+const { splitMessage, chunkLines } = require("../../Utils/Message/messageChunkUtils");
 
-const getStaffRoleIds=(client) => {void client;return[IDs.roles.Staff,IDs.roles.PartnerManager,IDs.roles.HighStaff].map((id) => String(id||"").trim()).filter(Boolean);};
+const getStaffRoleIds = (client) => { void client; return [IDs.roles.Staff, IDs.roles.PartnerManager, IDs.roles.HighStaff].map((id) => String(id || "").trim()).filter(Boolean); };
 
 function collectOpenDmRecipientIds(client) {
   const ids = new Set();
   if (!client?.channels?.cache) return ids;
   for (const channel of client.channels.cache.values()) {
     if (!channel?.isDMBased?.()) continue;
-    const recipientId=String(channel?.recipientId||channel?.recipient?.id||"",);
+    const recipientId = String(channel?.recipientId || channel?.recipient?.id || "",);
     if (recipientId) ids.add(recipientId);
   }
   return ids;
-}
-
-function splitMessage(text, max = 1900) {
-  const chunks = [];
-  let current = "";
-  for (const line of String(text || "").split("\n")) {
-    const next = current ? `${current}\n${line}` : line;
-    if (next.length > max) {
-      if (current) chunks.push(current);
-      if (line.length > max) {
-        for (let i = 0; i < line.length; i += max) {
-          chunks.push(line.slice(i, i + max));
-        }
-        current = "";
-      } else {
-        current = line;
-      }
-    } else {
-      current = next;
-    }
-  }
-  if (current) chunks.push(current);
-  return chunks.length ? chunks : [""];
-}
-
-function chunkLines(lines, maxLen = 1800) {
-  const chunks = [];
-  let current = "";
-  for (const line of lines) {
-    const next = current ? `${current}\n${line}` : line;
-    if (next.length > maxLen) {
-      if (current) chunks.push(current);
-      current = line;
-    } else {
-      current = next;
-    }
-  }
-  if (current) chunks.push(current);
-  return chunks.length ? chunks : [""];
 }
 
 async function handleDmBroadcastModal(interaction, client) {
@@ -66,7 +28,7 @@ async function handleDmBroadcastModal(interaction, client) {
       content:
         "<:vegax:1443934876440068179> Questo modulo può essere usato solo in un server.",
       flags: 1 << 6,
-    }).catch(() => {});
+    }).catch(() => { });
     return true;
   }
   const partsId = String(interaction.customId || "").split(":");
@@ -106,12 +68,12 @@ async function handleDmBroadcastModal(interaction, client) {
     return true;
   }
 
-  await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
+  await interaction.deferReply({ flags: 1 << 6 }).catch(() => { });
 
   const staffRoleIds = getStaffRoleIds(client);
   const noDmSet = await getNoDmSet(interaction.guild.id);
   if (!targetId) {
-    await interaction.guild.members.fetch().catch(() => {});
+    await interaction.guild.members.fetch().catch(() => { });
   }
 
   const skippedNoDm = [];
@@ -162,7 +124,7 @@ async function handleDmBroadcastModal(interaction, client) {
 
   const content = message.replace(/@everyone|@here/g, "@​everyone");
   const parts = splitMessage(content);
-  const footerText="Se non vuoi ricevere più questi avvisi tramite DM fai il comando +dm-disable nel server";
+  const footerText = "Se non vuoi ricevere più questi avvisi tramite DM fai il comando +dm-disable nel server";
 
   let sent = 0;
   let failed = 0;
@@ -170,19 +132,19 @@ async function handleDmBroadcastModal(interaction, client) {
   let processed = 0;
   const total = targets.length;
 
-  const progressEmbed=(text) => new EmbedBuilder().setColor("#6f4e37").setDescription(text);
+  const progressEmbed = (text) => new EmbedBuilder().setColor("#6f4e37").setDescription(text);
 
   await interaction.editReply({
     embeds: [
-      progressEmbed(`Invio DM in corso...\nUtenti target: **${total}**`),
+      progressEmbed(`<a:VC_pixeltime:1470796283320209600> Invio DM in corso...\n<:VC_Mention:1443994358201323681> Utenti target: **${total}**`),
     ],
-  }).catch(() => {});
+  }).catch(() => { });
 
   for (const target of targets) {
     processed += 1;
     try {
       for (const part of parts) {
-        const embed=new EmbedBuilder().setColor("#6f4e37").setDescription(part).setFooter({text:footerText}).setTimestamp();
+        const embed = new EmbedBuilder().setColor("#6f4e37").setDescription(part).setFooter({ text: footerText }).setTimestamp();
         if (title) embed.setTitle(title);
         await target.user.send({
           embeds: [embed],
@@ -198,10 +160,10 @@ async function handleDmBroadcastModal(interaction, client) {
       await interaction.editReply({
         embeds: [
           progressEmbed(
-            `Invio DM in corso...\nUtenti target: **${total}**\nInviati: **${sent}**\nFalliti: **${failed}**`,
+            `<a:VC_pixeltime:1470796283320209600> Invio DM in corso...\n<:VC_Mention:1443994358201323681> Utenti target: **${total}**\n<a:VC_pixeltime:1470796283320209600> Inviati: **${sent}**\n<:cancel:1461730653677551691> Falliti: **${failed}**`,
           ),
         ],
-      }).catch(() => {});
+      }).catch(() => { });
     }
     await new Promise((r) => setTimeout(r, 750));
   }
@@ -209,29 +171,29 @@ async function handleDmBroadcastModal(interaction, client) {
   await interaction.editReply({
     embeds: [
       progressEmbed(
-        `Invio completato.\nUtenti target: **${total}**\nInviati: **${sent}**\nFalliti: **${failed}**`,
+        `<:thumbsup:1471292172145004768> Invio completato.\n<:VC_Mention:1443994358201323681> Utenti target: **${total}**\n<a:VC_pixeltime:1470796283320209600> Inviati: **${sent}**\n<:cancel:1461730653677551691> Falliti: **${failed}**`,
       ),
     ],
-  }).catch(() => {});
+  }).catch(() => { });
 
   if (failedIds.length || skippedNoDm.length) {
     const lines = [];
     if (failedIds.length) {
-      lines.push("**Non recapitati:**");
+      lines.push("<:vegax:1443934876440068179> **Non recapitati:**");
       for (const id of failedIds) {
         const note = noDmSet.has(id) ? " (no-dm)" : "";
         lines.push(`<@${id}>${note}`);
       }
     }
     if (skippedNoDm.length) {
-      lines.push("\n**Esclusi (no-dm):**");
+      lines.push("\n<:vegax:1443934876440068179>**Esclusi (no-dm):**");
       for (const id of skippedNoDm) {
         lines.push(`<@${id}> (no-dm)`);
       }
     }
     const chunks = chunkLines(lines);
     for (const chunk of chunks) {
-      await interaction.followUp({ content: chunk, flags: 1 << 6 }).catch(() => {});
+      await interaction.followUp({ content: chunk, flags: 1 << 6 }).catch(() => { });
     }
   }
   return true;

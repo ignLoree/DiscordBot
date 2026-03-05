@@ -1,0 +1,11 @@
+const RESOCONTO_APPLY_PREFIX = "resoconto_apply";
+const RESOCONTO_REJECT_PREFIX = "resoconto_reject";
+const RESOCONTO_REASON_MODAL_PREFIX = "resoconto_reason";
+const RESOCONTO_REASON_INPUT_ID = "reason";
+
+module.exports = {
+  RESOCONTO_APPLY_PREFIX,
+  RESOCONTO_REJECT_PREFIX,
+  RESOCONTO_REASON_MODAL_PREFIX,
+  RESOCONTO_REASON_INPUT_ID,
+};

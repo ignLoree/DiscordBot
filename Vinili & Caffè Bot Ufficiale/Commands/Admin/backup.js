@@ -3,8 +3,9 @@ const { safeEditReply } = require("../../Utils/Moderation/reply");
 const { createGuildBackup, readBackupByIdGlobal, listAllBackupMetas, } = require("../../Services/Backup/serverBackupService");
 const { createLoadSession, buildLoadWarningEmbed, buildLoadComponents, getGuildBackupLoadStatus, cancelGuildBackupLoad, } = require("../../Services/Backup/backupLoadService");
 const { renderList } = require("../../Services/Backup/backupListService");
+const { buildInfoButtons, buildDeleteConfirmButtons, buildDeleteWarningEmbed } = require("../../Buttons").backupInfo;
 const EPHEMERAL_FLAG = 1 << 6;
-const CHANNEL_TYPE_LABEL = { 0: "#", 2: "[VC]", 4: "[CAT]", 5: "[ANN]", 13: "[STAGE]", 15: "[FORUM]", 16: "[MEDIA]", };
+const CHANNEL_TYPE_LABEL = { 0: "<:channeltext:1443247596922470551>", 2: "<:voice:1467639623735054509>", 4: "<:VC_category:1478836096669581505>", 5: "<a:VC_Announce:1448687280381235443>", 13: "<:VC_stage:1478836138583134400>", 15: "<:forum:1470541157724328059>", 16: "<:link:1470064815899803668>", };
 
 function formatBytes(bytes) {
   const size = Number(bytes || 0);
@@ -47,11 +48,11 @@ function buildSuccessEmbed(interaction, result) {
     )
     .addFields([
       {
-        name: "Salvato",
+        name: "<:success:1461731530333229226> Salvato",
         value: [
           `<:member_role_icon:1330530086792728618> Membri/Bot: **${result.stats.members}**`,
           `<:VC_Mention:1443994358201323681> Ruoli: **${result.stats.roles}**`,
-          `<:discordchannelwhite:1443308552536985810> Canali: **${result.stats.channels}**`,
+          `<:channeltext:1443247596922470551> Canali: **${result.stats.channels}**`,
           `<:VC_threads:1478515497569095760> Thread: **${result.stats.threads}**`,
           `<:VC_Chat:1448694742237053061> Messaggi: **${result.stats.messages}**`,
           `<:VC_BanHammer:1443933132645732362> Bans: **${result.stats.bans}**`,
@@ -69,7 +70,7 @@ function buildSuccessEmbed(interaction, result) {
     .setTimestamp();
 }
 
-function buildErrorEmbed(error, title = "Backup non riuscito") {
+function buildErrorEmbed(error, title = "<:cancel:1461730653677551691> Backup non riuscito") {
   const detail = String(error?.message || error || "Errore sconosciuto").slice(0, 400,);
   return new EmbedBuilder()
     .setColor("Red")
@@ -155,12 +156,12 @@ function buildInfoEmbed(interaction, backupId, backupData, fileSize, checksum = 
 
   const minimalBackup = totalMessages <= 0 || members.length <= 0 || bans.length <= 0;
 
-  const embed = new EmbedBuilder().setColor("#3498db").setTitle(`Info Backup - ${guild.name || interaction.guild?.name || "Server sconosciuto"}`,
+  const embed = new EmbedBuilder().setColor("#3498db").setTitle(`<:VC_Info:1460670816214585481> Info Backup - ${guild.name || interaction.guild?.name || "Server sconosciuto"}`,
   )
     .setDescription(
       minimalBackup
         ? "<:vegax:1443934876440068179> Questo backup non contiene messaggi, membri o ban."
-        : "Questo backup contiene uno snapshot completo del server.",
+        : "<:VC_Info:1460670816214585481> Questo backup contiene uno snapshot completo del server.",
     )
     .addFields([
       {
@@ -192,52 +193,6 @@ function buildInfoEmbed(interaction, backupId, backupData, fileSize, checksum = 
       },]).setFooter({ text: interaction.guild?.name || "Backup", iconURL: interaction.guild?.iconURL?.() || null, }).setTimestamp();
 
   return embed;
-}
-
-function encodeBackupToken(backupId, sourceGuildId = null) {
-  const id = String(backupId || "").trim().toUpperCase();
-  const gid = String(sourceGuildId || "").trim();
-  return gid ? `${id}|${gid}` : id;
-}
-
-function buildInfoButtons(backupId, ownerId, sourceGuildId = null) {
-  const token = encodeBackupToken(backupId, sourceGuildId);
-  return new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`backup_info_load:${token}:${ownerId}`)
-      .setLabel("Carica backup")
-      .setStyle(ButtonStyle.Primary)
-      .setDisabled(false),
-    new ButtonBuilder()
-      .setCustomId(`backup_info_delete:${token}:${ownerId}`)
-      .setLabel("Elimina backup")
-      .setStyle(ButtonStyle.Danger)
-      .setDisabled(false),
-  );
-}
-
-function buildDeleteWarningEmbed() {
-  return new EmbedBuilder()
-    .setColor("#f1c40f")
-    .setTitle("<:success:1461731530333229226> Conferma eliminazione")
-    .setDescription(
-      '<:PinkQuestionMark:1471892611026391306> Vuoi davvero eliminare questo backup?',
-      '<a:S_News_3:1471891662786527253> **Questa azione non è reversibile.**'
-    );
-}
-
-function buildDeleteConfirmButtons(backupId, ownerId, sourceGuildId = null) {
-  const token = encodeBackupToken(backupId, sourceGuildId);
-  return new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`backup_delete_confirm:${token}:${ownerId}`)
-      .setLabel("Conferma")
-      .setStyle(ButtonStyle.Success),
-    new ButtonBuilder()
-      .setCustomId(`backup_delete_cancel:${token}:${ownerId}`)
-      .setLabel("Annulla")
-      .setStyle(ButtonStyle.Danger),
-  );
 }
 
 function buildLoadStatusEmbed(status) {
@@ -428,7 +383,7 @@ module.exports = {
         });
       } catch (error) {
         global.logger?.error?.("[backup.info] failed:", error);
-        const notFound = error?.code === "ENOENT" ? `Backup \`${backupRef}\` non trovato.` : error;
+        const notFound = error?.code === "ENOENT" ? `<:cancel:1461730653677551691> Backup \`${backupRef}\` non trovato.` : error;
         await safeEditReply(interaction, {
           embeds: [buildErrorEmbed(notFound, "<:vegax:1443934876440068179> Backup info non riuscito")],
           flags: EPHEMERAL_FLAG,
@@ -459,7 +414,7 @@ module.exports = {
         });
       } catch (error) {
         global.logger?.error?.("[backup.load] failed:", error);
-        const notFound = error?.code === "ENOENT" ? `Backup \`${backupRef}\` non trovato.` : error;
+        const notFound = error?.code === "ENOENT" ? `<:cancel:1461730653677551691> Backup \`${backupRef}\` non trovato.` : error;
         await safeEditReply(interaction, {
           embeds: [buildErrorEmbed(notFound, "<:vegax:1443934876440068179> Backup load non riuscito")],
           flags: EPHEMERAL_FLAG,
@@ -511,7 +466,7 @@ module.exports = {
         });
       } catch (error) {
         global.logger?.error?.("[backup.delete] failed:", error);
-        const notFound = error?.code === "ENOENT" ? `Backup \`${backupRef}\` non trovato.` : error;
+        const notFound = error?.code === "ENOENT" ? `<:cancel:1461730653677551691> Backup \`${backupRef}\` non trovato.` : error;
         await safeEditReply(interaction, {
           embeds: [buildErrorEmbed(notFound, "<:vegax:1443934876440068179> Backup delete non riuscito")],
           flags: EPHEMERAL_FLAG,

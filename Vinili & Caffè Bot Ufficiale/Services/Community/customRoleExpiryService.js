@@ -1,8 +1,7 @@
 const { ChannelType, PermissionsBitField } = require("discord.js");
 const { CustomRole } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");
-
-const CUSTOM_VOICE_CATEGORY_ID = IDs?.categories?.categoryPrivate || null;
+const CUSTOM_VOICE_CATEGORY_ID = IDs.categories.categoryPrivate;
 const CHECK_INTERVAL_MS = 60 * 1000;
 let expiryLoopHandle = null;
 
@@ -130,7 +129,4 @@ function startCustomRoleExpiryLoop(client) {
   return expiryLoopHandle;
 }
 
-module.exports = {
-  runExpiredCustomRolesSweep,
-  startCustomRoleExpiryLoop,
-};
+module.exports = { runExpiredCustomRolesSweep, startCustomRoleExpiryLoop };

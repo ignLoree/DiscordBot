@@ -17,17 +17,10 @@ function parseTopPageModalCustomId(rawCustomId) {
   const lookbackDays = normalizeLookbackDays(parts[1 + offset] || "14");
   const selectedView = normalizeTopView(parts[2 + offset] || "overview");
   const currentPage = normalizePage(parts[3 + offset] || "1", 1);
-  const totalPages=Math.max(1,normalizePage(parts[4+offset]||"1",1),);
+  const totalPages = Math.max(1, normalizePage(parts[4 + offset] || "1", 1),);
   const controlsView = normalizeControlsView(parts[5 + offset] || "main");
 
-  return {
-    ownerId,
-    lookbackDays,
-    selectedView,
-    currentPage,
-    totalPages,
-    controlsView,
-  };
+  return { ownerId, lookbackDays, selectedView, currentPage, totalPages, controlsView, };
 }
 
 module.exports = {
@@ -43,12 +36,12 @@ module.exports = {
       await interaction.reply({
         content: "<:vegax:1443934876440068179> Questo controllo non appartiene a te.",
         flags: 1 << 6,
-      }).catch(() => {});
+      }).catch(() => { });
       return true;
     }
 
     try {
-      const rawInput=interaction.fields?.getTextInputValue(TOP_CHANNEL_PAGE_MODAL_INPUT_CUSTOM_ID,);
+      const rawInput = interaction.fields?.getTextInputValue(TOP_CHANNEL_PAGE_MODAL_INPUT_CUSTOM_ID,);
       const inputPage = normalizePage(rawInput || parsed.currentPage, parsed.currentPage);
       const requestedPage = Math.min(Math.max(1, inputPage), parsed.totalPages);
 
@@ -62,7 +55,7 @@ module.exports = {
       }
 
       await interaction.deferUpdate();
-      const payload=await buildTopChannelPayload({guild:interaction.guild},parsed.lookbackDays,parsed.controlsView,parsed.selectedView,requestedPage,parsed.ownerId||interaction.user?.id,);
+      const payload = await buildTopChannelPayload({ guild: interaction.guild }, parsed.lookbackDays, parsed.controlsView, parsed.selectedView, requestedPage, parsed.ownerId || interaction.user?.id,);
 
       await interaction.message.edit({
         ...payload,
@@ -75,13 +68,13 @@ module.exports = {
           content:
             "<:vegax:1443934876440068179> Errore durante il cambio pagina.",
           flags: 1 << 6,
-        }).catch(() => {});
+        }).catch(() => { });
       } else {
         await interaction.reply({
           content:
             "<:vegax:1443934876440068179> Errore durante il cambio pagina.",
           flags: 1 << 6,
-        }).catch(() => {});
+        }).catch(() => { });
       }
     }
 

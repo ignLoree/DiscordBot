@@ -1,0 +1,15 @@
+const SUGGESTION_UPV = "upv";
+const SUGGESTION_DOWNV = "downv";
+const SUGGESTION_STAFF_ACCEPT = "suggestion_staff_accept";
+const SUGGESTION_STAFF_REJECT = "suggestion_staff_reject";
+const SUGGESTION_STAFF_MODAL_PREFIX = "suggestion_staff_modal";
+const SUGGESTION_STAFF_REASON_INPUT_ID = "staff_reason";
+
+module.exports = {
+  SUGGESTION_UPV,
+  SUGGESTION_DOWNV,
+  SUGGESTION_STAFF_ACCEPT,
+  SUGGESTION_STAFF_REJECT,
+  SUGGESTION_STAFF_MODAL_PREFIX,
+  SUGGESTION_STAFF_REASON_INPUT_ID,
+};

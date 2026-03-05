@@ -1,20 +1,20 @@
-﻿const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits, } = require("discord.js");
+const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits, } = require("discord.js");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
 const fs = require("fs");
 const { getNextTicketId } = require("../../Utils/Ticket/ticketIdUtils");
 const { safeReply: safeReplyHelper, safeEditReply: safeEditReplyHelper, } = require("../../Utils/Moderation/reply");
 const IDs = require("../../Utils/Config/ids");
 const { buildTicketChannelName } = require("../../Utils/Ticket/ticketNamingRuntime");
-const{canUserHandleCloseRequest:runtimeCanUserHandleCloseRequest,ensureClosableTicketOrReply:runtimeEnsureClosableTicketOrReply,findOpenTicketByUser:runtimeFindOpenTicketByUser,findTicketByChannel:runtimeFindTicketByChannel,getClientGuildCached:runtimeGetClientGuildCached,getGuildChannelCached:runtimeGetGuildChannelCached,getSelectedTicketAction:runtimeGetSelectedTicketAction,hasActiveTicketClaimer:runtimeHasActiveTicketClaimer,isHandledTicketInteraction:runtimeIsHandledTicketInteraction,isSponsorGuild:runtimeIsSponsorGuild,isTicketRatingButton:runtimeIsTicketRatingButton,isTicketTranscriptButton:runtimeIsTicketTranscriptButton,loadTicketForChannelOrReply:runtimeLoadTicketForChannelOrReply,}=require("../../Utils/Ticket/ticketInteractionRuntime");
-const{buildTicketClosedEmbed:runtimeBuildTicketClosedEmbed,buildTicketRatingRows:runtimeBuildTicketRatingRows,closeTicket:runtimeCloseTicket,}=require("../../Utils/Ticket/ticketCloseRuntime");
-const{createTicketsCategory:runtimeCreateTicketsCategory,handleSponsorTicketOpen:runtimeHandleSponsorTicketOpen,}=require("../../Utils/Ticket/ticketOpenRuntime");
+const { canUserHandleCloseRequest: runtimeCanUserHandleCloseRequest, ensureClosableTicketOrReply: runtimeEnsureClosableTicketOrReply, findOpenTicketByUser: runtimeFindOpenTicketByUser, findTicketByChannel: runtimeFindTicketByChannel, getClientGuildCached: runtimeGetClientGuildCached, getGuildChannelCached: runtimeGetGuildChannelCached, getSelectedTicketAction: runtimeGetSelectedTicketAction, hasActiveTicketClaimer: runtimeHasActiveTicketClaimer, isHandledTicketInteraction: runtimeIsHandledTicketInteraction, isSponsorGuild: runtimeIsSponsorGuild, isTicketRatingButton: runtimeIsTicketRatingButton, isTicketTranscriptButton: runtimeIsTicketTranscriptButton, loadTicketForChannelOrReply: runtimeLoadTicketForChannelOrReply, } = require("../../Utils/Ticket/ticketInteractionRuntime");
+const { buildTicketClosedEmbed: runtimeBuildTicketClosedEmbed, buildTicketRatingRows: runtimeBuildTicketRatingRows, closeTicket: runtimeCloseTicket, } = require("../../Utils/Ticket/ticketCloseRuntime");
+const { createTicketsCategory: runtimeCreateTicketsCategory, handleSponsorTicketOpen: runtimeHandleSponsorTicketOpen, } = require("../../Utils/Ticket/ticketOpenRuntime");
 
 async function handleTicketInteraction(interaction) {
   const selectedTicketAction = runtimeGetSelectedTicketAction(interaction);
   const ticketActionId = selectedTicketAction || interaction.customId;
   const sponsorGuild = Boolean(interaction.guild && runtimeIsSponsorGuild(interaction.guild.id));
 
-  const{isTicketButton,isTicketSelect,isTicketModal}=runtimeIsHandledTicketInteraction(interaction);
+  const { isTicketButton, isTicketSelect, isTicketModal } = runtimeIsHandledTicketInteraction(interaction);
   if (!isTicketButton && !isTicketModal && !isTicketSelect) return false;
   if (sponsorGuild) {
     if (
@@ -41,13 +41,14 @@ async function handleTicketInteraction(interaction) {
   const ROLE_TICKETPARTNER_BLACKLIST = IDs.roles.blackilistPartner;
   const ROLE_TICKET_BLACKLIST = IDs.roles.blacklistTicket;
   const STAFF_ROLES = [ROLE_STAFF, ROLE_HIGHSTAFF];
+
   if (!interaction.client.ticketCloseLocks) {
     interaction.client.ticketCloseLocks = new Set();
   }
   if (!interaction.client.ticketActionLocks) {
     interaction.client.ticketActionLocks = new Set();
   }
-  const TICKET_PERMISSIONS=[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.EmbedLinks,PermissionFlagsBits.AttachFiles,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.AddReactions,];
+  const TICKET_PERMISSIONS = [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.EmbedLinks, PermissionFlagsBits.AttachFiles, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.AddReactions,];
 
   async function safeReply(target, payload) {
     return safeReplyHelper(target, payload);
@@ -80,8 +81,8 @@ async function handleTicketInteraction(interaction) {
       await safeReply(interaction, {
         embeds: [
           makeErrorEmbed(
-            "Attendi",
-            "<:attentionfromvega:1443651874032062505> Azione già in corso su questo ticket, attendi un attimo.",
+            "<a:VC_Loading:1462504528774430962> Attendi",
+            "<a:VC_Alert:1448670089670037675> Azione già in corso su questo ticket, attendi un attimo.",
           ),
         ],
         flags: 1 << 6,
@@ -97,16 +98,16 @@ async function handleTicketInteraction(interaction) {
     interaction.client.ticketActionLocks.delete(lockKey);
   }
 
-async function pinFirstTicketMessage(channel, message) {
-  if (!channel || !message?.pin) return;
-  await message.pin().catch(() => {});
-  const recent = await channel.messages.fetch({ limit: 6 }).catch(() => null);
-  if (!recent) return;
-  const pinSystem = recent.find((m) => Number(m.type) === 6);
-  if (pinSystem) {
-    await pinSystem.delete().catch(() => {});
+  async function pinFirstTicketMessage(channel, message) {
+    if (!channel || !message?.pin) return;
+    await message.pin().catch(() => { });
+    const recent = await channel.messages.fetch({ limit: 6 }).catch(() => null);
+    if (!recent) return;
+    const pinSystem = recent.find((m) => Number(m.type) === 6);
+    if (pinSystem) {
+      await pinSystem.delete().catch(() => { });
+    }
   }
-}
 
   try {
     if (isTicketButton || isTicketSelect) {
@@ -115,7 +116,7 @@ async function pinFirstTicketMessage(channel, message) {
         await safeReply(interaction, {
           embeds: [
             makeErrorEmbed(
-              "Errore",
+              "<a:VC_Alert:1448670089670037675> Errore",
               "<:vegax:1443934876440068179> Interazione non valida (fuori dal server).",
             ),
           ],
@@ -133,14 +134,15 @@ async function pinFirstTicketMessage(channel, message) {
             new EmbedBuilder()
               .setColor("#6f4e37")
               .setDescription(
-                `<:vegax:1443934876440068179> Non puoi usare questo bottone poiché sei blacklistato dalle partner. Se pensi sia un errore apri un <#1442569095068254219> \`Terza Categoria\``,
+                `<a:VC_Alert:1448670089670037675> Non puoi usare questo bottone poiché sei blacklistato dalle partner.`
+                  `<:vsl_ticket:1329520261053022208> Se pensi sia un errore apri un <#1442569095068254219> \`Terza Categoria\``,
               ),
           ],
           flags: 1 << 6,
         });
         return true;
       }
-      const ticketOpenButtons=["ticket_partnership","ticket_supporto","ticket_highstaff",];
+      const ticketOpenButtons = ["ticket_partnership", "ticket_supporto", "ticket_highstaff",];
       if (
         ticketOpenButtons.includes(ticketActionId) &&
         interaction.member?.roles?.cache?.has(ROLE_TICKET_BLACKLIST)
@@ -151,19 +153,20 @@ async function pinFirstTicketMessage(channel, message) {
               .setColor("#6f4e37")
               .setDescription(
                 `<:vegax:1443934876440068179> Non puoi usare questo bottone poiché sei blacklistato dai ticket.`,
+                `<:vsl_ticket:1329520261053022208> Se pensi sia un errore apri un <#1442569095068254219> \`Terza Categoria\``,
               ),
           ],
           flags: 1 << 6,
         });
         return true;
       }
-      const userOnlyTickets=["ticket_partnership","ticket_highstaff","ticket_supporto",];
+      const userOnlyTickets = ["ticket_partnership", "ticket_highstaff", "ticket_supporto",];
       if (userOnlyTickets.includes(ticketActionId)) {
         if (!ROLE_USER) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
-                "Errore",
+                "<a:VC_Alert:1448670089670037675> Errore",
                 "<:vegax:1443934876440068179> Ruolo verifica (Member) non configurato. Contatta lo staff.",
               ),
             ],
@@ -175,7 +178,7 @@ async function pinFirstTicketMessage(channel, message) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
-                "Errore",
+                "<a:VC_Alert:1448670089670037675> Errore",
                 "<:vegax:1443934876440068179> Devi aver completato la **verifica** per aprire un ticket.",
               ),
             ],
@@ -184,7 +187,7 @@ async function pinFirstTicketMessage(channel, message) {
           return true;
         }
       }
-      const ticketConfig={ticket_supporto:{type:"supporto",emoji:"⭐",name:"supporto",role:ROLE_STAFF,requiredRoles:ROLE_USER?[ROLE_USER]:[],embed:new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`,).setColor("#6f4e37"),},ticket_partnership:{type:"partnership",emoji:"🤝",name:"partnership",role:ROLE_PARTNERMANAGER,requiredRoles:[ROLE_USER],embed:new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Invia direttamente qui la tua descrizione.`,).setColor("#6f4e37"),},ticket_highstaff:{type:"high",emoji:"✨",name:"highstaff",role:ROLE_HIGHSTAFF,requiredRoles:[ROLE_USER],embed:new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET HIGH STAFF__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o High Staff.`,).setColor("#6f4e37"),},};
+      const ticketConfig = { ticket_supporto: { type: "supporto", emoji: "⭐", name: "supporto", role: ROLE_STAFF, requiredRoles: ROLE_USER ? [ROLE_USER] : [], embed: new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`,).setColor("#6f4e37"), }, ticket_partnership: { type: "partnership", emoji: "🤝", name: "partnership", role: ROLE_PARTNERMANAGER, requiredRoles: [ROLE_USER], embed: new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Invia direttamente qui la tua descrizione.`,).setColor("#6f4e37"), }, ticket_highstaff: { type: "high", emoji: "✨", name: "highstaff", role: ROLE_HIGHSTAFF, requiredRoles: [ROLE_USER], embed: new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET HIGH STAFF__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o High Staff.`,).setColor("#6f4e37"), }, };
       const config = ticketConfig[ticketActionId];
       if (
         !config &&
@@ -204,7 +207,7 @@ async function pinFirstTicketMessage(channel, message) {
         await safeReply(interaction, {
           embeds: [
             makeErrorEmbed(
-              "Errore",
+              "<a:VC_Alert:1448670089670037675> Errore",
               "<:vegax:1443934876440068179> Categoria ticket non valida. Riprova dal pannello.",
             ),
           ],
@@ -215,8 +218,8 @@ async function pinFirstTicketMessage(channel, message) {
       if (config) {
         if (!interaction.deferred && !interaction.replied) {
           try {
-            await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
-          } catch {}
+            await interaction.deferReply({ flags: 1 << 6 }).catch(() => { });
+          } catch { }
         }
         if (!interaction.client.ticketOpenLocks) {
           interaction.client.ticketOpenLocks = new Set();
@@ -226,7 +229,7 @@ async function pinFirstTicketMessage(channel, message) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
-                "Attendi",
+                "<a:VC_Loading:1462504528774430962> Attendi",
                 "<:attentionfromvega:1443651874032062505> Sto già aprendo un ticket per te, aspetta un attimo.",
               ),
             ],
@@ -250,7 +253,7 @@ async function pinFirstTicketMessage(channel, message) {
               await safeReply(interaction, {
                 embeds: [
                   makeErrorEmbed(
-                    "Errore",
+                    "<a:VC_Alert:1448670089670037675> Errore",
                     "<:vegax:1443934876440068179> Devi aver completato la **verifica** per aprire questo ticket.",
                   ),
                 ],
@@ -260,12 +263,12 @@ async function pinFirstTicketMessage(channel, message) {
             }
           }
           if (config.requiredRoles?.length > 0) {
-            const hasRole=config.requiredRoles.some((r) => interaction.member?.roles?.cache?.has(r),);
+            const hasRole = config.requiredRoles.some((r) => interaction.member?.roles?.cache?.has(r),);
             if (!hasRole) {
               await safeReply(interaction, {
                 embeds: [
                   makeErrorEmbed(
-                    "Errore",
+                    "<a:VC_Alert:1448670089670037675> Errore",
                     "<:vegax:1443934876440068179> Non hai i requisiti per aprire questo ticket",
                   ),
                 ],
@@ -274,14 +277,14 @@ async function pinFirstTicketMessage(channel, message) {
               return true;
             }
           }
-          const existing=await runtimeFindOpenTicketByUser(interaction.guild.id,interaction.user.id,);
+          const existing = await runtimeFindOpenTicketByUser(interaction.guild.id, interaction.user.id,);
           if (existing) {
             await safeReply(interaction, {
               embeds: [
                 new EmbedBuilder()
-                  .setTitle("Ticket Aperto")
+                  .setTitle("<:VC_open:1478517277279129712> • **__TICKET APERTO__**")
                   .setDescription(
-                    `<:vegax:1443934876440068179> Hai già un ticket aperto: <#${existing.channelId}>`,
+                    `<a:VC_Alert:1448670089670037675> Hai già un ticket aperto: <#${existing.channelId}>`,
                   )
                   .setColor("#6f4e37"),
               ],
@@ -289,12 +292,12 @@ async function pinFirstTicketMessage(channel, message) {
             });
             return true;
           }
-          const ticketsCategory=await runtimeCreateTicketsCategory(interaction,interaction.guild,);
+          const ticketsCategory = await runtimeCreateTicketsCategory(interaction, interaction.guild,);
           if (!ticketsCategory) {
             await safeReply(interaction, {
               embeds: [
                 makeErrorEmbed(
-                  "Errore",
+                  "<a:VC_Alert:1448670089670037675> Errore",
                   "<:vegax:1443934876440068179> Impossibile creare o trovare la categoria ticket",
                 ),
               ],
@@ -302,12 +305,12 @@ async function pinFirstTicketMessage(channel, message) {
             });
             return true;
           }
-          const channel=await interaction.guild.channels.create({name:buildTicketChannelName(config,interaction.user?.username,interaction.user?.id||"utente"),type:0,parent:ticketsCategory.id,permissionOverwrites:[{id:interaction.guild.roles.everyone,deny:[PermissionFlagsBits.ViewChannel],},{id:interaction.user.id,allow:TICKET_PERMISSIONS,},...(config.type==="supporto"?[{id:ROLE_STAFF,allow:TICKET_PERMISSIONS,},{id:ROLE_HIGHSTAFF,allow:TICKET_PERMISSIONS,},{id:ROLE_PARTNERMANAGER,deny:[PermissionFlagsBits.ViewChannel],},]:[]),...(config.type==="partnership"?[{id:ROLE_PARTNERMANAGER,allow:TICKET_PERMISSIONS,},{id:ROLE_HIGHSTAFF,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,],deny:[],},{id:ROLE_STAFF,deny:[PermissionFlagsBits.ViewChannel],},]:[]),...(config.type==="high"?[{id:ROLE_HIGHSTAFF,allow:TICKET_PERMISSIONS,},{id:ROLE_STAFF,deny:[PermissionFlagsBits.ViewChannel],},{id:ROLE_PARTNERMANAGER,deny:[PermissionFlagsBits.ViewChannel],},]:[]),],}).catch((err) => {global.logger.error(err);return null;});
+          const channel = await interaction.guild.channels.create({ name: buildTicketChannelName(config, interaction.user?.username, interaction.user?.id || "utente"), type: 0, parent: ticketsCategory.id, permissionOverwrites: [{ id: interaction.guild.roles.everyone, deny: [PermissionFlagsBits.ViewChannel], }, { id: interaction.user.id, allow: TICKET_PERMISSIONS, }, ...(config.type === "supporto" ? [{ id: ROLE_STAFF, allow: TICKET_PERMISSIONS, }, { id: ROLE_HIGHSTAFF, allow: TICKET_PERMISSIONS, }, { id: ROLE_PARTNERMANAGER, deny: [PermissionFlagsBits.ViewChannel], },] : []), ...(config.type === "partnership" ? [{ id: ROLE_PARTNERMANAGER, allow: TICKET_PERMISSIONS, }, { id: ROLE_HIGHSTAFF, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory,], deny: [], }, { id: ROLE_STAFF, deny: [PermissionFlagsBits.ViewChannel], },] : []), ...(config.type === "high" ? [{ id: ROLE_HIGHSTAFF, allow: TICKET_PERMISSIONS, }, { id: ROLE_STAFF, deny: [PermissionFlagsBits.ViewChannel], }, { id: ROLE_PARTNERMANAGER, deny: [PermissionFlagsBits.ViewChannel], },] : []),], }).catch((err) => { global.logger.error(err); return null; });
           if (!channel) {
             await safeReply(interaction, {
               embeds: [
                 makeErrorEmbed(
-                  "Errore",
+                  "<a:VC_Alert:1448670089670037675> Errore",
                   "<:vegax:1443934876440068179> Impossibile creare il canale ticket",
                 ),
               ],
@@ -315,8 +318,8 @@ async function pinFirstTicketMessage(channel, message) {
             });
             return true;
           }
-          const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("claim_ticket").setLabel("✅ Claim").setStyle(ButtonStyle.Success),);
-          const mainMsg=await channel.send({embeds:[config.embed],components:[row]}).catch((err) => {global.logger.error(err);return null;});
+          const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setEmoji(`<:VC_Lock:1468544444113617063>`).setLabel("Chiudi").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("close_ticket_motivo").setEmoji(`<:VC_reason:1478517122929004544>`).setLabel("Chiudi Con Motivo").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("claim_ticket").setEmoji(`<:VC_claim:1478517202016669887>`).setLabel("Claim").setStyle(ButtonStyle.Success),);
+          const mainMsg = await channel.send({ embeds: [config.embed], components: [row] }).catch((err) => { global.logger.error(err); return null; });
           if (mainMsg) {
             await pinFirstTicketMessage(channel, mainMsg);
           }
@@ -336,16 +339,16 @@ async function pinFirstTicketMessage(channel, message) {
             });
             ticketCreated = true;
           } catch (err) {
-            const isDuplicate=err?.code===11000||(err?.message&&String(err.message).includes("E11000"));
+            const isDuplicate = err?.code === 11000 || (err?.message && String(err.message).includes("E11000"));
             if (isDuplicate) {
-              await channel.delete().catch(() => {});
-              const other=await runtimeFindOpenTicketByUser(interaction.guild.id,interaction.user.id,);
+              await channel.delete().catch(() => { });
+              const other = await runtimeFindOpenTicketByUser(interaction.guild.id, interaction.user.id,);
               await safeEditReply(interaction, {
                 embeds: [
                   new EmbedBuilder()
-                    .setTitle("Ticket Aperto")
+                    .setTitle("<:VC_open:1478517277279129712> • **__TICKET APERTO__**")
                     .setDescription(
-                      `<:vegax:1443934876440068179> Hai già un ticket aperto${other?.channelId ? ": <#" + other.channelId + ">" : "."}`,
+                      `<a:VC_Alert:1448670089670037675> Hai già un ticket aperto ${other?.channelId ? ": <#" + other.channelId + ">" : "."}`,
                     )
                     .setColor("#6f4e37"),
                 ],
@@ -356,11 +359,11 @@ async function pinFirstTicketMessage(channel, message) {
             global.logger.error(err);
           }
           if (!ticketCreated) {
-            await channel.delete().catch(() => {});
+            await channel.delete().catch(() => { });
             await safeEditReply(interaction, {
               embeds: [
                 makeErrorEmbed(
-                  "Errore",
+                  "<a:VC_Alert:1448670089670037675> Errore",
                   "<:vegax:1443934876440068179> Impossibile creare il ticket, riprova.",
                 ),
               ],
@@ -370,18 +373,18 @@ async function pinFirstTicketMessage(channel, message) {
           }
           let tagRole =
             config.type === "partnership" ? ROLE_PARTNERMANAGER : config.role;
-          const mentionMsg=await channel.send(`<@${interaction.user.id}>${tagRole?`<@&${tagRole}>` : ""}`,).catch(() => null);
+          const mentionMsg = await channel.send(`<@${interaction.user.id}>${tagRole ? `<@&${tagRole}>` : ""}`,).catch(() => null);
           if (mentionMsg) {
             const mentionCleanupTimer = setTimeout(() => {
-              mentionMsg.delete().catch(() => {});
+              mentionMsg.delete().catch(() => { });
             }, 100);
             mentionCleanupTimer.unref?.();
           }
           await safeEditReply(interaction, {
             embeds: [
               new EmbedBuilder()
-                .setTitle("<:vegacheckmark:1443666279058772028> Ticket Creato")
-                .setDescription(`Aperto un nuovo ticket: ${channel}`)
+                .setTitle("<:success:1461731530333229226> • **__TICKET CREATO__**")
+                .setDescription(`<:vsl_ticket:1329520261053022208> Aperto un nuovo ticket: ${channel}`)
                 .setColor("#6f4e37"),
             ],
             flags: 1 << 6,
@@ -395,7 +398,7 @@ async function pinFirstTicketMessage(channel, message) {
         const ratingParts = String(interaction.customId).split(":");
         if (ratingParts.length !== 3) {
           await safeReply(interaction, {
-            embeds: [makeErrorEmbed("Errore", "Valutazione non valida.")],
+            embeds: [makeErrorEmbed("<a:VC_Alert:1448670089670037675> Errore", "<:vegax:1443934876440068179> Valutazione non valida.")],
             flags: 1 << 6,
           });
           return true;
@@ -404,7 +407,7 @@ async function pinFirstTicketMessage(channel, message) {
         const score = Number(scoreRaw);
         if (!ticketDbId || !Number.isInteger(score) || score < 1 || score > 5) {
           await safeReply(interaction, {
-            embeds: [makeErrorEmbed("Errore", "Valutazione non valida.")],
+            embeds: [makeErrorEmbed("<a:VC_Alert:1448670089670037675> Errore", "<:vegax:1443934876440068179> Valutazione non valida.")],
             flags: 1 << 6,
           });
           return true;
@@ -413,7 +416,7 @@ async function pinFirstTicketMessage(channel, message) {
         const currentTicket = await Ticket.findById(ticketDbId).catch(() => null);
         if (!currentTicket) {
           await safeReply(interaction, {
-            embeds: [makeErrorEmbed("Errore", "Ticket non trovato.")],
+            embeds: [makeErrorEmbed("<a:VC_Alert:1448670089670037675> Errore", "<:vegax:1443934876440068179> Ticket non trovato.")],
             flags: 1 << 6,
           });
           return true;
@@ -423,7 +426,7 @@ async function pinFirstTicketMessage(channel, message) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
-                "Errore",
+                "<a:VC_Alert:1448670089670037675> Errore",
                 "<:vegax:1443934876440068179> Solo chi ha aperto il ticket può votare.",
               ),
             ],
@@ -432,13 +435,13 @@ async function pinFirstTicketMessage(channel, message) {
           return true;
         }
 
-        const ratedTicket=await Ticket.findOneAndUpdate({_id:ticketDbId,ratingScore:null},{$set:{ratingScore:score,ratingBy:interaction.user.id,ratingAt:new Date(),},},{new:true},).catch(() => null);
+        const ratedTicket = await Ticket.findOneAndUpdate({ _id: ticketDbId, ratingScore: null }, { $set: { ratingScore: score, ratingBy: interaction.user.id, ratingAt: new Date(), }, }, { new: true },).catch(() => null);
 
         if (!ratedTicket) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
-                "Info",
+                "<a:VC_Alert:1448670089670037675> Info",
                 "<:attentionfromvega:1443651874032062505> Hai già inviato una valutazione per questo ticket.",
               ),
             ],
@@ -449,12 +452,12 @@ async function pinFirstTicketMessage(channel, message) {
 
         if (ratedTicket.closeLogChannelId && ratedTicket.closeLogMessageId) {
           const ticketGuild = interaction.guild || await runtimeGetClientGuildCached(interaction.client, ratedTicket.guildId);
-          const logChannel=await runtimeGetGuildChannelCached(ticketGuild,ratedTicket.closeLogChannelId,)||await runtimeGetGuildChannelCached(interaction.client.guilds.cache.get(ratedTicket.guildId),ratedTicket.closeLogChannelId,);
+          const logChannel = await runtimeGetGuildChannelCached(ticketGuild, ratedTicket.closeLogChannelId,) || await runtimeGetGuildChannelCached(interaction.client.guilds.cache.get(ratedTicket.guildId), ratedTicket.closeLogChannelId,);
           if (logChannel?.isTextBased?.()) {
-            const logMessage=await logChannel.messages.fetch(ratedTicket.closeLogMessageId).catch(() => null);
+            const logMessage = await logChannel.messages.fetch(ratedTicket.closeLogMessageId).catch(() => null);
             if (logMessage) {
-              const updatedEmbed=runtimeBuildTicketClosedEmbed({...ratedTicket.toObject(),guildName:ticketGuild?.name||interaction.client.guilds.cache.get(ratedTicket.guildId)?.name||"Ticket System",guildIconURL:ticketGuild?.iconURL?.({size:128})||null,});
-              await logMessage.edit({ embeds: [updatedEmbed] }).catch(() => {});
+              const updatedEmbed = runtimeBuildTicketClosedEmbed({ ...ratedTicket.toObject(), guildName: ticketGuild?.name || interaction.client.guilds.cache.get(ratedTicket.guildId)?.name || "Ticket System", guildIconURL: ticketGuild?.iconURL?.({ size: 128 }) || null, });
+              await logMessage.edit({ embeds: [updatedEmbed] }).catch(() => { });
             }
           }
         }
@@ -463,7 +466,7 @@ async function pinFirstTicketMessage(channel, message) {
           embeds: [
             new EmbedBuilder()
               .setColor("#6f4e37")
-              .setDescription(`Grazie per il feedback: **${score}/5** ⭐`),
+              .setDescription(`<a:VC_ThankYou:1330186319673950401> Grazie per il feedback: **${score}/5** ⭐`),
           ],
           flags: 1 << 6,
         });
@@ -473,7 +476,7 @@ async function pinFirstTicketMessage(channel, message) {
         const transcriptParts = String(interaction.customId).split(":");
         if (transcriptParts.length < 2) {
           await safeReply(interaction, {
-            embeds: [makeErrorEmbed("Errore", "Transcript non valido.")],
+            embeds: [makeErrorEmbed("<a:VC_Alert:1448670089670037675> Errore", "<:vegax:1443934876440068179> Transcript non valido.")],
             flags: 1 << 6,
           });
           return true;
@@ -481,7 +484,7 @@ async function pinFirstTicketMessage(channel, message) {
         const [, ticketDbId] = transcriptParts;
         if (!ticketDbId) {
           await safeReply(interaction, {
-            embeds: [makeErrorEmbed("Errore", "Transcript non valido.")],
+            embeds: [makeErrorEmbed("<a:VC_Alert:1448670089670037675> Errore", "<:vegax:1443934876440068179> Transcript non valido.")],
             flags: 1 << 6,
           });
           return true;
@@ -489,19 +492,19 @@ async function pinFirstTicketMessage(channel, message) {
         const ticketDoc = await Ticket.findById(ticketDbId).catch(() => null);
         if (!ticketDoc) {
           await safeReply(interaction, {
-            embeds: [makeErrorEmbed("Errore", "Ticket non trovato.")],
+            embeds: [makeErrorEmbed("<a:VC_Alert:1448670089670037675> Errore", "<:vegax:1443934876440068179> Ticket non trovato.")],
             flags: 1 << 6,
           });
           return true;
         }
 
-        const isOwner=String(ticketDoc.userId||"")===String(interaction.user?.id||"");
-        const hasStaffRole=Boolean(interaction.member?.roles?.cache?.has(ROLE_STAFF))||Boolean(interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF))||Boolean(interaction.member?.roles?.cache?.has(ROLE_PARTNERMANAGER));
+        const isOwner = String(ticketDoc.userId || "") === String(interaction.user?.id || "");
+        const hasStaffRole = Boolean(interaction.member?.roles?.cache?.has(ROLE_STAFF)) || Boolean(interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF)) || Boolean(interaction.member?.roles?.cache?.has(ROLE_PARTNERMANAGER));
         if (!isOwner && !hasStaffRole) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
-                "Errore",
+                "<a:VC_Alert:1448670089670037675> Errore",
                 "<:vegax:1443934876440068179> Non puoi visualizzare questo transcript.",
               ),
             ],
@@ -513,14 +516,18 @@ async function pinFirstTicketMessage(channel, message) {
         const transcriptHtmlPath = String(ticketDoc.transcriptHtmlPath || "");
         if (!transcriptHtmlPath || !fs.existsSync(transcriptHtmlPath)) {
           await safeReply(interaction, {
-            embeds: [makeErrorEmbed("Info", "Transcript HTML non disponibile.")],
+            embeds: [makeErrorEmbed("<a:VC_Alert:1448670089670037675> Info", "<:vegax:1443934876440068179> Transcript HTML non disponibile.")],
             flags: 1 << 6,
           });
           return true;
         }
 
+        const transcriptEmbed = new EmbedBuilder()
+          .setTitle("<:VC_file:1478515880722698300> • **__TRANSCRIPT DEL TICKET__**")
+          .setDescription(`<:vsl_ticket:1329520261053022208> In allegato il file HTML del transcript del ticket **#${ticketDoc.ticketNumber || ticketDoc._id}**.\n\n<:VC_open:1478517277279129712> Apri il file nel browser per visualizzare la conversazione.`)
+          .setColor("#6f4e37");
         await safeReply(interaction, {
-          content: "Transcript HTML del ticket:",
+          embeds: [transcriptEmbed],
           files: [
             {
               attachment: transcriptHtmlPath,
@@ -536,7 +543,7 @@ async function pinFirstTicketMessage(channel, message) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
-                "Errore",
+                "<a:VC_Alert:1448670089670037675> Errore",
                 "<:vegax:1443934876440068179> Interazione fuori canale",
               ),
             ],
@@ -552,7 +559,7 @@ async function pinFirstTicketMessage(channel, message) {
             await safeReply(interaction, {
               embeds: [
                 makeErrorEmbed(
-                  "Errore",
+                  "<a:VC_Alert:1448670089670037675> Errore",
                   "<:vegax:1443934876440068179> Ticket non trovato",
                 ),
               ],
@@ -560,14 +567,14 @@ async function pinFirstTicketMessage(channel, message) {
             });
             return true;
           }
-          const canClaimSupport=ticket.ticketType==="supporto"&&STAFF_ROLES.some((r) => interaction.member?.roles?.cache?.has(r));
-          const canClaimPartnership=ticket.ticketType==="partnership"&&(interaction.member?.roles?.cache?.has(ROLE_PARTNERMANAGER)||interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF));
-          const canClaimHigh=ticket.ticketType==="high"&&interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF);
+          const canClaimSupport = ticket.ticketType === "supporto" && STAFF_ROLES.some((r) => interaction.member?.roles?.cache?.has(r));
+          const canClaimPartnership = ticket.ticketType === "partnership" && (interaction.member?.roles?.cache?.has(ROLE_PARTNERMANAGER) || interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF));
+          const canClaimHigh = ticket.ticketType === "high" && interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF);
           if (!canClaimSupport && !canClaimPartnership && !canClaimHigh) {
             await safeReply(interaction, {
               embeds: [
                 makeErrorEmbed(
-                  "Errore",
+                  "<a:VC_Alert:1448670089670037675> Errore",
                   "<:vegax:1443934876440068179> Solo lo staff può claimare i ticket",
                 ),
               ],
@@ -579,7 +586,7 @@ async function pinFirstTicketMessage(channel, message) {
             await safeReply(interaction, {
               embeds: [
                 makeErrorEmbed(
-                  "Errore",
+                  "<a:VC_Alert:1448670089670037675> Errore",
                   "<:vegax:1443934876440068179> Non puoi claimare il ticket che hai aperto tu.",
                 ),
               ],
@@ -587,12 +594,12 @@ async function pinFirstTicketMessage(channel, message) {
             });
             return true;
           }
-          const claimedByVal=ticket.claimedBy!=null?String(ticket.claimedBy).trim():"";
+          const claimedByVal = ticket.claimedBy != null ? String(ticket.claimedBy).trim() : "";
           if (claimedByVal !== "" && !isHighStaffActor()) {
             await safeReply(interaction, {
               embeds: [
                 makeErrorEmbed(
-                  "Errore",
+                  "<a:VC_Alert:1448670089670037675> Errore",
                   "<:vegax:1443934876440068179> Ticket già claimato",
                 ),
               ],
@@ -604,13 +611,13 @@ async function pinFirstTicketMessage(channel, message) {
             isHighStaffActor()
               ? { channelId: interaction.channel.id }
               : {
-                  channelId: interaction.channel.id,
-                  $or: [
-                    { claimedBy: null },
-                    { claimedBy: { $exists: false } },
-                    { claimedBy: "" },
-                  ],
-                },
+                channelId: interaction.channel.id,
+                $or: [
+                  { claimedBy: null },
+                  { claimedBy: { $exists: false } },
+                  { claimedBy: "" },
+                ],
+              },
             { $set: { claimedBy: interaction.user.id } },
             { new: true },
           ).catch(() => null);
@@ -620,7 +627,7 @@ async function pinFirstTicketMessage(channel, message) {
               await safeReply(interaction, {
                 embeds: [
                   makeErrorEmbed(
-                    "Errore",
+                    "<a:VC_Alert:1448670089670037675> Errore",
                     "<:vegax:1443934876440068179> Ticket già claimato",
                   ),
                 ],
@@ -628,12 +635,12 @@ async function pinFirstTicketMessage(channel, message) {
               });
               return true;
             }
-            const nowClaimed=claimedTicket.claimedBy!=null?String(claimedTicket.claimedBy).trim():"";
+            const nowClaimed = claimedTicket.claimedBy != null ? String(claimedTicket.claimedBy).trim() : "";
             if (nowClaimed !== "" && !isHighStaffActor()) {
               await safeReply(interaction, {
                 embeds: [
                   makeErrorEmbed(
-                    "Errore",
+                    "<a:VC_Alert:1448670089670037675> Errore",
                     "<:vegax:1443934876440068179> Ticket già claimato da un altro staff.",
                   ),
                 ],
@@ -644,7 +651,7 @@ async function pinFirstTicketMessage(channel, message) {
             await safeReply(interaction, {
               embeds: [
                 makeErrorEmbed(
-                  "Errore",
+                  "<a:VC_Alert:1448670089670037675> Errore",
                   "<:vegax:1443934876440068179> Ticket già claimato.",
                 ),
               ],
@@ -733,20 +740,20 @@ async function pinFirstTicketMessage(channel, message) {
               global.logger.error(err);
             }
           }
-          const claimedButtons=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi con motivo").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("unclaim").setLabel("🔓 Unclaim").setStyle(ButtonStyle.Secondary),);
+          const claimedButtons = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setEmoji(`<:VC_Lock:1468544444113617063>`).setLabel("Chiudi").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("close_ticket_motivo").setEmoji(`<:VC_reason:1478517122929004544>`).setLabel("Chiudi Con Motivo").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("unclaim").setEmoji(`<a:VC_Unlock:1470011538432852108> `).setLabel("Unclaim").setStyle(ButtonStyle.Secondary),);
           try {
             if (interaction.channel && claimedTicket.messageId) {
-              const msg=await interaction.channel.messages.fetch(claimedTicket.messageId).catch(() => null);
+              const msg = await interaction.channel.messages.fetch(claimedTicket.messageId).catch(() => null);
               if (!msg) {
-                const fallback=new EmbedBuilder().setTitle("Ticket").setDescription(`Ticket claimato da <@${interaction.user.id}>`)
+                const fallback = new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET APERTO__**").setDescription(`<:VC_claim:1478517202016669887> Ticket claimato da <@${interaction.user.id}>`)
                   .setColor("#6f4e37");
                 await interaction.channel
                   .send({ embeds: [fallback], components: [claimedButtons] })
-                  .catch(() => {});
+                  .catch(() => { });
               } else {
-                const embedDaUsare=msg.embeds&&msg.embeds[0]?EmbedBuilder.from(msg.embeds[0]):new EmbedBuilder().setTitle("Ticket").setDescription(`Ticket claimato da <@${interaction.user.id}>`,
-                        )
-                        .setColor("#6f4e37");
+                const embedDaUsare = msg.embeds && msg.embeds[0] ? EmbedBuilder.from(msg.embeds[0]) : new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET APERTO__**").setDescription(`<:VC_claim:1478517202016669887> Ticket claimato da <@${interaction.user.id}>`,
+                )
+                  .setColor("#6f4e37");
                 await msg
                   .edit({ embeds: [embedDaUsare], components: [claimedButtons] })
                   .catch((err) => global.logger.error(err));
@@ -758,9 +765,9 @@ async function pinFirstTicketMessage(channel, message) {
           await safeReply(interaction, {
             embeds: [
               new EmbedBuilder()
-                .setTitle("Ticket Claimato")
+                .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET CLAIMATO__**")
                 .setDescription(
-                  `Ticket preso in carico da <@${claimedTicket.claimedBy}>`,
+                  `<:VC_claim:1478517202016669887> Ticket preso in carico da <@${claimedTicket.claimedBy}>`,
                 )
                 .setColor("#6f4e37"),
             ],
@@ -775,7 +782,7 @@ async function pinFirstTicketMessage(channel, message) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
-                "Errore",
+                "<a:VC_Alert:1448670089670037675> Errore",
                 "<:vegax:1443934876440068179> Interazione fuori canale",
               ),
             ],
@@ -786,13 +793,13 @@ async function pinFirstTicketMessage(channel, message) {
         const unclaimLockKey = await acquireTicketActionLock("claim_state");
         if (!unclaimLockKey) return true;
         try {
-          const ticketButtonsOriginal=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("claim_ticket").setLabel("✅ Claim").setStyle(ButtonStyle.Success),);
+          const ticketButtonsOriginal = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setEmoji(`<:VC_Lock:1468544444113617063>`).setLabel("Chiudi").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("close_ticket_motivo").setEmoji(`<:VC_reason:1478517122929004544>`).setLabel("Chiudi Con Motivo").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("claim_ticket").setEmoji(`<:VC_claim:1478517202016669887>`).setLabel("Claim").setStyle(ButtonStyle.Success),);
           const ticketDoc = await runtimeFindTicketByChannel(interaction.channel.id);
           if (!ticketDoc) {
             await safeReply(interaction, {
               embeds: [
                 makeErrorEmbed(
-                  "Errore",
+                  "<a:VC_Alert:1448670089670037675> Errore",
                   "<:vegax:1443934876440068179> Questo non è un ticket valido.",
                 ),
               ],
@@ -804,7 +811,7 @@ async function pinFirstTicketMessage(channel, message) {
             await safeReply(interaction, {
               embeds: [
                 makeErrorEmbed(
-                  "Errore",
+                  "<a:VC_Alert:1448670089670037675> Errore",
                   "<:vegax:1443934876440068179> Questo ticket non è claimato.",
                 ),
               ],
@@ -816,7 +823,7 @@ async function pinFirstTicketMessage(channel, message) {
             await safeReply(interaction, {
               embeds: [
                 makeErrorEmbed(
-                  "Errore",
+                  "<a:VC_Alert:1448670089670037675> Errore",
                   "<:vegax:1443934876440068179> Chi ha aperto il ticket non può usare questo pulsante.",
                 ),
               ],
@@ -828,7 +835,7 @@ async function pinFirstTicketMessage(channel, message) {
             await safeReply(interaction, {
               embeds: [
                 makeErrorEmbed(
-                  "Errore",
+                  "<a:VC_Alert:1448670089670037675> Errore",
                   "<:vegax:1443934876440068179> Solo chi ha claimato può unclaimare il ticket.",
                 ),
               ],
@@ -836,13 +843,13 @@ async function pinFirstTicketMessage(channel, message) {
             });
             return true;
           }
-          const unclaimQuery=isHighStaffActor()?{channelId:interaction.channel.id}:{channelId:interaction.channel.id,claimedBy:interaction.user.id};
-          const unclaimedTicket=await Ticket.findOneAndUpdate(unclaimQuery,{$set:{claimedBy:null}},{new:true},).catch(() => null);
+          const unclaimQuery = isHighStaffActor() ? { channelId: interaction.channel.id } : { channelId: interaction.channel.id, claimedBy: interaction.user.id };
+          const unclaimedTicket = await Ticket.findOneAndUpdate(unclaimQuery, { $set: { claimedBy: null } }, { new: true },).catch(() => null);
           if (!unclaimedTicket) {
             await safeReply(interaction, {
               embeds: [
                 makeErrorEmbed(
-                  "Errore",
+                  "<a:VC_Alert:1448670089670037675> Errore",
                   "<:vegax:1443934876440068179> Solo chi ha claimato può unclaimare il ticket.",
                 ),
               ],
@@ -852,23 +859,23 @@ async function pinFirstTicketMessage(channel, message) {
           }
           try {
             if (interaction.channel && unclaimedTicket.messageId) {
-              const msg=await interaction.channel.messages.fetch(unclaimedTicket.messageId).catch(() => null);
+              const msg = await interaction.channel.messages.fetch(unclaimedTicket.messageId).catch(() => null);
               if (!msg) {
-                const fallback=new EmbedBuilder().setTitle("Ticket").setDescription("Ticket non claimato").setColor("#6f4e37");
+                const fallback = new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET APERTO__**").setDescription("<:VC_claim:1478517202016669887> Ticket non claimato").setColor("#6f4e37");
                 await interaction.channel
                   .send({
                     embeds: [fallback],
                     components: [ticketButtonsOriginal],
                   })
-                  .catch(() => {});
+                  .catch(() => { });
               } else {
-                const embedUsato=msg.embeds&&msg.embeds[0]?EmbedBuilder.from(msg.embeds[0]):new EmbedBuilder().setTitle("Ticket").setDescription("Ticket non claimato").setColor("#6f4e37");
+                const embedUsato = msg.embeds && msg.embeds[0] ? EmbedBuilder.from(msg.embeds[0]) : new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET APERTO__**").setDescription("<:VC_claim:1478517202016669887> Ticket non claimato").setColor("#6f4e37");
                 await msg
                   .edit({
                     embeds: [embedUsato],
                     components: [ticketButtonsOriginal],
                   })
-                  .catch(() => {});
+                  .catch(() => { });
               }
             }
           } catch (err) {
@@ -877,9 +884,9 @@ async function pinFirstTicketMessage(channel, message) {
           await safeReply(interaction, {
             embeds: [
               new EmbedBuilder()
-                .setTitle("Ticket Unclaimato")
+                .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET UNCLAIMATO__**")
                 .setDescription(
-                  `Il ticket non è più gestito da <@${interaction.user.id}>`,
+                  `<:VC_claim:1478517202016669887> Il ticket non è più gestito da <@${interaction.user.id}>`,
                 )
                 .setColor("#6f4e37"),
             ],
@@ -894,7 +901,7 @@ async function pinFirstTicketMessage(channel, message) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
-                "Errore",
+                "<a:VC_Alert:1448670089670037675> Errore",
                 "<:vegax:1443934876440068179> Interazione non valida",
               ),
             ],
@@ -902,20 +909,20 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const ticketDoc=await runtimeLoadTicketForChannelOrReply({interaction,safeReply,makeErrorEmbed,channelId:interaction.channel?.id,missingDescription:"<:vegax:1443934876440068179> Ticket non trovato",});
+        const ticketDoc = await runtimeLoadTicketForChannelOrReply({ interaction, safeReply, makeErrorEmbed, channelId: interaction.channel?.id, missingDescription: "<:vegax:1443934876440068179> Ticket non trovato", });
         if (!ticketDoc) return true;
-        const canClose=await runtimeEnsureClosableTicketOrReply({interaction,safeReply,makeErrorEmbed,ticketDoc,highStaff:isHighStaffActor(),});
+        const canClose = await runtimeEnsureClosableTicketOrReply({ interaction, safeReply, makeErrorEmbed, ticketDoc, highStaff: isHighStaffActor(), });
         if (!canClose) return true;
-        const modal=new ModalBuilder().setCustomId(`modal_close_ticket:${interaction.user.id}`)
-          .setTitle("Chiudi Ticket con Motivo");
-        const input=new TextInputBuilder().setCustomId("motivo").setLabel("Motivo della chiusura").setStyle(TextInputStyle.Paragraph).setRequired(true);
+        const modal = new ModalBuilder().setCustomId(`modal_close_ticket:${interaction.user.id}`)
+          .setTitle("<:VC_reason:1478517122929004544> • **__CHIUDI TICKET CON MOTIVO__**");
+        const input = new TextInputBuilder().setCustomId("motivo").setLabel("Motivo della chiusura").setStyle(TextInputStyle.Paragraph).setRequired(true);
         modal.addComponents(new ActionRowBuilder().addComponents(input));
-        const shown=await interaction.showModal(modal).then(() => true).catch((err) => {global.logger.error(err);return false;});
+        const shown = await interaction.showModal(modal).then(() => true).catch((err) => { global.logger.error(err); return false; });
         if (!shown) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
-                "Errore",
+                "<a:VC_Alert:1448670089670037675> Errore",
                 "<:vegax:1443934876440068179> Impossibile aprire il modulo, riprova.",
               ),
             ],
@@ -929,7 +936,7 @@ async function pinFirstTicketMessage(channel, message) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
-                "Errore",
+                "<a:VC_Alert:1448670089670037675> Errore",
                 "<:vegax:1443934876440068179> Interazione non valida",
               ),
             ],
@@ -937,16 +944,16 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const ticketDoc=await runtimeLoadTicketForChannelOrReply({interaction,safeReply,makeErrorEmbed,channelId:interaction.channel?.id,missingDescription:"<:vegax:1443934876440068179> Ticket non trovato",});
+        const ticketDoc = await runtimeLoadTicketForChannelOrReply({ interaction, safeReply, makeErrorEmbed, channelId: interaction.channel?.id, missingDescription: "<:vegax:1443934876440068179> Ticket non trovato", });
         if (!ticketDoc) return true;
-        const canClose=await runtimeEnsureClosableTicketOrReply({interaction,safeReply,makeErrorEmbed,ticketDoc,highStaff:isHighStaffActor(),});
+        const canClose = await runtimeEnsureClosableTicketOrReply({ interaction, safeReply, makeErrorEmbed, ticketDoc, highStaff: isHighStaffActor(), });
         if (!canClose) return true;
         try {
           await interaction
             .deferReply({ flags: 1 << 6 })
-            .catch(() => {})
-            .catch(() => {});
-        } catch {}
+            .catch(() => { })
+            .catch(() => { });
+        } catch { }
         await runtimeCloseTicket(interaction, null, {
           safeReply,
           safeEditReply,
@@ -960,7 +967,7 @@ async function pinFirstTicketMessage(channel, message) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
-                "Errore",
+                "<a:VC_Alert:1448670089670037675> Errore",
                 "<:vegax:1443934876440068179> Interazione fuori canale",
               ),
             ],
@@ -968,14 +975,14 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const ticketDoc=await runtimeLoadTicketForChannelOrReply({interaction,safeReply,makeErrorEmbed,channelId:interaction.channel.id,missingDescription:"<:vegax:1443934876440068179> Non puoi chiudere questo ticket",});
+        const ticketDoc = await runtimeLoadTicketForChannelOrReply({ interaction, safeReply, makeErrorEmbed, channelId: interaction.channel.id, missingDescription: "<:vegax:1443934876440068179> Non puoi chiudere questo ticket", });
         if (!ticketDoc) return true;
-        const canHandleCloseRequest=runtimeCanUserHandleCloseRequest(ticketDoc,interaction.user.id,isHighStaffActor(),);
+        const canHandleCloseRequest = runtimeCanUserHandleCloseRequest(ticketDoc, interaction.user.id, isHighStaffActor(),);
         if (!canHandleCloseRequest) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
-                "Errore",
+                "<a:VC_Alert:1448670089670037675> Errore",
                 "<:vegax:1443934876440068179> Solo opener o claimer possono gestire questa richiesta.",
               ),
             ],
@@ -986,9 +993,9 @@ async function pinFirstTicketMessage(channel, message) {
         try {
           await interaction
             .deferReply({ flags: 1 << 6 })
-            .catch(() => {})
-            .catch(() => {});
-        } catch {}
+            .catch(() => { })
+            .catch(() => { });
+        } catch { }
         const motivo = ticketDoc.closeReason || "Nessun motivo inserito";
         await runtimeCloseTicket(interaction, motivo, {
           safeReply,
@@ -1004,7 +1011,7 @@ async function pinFirstTicketMessage(channel, message) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
-                "Errore",
+                "<a:VC_Alert:1448670089670037675> Errore",
                 "<:vegax:1443934876440068179> Interazione fuori canale",
               ),
             ],
@@ -1012,14 +1019,14 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const ticketDoc=await runtimeLoadTicketForChannelOrReply({interaction,safeReply,makeErrorEmbed,channelId:interaction.channel.id,missingDescription:"<:vegax:1443934876440068179> Non puoi chiudere questo ticket",});
+        const ticketDoc = await runtimeLoadTicketForChannelOrReply({ interaction, safeReply, makeErrorEmbed, channelId: interaction.channel.id, missingDescription: "<:vegax:1443934876440068179> Non puoi chiudere questo ticket", });
         if (!ticketDoc) return true;
-        const canHandleCloseRequest=runtimeCanUserHandleCloseRequest(ticketDoc,interaction.user.id,isHighStaffActor(),);
+        const canHandleCloseRequest = runtimeCanUserHandleCloseRequest(ticketDoc, interaction.user.id, isHighStaffActor(),);
         if (!canHandleCloseRequest) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
-                "Errore",
+                "<a:VC_Alert:1448670089670037675> Errore",
                 "<:vegax:1443934876440068179> Solo opener o claimer possono gestire questa richiesta.",
               ),
             ],
@@ -1031,7 +1038,7 @@ async function pinFirstTicketMessage(channel, message) {
           .update({
             embeds: [
               new EmbedBuilder()
-                .setTitle("Richiesta di chiusura")
+                .setTitle("<:PinkQuestionMark:1471892611026391306> • **__RICHIESTA DI CHIUSURA__**")
                 .setDescription(
                   `<:vegax:1443934876440068179> ${interaction.user} ha rifiutato la richiesta di chiusura`,
                 )
@@ -1039,7 +1046,7 @@ async function pinFirstTicketMessage(channel, message) {
             ],
             components: [],
           })
-          .catch(() => {});
+          .catch(() => { });
         await Ticket.updateOne(
           { _id: ticketDoc._id },
           {
@@ -1049,7 +1056,7 @@ async function pinFirstTicketMessage(channel, message) {
               closeRequestedAt: null,
             },
           },
-        ).catch(() => {});
+        ).catch(() => { });
         return true;
       }
       if (
@@ -1060,7 +1067,7 @@ async function pinFirstTicketMessage(channel, message) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
-                "Errore",
+                "<a:VC_Alert:1448670089670037675> Errore",
                 "<:vegax:1443934876440068179> Interazione fuori canale",
               ),
             ],
@@ -1071,14 +1078,14 @@ async function pinFirstTicketMessage(channel, message) {
         const autoCloseLockKey = await acquireTicketActionLock("auto_close_prompt");
         if (!autoCloseLockKey) return true;
         try {
-          const ticketDoc=await runtimeLoadTicketForChannelOrReply({interaction,safeReply,makeErrorEmbed,channelId:interaction.channel.id,missingDescription:"<:vegax:1443934876440068179> Non puoi gestire questo ticket",});
+          const ticketDoc = await runtimeLoadTicketForChannelOrReply({ interaction, safeReply, makeErrorEmbed, channelId: interaction.channel.id, missingDescription: "<:vegax:1443934876440068179> Non puoi gestire questo ticket", });
           if (!ticketDoc) return true;
-          const canHandleAutoClosePrompt=runtimeCanUserHandleCloseRequest(ticketDoc,interaction.user.id,isHighStaffActor(),);
+          const canHandleAutoClosePrompt = runtimeCanUserHandleCloseRequest(ticketDoc, interaction.user.id, isHighStaffActor(),);
           if (!canHandleAutoClosePrompt) {
             await safeReply(interaction, {
               embeds: [
                 makeErrorEmbed(
-                  "Errore",
+                  "<a:VC_Alert:1448670089670037675> Errore",
                   "<:vegax:1443934876440068179> Solo opener o claimer possono gestire questa richiesta automatica.",
                 ),
               ],
@@ -1091,10 +1098,10 @@ async function pinFirstTicketMessage(channel, message) {
             try {
               await interaction
                 .deferReply({ flags: 1 << 6 })
-                .catch(() => {})
-                .catch(() => {});
-            } catch {}
-            const motivo=ticketDoc.closeReason||"Chiusura proposta automaticamente dopo 24h.";
+                .catch(() => { })
+                .catch(() => { });
+            } catch { }
+            const motivo = ticketDoc.closeReason || "Chiusura automatica dopo 24h.";
             await runtimeCloseTicket(interaction, motivo, {
               safeReply,
               safeEditReply,
@@ -1109,7 +1116,7 @@ async function pinFirstTicketMessage(channel, message) {
             .update({
               embeds: [
                 new EmbedBuilder()
-                  .setTitle("Richiesta di chiusura")
+                  .setTitle("<:PinkQuestionMark:1471892611026391306> • **__RICHIESTA DI CHIUSURA__**")
                   .setDescription(
                     `<:vegax:1443934876440068179> ${interaction.user} ha rifiutato la richiesta automatica di chiusura`,
                   )
@@ -1117,7 +1124,7 @@ async function pinFirstTicketMessage(channel, message) {
               ],
               components: [],
             })
-            .catch(() => {});
+            .catch(() => { });
           await Ticket.updateOne(
             { _id: ticketDoc._id },
             {
@@ -1127,7 +1134,7 @@ async function pinFirstTicketMessage(channel, message) {
                 closeRequestedAt: null,
               },
             },
-          ).catch(() => {});
+          ).catch(() => { });
           return true;
         } finally {
           releaseTicketActionLock(autoCloseLockKey);
@@ -1141,17 +1148,17 @@ async function pinFirstTicketMessage(channel, message) {
       try {
         await interaction
           .deferReply({ flags: 1 << 6 })
-          .catch(() => {})
-          .catch(() => {});
-      } catch {}
-      const ticketDoc=await runtimeLoadTicketForChannelOrReply({interaction,safeReply,makeErrorEmbed,channelId:interaction.channel?.id,missingDescription:"<:vegax:1443934876440068179> Ticket non trovato",});
+          .catch(() => { })
+          .catch(() => { });
+      } catch { }
+      const ticketDoc = await runtimeLoadTicketForChannelOrReply({ interaction, safeReply, makeErrorEmbed, channelId: interaction.channel?.id, missingDescription: "<:vegax:1443934876440068179> Ticket non trovato", });
       if (!ticketDoc) return true;
-      const canClose=await runtimeEnsureClosableTicketOrReply({interaction,safeReply,makeErrorEmbed,ticketDoc,highStaff:isHighStaffActor(),});
+      const canClose = await runtimeEnsureClosableTicketOrReply({ interaction, safeReply, makeErrorEmbed, ticketDoc, highStaff: isHighStaffActor(), });
       if (!canClose) return true;
       let motivo = null;
       try {
         motivo = interaction.fields.getTextInputValue("motivo")?.trim() || null;
-      } catch (_) {}
+      } catch (_) { }
       if (!motivo && interaction.fields?.fields) {
         const first = interaction.fields.fields.first();
         if (first?.value) motivo = String(first.value).trim() || null;
@@ -1170,12 +1177,12 @@ async function pinFirstTicketMessage(channel, message) {
       await safeReply(interaction, {
         embeds: [
           makeErrorEmbed(
-            "Errore Interno",
+            "<a:VC_Alert:1448670089670037675> Errore Interno",
             "<:vegax:1443934876440068179> Si è verificato un errore durante l'elaborazione.",
           ),
         ],
         flags: 1 << 6,
-      }).catch(() => {});
+      }).catch(() => { });
     } catch (e) {
       global.logger.info(e);
     }

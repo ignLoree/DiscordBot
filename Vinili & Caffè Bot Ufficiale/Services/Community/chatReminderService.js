@@ -1,9 +1,8 @@
 const { EmbedBuilder } = require("discord.js");
 const { randomInt } = require("crypto");
-const { ChatReminderSchedule, } = require("../../Schemas/Community/communitySchemas");
-const { ChatReminderRotation, } = require("../../Schemas/Community/communitySchemas");
+const { ChatReminderSchedule, ChatReminderRotation } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");
-const DEFAULT_REMINDER_CHANNEL_ID = IDs.channels.chat || IDs.channels.joinLeaveLogs;
+const DEFAULT_REMINDER_CHANNEL_ID = IDs.channels.chat
 const DEFAULT_TIME_ZONE = "Europe/Rome";
 const DEFAULT_START_HOUR = 9;
 const DEFAULT_END_HOUR = 21;
@@ -423,8 +422,4 @@ function getChatReminderLoopStatus() {
   };
 }
 
-module.exports = {
-  startHourlyReminderLoop,
-  recordReminderActivity,
-  getChatReminderLoopStatus,
-};
+module.exports = { startHourlyReminderLoop, recordReminderActivity, getChatReminderLoopStatus };

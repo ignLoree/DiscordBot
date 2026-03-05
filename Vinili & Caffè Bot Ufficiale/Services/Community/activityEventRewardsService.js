@@ -258,14 +258,13 @@ async function grantEventRewardsForSameDayReviewAndVote(guild, eventStartDate) {
       guild.id,
       userId,
       1,
-      "Evento: voto Discadia (giorno avvio)",
+      "Evento: voto Discadia",
       member || undefined,
       guild,
     ).catch(() => null);
   }
 }
 
-/** Restituisce 1-4 = settimana evento (1 = primi 7 giorni dall'avvio, 4 = ultima). 0 = evento non attivo o fuori range. */
 function getEventWeekNumber(settings) {
   if (!settings?.eventStartedAt || !settings?.eventExpiresAt) return 0;
   const now = Date.now();
@@ -273,9 +272,9 @@ function getEventWeekNumber(settings) {
   const end = new Date(settings.eventExpiresAt).getTime();
   if (now < start || now > end) return 0;
   const weekMs = 7 * 24 * 60 * 60 * 1000;
-  const weekIndex = Math.floor((now - start) / weekMs); // 0 = giorni 0-6, 1 = giorni 7-13, ...
+  const weekIndex = Math.floor((now - start) / weekMs);
   if (weekIndex < 0) return 0;
-  return Math.min(4, weekIndex + 1); // settimana 1 = primi 7 giorni, 2 = secondi 7, ...
+  return Math.min(4, weekIndex + 1);
 }
 
 async function getTop10ExpDuringEvent(guildId, limit = 10) {
@@ -302,23 +301,10 @@ async function getTop3ExpDuringEventExcludingStaff(guild) {
   return out;
 }
 
-/** Cancella tutti i premi evento registrati per la guild (Supporter/Verificato/Guilded/voto/inviti). Dopo averla chiamata, riassegnare con grantEventRewardsForExistingRoleMembers. */
 async function clearActivityEventRewardsForGuild(guildId) {
   if (!guildId) return { deleted: 0 };
   const result = await ActivityEventReward.deleteMany({ guildId: String(guildId) }).catch(() => null);
   return { deleted: result?.deletedCount ?? 0 };
 }
 
-module.exports = {
-  isEventActive,
-  grantEventLevels,
-  grantEventRewardOnce,
-  grantEventRewardsForExistingRoleMembers,
-  grantEventRewardsForSameDayReviewAndVote,
-  clearActivityEventRewardsForGuild,
-  addEventWeekWinner,
-  hasEventWeekWinnerGrant,
-  getTop3ExpDuringEventExcludingStaff,
-  getEventWeekNumber,
-  getTop10ExpDuringEvent,
-};
+module.exports = { isEventActive, grantEventLevels, grantEventRewardOnce, grantEventRewardsForExistingRoleMembers, grantEventRewardsForSameDayReviewAndVote, clearActivityEventRewardsForGuild, addEventWeekWinner, hasEventWeekWinnerGrant, getTop3ExpDuringEventExcludingStaff, getEventWeekNumber, getTop10ExpDuringEvent };

@@ -7,30 +7,29 @@ const { buildEventoClassificaPayload } = require("../../Services/Community/event
 const IDs = require("../../Utils/Config/ids");
 const TIME_ZONE = "Europe/Rome";
 const EVENT_DURATION_DAYS = 31;
+const EVENT_GLOBAL_MULTI = 3;
+const EVENT_ROLE_OVERRIDES = { [IDs.roles.ServerBooster]: 3, [IDs.roles.Donator]: 4, [IDs.roles.VIP]: 5, };
+const EVENT_EXTRA_MULTI_ROLE_IDS = [IDs.roles.Veterano].filter(Boolean);
+const NEWS_CHANNEL_ID = IDs.channels.news;
+const NEWS_STAFF_CHANNEL_ID = IDs.channels.staffNews;
+const EVENT_ANNOUNCEMENT_MESSAGES = [["<:VC_Firework:1470796227913322658> **ACTIVITY EXP EVENT**", "", "> <a:VC_HeartsPink:1468685897389052008> __Per festeggiare i 350 membri abbiamo deciso di startare un nuovo evento!__", "> <a:VC_HeartsBlue:1468686100045369404> **Non sarà il classico activity event, ma sarà incentrato tanto sull'exp e i livelli.**", "", "<a:VC_Sparkles:1468546911936974889> Ogni ruolo ottenibile **gratuitamente** avrà una __ricompensa extra__ oltre a quelle già scritte in <#1442569111119990887>:", "<:VC_DoubleReply:1468713981152727120> <@&1469040179799920801> / <@&1469040190730408018> <a:VC_Arrow:1448672967721615452> __Facendo la verifica tramite selfie otterrete anche 5 livelli__", "<:VC_DoubleReply:1468713981152727120> <@&1442568948271943721> <a:VC_Arrow:1448672967721615452> __Mettendo il nostro link nello status (discord.gg/viniliecaffe) riceverete 5 livelli__", "<:VC_DoubleReply:1468713981152727120> <@&1468266342682722679> <a:VC_Arrow:1448672967721615452> __Votando ogni giorno su [Discadia](<https://discadia.com/vote/viniliecaffe/>) ricevete 1 livello__", "<:VC_DoubleReply:1468713981152727120> <@&1469758545263198442> / <@&1474357579143577610> / <@&1474361806956007425> <a:VC_Arrow:1448672967721615452> __Per ogni soglia di inviti fatti col vostro [custom link](<https://imgur.com/a/3wpDOVj>) raggiunta riceverete rispettivamente 5 livelli, 10 livelli e 25 livelli.__", "<:VC_Reply:1468262952934314131> <@&1471955147692179497> <a:VC_Arrow:1448672967721615452> __Mettendo una nostra <#1475223034057982184> riceverete 10 livelli__",].join("\n"), ["", "<:VC_EXP:1468714279673925883> Inoltre ci sarà un __multi globale__ di **x3** per tutti. Alcuni ruoli avranno anche dei boost **maggiorati** per tutta la durata dell'evento:", "<:VC_DoubleReply:1468713981152727120> <@&1329497467481493607> <a:VC_Arrow:1448672967721615452> __`x3` invece di `x2`__", "<:VC_DoubleReply:1468713981152727120> <@&1442568916114346096> <a:VC_Arrow:1448672967721615452> __`x4` invece di `x3`__", "<:VC_DoubleReply:1468713981152727120> <@&1442568950805430312> <a:VC_Arrow:1448672967721615452> __`x5` invece di `x4`__", "<:VC_Reply:1468262952934314131> <@&1469073503025103113> <a:VC_Arrow:1448672967721615452> __Per premiare anche chi sta qui da più tempo applicheremo un boost extra di `x2`__", "> <a:VC_Exclamation:1448687427836444854> __Ricordo che questi boost si sommano a quello globale, non tra di loro.__",].join("\n"), (startDateStr, endDateStr) => ["", "<a:VC_Events:1448688007438667796> Ogni settimana i 3 utenti più attivi in vocale e in testuali riceveranno rispettivamente le seguenti ricompense:", "<:VC_DoubleReply:1468713981152727120> **1° Settimana** <a:VC_Arrow:1448672967721615452> __10 livelli__", "<:VC_DoubleReply:1468713981152727120> **2° Settimana** <a:VC_Arrow:1448672967721615452> __Un colore gradiente a scelta__", "<:VC_DoubleReply:1468713981152727120> **3° Settimana** <a:VC_Arrow:1448672967721615452> __Ruolo custom e vocale privata permanente__", "<:VC_Reply:1468262952934314131> **4° Settimana** <a:VC_Arrow:1448672967721615452> __Ruolo <@&1442568950805430312> permanente__", "> <a:VC_Exclamation:1448687427836444854> __Ricordo che inoltre i primi in top testuale e vocale riceveranno lo stesso <@&1468674837957574757> e <@&1468674787399172208> ogni settimana.__", "", "<a:VC_Boost:1448670271115497617> Alla fine dell'evento verrà stilata una classifica globale in base all'**EXP** (__non ai livelli__) ottenuta durante la durata dell'evento e i primi 3 otterranno un **__NITRO BOOST__**.", "", "> **NB: Tutti i premi vengono assegnati automaticamente dal bot, anche quelli settimanali (naturalmente non i Nitro Boost), aprite un <#1442569095068254219> solo se siete sicuri di non aver ricevuto la vostra ricompensa. Tutti i ticket inutili verranno sanzionati.**", "", `<a:VC_Calendar:1448670320180592724> __La durata dell'evento è dal \`${startDateStr}\` al \`${endDateStr}\`__`, "", "<a:VC_Ping:1448670620412809298>︲<@&1442569012063109151>",].join("\n"),];
 
 function getEndDateAt21Rome(now, giorniDaOggi = 30) {
   const endDay = new Date(now.getTime() + giorniDaOggi * 24 * 60 * 60 * 1000);
-  const formatter=new Intl.DateTimeFormat("en-CA",{timeZone:TIME_ZONE,year:"numeric",month:"2-digit",day:"2-digit",});
+  const formatter = new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit", });
   const parts = formatter.formatToParts(endDay);
   const year = parseInt(parts.find((p) => p.type === "year").value, 10);
   const month = parseInt(parts.find((p) => p.type === "month").value, 10) - 1;
   const day = parseInt(parts.find((p) => p.type === "day").value, 10);
   const hour21CET = new Date(Date.UTC(year, month, day, 20, 0, 0));
   const hour21CEST = new Date(Date.UTC(year, month, day, 19, 0, 0));
-  const fmt=new Intl.DateTimeFormat("it-IT",{timeZone:TIME_ZONE,hour:"2-digit",minute:"2-digit",hour12:false,});
+  const fmt = new Intl.DateTimeFormat("it-IT", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit", hour12: false, });
   return fmt.format(hour21CET) === "21:00" ? hour21CET : hour21CEST;
 }
-const EVENT_GLOBAL_MULTI = 3;
-const EVENT_ROLE_OVERRIDES={[IDs.roles.ServerBooster]:3,[IDs.roles.Donator]:4,[IDs.roles.VIP]:5,};
-const EVENT_EXTRA_MULTI_ROLE_IDS = [IDs.roles.Veterano].filter(Boolean);
-const NEWS_CHANNEL_ID = IDs.channels.news;
-const NEWS_STAFF_CHANNEL_ID = IDs.channels.staffNews;
-
-const EVENT_ANNOUNCEMENT_MESSAGES=[["<:VC_Firework:1470796227913322658> **ACTIVITY EXP EVENT**","","> <a:VC_HeartsPink:1468685897389052008> __Per festeggiare i 350 membri abbiamo deciso di startare un nuovo evento!__","> <a:VC_HeartsBlue:1468686100045369404> **Non sarà il classico activity event, ma sarà incentrato tanto sull'exp e i livelli.**","","<a:VC_Sparkles:1468546911936974889> Ogni ruolo ottenibile **gratuitamente** avrà una __ricompensa extra__ oltre a quelle già scritte in <#1442569111119990887>:","<:VC_DoubleReply:1468713981152727120> <@&1469040179799920801> / <@&1469040190730408018> <a:VC_Arrow:1448672967721615452> __Facendo la verifica tramite selfie otterrete anche 5 livelli__","<:VC_DoubleReply:1468713981152727120> <@&1442568948271943721> <a:VC_Arrow:1448672967721615452> __Mettendo il nostro link nello status (discord.gg/viniliecaffe) riceverete 5 livelli__","<:VC_DoubleReply:1468713981152727120> <@&1468266342682722679> <a:VC_Arrow:1448672967721615452> __Votando ogni giorno su [Discadia](<https://discadia.com/vote/viniliecaffe/>) ricevete 1 livello__","<:VC_DoubleReply:1468713981152727120> <@&1469758545263198442> / <@&1474357579143577610> / <@&1474361806956007425> <a:VC_Arrow:1448672967721615452> __Per ogni soglia di inviti fatti col vostro [custom link](<https://imgur.com/a/3wpDOVj>) raggiunta riceverete rispettivamente 5 livelli, 10 livelli e 25 livelli.__","<:VC_Reply:1468262952934314131> <@&1471955147692179497> <a:VC_Arrow:1448672967721615452> __Mettendo una nostra <#1475223034057982184> riceverete 10 livelli__",].join("\n"),["","<:VC_EXP:1468714279673925883> Inoltre ci sarà un __multi globale__ di **x3** per tutti. Alcuni ruoli avranno anche dei boost **maggiorati** per tutta la durata dell'evento:","<:VC_DoubleReply:1468713981152727120> <@&1329497467481493607> <a:VC_Arrow:1448672967721615452> __`x3` invece di `x2`__","<:VC_DoubleReply:1468713981152727120> <@&1442568916114346096> <a:VC_Arrow:1448672967721615452> __`x4` invece di `x3`__","<:VC_DoubleReply:1468713981152727120> <@&1442568950805430312> <a:VC_Arrow:1448672967721615452> __`x5` invece di `x4`__","<:VC_Reply:1468262952934314131> <@&1469073503025103113> <a:VC_Arrow:1448672967721615452> __Per premiare anche chi sta qui da più tempo applicheremo un boost extra di `x2`__","> <a:VC_Exclamation:1448687427836444854> __Ricordo che questi boost si sommano a quello globale, non tra di loro.__",].join("\n"),(startDateStr,endDateStr) => ["","<a:VC_Events:1448688007438667796> Ogni settimana i 3 utenti più attivi in vocale e in testuali riceveranno rispettivamente le seguenti ricompense:","<:VC_DoubleReply:1468713981152727120> **1° Settimana** <a:VC_Arrow:1448672967721615452> __10 livelli__","<:VC_DoubleReply:1468713981152727120> **2° Settimana** <a:VC_Arrow:1448672967721615452> __Un colore gradiente a scelta__","<:VC_DoubleReply:1468713981152727120> **3° Settimana** <a:VC_Arrow:1448672967721615452> __Ruolo custom e vocale privata permanente__","<:VC_Reply:1468262952934314131> **4° Settimana** <a:VC_Arrow:1448672967721615452> __Ruolo <@&1442568950805430312> permanente__","> <a:VC_Exclamation:1448687427836444854> __Ricordo che inoltre i primi in top testuale e vocale riceveranno lo stesso <@&1468674837957574757> e <@&1468674787399172208> ogni settimana.__","","<a:VC_Boost:1448670271115497617> Alla fine dell'evento verrà stilata una classifica globale in base all'**EXP** (__non ai livelli__) ottenuta durante la durata dell'evento e i primi 3 otterranno un **__NITRO BOOST__**.","","> **NB: Tutti i premi vengono assegnati automaticamente dal bot, anche quelli settimanali (naturalmente non i Nitro Boost), aprite un <#1442569095068254219> solo se siete sicuri di non aver ricevuto la vostra ricompensa. Tutti i ticket inutili verranno sanzionati.**","",`<a:VC_Calendar:1448670320180592724> __La durata dell'evento è dal \`${startDateStr}\` al \`${endDateStr}\`__`,"","<a:VC_Ping:1448670620412809298>︲<@&1442569012063109151>",].join("\n"),];
 
 function buildStaffEventAnnouncementMessages(startDateStr, endDateStr) {
-  const part1=["## <a:VC_Announce:1448687280381235443>  **EVENTO STAFF**","","> <a:VC_Cross:1448671102355116052> __Lo <@&1442568910070349985> non può partecipare all'activity event__","> <a:VC_Diamon:1469463765610135635> __Per lo Staff ci sarà un evento parallelo a quello degli utenti__","","<:VC_Info:1460670816214585481> __Ogni staff per tutta la durata avrà una graduatoria che gli farà garantire un punteggio:__","<:VC_DoubleReply:1468713981152727120> **Ogni utente entrato tramite invito col vostro [custom link](<https://imgur.com/a/3wpDOVj>) **<a:VC_Arrow:1448672967721615452> __1 punto__","<:VC_DoubleReply:1468713981152727120> **Ogni utente che si candiderà grazie a voi** <a:VC_Arrow:1448672967721615452> __5 punti__","<:VC_DoubleReply:1468713981152727120> **Ogni utente che boosta grazie a voi**  <a:VC_Arrow:1448672967721615452> __10 punti__","<:VC_DoubleReply:1468713981152727120> **Fare il <@&1442568905582317740> oltre allo <@&1442568910070349985>** <a:VC_Arrow:1448672967721615452> __15 punti__","<:VC_DoubleReply:1468713981152727120> **Ogni server che si trasferirà nel nostro** <a:VC_Arrow:1448672967721615452> __20 punti__","<:VC_DoubleReply:1468713981152727120> **Superare ogni settimana i limiti di almeno 150 messaggi e 1h e 30** <a:VC_Arrow:1448672967721615452> __20 punti__","<:VC_DoubleReply:1468713981152727120> **Ogni server che chiede una <#1442569211611185323> grazie a voi** <a:VC_Arrow:1448672967721615452> __25 punti__","<:VC_Reply:1468262952934314131> **Ogni utente che compra il <@&1442568950805430312> o il <@&1442568916114346096> grazie a voi** <a:VC_Arrow:1448672967721615452> __50 punti__","> <a:VC_Alert:1448670089670037675> __NB: L'utente che si candiderà dovrà essere pexato al fine del conteggio dei punti. Per le prove dovrete aprire un <#1442569095068254219> `terza categoria`.__","> <:VC_BlackPin:1448687216871084266> __L'<@&1442568894349840435> è escluso dall'evento__",].join("\n");
-  const part2=["","<:VC_Attention:1443933073438675016> **Alla fine dell'evento verranno comunicati lo staffer con più punti (candidato al pex) e quello con meno punti (candidato al depex); pex e depex saranno assegnati manualmente dallo staff.**","",`<a:VC_pixeltime:1470796283320209600> __La durata dell'evento è dal \`${startDateStr}\` al \`${endDateStr}\`__`,"","<:VC_Mention:1443994358201323681>︲<@&1442568910070349985>",].join("\n");
+  const part1 = ["## <a:VC_Announce:1448687280381235443>  **EVENTO STAFF**", "", "> <a:VC_Cross:1448671102355116052> __Lo <@&1442568910070349985> non può partecipare all'activity event__", "> <a:VC_Diamon:1469463765610135635> __Per lo Staff ci sarà un evento parallelo a quello degli utenti__", "", "<:VC_Info:1460670816214585481> __Ogni staff per tutta la durata avrà una graduatoria che gli farà garantire un punteggio:__", "<:VC_DoubleReply:1468713981152727120> **Ogni utente entrato tramite invito col vostro [custom link](<https://imgur.com/a/3wpDOVj>) **<a:VC_Arrow:1448672967721615452> __1 punto__", "<:VC_DoubleReply:1468713981152727120> **Ogni utente che si candiderà grazie a voi** <a:VC_Arrow:1448672967721615452> __5 punti__", "<:VC_DoubleReply:1468713981152727120> **Ogni utente che boosta grazie a voi**  <a:VC_Arrow:1448672967721615452> __10 punti__", "<:VC_DoubleReply:1468713981152727120> **Fare il <@&1442568905582317740> oltre allo <@&1442568910070349985>** <a:VC_Arrow:1448672967721615452> __15 punti__", "<:VC_DoubleReply:1468713981152727120> **Ogni server che si trasferirà nel nostro** <a:VC_Arrow:1448672967721615452> __20 punti__", "<:VC_DoubleReply:1468713981152727120> **Superare ogni settimana i limiti di almeno 150 messaggi e 1h e 30** <a:VC_Arrow:1448672967721615452> __20 punti__", "<:VC_DoubleReply:1468713981152727120> **Ogni server che chiede una <#1442569211611185323> grazie a voi** <a:VC_Arrow:1448672967721615452> __25 punti__", "<:VC_Reply:1468262952934314131> **Ogni utente che compra il <@&1442568950805430312> o il <@&1442568916114346096> grazie a voi** <a:VC_Arrow:1448672967721615452> __50 punti__", "> <a:VC_Alert:1448670089670037675> __NB: L'utente che si candiderà dovrà essere pexato al fine del conteggio dei punti. Per le prove dovrete aprire un <#1442569095068254219> `terza categoria`.__", "> <:VC_BlackPin:1448687216871084266> __L'<@&1442568894349840435> è escluso dall'evento__",].join("\n");
+  const part2 = ["", "<:VC_Attention:1443933073438675016> **Alla fine dell'evento verranno comunicati lo staffer con più punti (candidato al pex) e quello con meno punti (candidato al depex); pex e depex saranno assegnati manualmente dallo staff.**", "", `<a:VC_pixeltime:1470796283320209600> __La durata dell'evento è dal \`${startDateStr}\` al \`${endDateStr}\`__`, "", "<:VC_Mention:1443994358201323681>︲<@&1442568910070349985>",].join("\n");
   return [part1, part2];
 }
 
@@ -66,13 +65,13 @@ module.exports = {
   subcommandAliases: { start: "start", stop: "stop", info: "info", classifica: "classifica", staff: "staff" },
 
   async execute(message, args = []) {
-    await message.channel.sendTyping().catch(() => {});
+    await message.channel.sendTyping().catch(() => { });
     const sub = String(args[0] || "").toLowerCase();
     const guildId = message.guild?.id;
     if (!guildId) return;
 
     if (!sub || !["start", "stop", "info", "assegna-ruoli", "reset-premi", "classifica", "staff"].includes(sub)) {
-      const usage=new EmbedBuilder().setColor("#6f4e37").setTitle("Comando evento").setDescription(["`+evento start` – Avvia l’evento Activity EXP.","`+evento stop` – Termina l’evento e ripristina i moltiplicatori.","`+evento info` – Mostra stato e configurazione evento.","`+evento assegna-ruoli` – Assegna i livelli a chi ha già Supporter/Verificato/Guilded (evento attivo).","`+evento reset-premi` – Cancella i premi già registrati e riassegna a tutti (senza annuncio).","`+evento classifica` – Classifica per settimana.","`+evento classifica staff` – Classifica punti evento staff.","`+evento staff start|stop|addpoints` – Gestione evento staff.",].join("\n"),);
+      const usage = new EmbedBuilder().setColor("#6f4e37").setTitle("Comando evento").setDescription(["`+evento start` – Avvia l’evento Activity EXP.", "`+evento stop` – Termina l’evento e ripristina i moltiplicatori.", "`+evento info` – Mostra stato e configurazione evento.", "`+evento assegna-ruoli` – Assegna i livelli a chi ha già Supporter/Verificato/Guilded (evento attivo).", "`+evento reset-premi` – Cancella i premi già registrati e riassegna a tutti (senza annuncio).", "`+evento classifica` – Classifica per settimana.", "`+evento classifica staff` – Classifica punti evento staff.", "`+evento staff start|stop|addpoints` – Gestione evento staff.",].join("\n"),);
       await safeMessageReply(message, {
         embeds: [usage],
         allowedMentions: { repliedUser: false },
@@ -92,14 +91,14 @@ module.exports = {
       await safeMessageReply(message, {
         content: "<:VC_EXP:1468714279673925883> Assegnazione livelli a chi ha già i ruoli in corso...",
         allowedMentions: { repliedUser: false },
-      }).catch(() => {});
+      }).catch(() => { });
       invalidateSettingsCache(guildId);
       await grantEventRewardsForExistingRoleMembers(message.guild).catch((err) => {
         global.logger?.error?.("[evento assegna-ruoli] grantEventRewardsForExistingRoleMembers failed:", err);
       });
       await message.channel.send({
         content: "<:vegacheckmark:1443666279058772028> Fatto. Assegnati i livelli a chi ha già Supporter, Verificato/Verificata o Guilded (solo chi non li aveva già ricevuti per questo evento).",
-      }).catch(() => {});
+      }).catch(() => { });
       return;
     }
 
@@ -115,7 +114,7 @@ module.exports = {
       await safeMessageReply(message, {
         content: "<:VC_EXP:1468714279673925883> Reset premi in corso: cancellazione registri e riassegnazione a tutti i membri...",
         allowedMentions: { repliedUser: false },
-      }).catch(() => {});
+      }).catch(() => { });
       const { deleted } = await clearActivityEventRewardsForGuild(guildId);
       invalidateSettingsCache(guildId);
       await grantEventRewardsForExistingRoleMembers(message.guild).catch((err) => {
@@ -123,7 +122,7 @@ module.exports = {
       });
       await message.channel.send({
         content: `<:vegacheckmark:1443666279058772028> Fatto. Cancellati ${deleted} premi registrati e riassegnati i livelli a chi ha Supporter, Verificato/Verificata o Guilded (senza invio annuncio).`,
-      }).catch(() => {});
+      }).catch(() => { });
       return;
     }
 
@@ -145,9 +144,9 @@ module.exports = {
           if (member?.user?.id && isStaffButNotHighStaff(member)) allowedIds.add(member.id);
         }
         const leaderboard = rawLeaderboard.filter((r) => allowedIds.has(r.userId)).slice(0, 25);
-        const lines=leaderboard.length?leaderboard.map((r,i) => `${i+1}.<@${r.userId}>—**${r.points}**pt`)
-          : ["Nessun punteggio (solo Staff non HighStaff in classifica)."];
-        const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Evento Staff — Classifica punti").setDescription(lines.join("\n")).setFooter({text:`Fine evento: ${fmtDateWithTime(staffSettings.expiresAt)}` });
+        const lines = leaderboard.length ? leaderboard.map((r, i) => `${i + 1}.<@${r.userId}>—**${r.points}**pt`)
+          : ["Nessun punteggio."];
+        const embed = new EmbedBuilder().setColor("#6f4e37").setTitle("Evento Staff — Classifica punti").setDescription(lines.join("\n")).setFooter({ text: `Fine evento: ${fmtDateWithTime(staffSettings.expiresAt)}` });
         await safeMessageReply(message, {
           embeds: [embed],
           allowedMentions: { repliedUser: false },
@@ -162,7 +161,7 @@ module.exports = {
         });
         return;
       }
-      const payload=await buildEventoClassificaPayload(message.guild,message.client,settings,1,);
+      const payload = await buildEventoClassificaPayload(message.guild, message.client, settings, 1,);
       await safeMessageReply(message, {
         ...payload,
         allowedMentions: { repliedUser: false },
@@ -187,7 +186,7 @@ module.exports = {
       if (staffSub === "start") {
         const now = new Date();
         const endDate = getEndDateAt21Rome(now, EVENT_DURATION_DAYS - 1);
-        const result=await setStaffEvent(guildId,{endDate:endDate.getTime(),startedAt:now,});
+        const result = await setStaffEvent(guildId, { endDate: endDate.getTime(), startedAt: now, });
         if (!result) {
           await safeMessageReply(message, {
             content: "<:vegax:1443934876440068179> Impossibile avviare l'evento staff.",
@@ -208,9 +207,9 @@ module.exports = {
           allowedMentions: { repliedUser: false },
         });
         if (NEWS_STAFF_CHANNEL_ID) {
-          const newsStaffChannel=message.client.channels.cache.get(NEWS_STAFF_CHANNEL_ID)||(await message.client.channels.fetch(NEWS_STAFF_CHANNEL_ID).catch(() => null));
+          const newsStaffChannel = message.client.channels.cache.get(NEWS_STAFF_CHANNEL_ID) || (await message.client.channels.fetch(NEWS_STAFF_CHANNEL_ID).catch(() => null));
           if (newsStaffChannel) {
-            const staffMessages=buildStaffEventAnnouncementMessages(fmtDate(now),fmtDateWithTime(endDate.getTime()),);
+            const staffMessages = buildStaffEventAnnouncementMessages(fmtDate(now), fmtDateWithTime(endDate.getTime()),);
             for (const content of staffMessages) {
               await newsStaffChannel.send({
                 content,
@@ -278,11 +277,11 @@ module.exports = {
     if (sub === "info") {
       const settings = await getGuildExpSettings(guildId);
       const hasEvent = Boolean(settings.eventExpiresAt);
-      const lines=[`- Evento attivo: **${hasEvent?"Sì":"No"}**`,
-        `-Moltiplicatore base:**${settings.baseMultiplier}x**`,
-        `-Moltiplicatore evento:**${settings.eventMultiplier}x**`,
-        `-Scadenza evento:**${settings.eventExpiresAt?fmtDate(settings.eventExpiresAt):"Nessuna"}**`,
-        `-Moltiplicatore effettivo:**${settings.effectiveMultiplier}x**`,
+      const lines = [`- Evento attivo: **${hasEvent ? "Sì" : "No"}**`,
+      `-Moltiplicatore base:**${settings.baseMultiplier}x**`,
+      `-Moltiplicatore evento:**${settings.eventMultiplier}x**`,
+      `-Scadenza evento:**${settings.eventExpiresAt ? fmtDate(settings.eventExpiresAt) : "Nessuna"}**`,
+      `-Moltiplicatore effettivo:**${settings.effectiveMultiplier}x**`,
       ];
       if (hasEvent && settings.eventRoleOverrides && Object.keys(settings.eventRoleOverrides).length > 0) {
         lines.push("- Override ruoli evento: attivi");
@@ -290,7 +289,7 @@ module.exports = {
       if (hasEvent && Array.isArray(settings.eventExtraMultiplierRoleIds) && settings.eventExtraMultiplierRoleIds.length > 0) {
         lines.push(`- Ruoli boost extra (x2): **${settings.eventExtraMultiplierRoleIds.length}**`);
       }
-      const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Stato evento Activity EXP").setDescription(lines.join("\n"));
+      const embed = new EmbedBuilder().setColor("#6f4e37").setTitle("Stato evento Activity EXP").setDescription(lines.join("\n"));
       await safeMessageReply(message, {
         embeds: [embed],
         allowedMentions: { repliedUser: false },
@@ -311,7 +310,7 @@ module.exports = {
     if (sub === "start") {
       const now = new Date();
       const endDate = getEndDateAt21Rome(now, EVENT_DURATION_DAYS - 1);
-      const result=await setActivityEvent(guildId,{startDate:now.getTime(),endDate:endDate.getTime(),startedAt:now,globalMultiplier:EVENT_GLOBAL_MULTI,roleOverrides:EVENT_ROLE_OVERRIDES,extraMultiplierRoleIds:EVENT_EXTRA_MULTI_ROLE_IDS,});
+      const result = await setActivityEvent(guildId, { startDate: now.getTime(), endDate: endDate.getTime(), startedAt: now, globalMultiplier: EVENT_GLOBAL_MULTI, roleOverrides: EVENT_ROLE_OVERRIDES, extraMultiplierRoleIds: EVENT_EXTRA_MULTI_ROLE_IDS, });
       if (!result) {
         await safeMessageReply(message, {
           content: "<:vegax:1443934876440068179> Impossibile avviare l'evento.",
@@ -330,26 +329,26 @@ module.exports = {
           global.logger?.error?.("[evento start] grantEventRewardsForSameDayReviewAndVote failed:", err);
         });
       }, 800);
-      const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Evento Activity EXP avviato").setDescription([`<:VC_EXP:1468714279673925883> **ACTIVITY EXP EVENT**`,``,`- Dal **${fmtDate(result.startDate)}**al**${fmtDateWithTime(result.endDate)}**`,
-            `-Moltiplicatore globale:**x${result.eventMultiplier}**`,
-            `-Override ruoli:Server Booster x3,Donator x4,VIP x5`,
-            `-Boost extra x2:<@&${IDs.roles.Veterano}>`,
-            ``,
-            `I boost si sommano al moltiplicatore globale,non tra loro.`,
-          ].join("\n"),
-        );
+      const embed = new EmbedBuilder().setColor("#6f4e37").setTitle("Evento Activity EXP avviato").setDescription([`<:VC_EXP:1468714279673925883> **ACTIVITY EXP EVENT**`, ``, `- Dal **${fmtDate(result.startDate)}**al**${fmtDateWithTime(result.endDate)}**`,
+        `-Moltiplicatore globale:**x${result.eventMultiplier}**`,
+        `-Override ruoli:Server Booster x3,Donator x4,VIP x5`,
+        `-Boost extra x2:<@&${IDs.roles.Veterano}>`,
+        ``,
+        `I boost si sommano al moltiplicatore globale,non tra loro.`,
+      ].join("\n"),
+      );
       await safeMessageReply(message, {
         embeds: [embed],
         allowedMentions: { repliedUser: false },
       });
 
       if (NEWS_CHANNEL_ID) {
-        const newsChannel=message.client.channels.cache.get(NEWS_CHANNEL_ID)||(await message.client.channels.fetch(NEWS_CHANNEL_ID).catch(() => null));
+        const newsChannel = message.client.channels.cache.get(NEWS_CHANNEL_ID) || (await message.client.channels.fetch(NEWS_CHANNEL_ID).catch(() => null));
         if (newsChannel) {
           const startStr = fmtDate(result.startDate);
           const endStr = fmtDateWithTime(result.endDate);
           for (let i = 0; i < EVENT_ANNOUNCEMENT_MESSAGES.length; i++) {
-            const content=typeof EVENT_ANNOUNCEMENT_MESSAGES[i]==="function"?EVENT_ANNOUNCEMENT_MESSAGES[i](startStr,endStr):EVENT_ANNOUNCEMENT_MESSAGES[i];
+            const content = typeof EVENT_ANNOUNCEMENT_MESSAGES[i] === "function" ? EVENT_ANNOUNCEMENT_MESSAGES[i](startStr, endStr) : EVENT_ANNOUNCEMENT_MESSAGES[i];
             await newsChannel
               .send({
                 content,
