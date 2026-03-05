@@ -229,15 +229,31 @@ function ensureDependencies(workingDir, useWorkspaces) {
     return npmInstallInProgressByDir[key];
 }
 
+function buildNodePath(workingDir) {
+    const parts = [
+        path.join(workingDir, 'node_modules'),
+        path.join(baseDir, 'node_modules'),
+    ].filter((dir) => fs.existsSync(dir));
+    const existing = String(process.env.NODE_PATH || '').trim();
+    if (existing) parts.push(existing);
+    return parts.join(path.delimiter);
+}
+
 function spawnBotProcess(bot, workingDir, file, resolve) {
     console.log(`[Loader] Avvio ${bot.label}: ${bot.folderSuffix} (${file})`);
 
     const nodeBin = resolveNodeExecutable();
     const scriptPath = path.resolve(workingDir, file);
     const shardEnv = file === 'run-sharded.js' ? { ENABLE_SHARDING: '1' } : {};
+    const nodePath = buildNodePath(workingDir);
+    if (nodePath) {
+        console.log(`[Loader] ${bot.label} NODE_PATH=${nodePath}`);
+    }
     console.log(`[Loader] Runtime ${bot.label}: ${nodeBin} (loader execPath: ${process.execPath})`);
     const nodeArgs = process.env.SHOW_NODE_WARNINGS === '1' ? [scriptPath] : ['--disable-warning=ExperimentalWarning', scriptPath];
-    const proc=child_process.spawn(nodeBin,nodeArgs,{cwd:workingDir,stdio:'inherit',env:{...silencedEnv,RUN_UNDER_LOADER:'1',...shardEnv},shell:false});
+    const spawnEnv = { ...silencedEnv, RUN_UNDER_LOADER: '1', ...shardEnv };
+    if (nodePath) spawnEnv.NODE_PATH = nodePath;
+    const proc=child_process.spawn(nodeBin,nodeArgs,{cwd:workingDir,stdio:'inherit',env:spawnEnv,shell:false});
 
     processRefs[bot.key] = proc;
     writePid(bot.key, proc.pid);
