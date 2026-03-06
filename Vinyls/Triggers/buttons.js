@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
+const { EmbedBuilder, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const { decrementQuoteCount } = require("../Utils/Quote/quoteCounter");
 const { ROLE_MULTIPLIERS } = require("../Services/Community/expService");
 const { AvatarPrivacy, BannerPrivacy, } = require("../Schemas/Community/communitySchemas");
@@ -602,6 +602,18 @@ module.exports = {
       const ticket = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setTitle("Acquista ora!").setDescription("<:blueflash:1470064803157643468> Apri un ticket nella **terza categoria** su: <#1442569095068254219>.");
       await interaction.reply({ embeds: [donations, vip, ticket], flags: 1 << 6 }).catch(() => null);
     }
+
+    if (interaction.customId == "info_sponsor") {
+      const sponsorEmbed = new EmbedBuilder().setColor("#6f4e37").setDescription("<:pinnednew:1443670849990430750> **Vinili & Caffè** offre un servizio di __sponsor__ con dei **requisiti** da rispettare. Per fare una __sponsor__ bisognerà aprire un <#1442569095068254219> `Terza Categoria`.\n\n" + "> Ogni server che vorrà effettuare una **sponsor** dovrà rispettare questi 3 requisiti:\n" + "> <:dot:1443660294596329582> Rispettare i [**ToS di Discord**](https://discord.com/terms)\n" + "> <:dot:1443660294596329582> Rispettare le [**Linee Guida di Discord**](https://discord.com/guidelines)\n" + "> <:dot:1443660294596329582> Rispettare il [**Regolamento di Vinili & Caffè**](https://discord.com/channels/1329080093599076474/1442569111119990887)").setImage(DIVIDER_URL);
+      const rowSponsor = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("metodi").setLabel("︲METODI").setEmoji("<:Money:1330544713463500970>").setStyle(ButtonStyle.Secondary), new ButtonBuilder().setCustomId("ping").setLabel("︲PING").setEmoji("<:Discord_Mention:1329524304790028328>").setStyle(ButtonStyle.Secondary));
+      await interaction.reply({ embeds: [sponsorEmbed], components: [rowSponsor], flags: 1 << 6 }).catch(() => null);
+    }
+
+    if (interaction.customId == "candidature_premi_partner") {
+      const premiPartnerEmbed = new EmbedBuilder().setColor("#6f4e37").setDescription("<:partneredserverowner:1443651871125409812> **__Vinili & Caffè__** offre un servizio di __pagamento__ in base al numero di **partner** effettuate.\n> Per riscattare eventuali premi bisognerà aprire un <#1442569095068254219> **__`Terza Categoria`__**\n\n<:dot:1443660294596329582> **__`150`__** partner <a:vegarightarrow:1443673039156936837> **__2__ euro** <:paypal:1329524292446191676>\n<:dot:1443660294596329582> **__`175`__** partner <a:vegarightarrow:1443673039156936837> **__3__ euro** <:paypal:1329524292446191676> / **Nitro __Basic__** <:sparkles_nitro_basic:1330196488336310383>\n<:dot:1443660294596329582> **__`250`__** partner <a:vegarightarrow:1443673039156936837> **Nitro __Boost__** <:VC_NitroBoost:1448706966263435326>\n\n<a:flyingnitroboost:1443652205705170986> Naturalmente, in caso di riscatto del **Nitro __Boost__**, almeno un **boost** dovrà andare a **__Vinili & Caffè__**.").setImage(DIVIDER_URL);
+      await interaction.reply({ embeds: [premiPartnerEmbed], flags: 1 << 6 }).catch(() => null);
+    }
+
     const sendUpdatedView = async (payload) => { const msgFlags = interaction.message?.flags; const isEphemeralSource = Boolean((typeof msgFlags?.has === "function" && msgFlags.has(1 << 6)) || (typeof msgFlags?.bitfield === "number" && (msgFlags.bitfield & (1 << 6)) !== 0) || (typeof msgFlags === "number" && (msgFlags & (1 << 6)) !== 0),); if (isEphemeralSource) { return interaction.update(payload).catch(async () => { return interaction.reply({ ...payload, flags: 1 << 6 }).catch(() => { }); }); } return interaction.reply({ ...payload, flags: 1 << 6 }).catch(() => { }); }; if (interaction.customId == "info_verifica") {
       const verifyEmbed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setTitle("<a:VC_Verified:1448687631109197978> **__Verificati per ottenere vantaggi unici__**").setDescription([
         `Per verificare il tuo profilo dovrai andare in <#${IDs.channels.ticket}> e selezionare la terza categoria`,

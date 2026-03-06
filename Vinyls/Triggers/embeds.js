@@ -28,7 +28,7 @@ Per candidarsi, è necessario **soddisfare** i seguenti __requisiti__:
 
   const candidatureAttachment = new AttachmentBuilder(CANDIDATURE_MEDIA_PATH, { name: CANDIDATURE_MEDIA_NAME, });
 
-  const rowCandidature = new ActionRowBuilder().addComponents(new ButtonBuilder().setLabel("︲HELPER").setEmoji("<:helper:1443651909448630312>").setStyle(ButtonStyle.Secondary).setCustomId("apply_helper"), new ButtonBuilder().setLabel("︲PARTNER MANAGER").setEmoji("<:partnermanager:1443651916838998099>").setStyle(ButtonStyle.Secondary).setCustomId("apply_partnermanager"),);
+  const rowCandidature = new ActionRowBuilder().addComponents(new ButtonBuilder().setLabel("︲HELPER").setEmoji("<:helper:1443651909448630312>").setStyle(ButtonStyle.Secondary).setCustomId("apply_helper"), new ButtonBuilder().setLabel("︲PARTNER MANAGER").setEmoji("<:partnermanager:1443651916838998099>").setStyle(ButtonStyle.Secondary).setCustomId("apply_partnermanager"), new ButtonBuilder().setLabel("︲STAFF PAGATO").setEmoji("<:partneredserverowner:1443651871125409812>").setStyle(ButtonStyle.Secondary).setCustomId("candidature_premi_partner"),);
 
   await upsertPanelMessage(candidatureChannel, client, {
     embeds: [candidatureEmbed],
@@ -44,29 +44,27 @@ async function runInfoPanelAuto(client) {
   const { PersonalityPanel } = require("../Schemas/Community/communitySchemas");
   const IDs = require("../Utils/Config/ids");
   const { upsertPanelMessage } = require("../../shared/discord/panelUpsertRuntime");
-
   const INFO_CHANNEL_ID = IDs.channels.info;
   const INFO_MEDIA_NAME = "info.gif";
   const INFO_MEDIA_PATH = path.join(__dirname, "..", "Photos", INFO_MEDIA_NAME);
-
   const DIVIDER_URL = "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
-
   const channel = client.channels.cache.get(INFO_CHANNEL_ID) || (await client.channels.fetch(INFO_CHANNEL_ID).catch(() => null));
   if (!channel?.isTextBased?.()) return;
-
   const attachment = new AttachmentBuilder(INFO_MEDIA_PATH, { name: INFO_MEDIA_NAME, });
-
   const embed1 = new EmbedBuilder().setColor("#6f4e37").setTitle("Ti diamo il benvenuto nella nostra community!").setFooter({ text: "Usa i bottoni sottostanti per accedere ad altre categorie del server:", }).setDescription(["<a:VC_HeartsBlue:1468686100045369404> Benvenuto/a su **Vinili & Caffè**, l'unico server in Italia non tossico e __incentrato sulla socializzazione__.", "", "<a:VC_HeartBlue:1448673354751021190> **Personalizza il tuo profilo:**", "<:VC_Reply:1468262952934314131> Nel canale <#1469429150669602961> potrai selezionare i colori e i ruoli da aggiungere al tuo profilo per completarlo: come età, menzioni, passioni e molto altro!", "", `Dubbi o problemi? <#${IDs.channels.ticket}> sarà la vostra bussola, lo staff vi risponderà il prima possibile!`,].join("\n"),).addFields({ name: "<:dot:1443660294596329582> Links", value: ["<:VC_bump:1330185435401424896> [Lascia una recensione su DISBOARD](<https://disboard.org/it/server/1329080093599076474>)", "<:link:1470064815899803668> [Votaci su Discadia](<https://discadia.com/vote/viniliecaffe/>)",].join("\n"), inline: true, }, { name: "<:dot:1443660294596329582> Informazioni", value: ["<:exp:1470067108543987846> Owner: <@295500038401163264>", "<:moon:1470064812615667827> Fondazione: ||<t:1765382400:F>||", "<:nitroboost:1470064881674883326> Invite: <https://discord.gg/viniliecaffe>",].join("\n"), inline: true, },).setImage(DIVIDER_URL);
-
-  const row1 = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("info_rules").setLabel("Regolamento").setEmoji("<a:VC_Rule:1469462649950703709>").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("info_donations").setLabel("Donazioni").setEmoji("<a:VC_Sparkles:1468546911936974889>").setStyle(ButtonStyle.Success), new ButtonBuilder().setCustomId("info_verifica").setLabel("Verifica Selfie").setEmoji(`<a:VC_Verified:1448687631109197978>`).setStyle(ButtonStyle.Primary),);
-
+  const row1 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId("info_rules").setLabel("Regolamento").setEmoji("<a:VC_Rule:1469462649950703709>").setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId("info_donations").setLabel("Donazioni").setEmoji("<a:VC_Sparkles:1468546911936974889>").setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId("info_sponsor").setLabel("Sponsor").setEmoji("<:pinnednew:1443670849990430750>").setStyle(ButtonStyle.Secondary),
+  );
   const embed2 = new EmbedBuilder().setColor("#6f4e37").setFooter({ text: "Usa i bottoni sottostanti per accedere ad altre categorie del server:", }).setTitle("<:VC_PurpleFlower:1469463879149944943> Sblocca dei vantaggi, permessi e ruoli:",).setDescription("Scopri tramite i bottoni sottostanti come sbloccare permessi, ad esempio: mandare link e immagini in chat, poter cambiare il nickname e molti altri.",).setImage(DIVIDER_URL);
-
-  const row2 = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("info_boost_levels").setLabel("Vantaggi Boost & Livelli").setEmoji("<a:VC_Rocket:1468544312475123753>").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("info_badges_roles").setLabel("Badge & Altri ruoli").setEmoji("<a:VC_Diamon:1469463765610135635>").setStyle(ButtonStyle.Success),);
-
+  const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId("info_boost_levels").setLabel("Vantaggi Boost & Livelli").setEmoji("<a:VC_Rocket:1468544312475123753>").setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId("info_badges_roles").setLabel("Badge & Altri ruoli").setEmoji("<a:VC_Diamon:1469463765610135635>").setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId("info_verifica").setLabel("Verifica Selfie").setEmoji(`<a:VC_Verified:1448687631109197978>`).setStyle(ButtonStyle.Secondary),
+  );
   const guildId = channel.guild?.id;
   if (!guildId) return;
-
   let panel = null;
   try {
     panel = await PersonalityPanel.findOneAndUpdate(
@@ -77,7 +75,6 @@ async function runInfoPanelAuto(client) {
   } catch { }
 
   const msg1 = await upsertPanelMessage(channel, client, { messageId: panel?.infoMessageId1 || null, files: [attachment], embeds: [embed1], components: [row1], attachmentName: INFO_MEDIA_NAME, });
-
   const msg2 = await upsertPanelMessage(channel, client, { messageId: panel?.infoMessageId2 || null, embeds: [embed2], components: [row2], });
 
   if (msg1?.id || msg2?.id) {
@@ -101,7 +98,6 @@ async function runStaffEmbedAuto(client) {
   const moderationChannel = client.channels.cache.get(IDs.channels.moderazioneStaff) || (await client.channels.fetch(IDs.channels.moderazioneStaff).catch(() => null));
   const bestStaffChannel = client.channels.cache.get(IDs.channels.bestStaff) || (await client.channels.fetch(IDs.channels.bestStaff).catch(() => null));
   const guideChannel = client.channels.cache.get(IDs.channels.guidaStaff) || (await client.channels.fetch(IDs.channels.guidaStaff).catch(() => null));
-  const paidChannel = client.channels.cache.get(IDs.channels.staffPagato) || (await client.channels.fetch(IDs.channels.staffPagato).catch(() => null));
 
   const DIVIDER_URL = "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
 
@@ -130,14 +126,7 @@ async function runStaffEmbedAuto(client) {
         <:dot:1443660294596329582> **__\`3\`__** <a:vegarightarrow:1443673039156936837> Quando **sanzionate**, usate sempre l'**__articolo__** del **regolamento** infranto.
         <:dot:1443660294596329582> **__\`4\`__** <a:vegarightarrow:1443673039156936837> Per visualizzare **quante** volte un __utente__ è stato **sanzionato** usate il comando +modlogs **__\`ID\`__**
         <:dot:1443660294596329582> **__\`5\`__** <a:vegarightarrow:1443673039156936837> Bisogna **__sempre__** sanzionare nel canale <#1442569245878648924> usando i comandi di <@1329118940110127204>
-        <:dot:1443660294596329582> **__\`6\`__** <a:vegarightarrow:1443673039156936837> Ogni volta che si __oltrepassa__ il numero di **sanzioni ottenibili** si **ricomincia** il __ciclo__ di sanzioni per quella **specifica __regola__**.`).setImage(DIVIDER_URL), new EmbedBuilder().setColor("#6f4e37").setDescription(`<:partneredserverowner:1443651871125409812> **__Vinili & Caffè__** offre un servizio di __pagamento__ in base al numero di **partner** effettuate.
-                > Per riscattare eventuali premi bisognerà aprire un <#1442569095068254219> **__\`Terza Categoria\`__**
-
-                <:dot:1443660294596329582> **__\`150\`__** partner <a:vegarightarrow:1443673039156936837> **__2__ euro** <:paypal:1329524292446191676>
-                <:dot:1443660294596329582> **__\`175\`__** partner <a:vegarightarrow:1443673039156936837> **__3__ euro** <:paypal:1329524292446191676> / **Nitro __Basic__** <:sparkles_nitro_basic:1330196488336310383>
-                <:dot:1443660294596329582> **__\`250\`__** partner <a:vegarightarrow:1443673039156936837> **Nitro __Boost__** <:VC_NitroBoost:1448706966263435326>
-
-                <a:flyingnitroboost:1443652205705170986> Naturalmente, in caso di riscatto del **Nitro __Boost__**, almeno un **boost** dovrà andare a **__Vinili & Caffè__**.`).setImage(DIVIDER_URL),];
+        <:dot:1443660294596329582> **__\`6\`__** <a:vegarightarrow:1443673039156936837> Ogni volta che si __oltrepassa__ il numero di **sanzioni ottenibili** si **ricomincia** il __ciclo__ di sanzioni per quella **specifica __regola__**.`).setImage(DIVIDER_URL),];
 
   const rowGuideMain = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("regolamento").setLabel("︲REGOLE").setEmoji("<:rules:1443307208543703131>").setStyle(ButtonStyle.Secondary), new ButtonBuilder().setCustomId("limiti").setLabel("︲LIMITI SETTIMANALI").setEmoji("<:reportmessage:1443670575376765130>").setStyle(ButtonStyle.Secondary), new ButtonBuilder().setCustomId("pause").setLabel("︲PAUSE").setEmoji("<:Clock:1330530065133338685>").setStyle(ButtonStyle.Secondary), new ButtonBuilder().setCustomId("valutazioni").setLabel("︲VALUTAZIONI").setEmoji("<a:loading:1443934440614264924>").setStyle(ButtonStyle.Secondary), new ButtonBuilder().setCustomId("sanzioni").setLabel("︲SANZIONI").setEmoji("<:discordstaff:1443651872258003005>").setStyle(ButtonStyle.Secondary),);
   const rowGuideWarn = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("warnstaff").setLabel("︲WARN STAFF").setEmoji("<:banhammer:1443651875441217639>").setStyle(ButtonStyle.Secondary),);
@@ -159,12 +148,6 @@ async function runStaffEmbedAuto(client) {
     await upsertPanelMessage(moderationChannel, client, {
       embeds: [embeds[2]],
       components: [rowModeration],
-    });
-  }
-  if (paidChannel?.isTextBased?.()) {
-    await upsertPanelMessage(paidChannel, client, {
-      embeds: [embeds[3]],
-      components: [],
     });
   }
 }
@@ -584,7 +567,6 @@ async function processOneVerifyPanel(client, guildId, verifyChannelIds) {
   const panelDoc = await sponsorGetOrCreatePanelDoc(guildId, channel.id).catch(() => null);
   if (!panelDoc) return 0;
 
-  // Riuso messageId da DB per evitare fetch storia messaggi (edit diretto)
   const verifyPayload = { messageId: panelDoc.verifyPanelMessageId || null, embeds: [verifyEmbed], components: [verifyRow], };
   const panelMessage = await upsertPanelMessage(channel, client, verifyPayload);
   if (panelMessage?.id) {
@@ -644,7 +626,6 @@ async function processOneSponsorTicketPanel(client, guildId, config) {
   const ticketRow = buildSponsorTicketMenuRow();
 
   const panelDoc = await sponsorGetOrCreatePanelDoc(guildId, channel.id).catch(() => null);
-  // Riuso messageId da DB per edit diretto senza fetch storia
   const ticketPayload = { messageId: panelDoc?.sponsorTicketPanelMessageId || null, embeds: [embed], components: [ticketRow], ...(attachment ? { files: [attachment], attachmentName: TICKET_IMAGE_NAME } : {}), };
   const sentMessage = await upsertPanelMessage(channel, client, ticketPayload);
   if (sentMessage?.id) {
@@ -673,52 +654,6 @@ async function runSponsorTicketPanels(client) {
   }
 }
 
-async function runSponsorPanelAuto(client) {
-  const IDs = require("../Utils/Config/ids");
-  const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, } = require("discord.js");
-  const path = require("path");
-  const fs = require("fs");
-  const { upsertPanelMessage } = require("../../shared/discord/panelUpsertRuntime");
-
-  const SPONSOR_MEDIA_NAME = "sponsor.gif";
-  const SPONSOR_MEDIA_PATH = path.join(__dirname, "..", "Photos", SPONSOR_MEDIA_NAME,);
-
-  const DIVIDER_URL = "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
-
-  const attachment = new AttachmentBuilder(SPONSOR_MEDIA_PATH, { name: SPONSOR_MEDIA_NAME, });
-
-  const channelId = IDs.channels?.infoSponsor || IDs.channels?.sponsor1;
-  if (!channelId) return;
-
-  const sponsorChannel = client.channels.cache.get(channelId) || (await client.channels.fetch(channelId).catch(() => null));
-  if (!sponsorChannel?.isTextBased?.()) {
-    global.logger.warn(
-      "[CLIENT READY] Sponsor panel channel missing:",
-      channelId,
-    );
-    return;
-  }
-
-  const sponsorEmbed = new EmbedBuilder().setColor("#6f4e37").setDescription("<:pinnednew:1443670849990430750> **Vinili & Caffè** offre un servizio di __sponsor__ con dei **requisiti** da rispettare. Per fare una __sponsor__ bisognerà aprire un <#1442569095068254219> `Terza Categoria`.\n\n" + "> Ogni server che vorrà effettuare una **sponsor** dovrà rispettare questi 3 requisiti:\n" + "> <:dot:1443660294596329582> Rispettare i [**ToS di Discord**](https://discord.com/terms)\n" + "> <:dot:1443660294596329582> Rispettare le [**Linee Guida di Discord**](https://discord.com/guidelines)\n" + "> <:dot:1443660294596329582> Rispettare il [**Regolamento di Vinili & Caffè**](https://discord.com/channels/1329080093599076474/1442569111119990887)",).setImage(DIVIDER_URL);
-
-  const rowSponsor = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("metodi").setLabel("︲METODI").setEmoji("<:Money:1330544713463500970>").setStyle(ButtonStyle.Secondary), new ButtonBuilder().setCustomId("ping").setLabel("︲PING").setEmoji("<:Discord_Mention:1329524304790028328>").setStyle(ButtonStyle.Secondary),);
-
-  const files = [];
-  try {
-    if (fs.existsSync(SPONSOR_MEDIA_PATH)) {
-      files.push(
-        new AttachmentBuilder(SPONSOR_MEDIA_PATH, { name: SPONSOR_MEDIA_NAME }),
-      );
-    }
-  } catch (e) { }
-
-  await upsertPanelMessage(sponsorChannel, client, {
-    embeds: [sponsorEmbed],
-    components: [rowSponsor],
-    files: [attachment],
-    attachmentName: SPONSOR_MEDIA_NAME,
-  });
-}
 
 async function runStaffListAuto(client) {
   const IDs = require("../Utils/Config/ids");
@@ -878,5 +813,3 @@ module.exports = {
     await runAllClientReadyPanels(client);
   },
 };
-
-const { getClientGuildCached, getGuildChannelCached, getGuildRoleCached } = require("../Utils/Interaction/interactionEntityCache");
