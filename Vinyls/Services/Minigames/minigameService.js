@@ -285,7 +285,10 @@ function isFailsafeDue(cfg) {
   if (!channelId) return false;
   const lastSent = lastSentAtByChannel.get(channelId) || 0;
   if (!lastSent) return false;
-  return Date.now() - lastSent >= getFailsafeMs(cfg);
+  if (Date.now() - lastSent < getFailsafeMs(cfg)) return false;
+  const minActivityForFailsafe = Math.min(1, getMinMessages(cfg));
+  if (getRecentCount(channelId, getActivityWindowMs(cfg)) < minActivityForFailsafe) return false;
+  return true;
 }
 
 async function saveActiveGame(client, cfg, payload) {
@@ -4984,7 +4987,7 @@ function startMinigameLoop(client) {
       if (!type) return;
       pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
     }
-    await maybeStartRandomGame(client, true);
+    await maybeStartRandomGame(client, false);
   };
 
   const timer = setInterval(runAtSlot, 60 * 1000);

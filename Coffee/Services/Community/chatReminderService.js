@@ -388,6 +388,9 @@ async function sendReminder(client, scheduleId, kind = "first") {
 async function sendReminderAtFixedSlot(client, parts, slotKey) {
   const channelId = getReminderChannelId(client);
   if (!channelId) return;
+  const { count30m: activityCount30m } = await getActivityCounts(client);
+  const minForSlot = Math.max(1, Number(getCfg(client)?.minMessagesForFixedSlot ?? 1));
+  if (activityCount30m < minForSlot) return;
   const channel =
     client.channels.cache.get(channelId) ||
     (await client.channels.fetch(channelId).catch(() => null));
