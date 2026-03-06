@@ -1,4 +1,4 @@
-﻿const cron = require("node-cron");
+const cron = require("node-cron");
 const axios = require("axios");
 const Poll = require("../../Schemas/Poll/pollSchema");
 const IDs = require("../../Utils/Config/ids");
@@ -280,7 +280,7 @@ async function fetchPollFromOpenRouter(cfg = {}, forcedTargetOptions = null) {
   for (const model of models) {
     const payload = {
       model, messages: [{ role: "system", content: "Genera sondaggi generali per utenti italiani. " + "Scrivi solo in italiano naturale. " + "Le domande devono sembrare sondaggi generali, leggeri e coinvolgenti, non interni a un server o community. " + "Evita trivia, domande da enciclopedia. " + "Le risposte devono essere coerenti tra loro, tutte plausibili, corte e senza duplicati. " + "Non usare risposte meta come 'dipende', 'altro', 'non so' salvo se davvero sensate. " + "Non usare mai riferimenti a Discord, community, server, staff, eventi del server o chat di gruppo. " + "Non usare mai il formato 'Qual e la tua opinione su ...'. " + "Restituisci solo JSON valido con le chiavi question e answers.", }, {
-        role: "user", content: `Genera un poll con ${optionCount}risposte.` +
+        role: "user", content: `Genera un poll con ${optionCount} risposte.` +
           " Target: pubblico italiano generalista." +
           " La domanda deve essere breve, chiara, coinvolgente e adatta a ricevere risposte reali da chiunque." +
           " I temi giusti sono abitudini, gusti, preferenze quotidiane, intrattenimento, lifestyle, stagioni, cibo, carattere, tempo libero, gaming, sesso, politica, musica, religione, cronaca." +
@@ -289,9 +289,6 @@ async function fetchPollFromOpenRouter(cfg = {}, forcedTargetOptions = null) {
       ],
       max_tokens: 220,
       temperature: 0.7,
-      response_format: {
-        type: "json_object",
-      },
     };
 
     try {
@@ -320,6 +317,12 @@ async function fetchPollFromOpenRouter(cfg = {}, forcedTargetOptions = null) {
     } catch (error) {
       const status = Number(error?.response?.status || 0);
       if (status === 429) startOpenRouterCooldown();
+      if (status === 400) {
+        const detail = error?.response?.data?.error?.message || error?.response?.data?.message || error?.response?.data;
+        global.logger?.warn?.("[poll.auto] OpenRouter 400 for model " + model + ":", detail || error?.message);
+        lastError = error;
+        continue;
+      }
       if ([404, 429, 500, 502, 503, 504].includes(status)) {
         lastError = error;
         continue;

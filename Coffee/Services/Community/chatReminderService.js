@@ -386,19 +386,18 @@ async function nextReminderEmbed(parts, guildId) {
   if (rotationDate !== key || rotationQueue.length === 0) {
     rotationDate = key;
     rotationQueue = reminderPool.map((_, idx) => idx);
-    for (let i = rotationQueue.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [rotationQueue[i], rotationQueue[j]] = [
-        rotationQueue[j],
-        rotationQueue[i],
-      ];
-    }
     await saveRotationState();
   }
-  const index = rotationQueue.shift();
+  if (rotationQueue.length === 0) {
+    const next = reminderPool[0];
+    return next ? next() : null;
+  }
+  const pos = randomInt(0, rotationQueue.length);
+  const index = rotationQueue[pos];
+  rotationQueue.splice(pos, 1);
   await saveRotationState();
   const next = Number.isFinite(index) ? reminderPool[index] : reminderPool[0];
-  return next();
+  return next ? next() : null;
 }
 
 function getRomeParts(date, client) {

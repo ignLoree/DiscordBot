@@ -178,7 +178,7 @@ async function runVerifyPanelAuto(client) {
 
   const verifyPanelEmbed = new EmbedBuilder().setColor(color).setTitle("<:verification:1461725843125571758> **`Verification Required!`**",).setDescription("<:space:1461733157840621608> <:alarm:1461725841451909183> **Per accedere a `" + serverName + "` devi prima verificarti.**\n" + "<:space:1461733157840621608><:space:1461733157840621608> <:rightSort:1461726104422453298> Clicca il pulsante **Verify** qui sotto per iniziare.",).setImage(DIVIDER_URL);
 
-  const verifyRow = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("verify_start").setLabel("︲VERIFY").setStyle(ButtonStyle.Success),);
+  const verifyRow = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("verify_start").setEmoji(`<a:VC_Verified:1448687631109197978>`).setLabel("︲VERIFY").setStyle(ButtonStyle.Success),);
 
   let panelDoc = null;
   try {
@@ -532,7 +532,7 @@ async function processOneVerifyPanel(client, guildId, verifyChannelIds) {
 
   const color = client.config?.embedVerify || SPONSOR_PANEL_COLOR;
   const verifyEmbed = new EmbedBuilder().setColor(color).setTitle("<:verification:1461725843125571758> **`Verification Required!`**").setDescription("<:space:1461733157840621608> <:alarm:1461725841451909183> **Per accedere a `" + (guild.name || "this server") + "` devi prima verificarti.**\n" + "<:space:1461733157840621608><:space:1461733157840621608> <:rightSort:1461726104422453298> Clicca il pulsante **Verify** qui sotto per iniziare.",);
-  const verifyRow = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("verify_start").setLabel("︲VERIFY").setStyle(ButtonStyle.Success),);
+  const verifyRow = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("verify_start").setEmoji(`<a:VC_Verified:1448687631109197978>`).setLabel("︲VERIFY").setStyle(ButtonStyle.Success),);
 
   const panelDoc = await sponsorGetOrCreatePanelDoc(guildId, channel.id).catch(() => null);
   if (!panelDoc) return 0;
