@@ -5,7 +5,7 @@ const giveawaySchema = new Schema(
   {
     guildId: { type: String, required: true, index: true },
     channelId: { type: String, required: true, index: true },
-    messageId: { type: String, required: true, unique: true },
+    messageId: { type: String, required: false, default: null },
     prize: { type: String, required: true },
     endAt: { type: Date, required: true, index: true },
     winnerCount: { type: Number, required: true, default: 1 },
@@ -19,5 +19,6 @@ const giveawaySchema = new Schema(
 );
 
 giveawaySchema.index({ ended: 1, endAt: 1 });
+giveawaySchema.index({ messageId: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.models?.Giveaway || model("Giveaway", giveawaySchema);

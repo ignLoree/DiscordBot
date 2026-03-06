@@ -48,7 +48,11 @@ initializeCommandCollections(client);
 installHandlers(APP_ROOT, client);
 
 const prefixFolders = listFoldersIfExists(path.join(APP_ROOT, "Prefix"));
-const commandFolders = listFoldersIfExists(path.join(APP_ROOT, "Commands"));
+const commandsDir = path.join(APP_ROOT, "Commands");
+const commandFolders = listFoldersIfExists(commandsDir);
+if (commandFolders.length === 0 && !require("fs").existsSync(commandsDir)) {
+  global.logger?.info?.("[COFFEE] Nessuna cartella Commands: nessuno slash command verrà registrato (solo bot Test).");
+}
 
 (async () => {
   if (typeof client.prefixCommands === "function") {
@@ -65,7 +69,7 @@ const commandFolders = listFoldersIfExists(path.join(APP_ROOT, "Commands"));
 
   if (typeof client.handleCommands === "function") {
     await client
-      .handleCommands(commandFolders, path.join(APP_ROOT, "Commands"))
+      .handleCommands(commandFolders, commandsDir)
       .catch((err) => {
         global.logger.error(" handleCommands:", err);
       });
