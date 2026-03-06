@@ -4,6 +4,7 @@ const { getGuildExpSettings, setActivityEvent, clearActivityEvent, setStaffEvent
 const { grantEventRewardsForExistingRoleMembers, grantEventRewardsForSameDayReviewAndVote, clearActivityEventRewardsForGuild } = require("../../Services/Community/activityEventRewardsService");
 const { givePmStaff15PointsAtStart, giveExistingInvitesPointsAtStart, addStaffEventPoints, getStaffEventLeaderboard, isStaffButNotHighStaff } = require("../../Services/Community/staffEventService");
 const { buildEventoClassificaPayload } = require("../../Services/Community/eventoClassificaService");
+const { getEventDiagnostics } = require("../../Services/Community/weeklyActivityWinnersService");
 const IDs = require("../../Utils/Config/ids");
 const TIME_ZONE = "Europe/Rome";
 const EVENT_DURATION_DAYS = 31;
@@ -277,18 +278,33 @@ module.exports = {
     if (sub === "info") {
       const settings = await getGuildExpSettings(guildId);
       const hasEvent = Boolean(settings.eventExpiresAt);
-      const lines = [`- Evento attivo: **${hasEvent ? "Sì" : "No"}**`,
-      `-Moltiplicatore base:**${settings.baseMultiplier}x**`,
-      `-Moltiplicatore evento:**${settings.eventMultiplier}x**`,
-      `-Scadenza evento:**${settings.eventExpiresAt ? fmtDate(settings.eventExpiresAt) : "Nessuna"}**`,
-      `-Moltiplicatore effettivo:**${settings.effectiveMultiplier}x**`,
+      const lines = [
+        "- Evento attivo: **" + (hasEvent ? "Sì" : "No") + "**",
+        "- Data inizio: **" + (settings.eventStartedAt ? fmtDate(settings.eventStartedAt) : "—") + "**",
+        "- Scadenza: **" + (settings.eventExpiresAt ? fmtDate(settings.eventExpiresAt) : "Nessuna") + "**",
+        "- Moltiplicatore base: **" + settings.baseMultiplier + "x**",
+        "- Moltiplicatore evento: **" + settings.eventMultiplier + "x**",
+        "- Moltiplicatore effettivo: **" + settings.effectiveMultiplier + "x**",
       ];
       if (hasEvent && settings.eventRoleOverrides && Object.keys(settings.eventRoleOverrides).length > 0) {
         lines.push("- Override ruoli evento: attivi");
       }
       if (hasEvent && Array.isArray(settings.eventExtraMultiplierRoleIds) && settings.eventExtraMultiplierRoleIds.length > 0) {
-        lines.push(`- Ruoli boost extra (x2): **${settings.eventExtraMultiplierRoleIds.length}**`);
+        lines.push("- Ruoli boost extra (x2): **" + settings.eventExtraMultiplierRoleIds.length + "**");
       }
+
+      const diag = await getEventDiagnostics(message.guild).catch(() => null);
+      if (diag) {
+        lines.push("", "**Diagnostica classifica settimanale:**");
+        lines.push("- Settimana evento: **" + (diag.eventWeek >= 1 && diag.eventWeek <= 4 ? diag.eventWeek : "—") + "**");
+        lines.push("- Canali testuali che contano: **" + diag.eligibleTextChannels + "**");
+        lines.push("- Canali vocali che contano: **" + diag.eligibleVoiceChannels + "**");
+        lines.push("- Righe attività (questa settimana): **" + diag.activityDailyCount + "**");
+        if (diag.eventWeek >= 1 && diag.eventWeek <= 4 && diag.activityDailyCount === 0) {
+          lines.push("", "<:VC_Info:1448670089670037675> Se nessuno viene calcolato: il bot deve essere online quando scrivono; i canali dove scrivono devono dare al ruolo Member **Visualizza canale** e **Invia messaggi**. Controlla che la chat principale non sia esclusa.");
+        }
+      }
+
       const embed = new EmbedBuilder().setColor("#6f4e37").setTitle("Stato evento Activity EXP").setDescription(lines.join("\n"));
       await safeMessageReply(message, {
         embeds: [embed],

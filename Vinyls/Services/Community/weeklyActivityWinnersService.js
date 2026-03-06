@@ -636,4 +636,47 @@ function startWeeklyActivityWinnersLoop(client) {
   );
 
   const runRecoveryIfNeeded = async () => { const now = new Date(); const weekday = getWeekdayRome(now); if (weekday !== "Mon" && weekday !== "Tue") return; const channel = client.channels.cache.get(TARGET_CHANNEL_ID) || (await client.channels.fetch(TARGET_CHANNEL_ID).catch(() => null)); const guildId = channel?.guild?.id; if (!guildId) return; const currentWeekKey = getWeekKey(now); const alreadyReset = await ActivityUser.exists({ guildId, "messages.weeklyKey": currentWeekKey, }).catch(() => false); if (alreadyReset) return; const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000); const previousWeekKey = getWeekKey(yesterday); if (previousWeekKey === currentWeekKey) return; try { global.logger.info("[WEEKLY ACTIVITY] Recovery: running missed weekly winners (bot was likely offline Sunday 21:00).",); await publishWeeklyActivityWinners(client, { weekKey: previousWeekKey }); await resetWeeklyActivityCounters(client, { nextWeekKey: currentWeekKey, }); } catch (error) { global.logger.error("[WEEKLY ACTIVITY] Recovery run failed:", error); } }; runRecoveryIfNeeded();
-} module.exports = { startWeeklyActivityWinnersLoop, publishWeeklyActivityWinners, resetWeeklyActivityCounters, getEventWeekDateKeys, loadActivityRowsFromDateKeys };
+}
+
+/**
+ * Diagnostica per l'evento: settimana corrente, date usate, righe ActivityDaily, canali eleggibili.
+ * Utile per capire perché "nessuno viene calcolato".
+ */
+async function getEventDiagnostics(guild) {
+  if (!guild?.id) return null;
+  const settings = await getGuildExpSettings(guild.id).catch(() => null);
+  const getEventWeekNumber = (s) => {
+    if (!s?.eventStartedAt || !s?.eventExpiresAt) return 0;
+    const now = Date.now();
+    const start = new Date(s.eventStartedAt).getTime();
+    const end = new Date(s.eventExpiresAt).getTime();
+    if (now < start || now > end) return 0;
+    const weekMs = 7 * 24 * 60 * 60 * 1000;
+    return Math.min(4, Math.max(1, Math.floor((now - start) / weekMs) + 1));
+  };
+  const eventWeek = settings ? getEventWeekNumber(settings) : 0;
+  const eligible = await getEligibleChannelSets(guild);
+  let dateKeys = [];
+  let activityDailyCount = 0;
+  if (eventWeek >= 1 && eventWeek <= 4 && settings?.eventStartedAt) {
+    dateKeys = getEventWeekDateKeys(settings.eventStartedAt, eventWeek);
+    if (dateKeys.length) {
+      activityDailyCount = await ActivityDaily.countDocuments({
+        guildId: guild.id,
+        dateKey: { $in: dateKeys },
+      }).catch(() => 0);
+    }
+  }
+  return {
+    eventActive: Boolean(settings?.eventExpiresAt && new Date(settings.eventExpiresAt).getTime() > Date.now()),
+    eventStartedAt: settings?.eventStartedAt || null,
+    eventExpiresAt: settings?.eventExpiresAt || null,
+    eventWeek,
+    dateKeys,
+    activityDailyCount,
+    eligibleTextChannels: eligible.text.size,
+    eligibleVoiceChannels: eligible.voice.size,
+  };
+}
+
+module.exports = { startWeeklyActivityWinnersLoop, publishWeeklyActivityWinners, resetWeeklyActivityCounters, getEventWeekDateKeys, loadActivityRowsFromDateKeys, getEventDiagnostics };
