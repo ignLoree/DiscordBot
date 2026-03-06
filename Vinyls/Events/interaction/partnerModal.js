@@ -23,12 +23,13 @@ function isValidServerName(name) {
 }
 
 function stripLinksFromDescription(text) {
-  return String(text || "")
+  const str = String(text || "");
+  const withoutNonInviteUrls = str
     .replace(
       /\bhttps?:\/\/(?!discord\.gg\/|discord(?:app)?\.com\/invite\/|discord\.com\/invite\/)\S+/gi,
-      "",
+      " ",
     )
-    .replace(/\bwww\.[^\s<>()]+\.[a-z]{2,}(?:\/\S*)?/gi, "")
+    .replace(/\bwww\.[^\s<>()]+\.[a-z]{2,}(?:\/\S*)?/gi, " ")
     .replace(
       /\b(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s<>()]*)?/gi,
       (match) =>
@@ -36,11 +37,14 @@ function stripLinksFromDescription(text) {
           String(match || "").trim(),
         )
           ? match
-          : "",
-    )
-    .replace(/\s{2,}/g, " ")
-    .replace(/[ \t]+\n/g, "\n")
+          : " ",
+    );
+  // Collapse only horizontal space (preserve newlines), then normalize line breaks
+  return withoutNonInviteUrls
+    .replace(/[ \t]+/g, " ")
+    .replace(/ *\n */g, "\n")
     .replace(/\n{3,}/g, "\n\n")
+    .replace(/^\n+|\n+$/g, "")
     .trim();
 }
 

@@ -87,6 +87,16 @@
                 "roles.PartnerManager"
             ]
         },
+        "giveaway": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "subcommands": {
+                "start": [
+                    "roles.HighStaff"
+                ]
+            }
+        },
         "poll": {
             "roles": [
                 "roles.HighStaff"
@@ -1264,6 +1274,12 @@
         "bh_save:*": {
             "ownerSegment": 1
         },
+        "giveaway_enter:*": [
+            "roles.Member"
+        ],
+        "giveaway_reroll:*": [
+            "roles.HighStaff"
+        ],
         "claim_ticket": [
             "roles.Staff",
             "roles.HighStaff",

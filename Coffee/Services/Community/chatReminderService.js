@@ -129,10 +129,146 @@ const reminderPool = [
           "<:VC_Vip:1448691936797134880> Potrai sbloccare i colori PLUS con il ruolo <@&1329497467481493607> o <@&1442568932136587297>; invece con il <@&1442568950805430312> potrai creartene uno personalizzato! Li trovi su: <#1469429150669602961>",
         ].join("\n"),
       ),
+  () =>
+    new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle("<:VC_EXP:1468714279673925883> Minigiochi e EXP")
+      .setDescription(
+        [
+          "<a:VC_Events:1448688007438667796> Nel server partono spesso **minigiochi** automatici: indovina la bandiera, la capitale, l'impiccato, quiz patente, indovina l'anno e molti altri!",
+          "",
+          "<:VC_EXP:1468714279673925883> Partecipando e indovinando **guadagni EXP** e sali di livello. Usa il comando `+mstats` per vedere le tue statistiche dei minigiochi.",
+          `> <a:VC_Arrow:1448672967721615452> Scopri livelli e ricompense in <#${IDs.channels.info}>`,
+        ].join("\n"),
+      ),
+  () =>
+    new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle("<:VC_LevelUp2:1443701876892762243> Livelli e ricompense")
+      .setDescription(
+        [
+          "<:VC_EXP:1468714279673925883> Scrivendo in chat e partecipando ai **minigiochi** guadagni **EXP** e sali di **livello**. A ogni traguardo sblocchi ruoli e vantaggi!",
+          "",
+          `Usa \`+mstats\` per le statistiche minigiochi e controlla tutti i livelli e le ricompense nel canale <#${IDs.channels.info}>.`,
+        ].join("\n"),
+      ),
+  () =>
+    new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle("<:VC_BlackPin:1448687216871084266> Info e funzioni del server")
+      .setDescription(
+        [
+          `Tutte le **info** su livelli, boost, Picperms, ruoli e funzioni del server sono raccolte in <#${IDs.channels.info}>.`,
+          "",
+          "<a:VC_Arrow:1448672967721615452> Lì trovi anche come sbloccare colori, livelli e cosa offre il server. Passa a dare un'occhiata!",
+        ].join("\n"),
+      ),
+  () =>
+    new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle("<:VC_Color:1470781368630775982> Personalizza il tuo profilo")
+      .setDescription(
+        [
+          "<:VC_Vip:1448691936797134880> Nel canale <#1469429150669602961> puoi scegliere **ruoli** e **colori** per il tuo nome, così da personalizzare il profilo nel server.",
+          "",
+          "Alcuni colori e ruoli si sbloccano con i livelli o con il boost del server.",
+        ].join("\n"),
+      ),
+  () =>
+    new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle("<a:VC_Coffe:1448695567244066827> Una community per socializzare")
+      .setDescription(
+        [
+          "Vinili & Caffè è un server **senza tossicità**, pensato per chiacchierare, condividere musica e passioni e conoscere nuove persone.",
+          "",
+          "Partecipa alla chat, ai minigiochi e alle attività: più sei attivo, più livelli e ricompense sblocchi!",
+        ].join("\n"),
+      ),
+  () =>
+    new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle("<:VC_Link:1448688587133685895> Non dimenticare il bump!")
+      .setDescription(
+        [
+          "Usa `/bump` con Disboard per **far salire il server** nelle classifiche. Più bump = più visibilità!",
+          "",
+          "<:VC_bump:1330185435401424896> Bumpare aiuta la community a crescere. Controlla la cooldown e bumpa quando possibile.",
+        ].join("\n"),
+      ),
+  () =>
+    new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle("<:VC_Eye:1331619214410383381> Non sai da dove iniziare?")
+      .setDescription(
+        [
+          "Usa il comando **`+help`** per vedere tutti i comandi del bot e le funzioni disponibili.",
+          "",
+          `Per livelli, ruoli, minigiochi e regole del server passa da <#${IDs.channels.info}>: trovi tutto lì!`,
+        ].join("\n"),
+      ),
+  () =>
+    new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle("<:VC_BlackPin:1448687216871084266> Condividi i post che ami")
+      .setDescription(
+        [
+          "Hai visto un messaggio che merita di essere condiviso? Rispondi con **`+quote`** per trasformarlo in un post nel canale dedicato.",
+          "",
+          "Così la community può ritrovare le frasi e i momenti più belli della chat!",
+        ].join("\n"),
+      ),
+  () =>
+    new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle("<:VC_Chat:1448694742237053061> Rispetto e regole")
+      .setDescription(
+        [
+          "Il server vive grazie al **rispetto** tra tutti. Leggi le regole del server e rispetta gli altri membri e lo staff.",
+          "",
+          `In caso di dubbi o per segnalare qualcosa che non va, apri un ticket in <#${IDs.channels.ticket}>: siamo qui per aiutarti.`,
+        ].join("\n"),
+      ),
+  () =>
+    new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle("<:VC_Link:1448688587133685895> Invita i tuoi amici!")
+      .setDescription(
+        [
+          "Ti piace Vinili & Caffè? **Invita** amici e conoscenti: più siamo, più la community diventa viva e divertente.",
+          "",
+          "Condividi il link del server o usa l'invito che trovi nelle info. Benvenuti a tutti!",
+        ].join("\n"),
+      ),
+  () =>
+    new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle("<a:VC_HeartsBlue:1468686100045369404> Unisciti alle vocali")
+      .setDescription(
+        [
+          "Oltre alla chat, puoi unirti ai **canali vocali** per chiacchierare a voce, ascoltare musica insieme o giocare. La voce rende tutto più vicino!",
+          "",
+          "Cerca la categoria vocali e clicca per entrare. Nessuno è obbligato a parlare: anche solo ascoltare va bene.",
+        ].join("\n"),
+      ),
+  () =>
+    new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle("<:VC_LevelUp2:1443701876892762243> Resta aggiornato")
+      .setDescription(
+        [
+          "Eventi, novità e annunci vengono condivisi nei canali del server. Tieni d'occhio **info** e la chat per non perdere nulla!",
+          "",
+          `Controlla spesso <#${IDs.channels.info}> per livelli, ricompense e tutto quello che offre Vinili & Caffè.`,
+        ].join("\n"),
+      ),
 ];
 
 function getDateKey(parts) {
-  return `${parts.year}-${parts.month}-${parts.day}`;
+  const y = parts.year;
+  const m = String(parts.month).padStart(2, "0");
+  const d = String(parts.day).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 function getCfg(client) {
@@ -196,20 +332,24 @@ async function saveRotationState() {
 async function loadRotationState(guildId, dateKey) {
   rotationGuildId = guildId;
   const doc = await ChatReminderRotation.findOne({ guildId }).lean().catch(() => null);
-  if (doc && doc.dateKey === dateKey && Array.isArray(doc.queue)) {
+  const normDate = dateKey ? String(dateKey) : "";
+  if (doc && normDate && doc.dateKey === normDate && Array.isArray(doc.queue)) {
     rotationDate = doc.dateKey;
-    rotationQueue = doc.queue.slice();
+    rotationQueue = doc.queue.slice().filter((i) => Number.isInteger(i) && i >= 0 && i < reminderPool.length);
     lastSentAt = doc.lastSentAt ? new Date(doc.lastSentAt).getTime() : null;
     return;
   }
-  rotationDate = dateKey;
+  rotationDate = normDate;
   rotationQueue = [];
   lastSentAt = doc?.lastSentAt ? new Date(doc.lastSentAt).getTime() : null;
   await saveRotationState();
 }
 
-async function nextReminderEmbed(parts) {
+async function nextReminderEmbed(parts, guildId) {
   const key = getDateKey(parts);
+  const gid = guildId || rotationGuildId;
+  if (gid) await loadRotationState(gid, key);
+
   if (rotationDate !== key || rotationQueue.length === 0) {
     rotationDate = key;
     rotationQueue = reminderPool.map((_, idx) => idx);
@@ -374,8 +514,9 @@ async function sendReminder(client, scheduleId, kind = "first") {
     client.channels.cache.get(channelId) ||
     (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return;
+  const guildId = client.guilds?.cache?.first()?.id ?? null;
   const parts = getRomeParts(new Date(), client);
-  const embed = await nextReminderEmbed(parts);
+  const embed = await nextReminderEmbed(parts, guildId);
   await channel.send({ embeds: [embed] }).catch(() => {});
   lastSentAt = Date.now();
   await saveRotationState();
@@ -395,7 +536,8 @@ async function sendReminderAtFixedSlot(client, parts, slotKey) {
     client.channels.cache.get(channelId) ||
     (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return;
-  const embed = await nextReminderEmbed(parts);
+  const guildId = client.guilds?.cache?.first()?.id ?? null;
+  const embed = await nextReminderEmbed(parts, guildId);
   await channel.send({ embeds: [embed] }).catch(() => {});
   lastSentAt = Date.now();
   lastReminderSlotKey = slotKey;

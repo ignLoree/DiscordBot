@@ -1172,15 +1172,8 @@ module.exports = {
         global.logger.info("[guildMemberAdd] Welcome channel not found.");
       }
 
-      await updateMemberCounterNow(member.guild).catch(() => {});
-      scheduleMemberCounterRefresh(member.guild, {
-        delayMs: 250,
-        secondPassMs: 1800,
-      });
-      await applyRolePersistForMember(member).catch(() => {});
-      await sendJoinLog(member);
-      await sendDmWelcome(member);
-
+      // Welcome e "è entratx con il link" subito in chat
+      let info = null;
       if (welcomeChannel) {
         await welcomeChannel
           .send({
@@ -1188,25 +1181,44 @@ module.exports = {
             embeds: [buildWelcomeEmbed(member)],
           })
           .catch(() => {});
+
+        info = await resolveInviteInfo(member).catch(() => null);
+        await announceInviteInfo(member, welcomeChannel, info);
       }
 
-      const info = await resolveInviteInfo(member).catch(() => null);
-      if (info && !info.isVanity && info.inviterId) {
-        await trackInviteJoin(member, info.inviterId).catch(() => {});
-        if (await isStaffEventActive(member.guild.id)) {
-          const inviterMember=member.guild.members.cache.get(info.inviterId)||(await member.guild.members.fetch(info.inviterId).catch(() => null));
-          if (inviterMember && isStaffButNotHighStaff(inviterMember)) {
-            await addStaffEventPoints(member.guild.id, info.inviterId, 1, "invite").catch(() => null);
+      // Il resto (counter, DM, track inviti, reward, log) in background per non bloccare il prossimo guildMemberAdd
+      setImmediate(() => {
+        (async () => {
+          try {
+            await updateMemberCounterNow(member.guild).catch(() => {});
+            scheduleMemberCounterRefresh(member.guild, {
+              delayMs: 250,
+              secondPassMs: 1800,
+            });
+            await applyRolePersistForMember(member).catch(() => {});
+            await sendJoinLog(member);
+            await sendDmWelcome(member);
+
+            if (info && !info.isVanity && info.inviterId) {
+              await trackInviteJoin(member, info.inviterId).catch(() => {});
+              if (await isStaffEventActive(member.guild.id)) {
+                const inviterMember=member.guild.members.cache.get(info.inviterId)||(await member.guild.members.fetch(info.inviterId).catch(() => null));
+                if (inviterMember && isStaffButNotHighStaff(inviterMember)) {
+                  await addStaffEventPoints(member.guild.id, info.inviterId, 1, "invite").catch(() => null);
+                }
+              }
+            }
+            await maybeSendInviteNearRewardReminder(member, info);
+            await maybeSendInviteReward(member, info);
+
+            if (member.guild?.id === IDs.guilds.main && member.client && memberHasStaffRole(member)) {
+              scheduleStaffListRefresh(member.client, member.guild.id);
+            }
+          } catch (err) {
+            global.logger?.warn?.("[guildMemberAdd] background post-welcome failed:", member.guild?.id, member?.id, err?.message || err);
           }
-        }
-      }
-      await maybeSendInviteNearRewardReminder(member, info);
-      await maybeSendInviteReward(member, info);
-      await announceInviteInfo(member, welcomeChannel, info);
-
-      if (member.guild?.id === IDs.guilds.main && member.client && memberHasStaffRole(member)) {
-        scheduleStaffListRefresh(member.client, member.guild.id);
-      }
+        })();
+      });
     } catch (error) {
       global.logger?.error?.("[guildMemberAdd] failed:", error);
     }

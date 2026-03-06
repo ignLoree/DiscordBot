@@ -188,22 +188,20 @@ module.exports = async function renderShipCanvas({ leftAvatarUrl, rightAvatarUrl
 
   drawHeart(ctx, width / 2, 228, 54);
 
+  // Percentuale: un solo pass con stesso font (stroke + fill) per evitare doppio disegno/ghosting
+  const percentText = `${finalPercent}%`;
+  const percentX = width / 2;
+  const percentY = 300;
   ctx.save();
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.font = '700 44px "Noto Sans", Arial, sans-serif';
   ctx.lineWidth = 6;
   ctx.strokeStyle = "rgba(255,255,255,0.95)";
-  ctx.strokeText(`${finalPercent}%`, width / 2, 300);
+  ctx.strokeText(percentText, percentX, percentY);
+  ctx.fillStyle = "#5b0d3f";
+  ctx.fillText(percentText, percentX, percentY);
   ctx.restore();
-
-  drawTextWithSpecialFallback(ctx, `${finalPercent}%`, width / 2, 300, {
-    size: 44,
-    weight: "700",
-    color: "#5b0d3f",
-    align: "center",
-    baseline: "middle",
-  });
 
   return canvas.toBuffer("image/png");
 };

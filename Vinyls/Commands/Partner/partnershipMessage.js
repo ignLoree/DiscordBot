@@ -25,10 +25,14 @@ function extractDescription(message) {
   const firstEmbed = message.embeds?.[0];
   const content = (message.content || "").trim();
   const embedDescription = (firstEmbed?.description || "").trim();
-  const source = embedDescription || content;
+  // Prefer the actual message text so we don't get only link-unfurl embed text
+  const source = content ? content : embedDescription;
   if (!source) return "";
 
-  const normalized = source.replace(/^\*\*manager:\*\*\s*<@!?(\d+)>\s*/i, "").replace(/^\*\*manager partner:\*\*\s*<@!?(\d+)>\s*/i, "").trim();
+  const normalized = source
+    .replace(/^\*\*manager:\*\*\s*<@!?(\d+)>\s*/i, "")
+    .replace(/^\*\*manager partner:\*\*\s*<@!?(\d+)>\s*/i, "")
+    .trim();
 
   return stripOuterCodeBlock(normalized).trim();
 }

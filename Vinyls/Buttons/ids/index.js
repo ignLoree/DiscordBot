@@ -14,6 +14,7 @@ const verify = require("./verify");
 const suggestion = require("./suggestion");
 const minigame = require("./minigame");
 const prefixMisc = require("./prefixMisc");
+const giveaway = require("./giveaway");
 
 module.exports = {
   ...backup,
@@ -28,4 +29,5 @@ module.exports = {
   ...suggestion,
   ...minigame,
   ...prefixMisc,
+  ...giveaway,
 };

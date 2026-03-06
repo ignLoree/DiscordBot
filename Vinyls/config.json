@@ -311,6 +311,34 @@
       "excludedChannelIds": [
         "1470775925426618468"
       ]
+    },
+    "guessYear": {
+      "durationMs": 180000,
+      "rewardExp": 150
+    },
+    "completeVerse": {
+      "durationMs": 180000,
+      "rewardExp": 150
+    },
+    "guessEmoji": {
+      "durationMs": 180000,
+      "rewardExp": 150
+    },
+    "quoteFilm": {
+      "durationMs": 180000,
+      "rewardExp": 150
+    },
+    "completeProverb": {
+      "durationMs": 180000,
+      "rewardExp": 120
+    },
+    "synonymAntonym": {
+      "durationMs": 180000,
+      "rewardExp": 120
+    },
+    "guessCity": {
+      "durationMs": 180000,
+      "rewardExp": 150
     }
   },
   "categoryNumbering": {

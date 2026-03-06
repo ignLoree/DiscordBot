@@ -1,16 +1,15 @@
 const { InteractionType, EmbedBuilder } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
-const {checkButtonPermission,checkStringSelectPermission,checkModalPermission,checkSlashPermission,buildGlobalPermissionDeniedEmbed,buildGlobalNotYourControlEmbed,}= require("../Utils/Moderation/commandPermissions");
+const { checkButtonPermission, checkStringSelectPermission, checkModalPermission, checkSlashPermission, buildGlobalPermissionDeniedEmbed, buildGlobalNotYourControlEmbed, } = require("../Utils/Moderation/commandPermissions");
 const { safeReply } = require("../Utils/Moderation/reply");
 const { getClientChannelCached } = require("../Utils/Interaction/entityCache");
-
 const PRIVATE_FLAG = 1 << 6;
 const BUTTON_SPAM_COOLDOWN_MS = 1200;
 const BUTTON_INFLIGHT_TTL_MS = 15000;
-const MONO_GUILD_DENIED = "Questo bot e utilizzabile solo nei server autorizzati.";
+const MONO_GUILD_DENIED = "Questo bot è utilizzabile solo nei server autorizzati.";
 const INTERACTION_DEDUPE_TTL_MS = 30 * 1000;
-const ALLOWED_GUILD_IDS = new Set([IDs.guilds ?. main,IDs.guilds ?. test].filter(Boolean).map((id)=>String(id)),);
+const ALLOWED_GUILD_IDS = new Set([IDs.guilds?.main, IDs.guilds?.test].filter(Boolean).map((id) => String(id)),);
 
 function markInteractionSeen(client, interactionId) {
   if (!interactionId) return false;
@@ -48,7 +47,7 @@ function acquireButtonSpamGuard(interaction, client) {
   const isButton = Boolean(interaction?.isButton?.());
   const isSelect = Boolean(interaction?.isStringSelectMenu?.());
   if (!isButton && !isSelect) {
-    return { blocked: false, release: () => {} };
+    return { blocked: false, release: () => { } };
   }
 
   const state = getButtonSpamState(client);
@@ -68,7 +67,7 @@ function acquireButtonSpamGuard(interaction, client) {
   const inFlightUntil = Number(state.inFlightByAction.get(actionKey) || 0);
 
   if (userCooldownUntil > nowTs || inFlightUntil > nowTs) {
-    return { blocked: true, release: () => {} };
+    return { blocked: true, release: () => { } };
   }
 
   state.cooldownByUser.set(userKey, nowTs + BUTTON_SPAM_COOLDOWN_MS);
@@ -90,7 +89,7 @@ function buildDeniedEmbed(gate, controlLabel) {
 
 async function sendPrivateInteractionResponse(interaction, payload) {
   if (!interaction?.isRepliable?.()) return;
-  await safeReply(interaction, payload).catch(() => {});
+  await safeReply(interaction, payload).catch(() => { });
 }
 
 async function runPermissionGate(interaction) {
@@ -133,12 +132,12 @@ async function runPermissionGate(interaction) {
 async function logInteractionError(interaction, client, err) {
   try {
     const errorChannelId = IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
-    const errorChannel = errorChannelId ? await getClientChannelCached(client,errorChannelId,{ttlMs:30_000}):null;
+    const errorChannel = errorChannelId ? await getClientChannelCached(client, errorChannelId, { ttlMs: 30_000 }) : null;
 
     if (errorChannel?.isTextBased?.()) {
       const contextValue = interaction?.commandName || interaction?.customId || "unknown";
-      const embed = buildErrorLogEmbed({contextLabel:"Contesto",contextValue,userTag:interaction ?. user ?. tag || "unknown",error:err,serverName:interaction ?. guild ?`${interaction.guild.name} [${interaction.guild.id}]`:null,});
-      await errorChannel.send({ embeds: [embed] }).catch(() => {});
+      const embed = buildErrorLogEmbed({ contextLabel: "Contesto", contextValue, userTag: interaction?.user?.tag || "unknown", error: err, serverName: interaction?.guild ? `${interaction.guild.name} [${interaction.guild.id}]` : null, });
+      await errorChannel.send({ embeds: [embed] }).catch(() => { });
     }
 
     await sendPrivateInteractionResponse(interaction, {
@@ -152,7 +151,7 @@ async function logInteractionError(interaction, client, err) {
       flags: PRIVATE_FLAG,
     });
   } catch (nestedErr) {
-    global.logger.error(" interactionCreate error-log", nestedErr);
+    global.logger.error("[interactionCreate] error-log", nestedErr);
   }
 }
 
@@ -173,11 +172,11 @@ module.exports = {
             embeds: [
               new EmbedBuilder()
                 .setColor("Orange")
-                .setDescription("Questo bot e utilizzabile solo nei server autorizzati."),
+                .setDescription("Questo bot è utilizzabile solo nei server autorizzati."),
             ],
             flags: PRIVATE_FLAG,
           })
-          .catch(() => {});
+          .catch(() => { });
       }
       return;
     }
@@ -193,23 +192,23 @@ module.exports = {
           !interaction.deferred &&
           (interaction.isButton?.() || interaction.isStringSelectMenu?.())
         ) {
-          await interaction.deferUpdate().catch(() => {});
+          await interaction.deferUpdate().catch(() => { });
         }
         return;
       }
 
       if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
-        const cmd = client.commands.get(`${interaction.commandName}:${interaction.commandType ||1}`,);
+        const cmd = client.commands.get(`${interaction.commandName}:${interaction.commandType || 1}`,);
         if (cmd?.autocomplete) {
           await cmd.autocomplete(interaction, client);
         } else {
-          await interaction.respond([]).catch(() => {});
+          await interaction.respond([]).catch(() => { });
         }
         return;
       }
 
       if (interaction.isChatInputCommand?.()) {
-        const command = client.commands.get(`${interaction.commandName}:${interaction.commandType ||1}`,);
+        const command = client.commands.get(`${interaction.commandName}:${interaction.commandType || 1}`,);
         if (!command) return;
 
         const allowed = await checkSlashPermission(interaction);
@@ -219,7 +218,7 @@ module.exports = {
               embeds: [buildGlobalPermissionDeniedEmbed([], "comando")],
               flags: PRIVATE_FLAG,
             })
-            .catch(() => {});
+            .catch(() => { });
           return;
         }
 
@@ -229,8 +228,21 @@ module.exports = {
 
       const allowedByGate = await runPermissionGate(interaction);
       if (!allowedByGate) return;
+
+      if (interaction.isButton?.()) {
+        const customId = String(interaction.customId || "");
+        const gw = require("../../Vinyls/Services/Giveaway/giveawayService");
+        if (customId.startsWith("giveaway_enter:")) {
+          const handled = await gw.enterGiveaway(interaction, client);
+          if (handled) return;
+        }
+        if (customId.startsWith("giveaway_reroll:")) {
+          const handled = await gw.rerollGiveaway(interaction, client);
+          if (handled) return;
+        }
+      }
     } catch (err) {
-      global.logger.error(" interactionCreate", err);
+      global.logger.error("[interactionCreate] error", err);
       await logInteractionError(interaction, client, err);
     } finally {
       if (typeof releaseButtonGuard === "function") releaseButtonGuard();
