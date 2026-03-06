@@ -167,16 +167,21 @@ function buildPanelRows(ownerId, nonce, showAge, disabled = false) {
 }
 
 /**
- * Invia o aggiorna il messaggio "Compleanno registrato/aggiornato" nel canale birthday.
+ * Invia o aggiorna il messaggio "Compleanno registrato/aggiornato".
+ * Se targetChannel è fornito, invia lì (es. canale del comando); altrimenti usa il canale birthday.
  * Se messageToEdit è fornito, modifica quel messaggio; altrimenti invia un nuovo messaggio.
  * @returns {Promise<import("discord.js").Message|null>} Il messaggio (editato o inviato) o null
  */
 async function sendBirthSaveEmbed(client, guild, user, state, options = {}) {
-  const { messageToEdit = null, isEdit = false } = options;
-  const channelId = IDs.channels.birthday;
-  if (!guild || !channelId) return null;
+  const { messageToEdit = null, isEdit = false, targetChannel = null } = options;
+  if (!guild) return null;
 
-  const channel=guild.channels.cache.get(channelId)||(await guild.channels.fetch(channelId).catch(() => null));
+  let channel = targetChannel && targetChannel.isTextBased?.() ? targetChannel : null;
+  if (!channel) {
+    const channelId = IDs.channels.birthday;
+    if (!channelId) return null;
+    channel = guild.channels.cache.get(channelId) || (await guild.channels.fetch(channelId).catch(() => null));
+  }
   if (!channel?.isTextBased?.()) return null;
 
   const embed = buildRegistrationEmbed(user, state, isEdit);
@@ -357,20 +362,22 @@ async function openBirthdayPanel(message, client, initialState = null, mode = "s
         const birthYear = inferBirthYearFromAge(state.day, state.month, state.age);
         const isEdit = mode === "edit";
 
+        const commandChannel = message.channel;
         let messageToEdit = null;
         if (isEdit) {
           const existingProfile=await BirthdayProfile.findOne({guildId:message.guild.id,userId:ownerId,}).lean().catch(() => null);
-          const regChannelId=existingProfile?.registrationChannelId||IDs.channels.birthday;
+          const regChannelId=existingProfile?.registrationChannelId||commandChannel?.id;
           const regMessageId = existingProfile?.registrationMessageId;
-          if (regMessageId && regChannelId) {
-            const ch=message.guild.channels.cache.get(regChannelId)||(await message.guild.channels.fetch(regChannelId).catch(() => null));
-            if (ch?.isTextBased?.()) {
-              messageToEdit = await ch.messages.fetch(regMessageId).catch(() => null);
-            }
+          if (regMessageId && regChannelId && String(regChannelId) === String(commandChannel?.id)) {
+            messageToEdit = await commandChannel.messages.fetch(regMessageId).catch(() => null);
           }
         }
 
-        const registrationMessage=await sendBirthSaveEmbed(client||message.client,message.guild,message.author,state,{messageToEdit:messageToEdit||null,isEdit,},);
+        const registrationMessage=await sendBirthSaveEmbed(client||message.client,message.guild,message.author,state,{
+          messageToEdit: messageToEdit || null,
+          isEdit,
+          targetChannel: commandChannel,
+        });
 
         const updatePayload={day:state.day,month:state.month,birthYear,showAge:state.showAge,};
         if (registrationMessage?.id && registrationMessage?.channelId) {
