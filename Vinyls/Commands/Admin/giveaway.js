@@ -45,6 +45,12 @@ module.exports = {
             .setDescription("Canale dove inviare il giveaway (default: questo)")
             .setRequired(false)
             .addChannelTypes(ChannelType.GuildText),
+        )
+        .addUserOption((o) =>
+          o
+            .setName("host")
+            .setDescription("Utente che ospita il giveaway (default: tu)")
+            .setRequired(false),
         ),
     )
     .addSubcommand((sub) =>
@@ -91,6 +97,9 @@ module.exports = {
     const durationStr = interaction.options.getString("durata")?.trim() || "";
     const winnerCount = interaction.options.getInteger("vincitori") ?? 1;
     const channelOption = interaction.options.getChannel("canale");
+    const hostUser = interaction.options.getUser("host") || interaction.user;
+    const hostId = hostUser?.id;
+    const hostTag = hostUser?.tag || "";
 
     if (!prize) {
       return safeEditReply(interaction, {
@@ -116,8 +125,6 @@ module.exports = {
     }
 
     const guildId = interaction.guild?.id;
-    const hostId = interaction.user?.id;
-    const hostTag = interaction.user?.tag || "";
 
     try {
       const giveaway = await createGiveaway({ guildId, channelId: channel.id, hostId, hostTag, prize, durationMs, winnerCount });

@@ -20,31 +20,40 @@ function formatTimeRemaining(endAt) {
   const days = Math.floor(ms / (24 * 60 * 60 * 1000));
   const hours = Math.floor((ms % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
   const minutes = Math.floor((ms % (60 * 60 * 1000)) / (60 * 1000));
+  const seconds = Math.floor((ms % (60 * 1000)) / 1000);
   const parts = [];
-  if (days > 0) parts.push(`${days} giorno${days !== 1 ? "i" : ""}`);
-  if (hours > 0) parts.push(`${hours} ora${hours !== 1 ? "e" : ""}`);
-  if (minutes > 0 || parts.length === 0) parts.push(`${minutes} minuto${minutes !== 1 ? "i" : ""}`);
+  if (days > 0) parts.push(`${days} ${days === 1 ? "giorno" : "giorni"}`);
+  if (hours > 0) parts.push(`${hours} ${hours === 1 ? "ora" : "ore"}`);
+  if (minutes > 0) parts.push(`${minutes} ${minutes === 1 ? "minuto" : "minuti"}`);
+  if (seconds > 0 && parts.length === 0) parts.push(`${seconds} ${seconds === 1 ? "secondo" : "secondi"}`);
+  if (parts.length === 0) parts.push("meno di 1 minuto");
   return parts.join(" ");
 }
 
 function buildGiveawayEmbed(giveaway, options = {}) {
-  const { prize, endAt, winnerCount, hostTag, participants = [], ended, winnerIds = [] } = giveaway;
+  const { prize, endAt, winnerCount, hostId, hostTag, participants = [], ended, winnerIds = [] } = giveaway;
   const endDate = new Date(endAt);
   const dateStr = endDate.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const hostDisplay = hostId ? `<@${hostId}>` : (hostTag || "—");
 
   const embed = new EmbedBuilder()
     .setColor("#5865F2")
     .setTitle(`<a:VC_Events:1448688007438667796> ${prize}`)
-    .setDescription(
-      [
-        "<a:VC_Calendar:1448670320180592724> **Tempo rimanente:** " + (ended ? "Terminato" : `tra ${formatTimeRemaining(endAt)}`),
-        "<:VC_EXP:1468714279673925883> **Hosted by:** " + (hostTag || "—"),
-      ].join("\n"),
+    .addFields(
+      {
+        name: "<a:VC_Calendar:1448670320180592724> Tempo rimanente",
+        value: ended ? "Terminato" : `tra ${formatTimeRemaining(endAt)}`,
+        inline: true,
+      },
+      {
+        name: "<:VC_EXP:1468714279673925883> Hosted by",
+        value: hostTag || "—",
+        inline: true,
+      }
     )
     .setFooter({
-      text: ended ? `Terminato il • ${dateStr}` : `${winnerCount} vincitor${winnerCount !== 1 ? "i" : "e"} | Termina il • ${dateStr}`,
-    })
-    .setTimestamp(endDate);
+      text: ended ? `Terminato il ${dateStr}` : `${winnerCount} vincitor${winnerCount !== 1 ? "i" : "e"} | Termina il ${dateStr}`,
+    });
 
   if (options.imageUrl) embed.setImage(options.imageUrl);
 
