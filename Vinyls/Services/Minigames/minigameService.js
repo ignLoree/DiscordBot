@@ -3039,9 +3039,9 @@ function buildMaskedTextHint(value) {
  * Indizio con lettere rivelate in posizione (es. "p _ r _ l a"). Non banale come "inizia per" o "N lettere".
  * @param {string} value - Testo (parola o frase)
  * @param {number} [revealRatio] - Quota di lettere da mostrare (0.35–0.5)
- * @param {boolean} [includeEmoji] - Se true (default) antepone emoji fiamma; in embed "Parola:" usare false per evitare che l'emoji mangi caratteri.
+ * @param {boolean} [includeEmoji] - Se true antepone emoji fiamma; default false per evitare che l'emoji animata faccia "mangiare" caratteri in Discord.
  */
-function buildRevealHint(value, revealRatio = 0.4, includeEmoji = true) {
+function buildRevealHint(value, revealRatio = 0.4, includeEmoji = false) {
   const normalized = (typeof value === "string" ? value : String(value || ""))
     .trim()
     .toLowerCase()

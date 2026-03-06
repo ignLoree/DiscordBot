@@ -283,7 +283,7 @@ function buildNoModuliDeniedEmbed() {
     .setDescription(
       "<a:VC_Alert:1448670089670037675> Sei blacklistato dalle candidature.",
       "",
-      "<:vsl_ticket:1329520261053022208> Se pensi sia un errore apri un ticket.",
+      "<:VC_Ticket:1448694637106692156> Se pensi sia un errore apri un ticket.",
     );
 }
 
@@ -310,7 +310,7 @@ function buildIntroEmbed(type) {
       .setDescription(
         "<:VC_Poll:1448695754972729436> Compilando questo modulo potrai candidarti come Partner Manager del server.",
         "<a:VC_Timer:1462779065625739344> In caso verrete accettati farete una prova di 1/2 settimane",
-        "<:vsl_ticket:1329520261053022208> Se hai dei dubbi apri un ticket terza categoria.",
+        "<:VC_Ticket:1448694637106692156> Se hai dei dubbi apri un ticket terza categoria.",
         "",
         "<a:VC_Alert:1448670089670037675> **__LEGGI BENE ALL'INTERNO DEI RIQUADRI LA DOMANDA E POI RISPONDI__**",);
   }
@@ -320,7 +320,7 @@ function buildIntroEmbed(type) {
     .setDescription(
       "<:VC_Poll:1448695754972729436> Compilando questo modulo potrai candidarti come Helper del server.",
       "<a:VC_Timer:1462779065625739344> In caso verrete accettati farete una prova di 1/2 settimane",
-      "<:vsl_ticket:1329520261053022208> Se hai dei dubbi apri un ticket terza categoria.",
+      "<:VC_Ticket:1448694637106692156> Se hai dei dubbi apri un ticket terza categoria.",
       "",
       "<a:VC_Alert:1448670089670037675> **__LEGGI BENE ALL'INTERNO DEI RIQUADRI LA DOMANDA E POI RISPONDI__**",
     );

@@ -18,8 +18,8 @@ function buildTicketClosedEmbed(data) {
   const reasonText = data?.closeReason && String(data.closeReason).trim() ? String(data.closeReason).trim() : "Nessuna motivazione specificata";
 
   const embed = new EmbedBuilder()
-    .setAuthor({ name: data?.guildName || "<:vsl_ticket:1329520261053022208> Sistema Ticket", iconURL: data?.guildIconURL || undefined, })
-    .setTitle("<:vsl_ticket:1329520261053022208> Ticket Chiuso")
+    .setAuthor({ name: data?.guildName || "<:VC_Ticket:1448694637106692156> Sistema Ticket", iconURL: data?.guildIconURL || undefined, })
+    .setTitle("<:VC_Ticket:1448694637106692156> Ticket Chiuso")
     .setColor("#6f4e37")
     .addFields(
       { name: "<:VC_id:1478517313618575419> ID Ticket", value: String(data?.ticketNumber || "N/D"), inline: true },

@@ -51,7 +51,7 @@ const reminderPool = [
       .setDescription(
         [
           "<:VC_EXP:1468714279673925883> La prima volta otterrai **250 EXP**, le altre volte altri exp!",
-          "<:link:1470064815899803668> Vota qui: https://discadia.com/server/viniliecaffe/",
+          "<:VC_Link:1448688587133685895> Vota qui: https://discadia.com/server/viniliecaffe/",
         ].join("\n"),
       ),
   () =>
@@ -61,7 +61,7 @@ const reminderPool = [
       .setDescription(
         [
           `<:VC_LevelUp2:1443701876892762243> Lasciare una recensione aiuta il server a farci conoscere e crescere, una volta messa la recensione apri un <#${IDs.channels.ticket}>\`Terza Categoria\` e riceverai **5 livelli**!`,
-          "<:link:1470064815899803668> Recensisci il nostro server qui: https://disboard.org/it/server/1329080093599076474",
+          "<:VC_Link:1448688587133685895> Recensisci il nostro server qui: https://disboard.org/it/server/1329080093599076474",
         ].join("\n"),
       ),
   () =>
@@ -83,10 +83,10 @@ const reminderPool = [
   () =>
     new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle("<:vsl_ticket:1329520261053022208> Devi segnalare un utente, fare una partnership o ti serve supporto?")
+      .setTitle("<:VC_Ticket:1448694637106692156> Devi segnalare un utente, fare una partnership o ti serve supporto?")
       .setDescription(
         [
-          `<:staff:1443651912179388548> Attraverso i ticket nel canale <#${IDs.channels.ticket}> puoi contattare un membro dello Staff che ti darà una mano per ogni tua richiesta.`,
+          `<:VC_Staff:1479443779571155086> Attraverso i ticket nel canale <#${IDs.channels.ticket}> puoi contattare un membro dello Staff che ti darà una mano per ogni tua richiesta.`,
         ].join("\n"),
       ),
   () =>
@@ -95,14 +95,14 @@ const reminderPool = [
       .setTitle("<a:VC_PepeFoto:1479131953100750882> Sblocca i Picperms")
       .setDescription(
         [
-          '<:link:1470064815899803668> Puoi sbloccarli in modo veloce mettendo ".gg/viniliecaffe" nello stato del tuo profilo Discord, potenziando il server oppure salendo al Livello 10.',
+          '<:VC_Link:1448688587133685895> Puoi sbloccarli in modo veloce mettendo ".gg/viniliecaffe" nello stato del tuo profilo Discord, potenziando il server oppure salendo al Livello 10.',
           `> <a:VC_Arrow:1448672967721615452> Scopri tutte le ricompense dei boost&livelli su:<#${IDs.channels.info}>`,
         ].join("\n"),
       ),
   () =>
     new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle("<:pokeball:1467091572632850474> Gotta Catch 'Em All!")
+      .setTitle("<:VC_Pokeball:1479444536227926107> Gotta Catch 'Em All!")
       .setDescription(
         [
           "<a:VC_PikaWave:1331622011004260354> Sei un appassionato di Pokémon? Vieni a catturarli tutti nel canale <#1442569184281362552>",

@@ -190,7 +190,7 @@ async function runVerifyPanelAuto(client) {
   const attachment = new AttachmentBuilder(VERIFY_MEDIA_PATH, { name: VERIFY_MEDIA_NAME, });
   const serverName = channel.guild?.name || "this server";
 
-  const verifyInfoEmbed = new EmbedBuilder().setColor("#6f4e37").setTitle("<a:VC_HeartsPink:1468685897389052008> **__Benvenutx su Vinili & Caffè__**",).setDescription("<:vegacheckmark:1443666279058772028> Per **verificarti** premi il pulsante **__`Verify`__**, poi inserisci il **codice** che riceverai in **risposta effimera**.\n" + "<:vsl_ticket:1329520261053022208> Per **qualsiasi** problema, non **esitate** ad aprire un **__<#1442569095068254219> `Prima Categoria`__**",).setImage(DIVIDER_URL);
+  const verifyInfoEmbed = new EmbedBuilder().setColor("#6f4e37").setTitle("<a:VC_HeartsPink:1468685897389052008> **__Benvenutx su Vinili & Caffè__**",).setDescription("<:vegacheckmark:1443666279058772028> Per **verificarti** premi il pulsante **__`Verify`__**, poi inserisci il **codice** che riceverai in **risposta effimera**.\n" + "<:VC_Ticket:1448694637106692156> Per **qualsiasi** problema, non **esitate** ad aprire un **__<#1442569095068254219> `Prima Categoria`__**",).setImage(DIVIDER_URL);
 
   const color = client?.config?.embedVerify || "#6f4e37";
 
