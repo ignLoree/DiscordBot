@@ -174,6 +174,11 @@ async function dispatchPrefixMessage(message, client) {
     }
   }
 
+  const channelId = String(message?.channelId || "");
+  if (WRONG_PREFIX_HINT_CHANNEL_IDS.size && !WRONG_PREFIX_HINT_CHANNEL_IDS.has(channelId)) {
+    return true;
+  }
+
   const availableCommands = Array.from(client.pcommands.keys()).sort((a,b)=>a.localeCompare(b)).map((name)=>`\`${safePrefix}${name}\``).join(", ");
 
   const embed = new EmbedBuilder().setColor("#6f4e37").setDescription("**Bot Test** \u2013 i comandi principali sono sul **bot ufficiale**.\n" +(availableCommands ?`Comandi disponibili qui: ${availableCommands}`:""),);
