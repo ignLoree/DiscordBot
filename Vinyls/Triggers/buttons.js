@@ -741,7 +741,10 @@ module.exports = {
             value: [
               `<@&${IDs.roles.Level100}>`,
               "Tutte le ricompense precedenti",
-              `<:VC_Reply:1468262952934314131> Votare per lo <@&${IDs.roles.StafferDelMese}>`,
+              "<:VC_DoubleReply:1468713981152727120> Cooldown sui comandi del nostro bot ridotto (da 5 secondi a 1 secondo).",
+              "<:VC_DoubleReply:1468713981152727120> Bypass requisiti per i giveaway",
+              "<:VC_DoubleReply:1468713981152727120> Bypass requisiti per le candidature",
+              "<:VC_Reply:1468262952934314131> Bonus EXP permanente +25%",
             ].join("\n"),
             inline: true,
           },

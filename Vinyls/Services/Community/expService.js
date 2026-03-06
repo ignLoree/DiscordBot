@@ -14,7 +14,7 @@ const PERKS_CHANNEL_ID = IDs.channels.info;
 const PERK_ROLE_ID = IDs.roles.PicPerms;
 const LEVEL_ROLE_MAP = new Map([[10, IDs.roles.Level10], [20, IDs.roles.Level20], [30, IDs.roles.Level30], [50, IDs.roles.Level50], [70, IDs.roles.Level70], [100, IDs.roles.Level100],]);
 const PERK_NEAR_LEVEL_DISTANCE = 2;
-const ROLE_MULTIPLIERS = new Map([[IDs.roles.Donator, 3], [IDs.roles.VIP, 4], [IDs.roles.ServerBooster, 2],]);
+const ROLE_MULTIPLIERS = new Map([[IDs.roles.Donator, 3], [IDs.roles.VIP, 4], [IDs.roles.ServerBooster, 2], [IDs.roles.Level100, 1.25],]);
 const EVENT_STAFF_ROLE_IDS = new Set([IDs.roles.Staff, IDs.roles.HighStaff,].filter(Boolean).map((id) => String(id)),);
 
 function isEventStaffMember(member) {

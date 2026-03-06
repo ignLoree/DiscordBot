@@ -4,6 +4,7 @@ const IDs = require("../Config/ids");
 const ROLE_COOLDOWN_BYPASS = IDs.roles.Staff;
 const ROLE_LEVEL_30 = IDs.roles.Level30;
 const ROLE_LEVEL_50 = IDs.roles.Level50;
+const ROLE_LEVEL_100 = IDs.roles.Level100;
 
 function isDbReady() {
   return mongoose.connection?.readyState === 1;
@@ -34,10 +35,12 @@ function hasRole(member, roleId) {
 
 function computeCooldownSeconds(member, level) {
   const hasBypassRole = hasRole(member, ROLE_COOLDOWN_BYPASS);
+  const hasRole100 = hasRole(member, ROLE_LEVEL_100);
   const hasRole50 = hasRole(member, ROLE_LEVEL_50);
   const hasRole30 = hasRole(member, ROLE_LEVEL_30);
 
   if (hasBypassRole) return 0;
+  if (hasRole100 || level >= 100) return 0;
   if (hasRole50 || level >= 50) return 5;
   if (hasRole30 || level >= 30) return 15;
   return 30;
