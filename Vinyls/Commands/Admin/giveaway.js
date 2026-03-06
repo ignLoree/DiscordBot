@@ -1,7 +1,15 @@
 const { SlashCommandBuilder, ChannelType } = require("discord.js");
 const { safeEditReply } = require("../../../shared/discord/replyRuntime");
-const { parseDuration, buildGiveawayEmbed, buildEnterButton, createGiveaway, setGiveawayMessageId, runScheduledEnds } = require("../../Services/Giveaway/giveawayService");
+const { parseDuration, buildGiveawayEmbed, buildEnterButton, createGiveaway, setGiveawayMessageId, rerollGiveawayByMessageId } = require("../../Services/Giveaway/giveawayService");
 const EPHEMERAL_FLAG = 1 << 6;
+
+function parseMessageIdFromOption(value) {
+  if (!value || typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (/^\d{17,21}$/.test(trimmed)) return trimmed;
+  const match = trimmed.match(/discord\.com\/channels\/\d{17,21}\/\d{17,21}\/(\d{17,21})/);
+  return match ? match[1] : null;
+}
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -38,10 +46,43 @@ module.exports = {
             .setRequired(false)
             .addChannelTypes(ChannelType.GuildText),
         ),
+    )
+    .addSubcommand((sub) =>
+      sub
+        .setName("reroll")
+        .setDescription("Estrai un nuovo vincitore per un giveaway già terminato")
+        .addStringOption((o) =>
+          o
+            .setName("messaggio")
+            .setDescription("ID del messaggio del giveaway o link al messaggio")
+            .setRequired(true),
+        ),
     ),
 
   async execute(interaction) {
     const subcommand = interaction.options.getSubcommand();
+    if (subcommand === "reroll") {
+      await interaction.deferReply({ flags: EPHEMERAL_FLAG }).catch(() => {});
+      const raw = interaction.options.getString("messaggio");
+      const messageId = parseMessageIdFromOption(raw);
+      if (!messageId) {
+        return safeEditReply(interaction, {
+          content: "<a:VC_Alert:1448670089670037675> Inserisci un ID messaggio valido o il link al messaggio del giveaway.",
+          flags: EPHEMERAL_FLAG,
+        });
+      }
+      const result = await rerollGiveawayByMessageId(messageId, interaction.client);
+      if (result.ok) {
+        return safeEditReply(interaction, {
+          content: `<a:VC_Events:1448688007438667796> Re-roll effettuato! Nuovo vincitore: <@${result.newWinnerId}>. Il messaggio è stato aggiornato nel canale.`,
+          flags: EPHEMERAL_FLAG,
+        });
+      }
+      return safeEditReply(interaction, {
+        content: `<a:VC_Alert:1448670089670037675> ${result.error || "Errore durante il re-roll."}`,
+        flags: EPHEMERAL_FLAG,
+      });
+    }
     if (subcommand !== "start") return;
 
     await interaction.deferReply({ flags: EPHEMERAL_FLAG }).catch(() => { });

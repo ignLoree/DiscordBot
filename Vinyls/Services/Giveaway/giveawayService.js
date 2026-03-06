@@ -257,6 +257,48 @@ async function rerollGiveaway(interaction, client) {
   return true;
 }
 
+/**
+ * Esegue un re-roll per giveaway identificato dal messageId. Usabile dal comando /giveaway reroll.
+ * @returns {{ ok: boolean, newWinnerId?: string, error?: string }}
+ */
+async function rerollGiveawayByMessageId(messageId, client) {
+  if (!messageId || !client) return { ok: false, error: "<a:VC_Alert:1448670089670037675> Parametri mancanti." };
+  const giveaway = await Giveaway.findOne({ messageId: String(messageId) });
+  if (!giveaway) return { ok: false, error: "<a:VC_Alert:1448670089670037675> Giveaway non trovato (messaggio non valido)." };
+  if (!giveaway.ended) return { ok: false, error: "<a:VC_Alert:1448670089670037675> Il giveaway non è ancora terminato." };
+
+  const participants = Array.isArray(giveaway.participants) ? giveaway.participants : [];
+  const currentWinners = Array.isArray(giveaway.winnerIds) ? giveaway.winnerIds : [];
+  const newWinnerId = pickOneExcluding(participants, currentWinners);
+  const newWinnerIds = newWinnerId ? [newWinnerId] : null;
+
+  if (newWinnerIds !== null) {
+    await Giveaway.updateOne(
+      { _id: giveaway._id },
+      { $set: { winnerIds: newWinnerIds } },
+    );
+  }
+
+  const channel =
+    client?.channels?.cache?.get(giveaway.channelId) ||
+    (await client?.channels?.fetch(giveaway.channelId).catch(() => null));
+  if (channel?.isTextBased?.() && newWinnerIds !== null) {
+    try {
+      const msg = await channel.messages.fetch(giveaway.messageId).catch(() => null);
+      if (msg?.editable) {
+        const updated = { ...giveaway.toObject(), winnerIds: newWinnerIds };
+        const embed = buildGiveawayEmbed(updated);
+        const rerollRow = buildRerollButton(giveaway._id.toString());
+        await msg.edit({ embeds: [embed], components: [rerollRow] }).catch(() => {});
+      }
+      await channel.send({ content: `<a:VC_Events:1448688007438667796><@${newWinnerId}> ha vinto il giveaway! <a:VC_Winner:1448687700235256009>` }).catch(() => {});
+    } catch (_) {}
+  }
+
+  if (newWinnerId) return { ok: true, newWinnerId };
+  return { ok: false, error: "<a:VC_Alert:1448670089670037675> Nessun altro partecipante disponibile per il re-roll." };
+}
+
 async function runScheduledEnds(client) {
   const now = new Date();
   const list = await Giveaway.find({ ended: false, endAt: { $lte: now } }).lean();
@@ -267,4 +309,4 @@ async function runScheduledEnds(client) {
   }
 }
 
-module.exports = { GIVEAWAY_ENTER_PREFIX, GIVEAWAY_REROLL_PREFIX, formatTimeRemaining, parseDuration, buildGiveawayEmbed, buildEnterButton, buildRerollButton, createGiveaway, setGiveawayMessageId, getGiveawayByMessageId, getGiveawayById, enterGiveaway, endGiveaway, rerollGiveaway, runScheduledEnds };
+module.exports = { GIVEAWAY_ENTER_PREFIX, GIVEAWAY_REROLL_PREFIX, formatTimeRemaining, parseDuration, buildGiveawayEmbed, buildEnterButton, buildRerollButton, createGiveaway, setGiveawayMessageId, getGiveawayByMessageId, getGiveawayById, enterGiveaway, endGiveaway, rerollGiveaway, rerollGiveawayByMessageId, runScheduledEnds };

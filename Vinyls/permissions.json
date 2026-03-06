@@ -94,6 +94,9 @@
             "subcommands": {
                 "start": [
                     "roles.HighStaff"
+                ],
+                "reroll": [
+                    "roles.HighStaff"
                 ]
             }
         },
