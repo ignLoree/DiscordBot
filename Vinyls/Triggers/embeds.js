@@ -728,12 +728,6 @@ async function runEmbedWithButtonsSections(client) {
   );
   await runPanelTask(
     "runEmbedWithButtonsSections",
-    "runSponsorPanelAuto",
-    runSponsorPanelAuto,
-    client,
-  );
-  await runPanelTask(
-    "runEmbedWithButtonsSections",
     "runSponsorPanel",
     runSponsorPanel,
     client,
