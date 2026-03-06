@@ -669,7 +669,7 @@ module.exports = {
         "Digita \`+help\` per la lista completa dei comandi.",
       ].join("\n"));
 
-      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("info_levels").setLabel("Info & Vantaggi Ruoli").setEmoji("<:exp:1470067108543987846>").setStyle(ButtonStyle.Secondary),);
+      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("info_levels").setLabel("︲INFO & VANTAGGI RUOLI").setEmoji("<:exp:1470067108543987846>").setStyle(ButtonStyle.Secondary),);
 
       return { embeds: [boostEmbed, howtoEmbed], components: [row] };
     };
@@ -755,7 +755,7 @@ module.exports = {
         "Digita \`+help\` per la lista completa dei comandi.",
       ].join("\n"));
 
-      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setLabel("Colori VIP Sbloccati").setEmoji(`<:VC_Color:1470781368630775982>`).setStyle(ButtonStyle.Link).setURL("https://discord.com/channels/1329080093599076474/1469429150669602961/1469803395937472647",), new ButtonBuilder().setLabel("Canale per i comandi").setEmoji(`<:VC_Bot:1470780684233871428>`).setStyle(ButtonStyle.Link).setURL("https://discord.com/channels/1329080093599076474/1442569138114662490",), new ButtonBuilder().setCustomId("torna_indietro").setLabel("Torna indietro").setEmoji("<a:vegaleftarrow:1462914743416131816>").setStyle(ButtonStyle.Primary),);
+      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setLabel("︲COLORI VIP SBLOCCATI").setEmoji(`<:VC_Color:1470781368630775982>`).setStyle(ButtonStyle.Link).setURL("https://discord.com/channels/1329080093599076474/1469429150669602961/1469803395937472647",), new ButtonBuilder().setLabel("︲CANALE PER I COMANDI").setEmoji(`<:VC_Bot:1470780684233871428>`).setStyle(ButtonStyle.Link).setURL("https://discord.com/channels/1329080093599076474/1442569138114662490",), new ButtonBuilder().setCustomId("torna_indietro").setLabel("︲TORNAA INDIETRO").setEmoji("<a:vegaleftarrow:1462914743416131816>").setStyle(ButtonStyle.Primary),);
 
       return { embeds: [levelEmbed, howtoEmbed], components: [row] };
     };
