@@ -178,9 +178,9 @@
     "enabled": true,
     "translateApiToItalian": true,
     "intervalMs": 900000,
-    "noParticipationIntervalMs": 1800000,
-    "activityWindowMs": 1800000,
-    "minMessages": 3,
+    "noParticipationIntervalMs": 900000,
+    "activityWindowMs": 900000,
+    "minMessages": 1,
     "failsafeMs": 5400000,
     "fastGuess": {
       "windowMs": 30000,

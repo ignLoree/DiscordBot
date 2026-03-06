@@ -8,7 +8,7 @@ const{handleAfk,handleAutoResponders,handleCounting,handleMentionAutoReactions,l
 const { runAutoModMessage } = require("../Services/Moderation/automodService");
 const IDs = require("../Utils/Config/ids");
 const STAFF_BYPASS_PERMISSIONS=[PermissionFlagsBits.Administrator,PermissionFlagsBits.ManageGuild,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.ManageRoles,PermissionFlagsBits.ManageMessages,PermissionFlagsBits.KickMembers,PermissionFlagsBits.BanMembers,PermissionFlagsBits.ModerateMembers,];
-const FORCE_DELETE_CHANNEL_IDS=new Set([IDs.channels.separator7].filter(Boolean).map((id) => String(id)),);
+const FORCE_DELETE_CHANNEL_IDS=new Set([]);
 const MEDIA_BLOCK_EXEMPT_CATEGORY_ID = IDs.categories.categorChat;
 const MEDIA_BLOCK_EXEMPT_CHANNEL_IDS=new Set([IDs.channels.media,IDs.channels.musicCommands].filter(Boolean).map((id) => String(id)),);
 const WRONG_PREFIX_HINT_CHANNEL_IDS=new Set([IDs.channels.commands,IDs.channels.staffCmds,IDs.channels.highCmds].filter(Boolean).map((id) => String(id)),);
