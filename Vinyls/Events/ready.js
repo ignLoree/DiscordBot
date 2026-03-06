@@ -293,9 +293,47 @@ function startPrimaryLoops(client, engagementTick) {
   interval.unref?.();
   client._primaryEngagementInterval = interval;
 
-  const startLoopSafely=(label,starter) => {try{starter();}catch(err){global.logger?.error?.(label,err);}};
+  const startLoopSafely = (label, starter) => {
+    try { starter(); } catch (err) { global.logger?.error?.(label, err); }
+  };
 
-  const loopStarters=[["[LIVE VOICE EXP] Failed to start loop",() => startLiveVoiceExpLoop(client)],["[MINIGAMES] Failed to start loop",() => startMinigameLoop(client)],["[VOTE ROLE] Failed to start cleanup loop",() => startVoteRoleCleanupLoop(client),],["[WEEKLY DM REMINDER] Failed to start loop",() => startWeeklyDmReminderLoop(client),],["[VERIFY TENURE] Failed to start loop",() => startVerificationTenureLoop(client),],["[CATEGORY NUMBERING] Failed to start loop",() => startCategoryNumberingLoop(client),],["[SPONSOR 24H KICK] Failed to start loop",() => startSponsorKickLoop(client),],["[WEEKLY ACTIVITY] Failed to start loop",() => startWeeklyActivityWinnersLoop(client),],["[BIRTHDAY] Failed to start loop",() => startBirthdayLoop(client)],["[TEMP ROLE] Failed to start cleanup loop",() => startTemporaryRoleCleanupLoop(client),],["[CUSTOM ROLE EXPIRY] Failed to start cleanup loop",() => startCustomRoleExpiryLoop(client),],["[MOD CASE LIFECYCLE] Failed to start loop",() => startModCaseLifecycleLoop(client),],["[TICKET AUTO CLOSE PROMPT] Failed to start loop",() => startTicketAutoClosePromptLoop(client),],["[TRANSCRIPT CLEANUP] Failed to start loop",() => startTranscriptCleanupLoop(),],["[WEEKLY STAFF RESOCONTO] Failed to start loop",() => startWeeklyStaffResocontoLoop(client),],["[JOIN RAID RESTORE] Failed to start loop",() => {const tick=async() => {const guilds=[...client.guilds.cache.values()];for(const guild of guilds){await restoreTempBans(guild).catch(() => {});}};tick().catch(() => {});const timer=setInterval(tick,JOIN_RAID_RESTORE_INTERVAL_MS);if(typeof timer.unref==="function")timer.unref();client._joinRaidRestoreInterval=timer;},],["[GIVEAWAY] Failed to start scheduled end loop",() => {const tick=() => runScheduledEnds(client).catch((e)=>global.logger?.warn?.("[GIVEAWAY] runScheduledEnds",e?.message));tick();const timer=setInterval(tick,60*1000);if(typeof timer.unref==="function")timer.unref();client._giveawayScheduledEndInterval=timer;}];for(const[label,starter]of loopStarters){startLoopSafely(label, starter);
+  const loopStarters = [
+    ["[LIVE VOICE EXP] Failed to start loop", () => startLiveVoiceExpLoop(client)],
+    ["[MINIGAMES] Failed to start loop", () => startMinigameLoop(client)],
+    ["[VOTE ROLE] Failed to start cleanup loop", () => startVoteRoleCleanupLoop(client)],
+    ["[WEEKLY DM REMINDER] Failed to start loop", () => startWeeklyDmReminderLoop(client)],
+    ["[VERIFY TENURE] Failed to start loop", () => startVerificationTenureLoop(client)],
+    ["[CATEGORY NUMBERING] Failed to start loop", () => startCategoryNumberingLoop(client)],
+    ["[SPONSOR 24H KICK] Failed to start loop", () => startSponsorKickLoop(client)],
+    ["[WEEKLY ACTIVITY] Failed to start loop", () => startWeeklyActivityWinnersLoop(client)],
+    ["[BIRTHDAY] Failed to start loop", () => startBirthdayLoop(client)],
+    ["[TEMP ROLE] Failed to start cleanup loop", () => startTemporaryRoleCleanupLoop(client)],
+    ["[CUSTOM ROLE EXPIRY] Failed to start cleanup loop", () => startCustomRoleExpiryLoop(client)],
+    ["[MOD CASE LIFECYCLE] Failed to start loop", () => startModCaseLifecycleLoop(client)],
+    ["[TICKET AUTO CLOSE PROMPT] Failed to start loop", () => startTicketAutoClosePromptLoop(client)],
+    ["[TRANSCRIPT CLEANUP] Failed to start loop", () => startTranscriptCleanupLoop()],
+    ["[WEEKLY STAFF RESOCONTO] Failed to start loop", () => startWeeklyStaffResocontoLoop(client)],
+    ["[JOIN RAID RESTORE] Failed to start loop", () => {
+      const tick = async () => {
+        const guilds = [...client.guilds.cache.values()];
+        for (const guild of guilds) { await restoreTempBans(guild).catch(() => {}); }
+      };
+      tick().catch(() => {});
+      const timer = setInterval(tick, JOIN_RAID_RESTORE_INTERVAL_MS);
+      if (typeof timer.unref === "function") timer.unref();
+      client._joinRaidRestoreInterval = timer;
+    }],
+    ["[GIVEAWAY] Failed to start scheduled end loop", () => {
+      const tick = () => runScheduledEnds(client).catch((e) => global.logger?.warn?.("[GIVEAWAY] runScheduledEnds", e?.message));
+      tick();
+      const timer = setInterval(tick, 60 * 1000);
+      if (typeof timer.unref === "function") timer.unref();
+      client._giveawayScheduledEndInterval = timer;
+    }],
+  ];
+
+  for (const [label, starter] of loopStarters) {
+    startLoopSafely(label, starter);
   }
 }
 
