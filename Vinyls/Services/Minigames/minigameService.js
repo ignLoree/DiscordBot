@@ -4787,15 +4787,18 @@ async function startMathExpressionGame(client, cfg) {
   return true;
 }
 
-async function pickRandomFindBotChannel(guild, requiredRoleId, excludeChannelId = null) {
+async function pickRandomFindBotChannel(guild, requiredRoleId, excludeChannelId = null, excludedChannelIds = null) {
   if (!guild) return null;
   await guild.channels.fetch().catch(() => {});
   const me = guild.members.me || guild.members.cache.get(guild.client?.user?.id);
   const roleToCheck = requiredRoleId ? guild.roles.cache.get(requiredRoleId) : guild.roles.everyone;
+  const excludedSet = new Set(
+    [excludeChannelId].filter(Boolean).concat(Array.isArray(excludedChannelIds) ? excludedChannelIds.filter((id) => id != null && String(id).trim()) : []),
+  );
 
   const channels = guild.channels.cache.filter((channel) => {
     if (channel.type !== ChannelType.GuildText && channel.type !== ChannelType.GuildAnnouncement) return false;
-    if (excludeChannelId && channel.id === excludeChannelId) return false;
+    if (excludedSet.has(channel.id)) return false;
     if (!channel.viewable) return false;
     if (me && !me.permissions?.has(PermissionsBitField.Flags.Administrator) && !channel.permissionsFor(me)?.has([PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages])) return false;
     const memberPerms = channel.permissionsFor(roleToCheck);
@@ -4816,13 +4819,14 @@ async function startFindBotGame(client, cfg) {
   const durationMs = Math.max(60000, Number(cfg?.findBot?.durationMs || 300000),);
   const rewardExp = Number(cfg?.findBot?.rewardExp || 100);
   const requiredRoleId = cfg?.findBot?.requiredRoleId || null;
+  const excludedChannelIds = cfg?.findBot?.excludedChannelIds || null;
 
   const mainChannel = await getChannelCached(client, channelId);
   if (!mainChannel?.guild) return false;
 
-  let targetChannel = await pickRandomFindBotChannel(mainChannel.guild, requiredRoleId, channelId);
+  let targetChannel = await pickRandomFindBotChannel(mainChannel.guild, requiredRoleId, channelId, excludedChannelIds);
   if (!targetChannel) {
-    targetChannel = await pickRandomFindBotChannel(mainChannel.guild, requiredRoleId, null);
+    targetChannel = await pickRandomFindBotChannel(mainChannel.guild, requiredRoleId, null, excludedChannelIds);
   }
   if (!targetChannel) return false;
 
