@@ -369,8 +369,47 @@ async function restorePendingVoteReminders(client) {
 }
 
 async function sendDueDiscadiaVoteReminders(client) {
-  return;
-}
+  const enabled = client?.config?.discadiaVoteReminder?.enabled;
+  if (!enabled) return;
+
+  const guildId = IDs.guilds.main;
+  const cooldownMs = getVoteCooldownMs(client);
+  const cutoff = new Date(Date.now() - cooldownMs);
+
+  let docs = [];
+  try {
+    docs = await DiscadiaVoter.find(
+      { guildId, lastVoteAt: { $lte: cutoff } },
+      { userId: 1, lastVoteAt: 1, lastRemindedAt: 1 },
+    ).lean();
+  } catch (err) {
+    global.logger?.error?.("[DISCADIA VOTE REMINDER] Failed to fetch voters:", err);
+    return;
+  }
+
+  for (const doc of docs) {
+    const userId = String(doc?.userId);
+    if (!userId || !doc?.lastVoteAt) continue;
+    const lastVoteAt = new Date(doc.lastVoteAt).getTime();
+    if (Date.now() - lastVoteAt < cooldownMs) continue;
+    if (doc.lastRemindedAt && new Date(doc.lastRemindedAt).getTime() >= lastVoteAt) continue;
+    if (await shouldSkipVoteDmByNoDm(client, guildId, userId)) continue;
+
+    const user = await getUserCached(client, userId);
+    if (!user) continue;
+
+    const embed = buildVoteReminderEmbed(client);
+    try {
+      await user.send({ embeds: [embed] });
+    } catch {
+      await sendVoteFallbackChannelReminder(client, guildId, userId);
+    }
+    await DiscadiaVoter.updateOne(
+      { guildId, userId },
+      { $set: { lastRemindedAt: new Date() } },
+    ).catch(() => {});
+  }
+} 
 
 function startDiscadiaVoteReminderLoop(client) {
   const enabled = client?.config?.discadiaVoteReminder?.enabled;

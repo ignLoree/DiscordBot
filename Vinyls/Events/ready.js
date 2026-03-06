@@ -1,7 +1,7 @@
 const config = require("../config.json");
 const mongoose = require("mongoose");
 const cron = require("node-cron");
-const { restorePendingVoteReminders, restorePendingDiscadiaReminders, restorePendingReminders, } = require("../Services/Bump/bumpService");
+const { restorePendingVoteReminders, restorePendingDiscadiaReminders, restorePendingReminders, startDiscadiaVoteReminderLoop, } = require("../Services/Bump/bumpService");
 const { bootstrapSupporter } = require("./presenceUpdate");
 const { restoreTtsConnections } = require("../Services/TTS/ttsService");
 const{runDueOneTimeReminders,}=require("../Services/Reminders/oneTimeReminderService");
@@ -15,6 +15,7 @@ const { syncLiveVoiceSessionsFromGateway, startLiveVoiceExpLoop, } = require("..
 const { removeExpiredTemporaryRoles, startTemporaryRoleCleanupLoop, } = require("../Services/Community/temporaryRoleService");
 const { runExpiredCustomRolesSweep, startCustomRoleExpiryLoop, } = require("../Services/Community/customRoleExpiryService");
 const{startDailyPartnerAuditLoop,}=require("../Services/Partner/partnerAuditService");
+const { startPartnershipChannelCleanupLoop } = require("../Services/Partner/partnershipChannelCleanupService");
 const { startTicketAutoClosePromptLoop, startTranscriptCleanupLoop, } = require("../Services/Ticket/ticketMaintenanceService");
 const { startAutoBackupLoop } = require("../Services/Backup/autoBackupService");
 const { startModCaseLifecycleLoop } = require("../Services/Moderation/modCaseLifecycleService");
@@ -227,6 +228,8 @@ async function restoreBumpReminders(client) {
     global.logger?.error?.("[DISCADIA REMINDER ERROR]", discadia.reason);
   if (voteReminders.status === "rejected")
     global.logger?.error?.("[DISCADIA VOTE REMINDER ERROR]", voteReminders.reason);
+
+  startDiscadiaVoteReminderLoop(client);
 }
 
 async function restoreCoreStartupState(client) {
@@ -419,6 +422,11 @@ module.exports = {
         startDailyPartnerAuditLoop(client);
       } catch (err) {
         global.logger?.error?.("[DAILY PARTNER AUDIT ERROR]", err);
+      }
+      try {
+        startPartnershipChannelCleanupLoop(client);
+      } catch (err) {
+        global.logger?.error?.("[PARTNERSHIP CHANNEL CLEANUP ERROR]", err);
       }
     }
 
