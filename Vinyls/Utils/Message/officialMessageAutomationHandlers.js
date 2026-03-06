@@ -1,5 +1,5 @@
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
-const { recordDiscadiaBump, recordDiscadiaVote, recordBump } = require("../../Services/Bump/bumpService");
+const { recordDiscadiaBump, recordDiscadiaVote, recordBump, awardBumpVoteExp, getVoteCooldownMs } = require("../../Services/Bump/bumpService");
 const { addExpWithLevel, shouldIgnoreExpForMember } = require("../../Services/Community/expService");
 const { upsertVoteRole } = require("../../Services/Community/communityOpsService");
 const { grantEventLevels } = require("../../Services/Community/activityEventRewardsService");
@@ -238,30 +238,23 @@ async function handleVoteManagerMessage(message, client) {
     global.logger.warn("[VOTE EMBED] Vote count not found. Text:", fullText);
   }
 
-  let expValue = getRandomExp();
+  let expValue = 0;
   let resolvedVoteCount = voteCount;
+  const voteRewardExtras = [];
   if (user?.id && message.guild?.id) {
     try {
-      const count = await recordDiscadiaVote(message.client, message.guild.id, user.id,);
-      if (typeof count === "number") {
-        resolvedVoteCount = count;
+      const result = await recordDiscadiaVote(message.client, message.guild.id, user.id);
+      if (result && typeof result.voteCount === "number") {
+        resolvedVoteCount = result.voteCount;
       }
-      if (count === 1) {
-        expValue = 250;
+      const baseExpRandom = resolvedVoteCount === 1 ? 250 : getRandomExp();
+      const voteCooldownMs = getVoteCooldownMs(message.client);
+      const reward = await awardBumpVoteExp(message.client, message.guild, user.id, "discadia_vote", result?.previousLastVoteAt ?? null, voteCooldownMs, baseExpRandom);
+      if (reward?.effectiveExp != null) {
+        expValue = reward.effectiveExp;
       }
-    } catch { }
-    try {
-      const targetMember = await getCachedOrFetchMember(message.guild, user.id);
-      const ignored = await shouldIgnoreExpForMember({ guildId: message.guild.id, member: targetMember, channelId: message.channel?.id || message.channelId || null, });
-      if (!ignored) {
-        await addExpWithLevel(
-          message.guild,
-          user.id,
-          Number(expValue || 0),
-          false,
-          false,
-        );
-      }
+      if (reward?.fastBonus > 0) voteRewardExtras.push("<a:VC_Flame:1473106990493335665> Risposta rapida **+" + reward.fastBonus + " exp**");
+      if (reward?.streakBonus > 0) voteRewardExtras.push("<a:VC_Flame:1473106990493335665> Streak " + reward.newStreak + " **+" + reward.streakBonus + " exp**");
     } catch { }
     try {
       const expiresAt = new Date(Date.now() + VOTE_ROLE_DURATION_MS);
@@ -285,18 +278,20 @@ async function handleVoteManagerMessage(message, client) {
   const voteLabel = typeof resolvedVoteCount === "number" ? `${resolvedVoteCount}°` : "";
   const voteRoleText = VOTE_ROLE_ID ? `<a:VC_Money:1448671284748746905> - Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`
     : "<a:VC_Money:1448671284748746905> - Reward voto assegnata per 24 ore";
+  const descriptionLines = [
+    `<a:VC_ThankYou:1330186319673950401> Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server!`,
+    "",
+    "`Hai guadagnato:`",
+    `<:VC_EXP:1468714279673925883> <a:VC_Arrow:1448672967721615452> **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : "**voto**"}`,
+    ...(voteRewardExtras.length > 0 ? voteRewardExtras : []),
+    voteRoleText,
+    "",
+    "<:VC_update:1478721333096349817> Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.",
+  ];
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("<a:VC_Vote:1448729692235628818> **Un nuovo voto!**")
-    .setDescription([
-      `<a:VC_ThankYou:1330186319673950401> Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server!`,
-      "",
-      "`Hai guadagnato:`",
-      `<:VC_EXP:1468714279673925883> <a:VC_Arrow:1448672967721615452> **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : "**voto**"}`,
-      voteRoleText,
-      "",
-      "<:VC_update:1478721333096349817> Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.",
-    ].join("\n"),)
+    .setDescription(descriptionLines.join("\n"))
     .setFooter({ text: "Ogni volta che voterai il valore dell'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente", }).setImage(dividerUrl);
 
   const components = [];
@@ -343,13 +338,23 @@ async function handleDisboardBump(message, client) {
 
   const dedupeKey = `disboard:${message.guild.id}:${message.id}`;
   if (shouldSkipProcessedBump(dedupeKey)) return true;
-  const bumpUserId = message.interaction?.user?.id;
+  const bumpUserId = message.interaction?.user?.id || null;
   const bumpMention = bumpUserId ? `<@${bumpUserId}>` : "";
-  const thanksMessage = "<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server!__**\n" +
+  const disboardCooldownMs = (client?.config?.disboard?.cooldownMinutes ?? 120) * 60 * 1000;
+  const recordResult = await recordBump(client, message.guild.id, bumpUserId);
+  let thanksMessage = "<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server!__**\n" +
     "<:VC_HelloKittyGun:1329447880150220883> Ci __vediamo__ nuovamente tra **due ore!**\n" +
     bumpMention;
-
-  await recordBump(client, message.guild.id, bumpUserId || null);
+  if (bumpUserId && recordResult?.previousLastBumpAt !== undefined) {
+    const reward = await awardBumpVoteExp(client, message.guild, bumpUserId, "disboard", recordResult.previousLastBumpAt, disboardCooldownMs).catch(() => null);
+    if (reward?.effectiveExp != null) {
+      const parts = ["<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server!__**", "<:VC_EXP:1468714279673925883> **" + reward.effectiveExp + " exp** guadagnati!"];
+      if (reward.fastBonus > 0) parts.push("<a:VC_Flame:1473106990493335665> Risposta rapida +" + reward.fastBonus + " exp");
+      if (reward.streakBonus > 0) parts.push("<a:VC_Flame:1473106990493335665> Streak " + reward.newStreak + " +" + reward.streakBonus + " exp");
+      parts.push("<:VC_HelloKittyGun:1329447880150220883> Ci __vediamo__ nuovamente tra **due ore!**\n" + bumpMention);
+      thanksMessage = parts.join("\n");
+    }
+  }
   const channel = message.channel || (await message.guild.channels.fetch(message.channelId).catch(() => null));
   if (channel?.isTextBased?.()) {
     try {
@@ -409,13 +414,23 @@ async function handleDiscadiaBump(message, client) {
   if (!isBump) return false;
   const dedupeKey = `discadia:${message.guild.id}:${message.id}`;
   if (shouldSkipProcessedBump(dedupeKey)) return true;
-  const bumpUserId = message.interaction?.user?.id || message.interactionMetadata?.user?.id || extractUserIdFromText(message.content) || extractUserIdFromText(joined);
+  const bumpUserId = message.interaction?.user?.id || message.interactionMetadata?.user?.id || extractUserIdFromText(message.content) || extractUserIdFromText(joined) || null;
   const bumpMention = bumpUserId ? `<@${bumpUserId}>` : "";
-  const thanksMessage = "<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server su Discadia!__**\n" +
+  const discadiaCooldownMs = (client?.config?.discadia?.cooldownMinutes ?? 1440) * 60 * 1000;
+  const recordResult = await recordDiscadiaBump(client, message.guild.id, bumpUserId);
+  let thanksMessage = "<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server su Discadia!__**\n" +
     "<:VC_HelloKittyGun:1329447880150220883> Ci __vediamo__ nuovamente tra **24 ore!**\n" +
     bumpMention;
-
-  await recordDiscadiaBump(client, message.guild.id, bumpUserId || null);
+  if (bumpUserId && recordResult?.previousLastBumpAt !== undefined) {
+    const reward = await awardBumpVoteExp(client, message.guild, bumpUserId, "discadia_bump", recordResult.previousLastBumpAt, discadiaCooldownMs).catch(() => null);
+    if (reward?.effectiveExp != null) {
+      const parts = ["<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server su Discadia!__**", "<:VC_EXP:1468714279673925883> **" + reward.effectiveExp + " exp** guadagnati!"];
+      if (reward.fastBonus > 0) parts.push("<a:VC_Flame:1473106990493335665> Risposta rapida +" + reward.fastBonus + " exp");
+      if (reward.streakBonus > 0) parts.push("<a:VC_Flame:1473106990493335665> Streak " + reward.newStreak + " +" + reward.streakBonus + " exp");
+      parts.push("<:VC_HelloKittyGun:1329447880150220883> Ci __vediamo__ nuovamente tra **24 ore!**\n" + bumpMention);
+      thanksMessage = parts.join("\n");
+    }
+  }
   const channel = message.channel || (message.channelId ? await message.guild.channels.fetch(message.channelId).catch(() => null) : null);
   if (channel?.isTextBased?.()) {
     try {

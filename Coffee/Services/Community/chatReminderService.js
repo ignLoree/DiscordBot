@@ -329,15 +329,26 @@ async function saveRotationState() {
   ).catch(() => {});
 }
 
+function queueHasAllReminderIndices(queue) {
+  const set = new Set(queue);
+  if (set.size !== reminderPool.length) return false;
+  for (let i = 0; i < reminderPool.length; i += 1) {
+    if (!set.has(i)) return false;
+  }
+  return true;
+}
+
 async function loadRotationState(guildId, dateKey) {
   rotationGuildId = guildId;
   const doc = await ChatReminderRotation.findOne({ guildId }).lean().catch(() => null);
   const normDate = dateKey ? String(dateKey) : "";
   if (doc && normDate && doc.dateKey === normDate && Array.isArray(doc.queue)) {
-    rotationDate = doc.dateKey;
     rotationQueue = doc.queue.slice().filter((i) => Number.isInteger(i) && i >= 0 && i < reminderPool.length);
-    lastSentAt = doc.lastSentAt ? new Date(doc.lastSentAt).getTime() : null;
-    return;
+    if (queueHasAllReminderIndices(rotationQueue)) {
+      rotationDate = doc.dateKey;
+      lastSentAt = doc.lastSentAt ? new Date(doc.lastSentAt).getTime() : null;
+      return;
+    }
   }
   rotationDate = normDate;
   rotationQueue = [];

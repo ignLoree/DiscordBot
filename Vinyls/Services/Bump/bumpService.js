@@ -1,9 +1,11 @@
 const { EmbedBuilder } = require("discord.js");
 const DisboardBump = require("../../Schemas/Disboard/disboardBumpSchema");
-const { DiscadiaBump, DiscadiaVoter, } = require("../../Schemas/Discadia/discadiaSchemas");
+const { DiscadiaBump, DiscadiaVoter } = require("../../Schemas/Discadia/discadiaSchemas");
+const BumpVoteReward = require("../../Schemas/Bump/bumpVoteRewardSchema");
 const IDs = require("../../Utils/Config/ids");
 const { getNoDmSet } = require("../../Utils/noDmList");
-const { getClientGuildCached, getGuildMemberCached, getUserCached, } = require("../../Utils/Interaction/interactionEntityCache");
+const { getClientGuildCached, getGuildMemberCached, getUserCached } = require("../../Utils/Interaction/interactionEntityCache");
+const { addExpWithLevel, shouldIgnoreExpForMember } = require("../Community/expService");
 const discadiaVoteTimers = new Map();
 const STAFF_BYPASS_ROLE_IDS = new Set([IDs.roles.Staff, IDs.roles.Helper, IDs.roles.Mod, IDs.roles.PartnerManager, IDs.roles.Coordinator, IDs.roles.Supervisor, IDs.roles.HighStaff, IDs.roles.Admin, IDs.roles.Manager, IDs.roles.CoFounder, IDs.roles.Founder,].filter(Boolean),);
 const BUMP_REMINDER_CHANNEL_BY_KEY = { disboard: IDs.channels.commands, discadia: IDs.channels.commands, };
@@ -116,7 +118,10 @@ function createBumpReminderService(options) {
     const bumpDate = bumpAt instanceof Date ? bumpAt : new Date(bumpAt);
     let lastBumpAt = bumpDate;
     let doc = null;
+    let previousLastBumpAt = null;
     try {
+      const before = await model.findOne({ guildId }).lean().catch(() => null);
+      if (before?.lastBumpAt) previousLastBumpAt = new Date(before.lastBumpAt);
       doc = await model.findOneAndUpdate(
         { guildId },
         {
@@ -133,11 +138,12 @@ function createBumpReminderService(options) {
       global.logger?.error?.(`${errorTag} setBumpAt DB failed, scheduling in-memory anyway:`, err?.message || err);
     }
     scheduleReminder(client, guildId, lastBumpAt);
-    return doc;
+    return { doc, previousLastBumpAt };
   }
 
   async function recordBump(client, guildId, userId) {
-    return setBumpAt(client, guildId, new Date(), userId);
+    const result = await setBumpAt(client, guildId, new Date(), userId);
+    return result;
   }
 
   async function restorePendingReminders(client) {
@@ -261,10 +267,13 @@ async function recordDiscadiaVote(client, guildId, userId) {
   const now = new Date();
   const mainGuildId = IDs.guilds.main;
   guildId = mainGuildId;
+  let previousLastVoteAt = null;
+  const before = await DiscadiaVoter.findOne({ guildId: IDs.guilds.main, userId }).lean().catch(() => null);
+  if (before?.lastVoteAt) previousLastVoteAt = new Date(before.lastVoteAt);
   const doc = await DiscadiaVoter.findOneAndUpdate({ guildId: IDs.guilds.main, userId }, { $set: { lastVoteAt: now }, $setOnInsert: { lastRemindedAt: null, voteMilestoneGranted: [], voteMilestoneNearReminded: [], }, $inc: { voteCount: 1 }, }, { upsert: true, new: true, setDefaultsOnInsert: true },);
 
   scheduleDiscadiaVoteReminder(client, mainGuildId, userId, now);
-  return doc?.voteCount || 1;
+  return { voteCount: doc?.voteCount || 1, previousLastVoteAt };
 }
 
 function scheduleDiscadiaVoteReminder(client, guildId, userId, lastVoteAt) {
@@ -425,4 +434,65 @@ function startDiscadiaVoteReminderLoop(client) {
   return discadiaVoteReminderLoopHandle;
 }
 
-module.exports = { createBumpReminderService, recordBump: disboardService.recordBump, restorePendingReminders: disboardService.restorePendingReminders, recordDiscadiaBump: discadiaBumpService.recordBump, restorePendingDiscadiaReminders: discadiaBumpService.restorePendingReminders, recordDiscadiaVote, sendDueReminders: sendDueDiscadiaVoteReminders, startDiscadiaVoteReminderLoop, restorePendingVoteReminders };
+const DEFAULT_REWARD = {
+  disboard: { baseExp: 80, fastGuess: { windowMs: 5 * 60 * 1000, multiplier: 1.5 }, streak: { bonusPercentPerWin: 10, maxBonusPercent: 50 } },
+  discadia_bump: { baseExp: 100, fastGuess: { windowMs: 15 * 60 * 1000, multiplier: 1.5 }, streak: { bonusPercentPerWin: 10, maxBonusPercent: 50 } },
+  discadia_vote: { baseExp: 150, fastGuess: { windowMs: 15 * 60 * 1000, multiplier: 1.5 }, streak: { bonusPercentPerWin: 10, maxBonusPercent: 50 } },
+};
+
+function getRewardConfig(client, source) {
+  const base = DEFAULT_REWARD[source] || { baseExp: 100, fastGuess: { windowMs: 15 * 60 * 1000, multiplier: 1.5 }, streak: { bonusPercentPerWin: 10, maxBonusPercent: 50 } };
+  if (source === "disboard" && client?.config?.disboard?.reward) {
+    return { ...base, ...client.config.disboard.reward };
+  }
+  if (source === "discadia_bump" && client?.config?.discadia?.reward) {
+    return { ...base, ...client.config.discadia.reward };
+  }
+  if (source === "discadia_vote" && client?.config?.discadiaVoteReminder?.reward) {
+    return { ...base, ...client.config.discadiaVoteReminder.reward };
+  }
+  return base;
+}
+
+async function awardBumpVoteExp(client, guild, userId, source, previousLastAt, cooldownMs, baseExpOverride) {
+  if (!guild?.id || !userId) return null;
+  const now = Date.now();
+  const slotAvailableAt = previousLastAt ? new Date(previousLastAt).getTime() + cooldownMs : now;
+  const cfg = getRewardConfig(client, source);
+  const baseExp = Number(baseExpOverride) > 0 ? Number(baseExpOverride) : (Number(cfg?.baseExp ?? 100) || 100);
+  const fastCfg = cfg?.fastGuess ?? {};
+  const windowMs = Number(fastCfg.windowMs ?? 15 * 60 * 1000) || 0;
+  const fastMultiplier = Number(fastCfg.multiplier ?? 1.5) || 1;
+  const isFast = windowMs > 0 && previousLastAt != null && (now - slotAvailableAt) <= windowMs;
+  const fastBonus = isFast ? Math.round(baseExp * (fastMultiplier - 1)) : 0;
+  const streakCfg = cfg?.streak ?? {};
+  const percentPerWin = Number(streakCfg.bonusPercentPerWin ?? 10) || 0;
+  const maxBonusPercent = Number(streakCfg.maxBonusPercent ?? 50) || 0;
+  const guildId = String(guild.id);
+  const rewardDoc = await BumpVoteReward.findOne({ guildId, userId, source }).lean().catch(() => null);
+  const prevStreak = Number(rewardDoc?.currentStreak ?? 0);
+  const lastActionAt = rewardDoc?.lastActionAt ? new Date(rewardDoc.lastActionAt).getTime() : 0;
+  const prevWindowStart = slotAvailableAt - cooldownMs;
+  const didPreviousSlot = lastActionAt >= prevWindowStart && lastActionAt < slotAvailableAt;
+  const newStreak = didPreviousSlot ? prevStreak + 1 : 1;
+  const bestStreak = Math.max(Number(rewardDoc?.bestStreak ?? 0), newStreak);
+  const streakBonusPercent = percentPerWin > 0 ? Math.min((newStreak - 1) * percentPerWin, maxBonusPercent) : 0;
+  const streakBonus = Math.round((baseExp * streakBonusPercent) / 100);
+  const effectiveExp = baseExp + fastBonus + streakBonus;
+  await BumpVoteReward.findOneAndUpdate(
+    { guildId, userId, source },
+    {
+      $set: { lastActionAt: new Date(), currentStreak: newStreak, bestStreak },
+      $inc: { totalExpAwarded: effectiveExp },
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  ).catch(() => null);
+  const member = await getGuildMemberCached(guild, userId);
+  const ignoreExp = await shouldIgnoreExpForMember({ guildId, member, channelId: null });
+  if (!ignoreExp) {
+    await addExpWithLevel(guild, userId, effectiveExp, false, false).catch(() => {});
+  }
+  return { baseExp, fastBonus, streakBonus, effectiveExp, newStreak, bestStreak, isFast };
+}
+
+module.exports = { createBumpReminderService, recordBump: disboardService.recordBump, restorePendingReminders: disboardService.restorePendingReminders, recordDiscadiaBump: discadiaBumpService.recordBump, restorePendingDiscadiaReminders: discadiaBumpService.restorePendingReminders, recordDiscadiaVote, sendDueReminders: sendDueDiscadiaVoteReminders, startDiscadiaVoteReminderLoop, restorePendingVoteReminders, awardBumpVoteExp, getVoteCooldownMs };

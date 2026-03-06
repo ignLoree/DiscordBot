@@ -1,4 +1,4 @@
-﻿const fs = require("fs");
+const fs = require("fs");
 const path = require("path");
 const { randomInt } = require("crypto");
 const { EmbedBuilder } = require("discord.js");
@@ -16,193 +16,199 @@ const DM_FOOTER = "Se non vuoi ricevere questi avvisi in DM usa +dm-disable nel 
 const DEFAULT_TZ = "Europe/Rome";
 const STAFF_ROLE_IDS = [IDs.roles.Staff, IDs.roles.PartnerManager, IDs.roles.HighStaff, IDs.roles.Admin, IDs.roles.Manager, IDs.roles.Coordinator, IDs.roles.Supervisor, IDs.roles.Mod, IDs.roles.Helper, IDs.roles.Founder, IDs.roles.CoFounder,].map((id) => String(id || "").trim()).filter(Boolean);
 const channelMention = (channelId, fallback) => channelId ? `<#${channelId}>` : fallback;
-const defaultPool = [{ title: "Ruoli e vantaggi del server", description: "Hai già controllato i ruoli sbloccabili con livelli, boost e voti? Dai un'occhiata al canale info del server.", }, {
-  title: "Comandi utili del bot", description: `Con +help trovi rapidamente i comandi principali del bot. Provali in ${channelMention(IDs.channels.commands, "chat comandi")}.`,
-},
-{
-  title: "Forum e discussioni",
-  description: `Se hai un tema interessante,aprilo nel forum del server(${channelMention(IDs.channels.forum, "canale forum")}):aiuta a tenere la community attiva e ordinata.`,
-},
-{
-  title: "Livelli e progressione",
-  description:
-    "Un po' di chat e vocale ogni settimana ti aiuta a salire di livello e sbloccare perks progressivi. Controlla +rank e +classifica.",
-},
-{
-  title: "Ticket e supporto",
-  description: `Se ti serve supporto,usa i ticket in ${channelMention(IDs.channels.ticket, "canale ticket")}:è il modo più veloce per ricevere assistenza dallo staff.`,
-},
-{
-  title: "Gestione DM",
-  description:
-    "Puoi disattivare questi promemoria con +dm-disable e riattivarli in seguito con +dm-enable.",
-},
-{
-  title: "Attività community",
-  description:
-    "Partecipare a eventi, sondaggi e discussioni aiuta il server a crescere e migliora l'esperienza di tutti.",
-},
-{
-  title: "Funzioni del bot",
-  description:
-    "Tra quote, livelli, classifiche e comandi utility c'è molto da usare: prova una funzione nuova questa settimana.",
-},
-{
-  title: "Canale suggerimenti",
-  description: `Hai un 'idea per migliorare il server? Scrivila in ${channelMention(IDs.channels.suggestions, "canale suggerimenti")}.`,
-}, { title: "News e aggiornamenti", description: `Controlla ${channelMention(IDs.channels.news, "canale news")}per novità,cambi e annunci importanti del server.`, }, { title: "Ruoli colori e badge", description: `Dai un 'occhiata a ${channelMention(IDs.channels.ruoliColori, "canale ruoli")}per colori e vantaggi sbloccabili.`, }, {
-  title: "Quote della community", description: `Se trovi un messaggio memorabile,usa i comandi quote:poi lo trovi in ${channelMention(IDs.channels.quotes, "canale quotes")}.`,
-},
-{
-  title: "Verifica e onboarding",
-  description: `Se inviti amici,ricordagli di completare la verifica in ${channelMention(IDs.channels.verify, "canale verify")}.`,
-},
-{
-  title: "Eventi e sondaggi",
-  description: `Partecipa a eventi e poll in ${channelMention(IDs.channels.polls, "canale polls")}:aiuti la comunità e resti aggiornato.`,
-},
-{
-  title: "Contatore e mini-attività",
-  description: `Per attività leggere passa da ${channelMention(IDs.channels.counting, "canale counting")}e dai un 'occhiata ai canali community.`,
-}, { title: "Media e contenuti", description: `Passa da ${channelMention(IDs.channels.media, "canale media")}per condividere contenuti interessanti in linea con il regolamento.`, }, {
-  title: "Canale comandi", description: `Per usare i comandi del bot in modo ordinato usa ${channelMention(IDs.channels.commands, "canale comandi")}.`,
-},
-{
-  title: "Top settimanale",
-  description: `Controlla ${channelMention(IDs.channels.topWeeklyUser, "top weekly")}per vedere chi sta spingendo di più questa settimana.`,
-},
-{
-  title: "Canale role info",
-  description: `In ${channelMention(IDs.channels.info, "canale info")}trovi molte informazioni utili su ruoli,vantaggi e funzioni del server.`,
-},
-{
-  title: "Canale partnership",
-  description: `Se ti interessano le collaborazioni,tieni d 'occhio ${channelMention(IDs.channels.partnerships, "canale partnerships")} e le regole dedicate.`,
-}, { title: "Supporter e badge", description: `Molti badge e ruoli speciali hanno vantaggi concreti: scopri i requisiti e punta a sbloccarne almeno uno.`, }, { title: "Classifica personale", description: "Usa +rank per controllare rapidamente il tuo stato e pianificare il prossimo obiettivo.", }, { title: "Classifica globale", description: "Con +classifica alltime puoi vedere chi è più costante nel lungo periodo.", }, { title: "Obiettivo settimanale", description: "Impostati un mini-obiettivo: più costanza in chat, più presenza in vocale o più partecipazione ai poll.", }, { title: "Sfrutta il forum", description: `Nel ${channelMention(IDs.channels.forum, "forum")}puoi creare discussioni ordinate invece di disperdere messaggi in chat.`, }, {
-  title: "Canale quote", description: `Le quote migliori finiscono in ${channelMention(IDs.channels.quotes, "canale quotes")}:ottimo per salvare momenti top della community.`,
-},
-{
-  title: "Canale suggestions",
-  description: `Quando proponi un 'idea in ${channelMention(IDs.channels.suggestions, "suggestions")}, spiega sempre anche il motivo e il vantaggio.`,
-}, { title: "Canale polls", description: `Votare nei poll in ${channelMention(IDs.channels.polls, "polls")}aiuta a prendere decisioni più utili per tutti.`, }, {
-  title: "Canale news", description: `Controlla periodicamente ${channelMention(IDs.channels.news, "news")}per non perderti novità su eventi,regole e aggiornamenti.`,
-},
-{
-  title: "Canale ruoli",
-  description: `In ${channelMention(IDs.channels.ruoliColori, "canale ruoli")}puoi personalizzare il profilo e sbloccare opzioni interessanti.`,
-},
-{
-  title: "Canale counting",
-  description: `In ${channelMention(IDs.channels.counting, "counting")}conta con attenzione:è una piccola attività ma tiene viva la community.`,
-},
-{
-  title: "Comando help",
-  description: "Se ti senti perso tra i comandi, +help resta sempre il punto migliore da cui partire.",
-},
-{
-  title: "Comandi utility",
-  description: "Dedica 2 minuti a provare un comando utility che non hai mai usato: spesso scopri funzioni utilissime.",
-},
-{
-  title: "Onboarding amici",
-  description: "Quando inviti qualcuno, accompagnalo nei primi passaggi: verifica, regole, canali utili e comandi base.",
-},
-{
-  title: "Canali vocali",
-  description: "Un po' di presenza in vocale migliora l'attività personale e rende più viva la community.",
-},
-{
-  title: "Eventi community",
-  description: "Partecipa agli eventi quando puoi: è il modo più veloce per conoscere utenti nuovi.",
-},
-{
-  title: "Canale media",
-  description: "Condividi contenuti in modo pulito: qualità > quantità, sempre.",
-},
-{
-  title: "Comando classifica weekly",
-  description: "Usa +classifica weekly per vedere il tuo posizionamento reale nella settimana corrente.",
-},
-{
-  title: "Comando classifica alltime",
-  description: "Usa +classifica alltime per monitorare la tua crescita nel lungo periodo.",
-},
-{
-  title: "Comando rank",
-  description: "Con +rank puoi verificare subito se stai mantenendo un buon ritmo di attività.",
-},
-{
-  title: "Idea della settimana",
-  description: "Prova a migliorare un'abitudine: meno messaggi casuali, più interventi utili e ordinati.",
-},
-{
-  title: "Supporto rapido",
-  description: "Se hai un dubbio tecnico o organizzativo, apri ticket invece di aspettare: risolvi prima e meglio.",
-},
-{
-  title: "Buone pratiche",
-  description: "Evita spam e flood: qualità dei messaggi e interazioni sane fanno la differenza.",
-},
-{
-  title: "Profilo server",
-  description: "Ogni tanto aggiorna il tuo profilo ruoli/interessi: aiuta a trovare persone con gusti simili.",
-},
-{
-  title: "Partecipazione utile",
-  description: "Anche un singolo contributo utile al giorno mantiene alto il livello della community.",
-},
-{
-  title: "Focus comandi",
-  description: "Questa settimana prova una combinazione: +help, poi +rank, poi +classifica weekly.",
-},
-{
-  title: "Focus feedback",
-  description: "Se trovi qualcosa che non funziona bene, segnalarlo con chiarezza aiuta tutti.",
-},
-{
-  title: "Focus community",
-  description: "Passa in chat, forum e poll: tre piccoli passi che migliorano davvero l'esperienza generale.",
-},
-{
-  title: "Candidature staff aperte",
-  description: "Se vuoi entrare nello staff, controlla i requisiti e valuta la candidatura: costanza e serietà fanno la differenza.",
-},
-{
-  title: "Candidati con criterio",
-  description: `Prima di candidarti,leggi con attenzione le info in ${channelMention(IDs.channels.candidatureStaff, "canale candidature")}e prepara una richiesta chiara.`,
-},
-{
-  title: "Percorso staff",
-  description: "Se punti allo staff, inizia mostrando presenza utile, comportamento corretto e collaborazione con la community.",
-},
-{
-  title: "Partner Manager",
-  description: `Se ti interessa il percorso Partner Manager,consulta indicazioni e canali dedicati prima di candidarti.`,
-},
-{
-  title: "Candidatura efficace",
-  description: "Una buona candidatura è concreta: racconta cosa puoi offrire, non solo il ruolo che vuoi ottenere.",
-},
-{
-  title: "Preparazione candidatura",
-  description: "Prima di inviare la candidatura, cura grammatica, chiarezza e motivazioni: aumenta molto le possibilità di essere considerato.",
-},
-{
-  title: "Staff pagato: informazioni",
-  description: `Se ti interessa il percorso staff pagato,consulta ${channelMention(IDs.channels.staffPagato, "canale staff pagato")}per dettagli e requisiti.`,
-},
-{
-  title: "Staff pagato: requisiti",
-  description: "Per accedere a ruoli pagati servono costanza, affidabilità e risultati concreti nel tempo.",
-},
-{
-  title: "Staff pagato: approccio",
-  description: "Prima di puntare al compenso, concentra il focus su qualità del supporto e responsabilità nelle attività staff.",
-},
-{
-  title: "Staff pagato: candidatura",
-  description: "Se vuoi proporti per percorsi pagati, prepara una candidatura ordinata e basata su contributi reali.",
-},
+const defaultPool = [
+  {
+    title: "Ruoli e vantaggi del server",
+    description: "Hai già controllato i ruoli sbloccabili con livelli, boost e voti? Dai un'occhiata al canale info del server.",
+  },
+  {
+    title: "Comandi utili del bot",
+    description: `Con +help trovi rapidamente i comandi principali del bot. Provali in ${channelMention(IDs.channels.commands, "chat comandi")}.`,
+  },
+  {
+    title: "Forum e discussioni",
+    description: `Se hai un tema interessante,aprilo nel forum del server(${channelMention(IDs.channels.forum, "canale forum")}):aiuta a tenere la community attiva e ordinata.`,
+  },
+  {
+    title: "Livelli e progressione",
+    description:
+      "Un po' di chat e vocale ogni settimana ti aiuta a salire di livello e sbloccare perks progressivi. Controlla +rank e +classifica.",
+  },
+  {
+    title: "Ticket e supporto",
+    description: `Se ti serve supporto,usa i ticket in ${channelMention(IDs.channels.ticket, "canale ticket")}:è il modo più veloce per ricevere assistenza dallo staff.`,
+  },
+  {
+    title: "Gestione DM",
+    description:
+      "Puoi disattivare questi promemoria con +dm-disable e riattivarli in seguito con +dm-enable.",
+  },
+  {
+    title: "Attività community",
+    description:
+      "Partecipare a eventi, sondaggi e discussioni aiuta il server a crescere e migliora l'esperienza di tutti.",
+  },
+  {
+    title: "Funzioni del bot",
+    description:
+      "Tra quote, livelli, classifiche e comandi utility c'è molto da usare: prova una funzione nuova questa settimana.",
+  },
+  {
+    title: "Canale suggerimenti",
+    description: `Hai un 'idea per migliorare il server? Scrivila in ${channelMention(IDs.channels.suggestions, "canale suggerimenti")}.`,
+  }, { title: "News e aggiornamenti", description: `Controlla ${channelMention(IDs.channels.news, "canale news")}per novità,cambi e annunci importanti del server.`, }, { title: "Ruoli colori e badge", description: `Dai un 'occhiata a ${channelMention(IDs.channels.ruoliColori, "canale ruoli")}per colori e vantaggi sbloccabili.`, }, {
+    title: "Quote della community", description: `Se trovi un messaggio memorabile,usa i comandi quote:poi lo trovi in ${channelMention(IDs.channels.quotes, "canale quotes")}.`,
+  },
+  {
+    title: "Verifica e onboarding",
+    description: `Se inviti amici,ricordagli di completare la verifica in ${channelMention(IDs.channels.verify, "canale verify")}.`,
+  },
+  {
+    title: "Eventi e sondaggi",
+    description: `Partecipa a eventi e poll in ${channelMention(IDs.channels.polls, "canale polls")}:aiuti la comunità e resti aggiornato.`,
+  },
+  {
+    title: "Contatore e mini-attività",
+    description: `Per attività leggere passa da ${channelMention(IDs.channels.counting, "canale counting")}e dai un 'occhiata ai canali community.`,
+  }, { title: "Media e contenuti", description: `Passa da ${channelMention(IDs.channels.media, "canale media")}per condividere contenuti interessanti in linea con il regolamento.`, }, {
+    title: "Canale comandi", description: `Per usare i comandi del bot in modo ordinato usa ${channelMention(IDs.channels.commands, "canale comandi")}.`,
+  },
+  {
+    title: "Top settimanale",
+    description: `Controlla ${channelMention(IDs.channels.topWeeklyUser, "top weekly")}per vedere chi sta spingendo di più questa settimana.`,
+  },
+  {
+    title: "Canale role info",
+    description: `In ${channelMention(IDs.channels.info, "canale info")}trovi molte informazioni utili su ruoli,vantaggi e funzioni del server.`,
+  },
+  {
+    title: "Canale partnership",
+    description: `Se ti interessano le collaborazioni,tieni d 'occhio ${channelMention(IDs.channels.partnerships, "canale partnerships")} e le regole dedicate.`,
+  }, { title: "Supporter e badge", description: `Molti badge e ruoli speciali hanno vantaggi concreti: scopri i requisiti e punta a sbloccarne almeno uno.`, }, { title: "Classifica personale", description: "Usa +rank per controllare rapidamente il tuo stato e pianificare il prossimo obiettivo.", }, { title: "Classifica globale", description: "Con +classifica alltime puoi vedere chi è più costante nel lungo periodo.", }, { title: "Obiettivo settimanale", description: "Impostati un mini-obiettivo: più costanza in chat, più presenza in vocale o più partecipazione ai poll.", }, { title: "Sfrutta il forum", description: `Nel ${channelMention(IDs.channels.forum, "forum")}puoi creare discussioni ordinate invece di disperdere messaggi in chat.`, }, {
+    title: "Canale quote", description: `Le quote migliori finiscono in ${channelMention(IDs.channels.quotes, "canale quotes")}:ottimo per salvare momenti top della community.`,
+  },
+  {
+    title: "Canale suggestions",
+    description: `Quando proponi un 'idea in ${channelMention(IDs.channels.suggestions, "suggestions")}, spiega sempre anche il motivo e il vantaggio.`,
+  }, { title: "Canale polls", description: `Votare nei poll in ${channelMention(IDs.channels.polls, "polls")}aiuta a prendere decisioni più utili per tutti.`, }, {
+    title: "Canale news", description: `Controlla periodicamente ${channelMention(IDs.channels.news, "news")}per non perderti novità su eventi,regole e aggiornamenti.`,
+  },
+  {
+    title: "Canale ruoli",
+    description: `In ${channelMention(IDs.channels.ruoliColori, "canale ruoli")}puoi personalizzare il profilo e sbloccare opzioni interessanti.`,
+  },
+  {
+    title: "Canale counting",
+    description: `In ${channelMention(IDs.channels.counting, "counting")}conta con attenzione:è una piccola attività ma tiene viva la community.`,
+  },
+  {
+    title: "Comando help",
+    description: "Se ti senti perso tra i comandi, +help resta sempre il punto migliore da cui partire.",
+  },
+  {
+    title: "Comandi utility",
+    description: "Dedica 2 minuti a provare un comando utility che non hai mai usato: spesso scopri funzioni utilissime.",
+  },
+  {
+    title: "Onboarding amici",
+    description: "Quando inviti qualcuno, accompagnalo nei primi passaggi: verifica, regole, canali utili e comandi base.",
+  },
+  {
+    title: "Canali vocali",
+    description: "Un po' di presenza in vocale migliora l'attività personale e rende più viva la community.",
+  },
+  {
+    title: "Eventi community",
+    description: "Partecipa agli eventi quando puoi: è il modo più veloce per conoscere utenti nuovi.",
+  },
+  {
+    title: "Canale media",
+    description: "Condividi contenuti in modo pulito: qualità > quantità, sempre.",
+  },
+  {
+    title: "Comando classifica weekly",
+    description: "Usa +classifica weekly per vedere il tuo posizionamento reale nella settimana corrente.",
+  },
+  {
+    title: "Comando classifica alltime",
+    description: "Usa +classifica alltime per monitorare la tua crescita nel lungo periodo.",
+  },
+  {
+    title: "Comando rank",
+    description: "Con +rank puoi verificare subito se stai mantenendo un buon ritmo di attività.",
+  },
+  {
+    title: "Idea della settimana",
+    description: "Prova a migliorare un'abitudine: meno messaggi casuali, più interventi utili e ordinati.",
+  },
+  {
+    title: "Supporto rapido",
+    description: "Se hai un dubbio tecnico o organizzativo, apri ticket invece di aspettare: risolvi prima e meglio.",
+  },
+  {
+    title: "Buone pratiche",
+    description: "Evita spam e flood: qualità dei messaggi e interazioni sane fanno la differenza.",
+  },
+  {
+    title: "Profilo server",
+    description: "Ogni tanto aggiorna il tuo profilo ruoli/interessi: aiuta a trovare persone con gusti simili.",
+  },
+  {
+    title: "Partecipazione utile",
+    description: "Anche un singolo contributo utile al giorno mantiene alto il livello della community.",
+  },
+  {
+    title: "Focus comandi",
+    description: "Questa settimana prova una combinazione: +help, poi +rank, poi +classifica weekly.",
+  },
+  {
+    title: "Focus feedback",
+    description: "Se trovi qualcosa che non funziona bene, segnalarlo con chiarezza aiuta tutti.",
+  },
+  {
+    title: "Focus community",
+    description: "Passa in chat, forum e poll: tre piccoli passi che migliorano davvero l'esperienza generale.",
+  },
+  {
+    title: "Candidature staff aperte",
+    description: "Se vuoi entrare nello staff, controlla i requisiti e valuta la candidatura: costanza e serietà fanno la differenza.",
+  },
+  {
+    title: "Candidati con criterio",
+    description: `Prima di candidarti,leggi con attenzione le info in ${channelMention(IDs.channels.candidatureStaff, "canale candidature")}e prepara una richiesta chiara.`,
+  },
+  {
+    title: "Percorso staff",
+    description: "Se punti allo staff, inizia mostrando presenza utile, comportamento corretto e collaborazione con la community.",
+  },
+  {
+    title: "Partner Manager",
+    description: `Se ti interessa il percorso Partner Manager,consulta indicazioni e canali dedicati prima di candidarti.`,
+  },
+  {
+    title: "Candidatura efficace",
+    description: "Una buona candidatura è concreta: racconta cosa puoi offrire, non solo il ruolo che vuoi ottenere.",
+  },
+  {
+    title: "Preparazione candidatura",
+    description: "Prima di inviare la candidatura, cura grammatica, chiarezza e motivazioni: aumenta molto le possibilità di essere considerato.",
+  },
+  {
+    title: "Staff pagato: informazioni",
+    description: `Se ti interessa il percorso staff pagato,consulta ${channelMention(IDs.channels.staffPagato, "canale staff pagato")}per dettagli e requisiti.`,
+  },
+  {
+    title: "Staff pagato: requisiti",
+    description: "Per accedere a ruoli pagati servono costanza, affidabilità e risultati concreti nel tempo.",
+  },
+  {
+    title: "Staff pagato: approccio",
+    description: "Prima di puntare al compenso, concentra il focus su qualità del supporto e responsabilità nelle attività staff.",
+  },
+  {
+    title: "Staff pagato: candidatura",
+    description: "Se vuoi proporti per percorsi pagati, prepara una candidatura ordinata e basata su contributi reali.",
+  },
 ];
 const MASSIVE_REMINDER_TOPICS = [{
   title: "Panoramica server", line: `Resta aggiornato passando da ${channelMention(IDs.channels.info, "canale info")}e ${channelMention(IDs.channels.news, "canale news")}.`,
@@ -257,7 +263,7 @@ const MASSIVE_REMINDER_TOPICS = [{
 },
 {
   title: "Candidature",
-  line: `Se vuoi candidarti,prepara bene i dettagli in ${channelMention(IDs.channels.candidatureStaff, "canale candidature")}.`,
+  line: `Se vuoi candidarti, prepara bene i dettagli in ${channelMention(IDs.channels.candidatureStaff, "canale candidature")}.`,
 },
 {
   title: "Staff pagato",

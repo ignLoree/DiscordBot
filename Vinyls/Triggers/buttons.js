@@ -609,6 +609,27 @@ module.exports = {
       await interaction.reply({ embeds: [sponsorEmbed], components: [rowSponsor], flags: 1 << 6 }).catch(() => null);
     }
 
+    if (interaction.customId == "info_tags") {
+      const suggestionsMention = IDs.channels.suggestions ? "<#" + IDs.channels.suggestions + ">" : "<#1442569147559973094>";
+      const tagsEmbed = new EmbedBuilder()
+        .setColor("#6f4e37")
+        .setTitle("<:VC_Firework:1470796227913322658> LE NOSTRE TAGS")
+        .setDescription([
+          "> Per prendere una di queste tag vi basterà entrare nel server dedicato e verificarvi <a:VC_HeartsBlue:1468686100045369404>",
+          "",
+          "<:VC_Luna1:1471613026158514246><:VC_Luna2:1471613140654489783><a:VC_Arrow:1448672967721615452> <https://discord.gg/E6vrm5zE6B>",
+          "<:VC_Cash1:1471614972034547884><:VC_Cash2:1471615052435161162><a:VC_Arrow:1448672967721615452> <https://discord.gg/QnTN5P578g>",
+          "<:VC_Porn1:1471615143434518661><:VC_Porn2:1471615225743675554><a:VC_Arrow:1448672967721615452> <https://discord.gg/WMuZ4EMAkc>",
+          "<:VC_SixNine1:1471615411639292047><:VC_SixNine2:1471615623044796519><a:VC_Arrow:1448672967721615452> <https://discord.gg/uqUNS9f5m5>",
+          "<:VC_Weed1:1471615705601282119><:VC_Weed2:1471615783615463467><a:VC_Arrow:1448672967721615452> <https://discord.gg/SzBwnxHXNv>",
+          "<:VC_Figa1:1471615881929818328><:VC_Figa2:1471615955955355873><a:VC_Arrow:1448672967721615452> <https://discord.gg/z3EXtJwvQH>",
+          "",
+          "<:VC_Reply:1468262952934314131> _In costante aggiornamento, per consigliarne altre " + suggestionsMention + "_",
+        ].join("\n"))
+        .setImage(DIVIDER_URL);
+      await interaction.reply({ embeds: [tagsEmbed], flags: 1 << 6 }).catch(() => null);
+    }
+
     if (interaction.customId == "candidature_premi_partner") {
       const premiPartnerEmbed = new EmbedBuilder().setColor("#6f4e37").setDescription("<:partneredserverowner:1443651871125409812> **__Vinili & Caffè__** offre un servizio di __pagamento__ in base al numero di **partner** effettuate.\n> Per riscattare eventuali premi bisognerà aprire un <#1442569095068254219> **__`Terza Categoria`__**\n\n<:dot:1443660294596329582> **__`150`__** partner <a:vegarightarrow:1443673039156936837> **__2__ euro** <:paypal:1329524292446191676>\n<:dot:1443660294596329582> **__`175`__** partner <a:vegarightarrow:1443673039156936837> **__3__ euro** <:paypal:1329524292446191676> / **Nitro __Basic__** <:sparkles_nitro_basic:1330196488336310383>\n<:dot:1443660294596329582> **__`250`__** partner <a:vegarightarrow:1443673039156936837> **Nitro __Boost__** <:VC_NitroBoost:1448706966263435326>\n\n<a:flyingnitroboost:1443652205705170986> Naturalmente, in caso di riscatto del **Nitro __Boost__**, almeno un **boost** dovrà andare a **__Vinili & Caffè__**.").setImage(DIVIDER_URL);
       await interaction.reply({ embeds: [premiPartnerEmbed], flags: 1 << 6 }).catch(() => null);

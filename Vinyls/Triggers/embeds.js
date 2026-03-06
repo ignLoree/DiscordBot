@@ -56,6 +56,7 @@ async function runInfoPanelAuto(client) {
     new ButtonBuilder().setCustomId("info_rules").setLabel("Regolamento").setEmoji("<a:VC_Rule:1469462649950703709>").setStyle(ButtonStyle.Danger),
     new ButtonBuilder().setCustomId("info_donations").setLabel("Donazioni").setEmoji("<a:VC_Sparkles:1468546911936974889>").setStyle(ButtonStyle.Success),
     new ButtonBuilder().setCustomId("info_sponsor").setLabel("Sponsor").setEmoji("<:pinnednew:1443670849990430750>").setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId("info_tags").setLabel("Tags").setEmoji("<:VC_Firework:1470796227913322658>").setStyle(ButtonStyle.Secondary),
   );
   const embed2 = new EmbedBuilder().setColor("#6f4e37").setFooter({ text: "Usa i bottoni sottostanti per accedere ad altre categorie del server:", }).setTitle("<:VC_PurpleFlower:1469463879149944943> Sblocca dei vantaggi, permessi e ruoli:",).setDescription("Scopri tramite i bottoni sottostanti come sbloccare permessi, ad esempio: mandare link e immagini in chat, poter cambiare il nickname e molti altri.",).setImage(DIVIDER_URL);
   const row2 = new ActionRowBuilder().addComponents(

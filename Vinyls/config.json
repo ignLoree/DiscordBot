@@ -11,7 +11,12 @@
     "bumpSuccessPatterns": [
       "Bump done",
       "Bump successful"
-    ]
+    ],
+    "reward": {
+      "baseExp": 100,
+      "fastGuess": { "windowMs": 300000, "multiplier": 1.5 },
+      "streak": { "bonusPercentPerWin": 10, "maxBonusPercent": 50 }
+    }
   },
   "discadia": {
     "cooldownMinutes": 1440,
@@ -19,13 +24,23 @@
       "has been successfully bumped",
       "successfully bumped",
       "bumped successfully"
-    ]
+    ],
+    "reward": {
+      "baseExp": 100,
+      "fastGuess": { "windowMs": 900000, "multiplier": 1.5 },
+      "streak": { "bonusPercentPerWin": 10, "maxBonusPercent": 50 }
+    }
   },
   "discadiaVoteReminder": {
     "enabled": true,
     "cooldownHours": 24,
     "checkIntervalMinutes": 30,
-    "message": "Ciao! Sono passate 24 ore, puoi votare di nuovo su Discadia: https://discadia.com/server/viniliecaffe/ Grazie per il supporto!"
+    "message": "Ciao! Sono passate 24 ore, puoi votare di nuovo su Discadia: https://discadia.com/server/viniliecaffe/ Grazie per il supporto!",
+    "reward": {
+      "baseExp": 150,
+      "fastGuess": { "windowMs": 900000, "multiplier": 1.5 },
+      "streak": { "bonusPercentPerWin": 10, "maxBonusPercent": 50 }
+    }
   },
   "autoPoll": {
     "enabled": true,
@@ -269,6 +284,7 @@
         "Belgian Pro League",
         "Portuguese Primeira Liga",
         "Saudi Pro League",
+        "Turkish Super Lig",
         "Italian Serie B",
         "English League Championship",
         "American Major League Soccer"
