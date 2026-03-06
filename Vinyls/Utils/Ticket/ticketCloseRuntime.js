@@ -45,7 +45,7 @@ function buildTicketClosedEmbed(data) {
   return embed;
 }
 
-async function sendTranscriptWithBrowserLink(channel, payload, hasHtml, extraRows = [], options = {}) {
+async function sendTranscriptWithBrowserLink(target, payload, hasHtml, extraRows = [], options = {}) {
   if (!target?.send) return null;
   const { guildId, bypassNoDm } = options;
   const isUserDm = Boolean(bypassNoDm && guildId && (target.user || target.id));

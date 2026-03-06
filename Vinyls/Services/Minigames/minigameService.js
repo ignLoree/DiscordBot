@@ -4784,12 +4784,21 @@ async function startMathExpressionGame(client, cfg) {
   return true;
 }
 
-async function pickRandomFindBotChannel(guild, requiredRoleId) {
+async function pickRandomFindBotChannel(guild, requiredRoleId, excludeChannelId = null) {
   if (!guild) return null;
-  const role = requiredRoleId ? guild.roles.cache.get(requiredRoleId) : null;
-  const me = guild.members.me || guild.members.cache.get(guild.client.user.id);
+  await guild.channels.fetch().catch(() => {});
+  const me = guild.members.me || guild.members.cache.get(guild.client?.user?.id);
+  const roleToCheck = requiredRoleId ? guild.roles.cache.get(requiredRoleId) : guild.roles.everyone;
 
-  const channels = guild.channels.cache.filter((channel) => { if (channel.type !== ChannelType.GuildText && channel.type !== ChannelType.GuildAnnouncement) return false; if (!channel.viewable) return false; if (!channel.permissionsFor(me)?.has([PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages,])) return false; if (role && !channel.permissionsFor(role)?.has(PermissionsBitField.Flags.ViewChannel)) return false; return true; });
+  const channels = guild.channels.cache.filter((channel) => {
+    if (channel.type !== ChannelType.GuildText && channel.type !== ChannelType.GuildAnnouncement) return false;
+    if (excludeChannelId && channel.id === excludeChannelId) return false;
+    if (!channel.viewable) return false;
+    if (me && !me.permissions?.has(PermissionsBitField.Flags.Administrator) && !channel.permissionsFor(me)?.has([PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages])) return false;
+    const memberPerms = channel.permissionsFor(roleToCheck);
+    if (!memberPerms?.has([PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages])) return false;
+    return true;
+  });
 
   const list = Array.from(channels.values());
   if (list.length === 0) return null;
@@ -4808,7 +4817,10 @@ async function startFindBotGame(client, cfg) {
   const mainChannel = await getChannelCached(client, channelId);
   if (!mainChannel?.guild) return false;
 
-  const targetChannel = await pickRandomFindBotChannel(mainChannel.guild, requiredRoleId,);
+  let targetChannel = await pickRandomFindBotChannel(mainChannel.guild, requiredRoleId, channelId);
+  if (!targetChannel) {
+    targetChannel = await pickRandomFindBotChannel(mainChannel.guild, requiredRoleId, null);
+  }
   if (!targetChannel) return false;
 
   const roleId = cfg.roleId;
@@ -4823,7 +4835,11 @@ async function startFindBotGame(client, cfg) {
 
   const customId = `minigame_findbot:${Date.now()}`;
   const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(customId).setEmoji(`<a:VC_Heart:1448672728822448141>`).setLabel("Clicca qui per vincere!").setStyle(ButtonStyle.Primary),);
-  const gameMessage = await targetChannel.send({ embeds: [buildFindBotButtonEmbed(rewardExp, durationMs)], components: [row] }).catch(() => null);
+  const gameMessage = await targetChannel.send({ embeds: [buildFindBotButtonEmbed(rewardExp, durationMs)], components: [row] }).catch((err) => {
+    global.logger?.error?.("[MINIGAMES] FindBot: send to target channel failed", { channelId: targetChannel.id, channelName: targetChannel.name, err: err?.message || err });
+    return null;
+  });
+  if (!gameMessage) return false;
 
   const timeout = setTimeout(async () => { const game = activeGames.get(channelId); if (!game || game.customId !== customId) return; recordNoParticipationIfNeeded(channelId, game); activeGames.delete(channelId); if (game.hintTimeout) clearTimeout(game.hintTimeout); if (game.channelId && game.messageId) { const ch = mainChannel.guild.channels.cache.get(game.channelId) || (await mainChannel.guild.channels.fetch(game.channelId).catch(() => null)); if (ch) { const msg = await ch.messages.fetch(game.messageId).catch(() => null); if (msg) { await msg.delete().catch(() => { }); } await mainChannel.send({ embeds: [buildTimeoutFindBotEmbed()] }).catch(() => { }); } } await clearActiveGame(client, cfg); }, durationMs); timeout.unref?.(); const hintTimeout = await scheduleMinuteHint(client, targetChannel.id, durationMs, channelId,);
 
