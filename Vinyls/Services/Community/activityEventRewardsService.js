@@ -56,6 +56,12 @@ async function grantEventLevels(guildId, userId, levels, note = null, member = n
   const expToAdd = Math.max(0, getTotalExpForLevel(targetLevel) - getTotalExpForLevel(currentLevel),);
   if (expToAdd <= 0) return { doc, added: 0 };
 
+  if (clientOrGuild) {
+    const guild = clientOrGuild?.guilds?.cache?.get(guildId) ?? (await clientOrGuild?.guilds?.fetch(guildId).catch(() => null));
+    const mem = guild ? (guild.members?.cache?.get(userId) ?? (await guild.members?.fetch(userId).catch(() => null))) : null;
+    if (mem?.user?.bot) return null;
+  }
+
   const result = await addExp(guildId, userId, expToAdd, false, null);
   if (!result) return null;
   await recordLevelHistory({

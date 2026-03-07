@@ -3147,23 +3147,22 @@ function normalizeHintTextForDiscord(str) {
 
 /**
  * Indizio con lettere rivelate in posizione (es. "p _ r _ l a"). Non banale come "inizia per" o "N lettere".
- * @param {string} value - Testo (parola o frase)
- * @param {number} [revealRatio] - Quota di lettere da mostrare (0.35–0.5)
- * @param {boolean} [includeEmoji] - Se true antepone emoji fiamma; default false per evitare che l'emoji animata faccia "mangiare" caratteri in Discord.
+ * Mantiene case originale e tutti gli spazi per non perdere caratteri in output.
  */
 function buildRevealHint(value, revealRatio = 0.4, includeEmoji = false) {
   const raw = (typeof value === "string" ? value : String(value || ""));
-  const normalized = normalizeHintTextForDiscord(raw)
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
+  const normalized = normalizeHintTextForDiscord(raw).trim();
   if (!normalized) return null;
   const chars = normalized.split("");
-  const indices = chars.map((_, i) => i).filter((i) => /[a-z0-9àèéìòù]/.test(chars[i]));
+  const charsLower = normalized.toLowerCase().split("");
+  const indices = charsLower
+    .map((_, i) => i)
+    .filter((i) => /[a-z0-9]/.test(charsLower[i]));
   if (indices.length === 0) return null;
   const wrap = (s) => (includeEmoji ? `<a:VC_Flame:1473106990493335665> **${s}**` : `**${s}**`);
+  const isLetterOrDigit = (c) => /[a-z0-9]/i.test(c);
   if (indices.length <= 2) {
-    const out = chars.map((c, i) => (indices.includes(i) ? c : /[a-z0-9àèéìòù]/.test(c) ? "_" : c)).join("").replace(/\s+/g, " ");
+    const out = chars.map((c, i) => (indices.includes(i) ? c : isLetterOrDigit(c) ? "_" : c)).join("");
     return wrap(out);
   }
   const toReveal = Math.max(2, Math.min(indices.length, Math.round(indices.length * Math.min(0.5, Math.max(0.35, revealRatio)))));
@@ -3175,10 +3174,10 @@ function buildRevealHint(value, revealRatio = 0.4, includeEmoji = false) {
   }
   const out = chars.map((c, i) => {
     if (revealedSet.has(i)) return c;
-    if (/[a-z0-9àèéìòù]/i.test(c)) return "_";
+    if (isLetterOrDigit(c)) return "_";
     return c;
   });
-  return wrap(out.join("").replace(/\s+/g, " "));
+  return wrap(out.join(""));
 }
 
 function buildCountryHint(country) {

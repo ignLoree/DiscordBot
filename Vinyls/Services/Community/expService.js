@@ -595,14 +595,15 @@ async function syncLevelRolesForMember(guild, userId, level) {
 
 async function addExpWithLevel(guild, userId, amount, applyMultiplier = false, includeWeekly = true) {
   if (!guild || !userId) return null;
+  const member = await fetchGuildMember(guild, userId);
+  if (member?.user?.bot) return null;
   let effectiveAmount = amount;
   if (applyMultiplier) {
-    const member = await fetchGuildMember(guild, userId);
     const settings = await getGuildExpSettings(guild.id);
     const globalMulti = settings.effectiveMultiplier;
-    const roleMulti = getRoleMultiplier(member, settings);
+    const roleMulti = getRoleMultiplier(member || null, settings);
     const roleBonus = Math.max(0, Number(roleMulti || 1) - 1);
-    const extraBonus = settings?.eventExpiresAt && Array.isArray(settings.eventExtraMultiplierRoleIds) && settings.eventExtraMultiplierRoleIds.some((id) => member?.roles?.cache?.has(id),) ? 1 : 0;
+    const extraBonus = settings?.eventExpiresAt && Array.isArray(settings.eventExtraMultiplierRoleIds) && (member && settings.eventExtraMultiplierRoleIds.some((id) => member.roles?.cache?.has(id))) ? 1 : 0;
     const combined = Math.min(MAX_COMBINED_MULTIPLIER, Math.max(1, Number(globalMulti || 1) + roleBonus + extraBonus),);
     effectiveAmount = Number(amount || 0) * combined;
   }
@@ -625,7 +626,6 @@ async function addExpWithLevel(guild, userId, amount, applyMultiplier = false, i
     });
   }
   if (result.levelInfo.level > (result.prevLevel ?? 0)) {
-    const member = await fetchGuildMember(guild, userId);
     if (member) {
       const level = result.levelInfo.level;
       const reachedPerkLevels = Array.from(LEVEL_ROLE_MAP.keys()).filter((perkLevel) => perkLevel > (result.prevLevel ?? 0) && perkLevel <= level,).sort((a, b) => a - b);
@@ -644,17 +644,11 @@ async function addExpWithLevel(guild, userId, amount, applyMultiplier = false, i
       }
       await maybeSendPerkNearReminder(guild, member, result);
     }
-  } else if (result.levelInfo.level >= 10) {
-    const member = await fetchGuildMember(guild, userId);
-    if (member) {
-      await addPerkRoleIfPossible(member);
-      await maybeSendPerkNearReminder(guild, member, result);
-    }
-  } else {
-    const member = await fetchGuildMember(guild, userId);
-    if (member) {
-      await maybeSendPerkNearReminder(guild, member, result);
-    }
+  } else if (result.levelInfo.level >= 10 && member) {
+    await addPerkRoleIfPossible(member);
+    await maybeSendPerkNearReminder(guild, member, result);
+  } else if (member) {
+    await maybeSendPerkNearReminder(guild, member, result);
   }
   return result;
 }
