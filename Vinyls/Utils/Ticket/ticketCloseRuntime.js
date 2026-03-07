@@ -182,7 +182,7 @@ async function closeTicket(targetInteraction, motivo, helpers) {
         logChannel,
         { embeds: [closeEmbed] },
         false,
-        [...transcriptRows, ...ratingRows],
+        transcriptRows,
       );
     }
 
