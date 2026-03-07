@@ -250,7 +250,7 @@ async function handlePartnerModal(interaction) {
       .setTitle(`**<:partneredserverowner:1443651871125409812> __PARTNER EFFETTUATA__**`,)
       .setDescription(`<a:ThankYou:1329504268369002507> Grazie per aver _effettuato_ una **partner** con \`${interaction.guild.name}\`
     <:mariolevelup:1443679595084910634> Ora sei a **\`${totalPartners}\`** partner!
-    <:Money:1330544713463500970> Continua ad __effettuare__ partner per riscattare i **premi** in <#1442579412280410194>`,)
+    <:Money:1330544713463500970> Continua ad __effettuare__ partner per riscattare i **premi** in <#1442569232507473951>`,)
       .setFooter({ text: serverName, iconURL: serverIcon }).setColor("#6f4e37").setTimestamp().setThumbnail(interaction.guild.iconURL());
 
     const sentMessageIds = [];
