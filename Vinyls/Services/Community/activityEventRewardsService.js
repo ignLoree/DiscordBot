@@ -64,15 +64,6 @@ async function grantEventLevels(guildId, userId, levels, note = null, member = n
 
   const result = await addExp(guildId, userId, expToAdd, false, null);
   if (!result) return null;
-  await recordLevelHistory({
-    guildId,
-    userId,
-    actorId: null,
-    action: "event_reward_levels",
-    beforeExp: result.beforeExp,
-    afterExp: result.afterExp,
-    note: note || `Evento: +${levels} livelli`,
-  });
   const suppressLog = Boolean(options?.suppressLog);
   const suppressDm = Boolean(options?.suppressDm);
   if (clientOrGuild && !suppressLog) {

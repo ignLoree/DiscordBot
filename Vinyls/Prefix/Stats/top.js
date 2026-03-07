@@ -207,7 +207,7 @@ async function resolveTopExpEntries(guild, guildId, lookbackDays, limit = TOP_PA
       });
       if (out.length >= safeLimit) break;
     }
-    return out;
+    if (out.length > 0) return out;
   }
 
   const docs = await ExpUser.find({ guildId: safeGuildId })
@@ -255,7 +255,7 @@ async function resolveTopLevelEntries(guild, guildId, lookbackDays, limit = TOP_
       });
       if (out.length >= safeLimit) break;
     }
-    return out;
+    if (out.length > 0) return out;
   }
 
   const docs = await ExpUser.find({ guildId: safeGuildId })

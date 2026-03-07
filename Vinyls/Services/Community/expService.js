@@ -326,6 +326,10 @@ async function getStaffEventSettings(guildId) {
 }
 
 async function recordLevelHistory(guildId, userId, actorId = null, action = "update", beforeExp = 0, afterExp = 0, note = null) {
+  if (typeof guildId === "object" && guildId !== null) {
+    const o = guildId;
+    return recordLevelHistory(o.guildId, o.userId, o.actorId ?? null, o.action ?? "update", o.beforeExp ?? 0, o.afterExp ?? 0, o.note ?? null);
+  }
   if (!guildId || !userId) return null;
   const beforeLevel = getLevelInfo(beforeExp).level;
   const afterLevel = getLevelInfo(afterExp).level;
@@ -362,12 +366,14 @@ async function addExp(guildId, userId, amount, applyMultiplier = false, weeklyAm
   const levelInfo = getLevelInfo(doc.totalExp);
   doc.level = levelInfo.level;
   await doc.save();
+  const afterExp = Number(doc.totalExp || 0);
+  recordLevelHistory(guildId, userId, null, "update", beforeExp, afterExp, null).catch(() => null);
   return {
     doc,
     prevLevel,
     levelInfo,
     beforeExp,
-    afterExp: Number(doc.totalExp || 0),
+    afterExp,
   };
 }
 
@@ -615,16 +621,6 @@ async function addExpWithLevel(guild, userId, amount, applyMultiplier = false, i
   }
   const result = await addExp(guild.id, userId, effectiveAmount, false, weeklyAmount,);
   if (!result || !result.levelInfo) return result;
-  if (result.levelInfo.level > (result.prevLevel ?? 0)) {
-    await recordLevelHistory({
-      guildId: guild.id,
-      userId,
-      action: "level_up_auto",
-      beforeExp: result.beforeExp,
-      afterExp: result.afterExp,
-      note: `Level up ${result.prevLevel ?? 0} -> ${result.levelInfo.level}`,
-    });
-  }
   if (result.levelInfo.level > (result.prevLevel ?? 0)) {
     if (member) {
       const level = result.levelInfo.level;
