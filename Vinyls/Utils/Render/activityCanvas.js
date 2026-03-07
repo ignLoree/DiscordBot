@@ -102,6 +102,7 @@ function drawLabel(
     color = "#d7dbe3",
     align = "left",
     baseline = "middle",
+    useNumericFont = false,
   } = {},
 ) {
   drawTextWithSpecialFallback(ctx, prepareVisibleText(text), x, y, {
@@ -111,6 +112,7 @@ function drawLabel(
     align,
     baseline,
     normalizeCompatibility: false,
+    useNumericFont,
   });
 }
 
@@ -315,6 +317,7 @@ function drawDateBadge(ctx, title, value, x, y, w = 280, h = 80) {
     size: 21,
     weight: "700",
     color: "#f2f5fa",
+    useNumericFont: true,
   });
 }
 
@@ -339,13 +342,14 @@ function drawMetricPanel(ctx, title, rows, x, y, w, h) {
       weight: "700",
       align: "center",
       color: "#dbe1eb",
+      useNumericFont: true,
     });
     drawLabel(
       ctx,
       fitText(ctx, rows[i].value, w - 170, 24, "700"),
       x + w - 26,
       rowY + 25,
-      { size: 24, weight: "700", align: "right", color: "#d2d9e5" },
+      { size: 24, weight: "700", align: "right", color: "#d2d9e5", useNumericFont: true },
     );
   }
 }
@@ -404,6 +408,7 @@ async function drawTopChip(ctx, label, value, unit, position, x, y, w, h, option
     weight: "800",
     align: "right",
     color: "#d5dbe5",
+    useNumericFont: true,
   });
   if (showRank) {
     drawLabel(ctx, `#${Number(position || 0) || "-"}`, x + w - 14, y + h / 2, {
@@ -411,6 +416,7 @@ async function drawTopChip(ctx, label, value, unit, position, x, y, w, h, option
       weight: "900",
       align: "right",
       color: "#e8edf7",
+      useNumericFont: true,
     });
   }
 }
@@ -507,6 +513,7 @@ async function drawTopListCard(ctx, title, rows, x, y, w, h, options = {}) {
       weight: "800",
       color: "#e0e5ed",
       align: "center",
+      useNumericFont: true,
     });
 
     await drawLabelWithEmoji(
@@ -533,6 +540,7 @@ async function drawTopListCard(ctx, title, rows, x, y, w, h, options = {}) {
       weight: "800",
       color: "#d5dbe5",
       align: "right",
+      useNumericFont: true,
     });
   }
 }
@@ -655,6 +663,7 @@ async function renderUserActivityCanvas({ guildName, userTag, displayName, avata
     size: 20,
     weight: "700",
     color: "#cfd6e2",
+    useNumericFont: true,
   });
 
   return canvas.toBuffer("image/png");
@@ -802,6 +811,7 @@ async function renderServerActivityCanvas({ guildName, guildIconUrl, createdOn, 
     size: 20,
     weight: "700",
     color: "#cfd6e2",
+    useNumericFont: true,
   });
 
   return canvas.toBuffer("image/png");
@@ -972,6 +982,7 @@ async function renderTopStatisticsSingleCanvas({ guildName, guildIconUrl, lookba
       size: 20,
       weight: "700",
       color: "#cfd6e2",
+      useNumericFont: true,
     },
   );
 
@@ -993,6 +1004,7 @@ async function drawTopRowsColumn(ctx, rows, { x, y, w, rankStart = 1, unit = "ms
       weight: "800",
       color: "#e0e5ed",
       align: "center",
+      useNumericFont: true,
     });
 
     const labelMaxWidth = w - 260;
@@ -1020,6 +1032,7 @@ async function drawTopRowsColumn(ctx, rows, { x, y, w, rankStart = 1, unit = "ms
       weight: "800",
       color: "#d5dbe5",
       align: "right",
+      useNumericFont: true,
     });
   }
 }
@@ -1127,6 +1140,7 @@ async function renderTopLeaderboardPageCanvas({ guildName, guildIconUrl, lookbac
       size: 20,
       weight: "700",
       color: "#cfd6e2",
+      useNumericFont: true,
     },
   );
 

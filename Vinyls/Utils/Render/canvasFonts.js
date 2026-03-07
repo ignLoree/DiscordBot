@@ -11,6 +11,7 @@ const MATH_FONT = "Noto Sans Math";
 const FALLBACK_FONT = "Yu Gothic";
 const BASE_STACK =[`"${COLOR_EMOJI_FONT}"`,'"Noto Sans CJK JP"','"Noto Sans CJK SC"','"Noto Sans CJK TC"','"Noto Sans JP"','"Noto Sans KR"','"Noto Sans SC"','"Noto Sans TC"','"Arial Unicode MS"','"DejaVu Sans"','"Segoe UI"','"Calibri"','"Tahoma"','"Segoe UI Emoji"','"Apple Color Emoji"','"Noto Emoji"',`"${SYMBOLS_FONT}"`,'"Segoe UI Symbol"',`"${MATH_FONT}"`,`"${TIBETAN_FONT}"`,`"${FRAKTUR_FONT}"`,`"${EMOJI_FONT}"`,`"${FALLBACK_FONT}"`,'"Arial"',"sans-serif",];
 const FONT_STACK = [`"${PRIMARY_FONT}"`, ...BASE_STACK].join(", ");
+const NUMERIC_FONT_STACK = [`"${PRIMARY_FONT}"`, '"DejaVu Sans"', '"Segoe UI"', '"Arial"', "sans-serif"].join(", ");
 let registered = false;
 
 function registerCanvasFonts(canvasModule) {
@@ -71,6 +72,11 @@ function fontStack(size, weight) {
   return `${prefix}${size}px ${FONT_STACK}`;
 }
 
+function fontStackNumeric(size, weight) {
+  const prefix = weight ? `${weight} ` : "";
+  return `${prefix}${size}px ${NUMERIC_FONT_STACK}`;
+}
+
 function fontStackWithPrimary(primary, size, weight) {
   const prefix = weight ? `${weight} ` : "";
   const stack = [`"${primary}"`, ...BASE_STACK].join(", ");
@@ -86,7 +92,8 @@ function drawTextWithSpecialFallback(ctx, text, x, y, options = {}) {
   const align = options.align || ctx.textAlign || "left";
   const baseline = options.baseline || ctx.textBaseline || "alphabetic";
   const color = options.color || ctx.fillStyle;
-  const normalFont = fontStack(size, weight);
+  const useNumericFont = options.useNumericFont === true;
+  const normalFont = useNumericFont ? fontStackNumeric(size, weight) : fontStack(size, weight);
   const tibetanFont = fontStackWithPrimary(TIBETAN_FONT, size, weight);
   const hasTibetan = /[\u0F00-\u0FFF]/.test(value);
   ctx.save();

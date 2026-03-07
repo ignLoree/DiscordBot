@@ -271,41 +271,8 @@ function collectManagerActions(partnerships, managerId) {
   return all;
 }
 
-async function logManagerLeave(mainGuild, member, partnerships) {
-  const partnerLogChannel=mainGuild.channels.cache.get(IDs.channels.partnerLogs)||(await mainGuild.channels.fetch(IDs.channels.partnerLogs).catch(() => null));
-  if (!partnerLogChannel) return;
-
-  const allWithThisManager = collectManagerActions(partnerships, member.id);
-  const mostRecent = allWithThisManager[0];
-  if (!mostRecent) return;
-
-  const { action: lastPartner, doc: ownerDoc } = mostRecent;
-  const partnerName = lastPartner?.partner || "Partner sconosciuta";
-  const inviteLink = lastPartner?.invite || "Link non disponibile";
-  const lastPartnerDate = lastPartner?.date ? new Date(lastPartner.date) : null;
-  const hasValidDate=lastPartnerDate&&!Number.isNaN(lastPartnerDate.getTime());
-  const lastPartnerTimestamp=hasValidDate?Math.floor(lastPartnerDate.getTime()/1000):null;
-  const lastPartnerWhenText=lastPartnerTimestamp?`<t:${lastPartnerTimestamp}:F>(<t:${lastPartnerTimestamp}:R>)`
-    : "Non disponibile";
-
-  const totalCount = allWithThisManager.length;
-  const extraLine=totalCount>1?`\n**Partnership totali con questo manager:** ${totalCount}(mostrata la più recente)`
-      : "";
-
-  await partnerLogChannel.send({
-    embeds: [
-      new EmbedBuilder()
-        .setColor("#6f4e37")
-        .setDescription(
-          `**<:vegax:1443934876440068179> Manager uscito dal server**\n` +
-          `**Utente:** ${member.user}\n` +
-          `**PM:** <@${ownerDoc.userId}>\n` +
-          `**Partner:** ${partnerName}\n` +
-          `**Invito:** ${inviteLink}\n` +
-          `**Ultima partner:** ${lastPartnerWhenText}${extraLine}`,
-        ),
-    ],
-  });
+async function logManagerLeave(_mainGuild, _member, _partnerships) {
+  // Log su #partnerLogs disabilitato.
 }
 
 async function sendRejoinDm(member) {
