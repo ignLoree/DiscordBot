@@ -87,7 +87,13 @@ async function executePrefixCommandRuntime({
   commandMessage.reply = (replyPayload) => {
     const withFooter = applyDefaultFooterToEmbeds(replyPayload, execMessage.guild);
     if (!hasSendablePayload(withFooter)) return Promise.resolve(null);
-    return originalReply(withFooter);
+    return originalReply(withFooter).then((result) => {
+      stopTyping();
+      return result;
+    }).catch((err) => {
+      stopTyping();
+      throw err;
+    });
   };
 
   const originalChannelSend = execMessage.channel?.send?.bind(execMessage.channel);
@@ -98,8 +104,11 @@ async function executePrefixCommandRuntime({
       const withFooter = applyDefaultFooterToEmbeds(sendPayload, execMessage.guild);
       if (!hasSendablePayload(withFooter)) return Promise.resolve(null);
 
-      const sendWithReferenceFallback = async (primaryPayload, fallbackPayload) => { try { return await originalChannelSend(primaryPayload); } catch (error) { const hasUnknownRef = error?.code === 50035 && Boolean(error?.rawError?.errors?.message_reference); if (!hasUnknownRef) throw error; return originalChannelSend(fallbackPayload); } }; if (typeof withFooter === "string") {
-        return sendWithReferenceFallback(
+      const sendWithReferenceFallback = async (primaryPayload, fallbackPayload) => { try { return await originalChannelSend(primaryPayload); } catch (error) { const hasUnknownRef = error?.code === 50035 && Boolean(error?.rawError?.errors?.message_reference); if (!hasUnknownRef) throw error; return originalChannelSend(fallbackPayload); } };
+      const afterSend = (p) => p.then((result) => { stopTyping(); return result; }).catch((err) => { stopTyping(); throw err; });
+
+      if (typeof withFooter === "string") {
+        return afterSend(sendWithReferenceFallback(
           {
             content: withFooter,
             reply: {
@@ -109,15 +118,12 @@ async function executePrefixCommandRuntime({
             allowedMentions: { repliedUser: false },
             failIfNotExists: false,
           },
-          {
-            content: withFooter,
-            allowedMentions: { repliedUser: false },
-          },
-        );
+          { content: withFooter, allowedMentions: { repliedUser: false } },
+        ));
       }
 
       if (!withFooter || typeof withFooter !== "object") {
-        return originalChannelSend(withFooter);
+        return afterSend(originalChannelSend(withFooter));
       }
 
       const normalized = { ...withFooter, reply: withFooter.reply || (withFooter.messageReference ? undefined : { messageReference: execMessage.id, failIfNotExists: false }), failIfNotExists: withFooter.failIfNotExists ?? false, allowedMentions: { ...(withFooter.allowedMentions || {}), repliedUser: withFooter.allowedMentions?.repliedUser ?? false, }, };
@@ -125,7 +131,7 @@ async function executePrefixCommandRuntime({
       delete fallback.reply;
       delete fallback.messageReference;
       delete fallback.failIfNotExists;
-      return sendWithReferenceFallback(normalized, fallback);
+      return afterSend(sendWithReferenceFallback(normalized, fallback));
     };
   }
 
@@ -133,6 +139,19 @@ async function executePrefixCommandRuntime({
   let typingStartTimer = null;
   let typingPulseTimer = null;
   let commandFinished = false;
+
+  const stopTyping = () => {
+    if (commandFinished) return;
+    commandFinished = true;
+    if (typingStartTimer) {
+      clearTimeout(typingStartTimer);
+      typingStartTimer = null;
+    }
+    if (typingPulseTimer) {
+      clearInterval(typingPulseTimer);
+      typingPulseTimer = null;
+    }
+  };
 
   if (originalSendTyping) {
     const sendTypingSafe = async () => { if (commandFinished) return; try { await originalSendTyping(); } catch { } };
@@ -240,7 +259,15 @@ async function drainPrefixQueue(lockId, resolvedClient) {
     await removeLoadingReaction(next.message);
     resolvedClient.prefixCommandLocks.add(lockId);
     try {
-      await executePrefixCommandRuntime({ payload: next, resolvedClient });
+      await Promise.race([
+        executePrefixCommandRuntime({ payload: next, resolvedClient }),
+        new Promise((_, reject) => {
+          const t = setTimeout(() => reject(new Error("Queue item execution timeout")), PREFIX_EXECUTION_TIMEOUT_MS + 5000);
+          t.unref?.();
+        }),
+      ]);
+    } catch (err) {
+      global.logger?.warn?.("[PREFIX] drainPrefixQueue item timeout or error", err?.message || err);
     } finally {
       resolvedClient.prefixCommandLocks.delete(lockId);
     }
