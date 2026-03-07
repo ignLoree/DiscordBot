@@ -187,7 +187,7 @@ function getVoteReminderText(client) {
       "<:VC_bump:1330185435401424896> Hey! Sono passate 24 ore: puoi votare di nuovo su Discadia.",
       "<a:VC_ThankYou:1330186319673950401> **Grazie per il supporto!**",
       "<:link:1470064815899803668> Per votare su Discadia, clicca sul pulsante sottostante:\n",
-    ].join("\n")
+    ]
   );
 }
 

@@ -448,7 +448,7 @@ async function sendPerksLevelMessage(guild, member, level) {
 }
 
 function buildPerkNearDmEmbed(member, targetLevel, roleLabel, missingExp) {
-  const safeRoleLabel = String(roleLabel || "<:VC_Role:1448670089670037675> Ruolo sconosciuto").trim();
+  const safeRoleLabel = String(roleLabel || "<:VC_Mention:1443994358201323681> Ruolo sconosciuto").trim();
   return {
     embeds: [
       {
@@ -459,7 +459,7 @@ function buildPerkNearDmEmbed(member, targetLevel, roleLabel, missingExp) {
         },
         description: [
           `<a:VC_PandaClap:1331620157398712330> ${member}, ci sei quasi!`,
-          `<:VC_Role:1448670089670037675> Sei vicino al ruolo **${safeRoleLabel}** (livello \`${targetLevel}\`).`,
+          `<:VC_Mention:1443994358201323681> Sei vicino al ruolo **${safeRoleLabel}** (livello \`${targetLevel}\`).`,
           `<:VC_EXP:1468714279673925883> Ti mancano **${Math.max(0, Number(missingExp || 0))} EXP**.`,
           PERKS_CHANNEL_ID
             ? `<:VC_Info:1448670089670037675> Info perks: <#${PERKS_CHANNEL_ID}>`
