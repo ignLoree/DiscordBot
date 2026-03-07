@@ -3065,10 +3065,11 @@ function buildMinuteHintEmbed(channelId) {
 }
 
 function buildGenericHintEmbed(text) {
+  const safeText = normalizeHintTextForDiscord(typeof text === "string" ? text : String(text ?? ""));
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("<a:VC_Heart:1448672728822448141> Indizio")
-    .setDescription(`<a:VC_Arrow:1448672967721615452> ${text}`);
+    .setDescription(`<a:VC_Arrow:1448672967721615452>\u200B ${safeText}`);
 }
 
 function buildMaskedTextHint(value) {
@@ -3080,13 +3081,57 @@ function buildMaskedTextHint(value) {
 }
 
 /**
+ * Normalizza testo per embed Discord: evita caratteri Unicode che Discord può renderizzare con spaziatura sbagliata (fullwidth, mathematical alphanumeric).
+ */
+function normalizeHintTextForDiscord(str) {
+  if (str == null || typeof str !== "string") return "";
+  let s = String(str).normalize("NFKC");
+  const out = [];
+  for (const ch of Array.from(s)) {
+    const cp = ch.codePointAt(0);
+    if (!Number.isFinite(cp)) {
+      out.push(ch);
+      continue;
+    }
+    if (cp >= 0xff01 && cp <= 0xff5e) {
+      out.push(String.fromCodePoint(cp - 0xff01 + 0x21));
+      continue;
+    }
+    if (cp >= 0x1d400 && cp <= 0x1d7ff) {
+      const mathToAscii = [
+        [0x1d400, 0x1d419, 0x41], [0x1d41a, 0x1d433, 0x61], [0x1d434, 0x1d44d, 0x41], [0x1d44e, 0x1d467, 0x61],
+        [0x1d468, 0x1d481, 0x41], [0x1d482, 0x1d49b, 0x61], [0x1d49c, 0x1d4b5, 0x41], [0x1d4b6, 0x1d4cf, 0x61],
+        [0x1d4d0, 0x1d4e9, 0x41], [0x1d4ea, 0x1d503, 0x61], [0x1d504, 0x1d51d, 0x41], [0x1d51e, 0x1d537, 0x61],
+        [0x1d538, 0x1d551, 0x41], [0x1d552, 0x1d56b, 0x61], [0x1d56c, 0x1d585, 0x41], [0x1d586, 0x1d59f, 0x61],
+        [0x1d5a0, 0x1d5b9, 0x41], [0x1d5ba, 0x1d5d3, 0x61], [0x1d5d4, 0x1d5ed, 0x41], [0x1d5ee, 0x1d607, 0x61],
+        [0x1d608, 0x1d621, 0x41], [0x1d622, 0x1d63b, 0x61], [0x1d63c, 0x1d655, 0x41], [0x1d656, 0x1d66f, 0x61],
+        [0x1d670, 0x1d689, 0x41], [0x1d68a, 0x1d6a3, 0x61],
+        [0x1d7ce, 0x1d7d7, 0x30], [0x1d7e2, 0x1d7eb, 0x30], [0x1d7ec, 0x1d7f5, 0x30],
+      ];
+      let mapped = null;
+      for (const [start, end, base] of mathToAscii) {
+        if (cp >= start && cp <= end) {
+          mapped = String.fromCodePoint(base + (cp - start));
+          break;
+        }
+      }
+      out.push(mapped ?? ch);
+      continue;
+    }
+    out.push(ch);
+  }
+  return out.join("");
+}
+
+/**
  * Indizio con lettere rivelate in posizione (es. "p _ r _ l a"). Non banale come "inizia per" o "N lettere".
  * @param {string} value - Testo (parola o frase)
  * @param {number} [revealRatio] - Quota di lettere da mostrare (0.35–0.5)
  * @param {boolean} [includeEmoji] - Se true antepone emoji fiamma; default false per evitare che l'emoji animata faccia "mangiare" caratteri in Discord.
  */
 function buildRevealHint(value, revealRatio = 0.4, includeEmoji = false) {
-  const normalized = (typeof value === "string" ? value : String(value || ""))
+  const raw = (typeof value === "string" ? value : String(value || ""));
+  const normalized = normalizeHintTextForDiscord(raw)
     .trim()
     .toLowerCase()
     .replace(/\s+/g, " ");
