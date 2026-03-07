@@ -3069,7 +3069,7 @@ function buildGenericHintEmbed(text) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("<a:VC_Heart:1448672728822448141> Indizio")
-    .setDescription(`<a:VC_Arrow:1448672967721615452>\u200B ${safeText}`);
+    .setDescription(`<a:VC_Arrow:1448672967721615452> ${safeText}`);
 }
 
 function buildMaskedTextHint(value) {
@@ -3080,9 +3080,18 @@ function buildMaskedTextHint(value) {
   return `<a:VC_Flame:1473106990493335665> Inizia con **${plain[0]}** e termina con **${plain[plain.length - 1]}** (${plain.length} lettere)`;
 }
 
-/**
- * Normalizza testo per embed Discord: evita caratteri Unicode che Discord può renderizzare con spaziatura sbagliata (fullwidth, mathematical alphanumeric).
- */
+const ACCENT_TO_ASCII = {
+  à: "a", á: "a", â: "a", ã: "a", ä: "a", å: "a", ā: "a", ă: "a", ą: "a", æ: "ae",
+  è: "e", é: "e", ê: "e", ë: "e", ē: "e", ĕ: "e", ė: "e", ę: "e", ě: "e",
+  ì: "i", í: "i", î: "i", ï: "i", ı: "i", ī: "i", ĭ: "i", į: "i",
+  ò: "o", ó: "o", ô: "o", õ: "o", ö: "o", ō: "o", ŏ: "o", ő: "o", œ: "oe",
+  ù: "u", ú: "u", û: "u", ü: "u", ū: "u", ŭ: "u", ů: "u", ű: "u",
+  ñ: "n", Ñ: "N", ç: "c", Ç: "C", ý: "y", ÿ: "y", ß: "ss",
+  À: "A", Á: "A", Â: "A", Ã: "A", Ä: "A", Å: "A", È: "E", É: "E", Ê: "E", Ë: "E",
+  Ì: "I", Í: "I", Î: "I", Ï: "I", Ò: "O", Ó: "O", Ô: "O", Õ: "O", Ö: "O",
+  Ù: "U", Ú: "U", Û: "U", Ü: "U",
+};
+
 function normalizeHintTextForDiscord(str) {
   if (str == null || typeof str !== "string") return "";
   let s = String(str).normalize("NFKC");
@@ -3091,6 +3100,10 @@ function normalizeHintTextForDiscord(str) {
     const cp = ch.codePointAt(0);
     if (!Number.isFinite(cp)) {
       out.push(ch);
+      continue;
+    }
+    if (ACCENT_TO_ASCII[ch] !== undefined) {
+      out.push(ACCENT_TO_ASCII[ch]);
       continue;
     }
     if (cp >= 0xff01 && cp <= 0xff5e) {
@@ -3116,6 +3129,15 @@ function normalizeHintTextForDiscord(str) {
         }
       }
       out.push(mapped ?? ch);
+      continue;
+    }
+    if (cp <= 0x7f) {
+      out.push(ch);
+      continue;
+    }
+    const decomp = ch.normalize("NFD");
+    if (decomp.length >= 1 && decomp[0].codePointAt(0) <= 0x7f) {
+      out.push(decomp[0]);
       continue;
     }
     out.push(ch);
