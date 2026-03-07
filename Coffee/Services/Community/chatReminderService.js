@@ -100,7 +100,7 @@ const reminderPool = [
           "",
           `<a:VC_Coffe:1448695567244066827> Vinili & Caffè in questo __momento__ ha bisogno di **staff**: apri <#1442569232507473951> e candidati cliccando il pulsante.`,
           "",
-          `> <:VC_Eye:1331619214410383381> Puoi candidarti anche come **Partner Manager** direttamente dallo stesso pannello in <#1442569232507473951>, cliccando il pulsante dedicato. Essi saranno anche __pagati__ per le partner fatte, per più info __<#1442579412280410194>__.`,
+          `> <:VC_Eye:1331619214410383381> Puoi candidarti anche come **Partner Manager** direttamente dallo stesso pannello in <#1442569232507473951>, cliccando il pulsante dedicato. Essi saranno anche __pagati__ per le partner fatte.`,
         ].join("\n"),
       ),
   () =>
