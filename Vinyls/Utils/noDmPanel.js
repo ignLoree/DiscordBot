@@ -112,7 +112,8 @@ async function runNoDmPanel(message, options = {}) {
   collector.on("collect", async (interaction) => {
     const id = interaction.customId;
     if (id.includes("_toggle_")) {
-      const cat = id.split("_")[2];
+      const afterToggle = id.slice((PREFIX + "toggle_").length);
+      const cat = afterToggle.slice(0, afterToggle.indexOf("_"));
       if (!DM_CATEGORIES.includes(cat)) return interaction.deferUpdate().catch(() => {});
       const prefs2 = await getNoDmPreferences(guildId, userId);
       const isAll = prefs2.blockAll || prefs2.disabled.has(DM_CATEGORY_ALL);
