@@ -104,9 +104,10 @@ module.exports = (client) => {
     if (!clientId) return;
 
     const allowedGuildIds = toArrayUnique([IDs?.guilds?.main, IDs?.guilds?.test]);
+    const forceDeployEmpty = client.commandArray.length === 0;
     for (const guildId of allowedGuildIds) {
       const deployCheck = isCommandDeployRequired(BOT_DEPLOY_CACHE_KEY,{clientId,guildId},client.commandArray,);
-      const forceDeploy = shouldForceSlashDeploy();
+      const forceDeploy = shouldForceSlashDeploy() || forceDeployEmpty;
       if (!deployCheck.required && !forceDeploy) {
         global.logger?.info?.(
           `[COMMANDS] Nessuna modifica ai comandi per guild ${guildId}, deploy REST saltato. scope=${deployCheck.scopeKey} hash=${deployCheck.hash}`,

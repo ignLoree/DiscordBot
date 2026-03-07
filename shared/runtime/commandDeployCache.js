@@ -57,4 +57,13 @@ function markCommandDeployComplete(botKey, scope, hash) {
   fs.writeFileSync(getStatePath(botKey), JSON.stringify(state, null, 2), "utf8");
 }
 
-module.exports = { isCommandDeployRequired, markCommandDeployComplete };
+function clearCommandDeployCache(botKey) {
+  const filePath = getStatePath(botKey);
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+    return true;
+  }
+  return false;
+}
+
+module.exports = { isCommandDeployRequired, markCommandDeployComplete, clearCommandDeployCache };
