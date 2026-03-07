@@ -86,6 +86,7 @@ module.exports = async function renderQuoteCanvas({ avatarUrl, message, username
     weight: "italic",
     color: "rgba(255,255,255,0.7)",
     normalizeCompatibility: true,
+    forcePrimaryFont: true,
   });
 
   ctx.font = fontStack(fontSize, "600");
@@ -95,6 +96,7 @@ module.exports = async function renderQuoteCanvas({ avatarUrl, message, username
       size: fontSize,
       weight: "600",
       color: "#f7f7f7",
+      forcePrimaryFont: true,
     });
     y += lineHeight;
   }
@@ -106,6 +108,7 @@ module.exports = async function renderQuoteCanvas({ avatarUrl, message, username
       size: 20,
       weight: "700",
       color: "rgba(255,255,255,0.9)",
+      forcePrimaryFont: true,
     });
   }
 

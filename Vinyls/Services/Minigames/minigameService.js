@@ -1,5 +1,7 @@
 const axios = require("axios");
-const { createCanvas, loadImage } = require("canvas");
+const canvasModule = require("canvas");
+const { createCanvas, loadImage } = canvasModule;
+const { registerCanvasFonts, fontStackPrimaryOnly } = require("../../Utils/Render/canvasFonts");
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField, AttachmentBuilder, } = require("discord.js");
 const { MinigameUser, MinigameState, MinigameRotation, } = require("../../Schemas/Minigames/minigameSchema");
 const { addExpWithLevel, shouldIgnoreExpForMember } = require("../Community/expService");
@@ -1287,6 +1289,7 @@ function wrapPromptText(ctx, text, maxWidth) {
 
 function buildFastTypePromptImage(phrase) {
   try {
+    registerCanvasFonts(canvasModule);
     const width = 1200;
     const height = 420;
     const canvas = createCanvas(width, height);
@@ -1303,7 +1306,7 @@ function buildFastTypePromptImage(phrase) {
 
     const phraseText = String(phrase || "").trim() || "...";
     const usableWidth = cardW - 80;
-    ctx.font = "bold 42px Sans";
+    ctx.font = fontStackPrimaryOnly(42, "700");
     const phraseLines = wrapPromptText(ctx, phraseText, usableWidth);
     const lineHeight = 54;
     const totalPhraseHeight = phraseLines.length * lineHeight;
@@ -1315,11 +1318,11 @@ function buildFastTypePromptImage(phrase) {
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.fillStyle = CANVAS_STYLE.titleColor;
-    ctx.font = "600 28px Sans";
+    ctx.font = fontStackPrimaryOnly(28, "600");
     ctx.fillText("Scrivi esattamente questa frase", width / 2, contentStartY);
 
     let phraseY = contentStartY + labelHeight + gapLabelPhrase;
-    ctx.font = "bold 42px Sans";
+    ctx.font = fontStackPrimaryOnly(42, "700");
     ctx.fillStyle = CANVAS_STYLE.bodyColor;
     for (const line of phraseLines) {
       ctx.fillText(line, width / 2, phraseY, usableWidth);
@@ -1335,6 +1338,7 @@ function buildFastTypePromptImage(phrase) {
 
 function buildDrivingQuizPromptImage(row) {
   try {
+    registerCanvasFonts(canvasModule);
     const width = 1400;
     const height = 780;
     const padding = CANVAS_STYLE.padding;
@@ -1351,11 +1355,11 @@ function buildDrivingQuizPromptImage(row) {
 
     const isMultiple = (row?.questionType === "multiple" || hasSign) && Array.isArray(row?.options) && row.options.length >= 2;
     const statement = String(row?.statement ?? "").trim() || "Domanda";
-    ctx.font = "bold 58px Sans";
+    ctx.font = fontStackPrimaryOnly(58, "700");
     const statementLines = wrapPromptText(ctx, statement, usableWidth);
     let optionsLines = [];
     if (isMultiple) {
-      ctx.font = "bold 42px Sans";
+      ctx.font = fontStackPrimaryOnly(42, "700");
       for (let i = 0; i < row.options.length; i++) {
         const opt = String(row.options[i] ?? "").trim();
         const letter = ["A", "B", "C", "D"][i] ?? String(i + 1);
@@ -1393,12 +1397,12 @@ function buildDrivingQuizPromptImage(row) {
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.fillStyle = CANVAS_STYLE.titleColor;
-    ctx.font = "700 56px Sans";
+    ctx.font = fontStackPrimaryOnly(56, "700");
     ctx.fillText("Quiz patente", textCenterX, y);
     y += titleHeight + titleGap;
 
     ctx.fillStyle = CANVAS_STYLE.bodyColor;
-    ctx.font = "bold 58px Sans";
+    ctx.font = fontStackPrimaryOnly(58, "700");
     for (const line of statementLines) {
       ctx.fillText(line, textCenterX, y, usableWidth);
       y += statementLineHeight;
@@ -1406,7 +1410,7 @@ function buildDrivingQuizPromptImage(row) {
 
     if (isMultiple) {
       y += optionsGap;
-      ctx.font = "bold 42px Sans";
+      ctx.font = fontStackPrimaryOnly(42, "700");
       for (const line of optionsLines) {
         ctx.fillText(line, textCenterX, y, usableWidth);
         y += optionLineHeight;
@@ -1414,7 +1418,7 @@ function buildDrivingQuizPromptImage(row) {
     } else {
       y += boolGap;
       ctx.fillStyle = CANVAS_STYLE.titleColor;
-      ctx.font = "700 46px Sans";
+      ctx.font = fontStackPrimaryOnly(46, "700");
       ctx.fillText("Rispondi: Vero o Falso", textCenterX, y);
     }
 
@@ -1480,7 +1484,7 @@ function drawRoadSign(ctx, signType, cx, cy, size) {
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = "#e00";
-      ctx.font = `bold ${Math.round(s / 3)}px Sans`;
+      ctx.font = fontStackPrimaryOnly(Math.round(s / 3), "700");
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText("!", cx, cy);
@@ -1503,7 +1507,7 @@ function drawRoadSign(ctx, signType, cx, cy, size) {
       ctx.lineWidth = 2;
       ctx.stroke();
       ctx.fillStyle = "#fff";
-      ctx.font = `bold ${Math.round(s / 4.5)}px Sans`;
+      ctx.font = fontStackPrimaryOnly(Math.round(s / 4.5), "700");
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText("STOP", cx, cy);
@@ -1535,7 +1539,7 @@ function drawRoadSign(ctx, signType, cx, cy, size) {
       ctx.fillStyle = "#0066b3";
       ctx.fillRect(cx - r + 4, cy - r * 0.7, (r - 4) * 2, r * 1.4);
       ctx.fillStyle = "#fff";
-      ctx.font = `bold ${Math.round(s / 2.2)}px Sans`;
+      ctx.font = fontStackPrimaryOnly(Math.round(s / 2.2), "700");
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText("P", cx, cy);
@@ -1566,7 +1570,7 @@ function drawRoadSign(ctx, signType, cx, cy, size) {
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = "#000";
-      ctx.font = `bold ${Math.round(s / 2.5)}px Sans`;
+      ctx.font = fontStackPrimaryOnly(Math.round(s / 2.5), "700");
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText("50", cx, cy);
@@ -1613,7 +1617,7 @@ function drawRoadSign(ctx, signType, cx, cy, size) {
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = "#000";
-      ctx.font = `bold ${Math.round(s / 4)}px Sans`;
+      ctx.font = fontStackPrimaryOnly(Math.round(s / 4), "700");
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText("PED", cx, cy);
@@ -1665,6 +1669,7 @@ function drawRoadSign(ctx, signType, cx, cy, size) {
 
 function buildHangmanImageAttachment(maskedWord, misses = 0, maxMisses = 7) {
   try {
+    registerCanvasFonts(canvasModule);
     const width = 900;
     const height = 520;
     const canvas = createCanvas(width, height);
@@ -1762,16 +1767,16 @@ function buildHangmanImageAttachment(maskedWord, misses = 0, maxMisses = 7) {
     ctx.fillStyle = "#e8e0d5";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = "bold 42px Sans";
+    ctx.font = fontStackPrimaryOnly(42, "700");
     ctx.fillText("Impiccato", width / 2, 54);
 
     const wordStr = String(maskedWord || "").trim() || "_";
     ctx.fillStyle = "#e8e0d5";
-    ctx.font = "bold 44px Sans";
+    ctx.font = fontStackPrimaryOnly(44, "700");
     ctx.fillText(wordStr, wordCenterX, (contentTop + contentBottom) / 2, width - 320);
 
     ctx.fillStyle = CANVAS_STYLE.titleColor;
-    ctx.font = "bold 28px Sans";
+    ctx.font = fontStackPrimaryOnly(28, "700");
     ctx.fillText(`Errori: ${m}/${max}`, width / 2, height - 56);
 
     return new AttachmentBuilder(canvas.toBuffer("image/png"), { name: "hangman.png" });
@@ -1783,6 +1788,7 @@ function buildHangmanImageAttachment(maskedWord, misses = 0, maxMisses = 7) {
 function buildPromptImageAttachment(title, lines = [], fileBaseName = "minigame") {
   if (fileBaseName === "italian_gk" && Array.isArray(lines) && lines.length > 0) {
     try {
+      registerCanvasFonts(canvasModule);
       const width = 1400;
       const height = 780;
       const canvas = createCanvas(width, height);
@@ -1798,7 +1804,7 @@ function buildPromptImageAttachment(title, lines = [], fileBaseName = "minigame"
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
       ctx.fillStyle = CANVAS_STYLE.titleColor;
-      ctx.font = "800 76px Sans";
+      ctx.font = fontStackPrimaryOnly(76, "800");
       ctx.fillText("Cultura generale", width / 2, cardY + 100);
 
       const question = polishItalianQuestionText(String(lines[0] || "").trim() || "Domanda");
@@ -1806,7 +1812,7 @@ function buildPromptImageAttachment(title, lines = [], fileBaseName = "minigame"
       let questionFont = 64;
       let questionLines = [];
       for (; questionFont >= 42; questionFont -= 2) {
-        ctx.font = `700 ${questionFont}px Sans`;
+        ctx.font = fontStackPrimaryOnly(questionFont, "700");
         questionLines = wrapPromptText(ctx, question, usableWidth);
         if (questionLines.length <= 5) break;
       }
@@ -1816,7 +1822,7 @@ function buildPromptImageAttachment(title, lines = [], fileBaseName = "minigame"
       let y = Math.round(cardY + 200 + Math.max(0, (cardH - 300 - totalH) / 2));
 
       ctx.fillStyle = CANVAS_STYLE.bodyColor;
-      ctx.font = `700 ${questionFont}px Sans`;
+      ctx.font = fontStackPrimaryOnly(questionFont, "700");
       for (const line of questionLines) {
         ctx.fillText(line, width / 2, y, usableWidth);
         y += lineHeight;
@@ -1832,6 +1838,7 @@ function buildPromptImageAttachment(title, lines = [], fileBaseName = "minigame"
 
   if (fileBaseName === "guess_word" && Array.isArray(lines) && lines.length > 0) {
     try {
+      registerCanvasFonts(canvasModule);
       const width = 1400;
       const height = 780;
       const canvas = createCanvas(width, height);
@@ -1847,7 +1854,7 @@ function buildPromptImageAttachment(title, lines = [], fileBaseName = "minigame"
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
       ctx.fillStyle = CANVAS_STYLE.titleColor;
-      ctx.font = "800 76px Sans";
+      ctx.font = fontStackPrimaryOnly(76, "800");
       ctx.fillText("Indovina la parola", width / 2, cardY + 100);
 
       const scrambled = String(lines[0] || "").trim() || "?";
@@ -1855,7 +1862,7 @@ function buildPromptImageAttachment(title, lines = [], fileBaseName = "minigame"
       let fontSize = 72;
       let textLines = [];
       for (; fontSize >= 44; fontSize -= 4) {
-        ctx.font = `700 ${fontSize}px Sans`;
+        ctx.font = fontStackPrimaryOnly(fontSize, "700");
         textLines = wrapPromptText(ctx, scrambled, usableWidth);
         if (textLines.length <= 3) break;
       }
@@ -1863,7 +1870,7 @@ function buildPromptImageAttachment(title, lines = [], fileBaseName = "minigame"
       const totalH = textLines.length * lineHeight;
       let y = Math.round(cardY + 200 + Math.max(0, (cardH - 300 - totalH) / 2));
       ctx.fillStyle = CANVAS_STYLE.bodyColor;
-      ctx.font = `700 ${fontSize}px Sans`;
+      ctx.font = fontStackPrimaryOnly(fontSize, "700");
       for (const line of textLines) {
         ctx.fillText(line, width / 2, y, usableWidth);
         y += lineHeight;
@@ -1888,6 +1895,7 @@ function buildPromptImageAttachment(title, lines = [], fileBaseName = "minigame"
   }
 
   try {
+    registerCanvasFonts(canvasModule);
     const width = 1400;
     const height = 780;
     const canvas = createCanvas(width, height);
@@ -1903,19 +1911,19 @@ function buildPromptImageAttachment(title, lines = [], fileBaseName = "minigame"
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.fillStyle = CANVAS_STYLE.titleColor;
-    ctx.font = "bold 68px Sans";
+    ctx.font = fontStackPrimaryOnly(68, "700");
     ctx.fillText(String(title || "Minigioco"), width / 2, cardY + 48);
 
     const usableWidth = cardW - 120;
     const sourceLines = Array.isArray(lines) ? lines.map((line) => String(line || "").trim()).filter(Boolean) : [];
     const renderedLines = [];
     for (const line of sourceLines) {
-      ctx.font = "bold 56px Sans";
+      ctx.font = fontStackPrimaryOnly(56, "700");
       renderedLines.push(...wrapPromptText(ctx, line, usableWidth));
     }
     if (!renderedLines.length) renderedLines.push("...");
 
-    ctx.font = "bold 56px Sans";
+    ctx.font = fontStackPrimaryOnly(56, "700");
     ctx.fillStyle = CANVAS_STYLE.bodyColor;
     const lineHeight = 76;
     const totalHeight = renderedLines.length * lineHeight;
@@ -1934,6 +1942,7 @@ function buildPromptImageAttachment(title, lines = [], fileBaseName = "minigame"
 
 async function buildGuessFlagCardAttachment(flagUrl) {
   try {
+    registerCanvasFonts(canvasModule);
     const flagImg = await loadImage(flagUrl).catch(() => null);
     if (!flagImg) return null;
     const width = 1400;
@@ -1948,7 +1957,7 @@ async function buildGuessFlagCardAttachment(flagUrl) {
     fillCanvasCard(ctx, cardX, cardY, cardW, cardH);
     ctx.textAlign = "center";
     ctx.fillStyle = CANVAS_STYLE.titleColor;
-    ctx.font = "bold 68px Sans";
+    ctx.font = fontStackPrimaryOnly(68, "700");
     ctx.fillText("Indovina la bandiera", width / 2, cardY + 48);
     const maxW = cardW - 120;
     const maxH = cardH - 200;
@@ -1966,6 +1975,7 @@ async function buildGuessFlagCardAttachment(flagUrl) {
 
 function buildMathExpressionImageAttachment(expression) {
   try {
+    registerCanvasFonts(canvasModule);
     const width = 1200;
     const height = 420;
     const canvas = createCanvas(width, height);
@@ -1980,7 +1990,7 @@ function buildMathExpressionImageAttachment(expression) {
     ctx.fillStyle = CANVAS_STYLE.bodyColor;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = "bold 120px Sans";
+    ctx.font = fontStackPrimaryOnly(120, "700");
     ctx.fillText(String(expression || ""), width / 2, height / 2);
 
     const name = "math_expression.png";
@@ -2932,6 +2942,7 @@ function buildRegionNameImageAttachment(regionName) {
   const safeRegion = String(regionName || "").trim();
   if (!safeRegion) return null;
   try {
+    registerCanvasFonts(canvasModule);
     const width = 1200;
     const height = 420;
     const canvas = createCanvas(width, height);
@@ -2946,10 +2957,10 @@ function buildRegionNameImageAttachment(regionName) {
     ctx.fillStyle = CANVAS_STYLE.titleColor;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = "bold 52px Sans";
+    ctx.font = fontStackPrimaryOnly(52, "700");
     ctx.fillText("Regione", width / 2, 140);
     ctx.fillStyle = CANVAS_STYLE.bodyColor;
-    ctx.font = "bold 96px Sans";
+    ctx.font = fontStackPrimaryOnly(96, "700");
     ctx.fillText(safeRegion, width / 2, 250, width - 120);
 
     return new AttachmentBuilder(canvas.toBuffer("image/png"), {

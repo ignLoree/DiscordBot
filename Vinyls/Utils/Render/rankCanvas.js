@@ -65,6 +65,7 @@ module.exports = async function renderRankCanvas({ username, avatarUrl, level, t
     color: "#ffffff",
     align: "left",
     baseline: "middle",
+    forcePrimaryFont: true,
   });
 
   drawTextWithSpecialFallback(
@@ -78,6 +79,7 @@ module.exports = async function renderRankCanvas({ username, avatarUrl, level, t
       color: "#f7ede5",
       align: "left",
       baseline: "middle",
+      forcePrimaryFont: true,
     },
   );
 
@@ -104,6 +106,7 @@ module.exports = async function renderRankCanvas({ username, avatarUrl, level, t
     color: "#2f2118",
     align: "center",
     baseline: "middle",
+    forcePrimaryFont: true,
   });
 
   drawTextWithSpecialFallback(ctx, `${currentLevelExp} EXP`, barX, barY + 72, {
@@ -112,6 +115,7 @@ module.exports = async function renderRankCanvas({ username, avatarUrl, level, t
     color: "#f7ede5",
     align: "left",
     baseline: "middle",
+    forcePrimaryFont: true,
   });
   drawTextWithSpecialFallback(
     ctx,
@@ -124,6 +128,7 @@ module.exports = async function renderRankCanvas({ username, avatarUrl, level, t
       color: "#f7ede5",
       align: "right",
       baseline: "middle",
+      forcePrimaryFont: true,
     },
   );
 
@@ -135,6 +140,7 @@ module.exports = async function renderRankCanvas({ username, avatarUrl, level, t
     color: "#ffffff",
     align: "left",
     baseline: "middle",
+    forcePrimaryFont: true,
   });
   drawTextWithSpecialFallback(ctx, `All Time: ${ar}`, 520, 290, {
     size: 28,
@@ -142,6 +148,7 @@ module.exports = async function renderRankCanvas({ username, avatarUrl, level, t
     color: "#ffffff",
     align: "left",
     baseline: "middle",
+    forcePrimaryFont: true,
   });
 
   return canvas.toBuffer("image/png");

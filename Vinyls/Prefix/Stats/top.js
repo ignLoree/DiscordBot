@@ -2,7 +2,8 @@ const { AttachmentBuilder, ChannelType } = require("discord.js");
 const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const IDs = require("../../Utils/Config/ids");
 const { getServerOverviewStats } = require("../../Services/Community/activityService");
-const { InviteTrack } = require("../../Schemas/Community/communitySchemas");
+const { InviteTrack, ExpUser } = require("../../Schemas/Community/communitySchemas");
+const { getLevelInfo } = require("../../Services/Community/expService");
 const { renderTopStatisticsCanvas, renderTopLeaderboardPageCanvas } = require("../../Utils/Render/activityCanvas");
 const { upsertChannelSnapshot, syncGuildChannelSnapshots, getChannelSnapshotMap } = require("../../Utils/Community/channelSnapshotUtils");
 const { getGuildMemberCached, getUserCached } = require("../../Utils/Interaction/interactionEntityCache");
@@ -32,7 +33,7 @@ const {
 } = topComponents;
 
 const TOP_PAGE_DATA_LIMIT = 100;
-const TOP_SOURCE_CACHE_TTL_MS = 15 * 1000;
+const TOP_SOURCE_CACHE_TTL_MS = 45 * 1000;
 const SNAPSHOT_SYNC_INTERVAL_MS = 10 * 60 * 1000;
 const topSourceCache = new Map();
 const snapshotSyncByGuild = new Map();
@@ -184,6 +185,63 @@ async function resolveTopInviteEntries(
   return out.slice(0, Math.max(1, Number(limit || TOP_PAGE_DATA_LIMIT)));
 }
 
+async function resolveTopExpEntries(guild, guildId, limit = TOP_PAGE_DATA_LIMIT) {
+  const safeGuildId = String(guildId || "").trim();
+  if (!safeGuildId) return [];
+  const safeLimit = Math.max(1, Math.min(TOP_PAGE_DATA_LIMIT, Number(limit || TOP_PAGE_DATA_LIMIT)));
+  const docs = await ExpUser.find({ guildId: safeGuildId })
+    .sort({ totalExp: -1 })
+    .limit(safeLimit * 2)
+    .select("userId totalExp")
+    .lean()
+    .catch(() => []);
+  const out = [];
+  for (const doc of docs) {
+    const userId = String(doc?.userId || "").trim();
+    if (!userId) continue;
+    const bot = await isBotUser(guild, userId);
+    if (bot) continue;
+    const rawDisplayName = await resolveDisplayName(guild, userId);
+    out.push({
+      id: userId,
+      label: normalizeCanvasLabel(rawDisplayName, `utente_${userId.slice(-6)}`),
+      value: Math.max(0, Math.floor(Number(doc?.totalExp || 0))),
+    });
+    if (out.length >= safeLimit) break;
+  }
+  return out;
+}
+
+async function resolveTopLevelEntries(guild, guildId, limit = TOP_PAGE_DATA_LIMIT) {
+  const safeGuildId = String(guildId || "").trim();
+  if (!safeGuildId) return [];
+  const safeLimit = Math.max(1, Math.min(TOP_PAGE_DATA_LIMIT, Number(limit || TOP_PAGE_DATA_LIMIT)));
+  const docs = await ExpUser.find({ guildId: safeGuildId })
+    .sort({ totalExp: -1 })
+    .limit(safeLimit * 2)
+    .select("userId totalExp")
+    .lean()
+    .catch(() => []);
+  const withLevel = docs.map((doc) => {
+    const totalExp = Math.max(0, Math.floor(Number(doc?.totalExp || 0)));
+    return { userId: String(doc?.userId || "").trim(), totalExp, level: getLevelInfo(totalExp).level };
+  }).filter((x) => x.userId);
+  withLevel.sort((a, b) => b.level - a.level || b.totalExp - a.totalExp);
+  const out = [];
+  for (const item of withLevel.slice(0, safeLimit)) {
+    const userId = item.userId;
+    const bot = await isBotUser(guild, userId);
+    if (bot) continue;
+    const rawDisplayName = await resolveDisplayName(guild, userId);
+    out.push({
+      id: userId,
+      label: normalizeCanvasLabel(rawDisplayName, `utente_${userId.slice(-6)}`),
+      value: item.level,
+    });
+  }
+  return out;
+}
+
 async function resolveTopChannelEntries(guild, entries = [], snapshotMap = new Map()) {
   const afkIds=new Set([guild?.afkChannelId,IDs.channels?.vocaleAFK].filter(Boolean).map((x) => String(x)),);
 
@@ -258,13 +316,17 @@ async function getTopSource(guild, lookbackDays) {
   const channelIds=Array.from(new Set([...(stats.topChannelsText||[]),...(stats.topChannelsVoice||[])].map((item) => String(item?.id||"").trim()).filter(Boolean),),);
   const snapshotMap = await getChannelSnapshotMap(guild.id, channelIds);
 
-  const topUsersText = await resolveTopUserEntries(guild, stats.topUsersText || []);
-  const topChannelsText=await resolveTopTextChannelEntries(guild,stats.topChannelsText||[],snapshotMap,);
-  const topUsersVoice = await resolveTopUserEntries(guild, stats.topUsersVoice || []);
-  const topUsersInvites=await resolveTopInviteEntries(guild,guild.id,TOP_PAGE_DATA_LIMIT,);
-  const topChannelsVoice=await resolveTopChannelEntries(guild,stats.topChannelsVoice||[],snapshotMap,);
+  const [topUsersText, topChannelsText, topUsersVoice, topUsersInvites, topChannelsVoice, topUsersExp, topUsersLevel] = await Promise.all([
+    resolveTopUserEntries(guild, stats.topUsersText || []),
+    resolveTopTextChannelEntries(guild, stats.topChannelsText || [], snapshotMap),
+    resolveTopUserEntries(guild, stats.topUsersVoice || []),
+    resolveTopInviteEntries(guild, guild.id, TOP_PAGE_DATA_LIMIT),
+    resolveTopChannelEntries(guild, stats.topChannelsVoice || [], snapshotMap),
+    resolveTopExpEntries(guild, guild.id, TOP_PAGE_DATA_LIMIT),
+    resolveTopLevelEntries(guild, guild.id, TOP_PAGE_DATA_LIMIT),
+  ]);
 
-  const value={topUsersText,topChannelsText,topUsersVoice,topUsersInvites,topChannelsVoice,};
+  const value={topUsersText,topChannelsText,topUsersVoice,topUsersInvites,topChannelsVoice,topUsersExp,topUsersLevel,};
   topSourceCache.set(cacheKey, { expiresAt: now + TOP_SOURCE_CACHE_TTL_MS, value });
   return value;
 }
@@ -300,6 +362,22 @@ function resolveViewConfig(selectedView, source) {
       title: "Invites User",
       rows: source.topUsersInvites,
       unit: "invites",
+      mode: "messages",
+    };
+  }
+  if (safeView === "exp_users") {
+    return {
+      title: "Top EXP",
+      rows: source.topUsersExp || [],
+      unit: "EXP",
+      mode: "messages",
+    };
+  }
+  if (safeView === "level_users") {
+    return {
+      title: "Top Livelli",
+      rows: source.topUsersLevel || [],
+      unit: "livello",
       mode: "messages",
     };
   }

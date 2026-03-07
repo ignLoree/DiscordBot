@@ -168,6 +168,7 @@ module.exports = async function renderShipCanvas({ leftAvatarUrl, rightAvatarUrl
     color: "#ffffff",
     align: "center",
     baseline: "middle",
+    forcePrimaryFont: true,
   });
 
   drawTextWithSpecialFallback(ctx, leftName, 220, 450, {
@@ -176,6 +177,7 @@ module.exports = async function renderShipCanvas({ leftAvatarUrl, rightAvatarUrl
     color: "#ffffff",
     align: "center",
     baseline: "middle",
+    forcePrimaryFont: true,
   });
 
   drawTextWithSpecialFallback(ctx, rightName, 780, 450, {
@@ -184,6 +186,7 @@ module.exports = async function renderShipCanvas({ leftAvatarUrl, rightAvatarUrl
     color: "#ffffff",
     align: "center",
     baseline: "middle",
+    forcePrimaryFont: true,
   });
 
   drawHeart(ctx, width / 2, 228, 54);

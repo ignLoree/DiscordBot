@@ -138,6 +138,7 @@ module.exports = async function renderSkullboardCanvas({ avatarUrl, username, me
       size: 12,
       weight: "600",
       color: replyNameColor,
+      forcePrimaryFont: true,
     });
     rx += ctx.measureText(replyName).width + 8;
 
@@ -156,6 +157,7 @@ module.exports = async function renderSkullboardCanvas({ avatarUrl, username, me
       size: 12,
       weight: "500",
       color: "#949ba4",
+      forcePrimaryFont: true,
     });
 
     const connStartX = outerPad + avatarSize / 2;
@@ -208,6 +210,7 @@ module.exports = async function renderSkullboardCanvas({ avatarUrl, username, me
       size: 12,
       weight: "500",
       color: "#b5bac1",
+      forcePrimaryFont: true,
     },
   );
 
@@ -218,6 +221,7 @@ module.exports = async function renderSkullboardCanvas({ avatarUrl, username, me
         size: 33 / 2,
         weight: "500",
         color: "#f2f3f5",
+        forcePrimaryFont: true,
       });
       lineY += 20;
     }

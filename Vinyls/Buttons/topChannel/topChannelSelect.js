@@ -11,13 +11,12 @@ function match(interaction) {
 }
 
 async function execute(interaction) {
-  const { denyIfNotOwner, sendControlErrorFallback, parseTopChannelViewSelectCustomId, normalizeComponentsForDiscord, disableComponentsForLoading } = require("../../Utils/Interaction/buttonParsers");
+  const { denyIfNotOwner, sendControlErrorFallback, parseTopChannelViewSelectCustomId, normalizeComponentsForDiscord } = require("../../Utils/Interaction/buttonParsers");
   const parsedSelect = parseTopChannelViewSelectCustomId(interaction.customId);
   if (!parsedSelect) return false;
   if (await denyIfNotOwner(interaction, parsedSelect.ownerId)) return true;
   try {
     await interaction.deferUpdate();
-    await interaction.message.edit({ components: disableComponentsForLoading(interaction.message?.components) }).catch(() => { });
     const selectedValue = normalizeTopView(interaction.values?.[0] || "overview");
     const payload = await buildTopChannelPayload({ guild: interaction.guild }, parsedSelect.lookbackDays, "main", selectedValue, 1, parsedSelect.ownerId || interaction.user?.id);
     await interaction.message.edit({

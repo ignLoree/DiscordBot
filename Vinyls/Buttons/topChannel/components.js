@@ -1,5 +1,4 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, } = require("discord.js");
-
 const TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX = "stats_top_channel_refresh";
 const TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX = "stats_top_channel_period_open";
 const TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX = "stats_top_channel_period_set";
@@ -12,7 +11,7 @@ const TOP_CHANNEL_PAGE_NEXT_CUSTOM_ID_PREFIX = "stats_top_channel_page_next";
 const TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX = "stats_top_channel_page_last";
 const TOP_CHANNEL_PAGE_MODAL_CUSTOM_ID_PREFIX = "stats_top_channel_page_modal";
 const TOP_CHANNEL_PAGE_MODAL_INPUT_CUSTOM_ID = "stats_top_channel_page_modal_input";
-const TOP_VIEWS = ["overview", "message_users", "voice_users", "message_channels", "voice_channels", "invites_users"];
+const TOP_VIEWS = ["overview", "message_users", "voice_users", "message_channels", "voice_channels", "invites_users", "exp_users", "level_users"];
 
 function normalizeLookbackDays(raw) {
   const parsed = Number(String(raw || "14").toLowerCase().replace(/d$/i, ""));
@@ -45,14 +44,16 @@ function buildTopChannelSelectRow(ownerId, lookbackDays, selectedView = "overvie
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId(`${TOP_CHANNEL_VIEW_SELECT_CUSTOM_ID_PREFIX}:${safeOwner}:${safeLookback}:${safeView}`)
-      .setPlaceholder("<:VC_Info:1460670816214585481> Overview")
+      .setPlaceholder("📊 Overview")
       .addOptions(
-        { label: "<:VC_Info:1460670816214585481> Overview", value: "overview", default: safeView === "overview" },
-        { label: "<:VC_Chat:1448694742237053061> Top Message Users", value: "message_users", default: safeView === "message_users" },
-        { label: "<:voice:1467639623735054509> Top Voice Users", value: "voice_users", default: safeView === "voice_users" },
-        { label: "<:channeltext:1443247596922470551> Top canali messaggi", value: "message_channels", default: safeView === "message_channels" },
-        { label: "<:voice:1467639623735054509> Top canali vocali", value: "voice_channels", default: safeView === "voice_channels" },
-        { label: "<:VC_Link:1448688587133685895> Invites User", value: "invites_users", default: safeView === "invites_users" },
+        { label: "📊 Overview", value: "overview", default: safeView === "overview" },
+        { label: "✍️ Top Message Users", value: "message_users", default: safeView === "message_users" },
+        { label: "🎙️ Top Voice Users", value: "voice_users", default: safeView === "voice_users" },
+        { label: "💭 Top canali messaggi", value: "message_channels", default: safeView === "message_channels" },
+        { label: "🔊 Top canali vocali", value: "voice_channels", default: safeView === "voice_channels" },
+        { label: "🔗 Invites User", value: "invites_users", default: safeView === "invites_users" },
+        { label: "📈 Top EXP", value: "exp_users", default: safeView === "exp_users" },
+        { label: "🏆 Top Livelli", value: "level_users", default: safeView === "level_users" },
       ),
   );
 }

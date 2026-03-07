@@ -12,10 +12,22 @@ function buildTicketRatingRows(ticketId) {
   return [row];
 }
 
+function formatRatingStars(score) {
+  const s = Math.max(0, Math.min(5, Math.floor(Number(score) || 0)));
+  return "<:VC_EXP:1468714279673925883>".repeat(s) + "<:VC_EXP:1468714279673925883>".repeat(5 - s);
+}
+
 function buildTicketClosedEmbed(data) {
   const openedAt = data?.createdAt ? `<t:${Math.floor(new Date(data.createdAt).getTime() / 1000)}:F>` : "Sconosciuto";
   const closedAt = data?.closedAt ? `<t:${Math.floor(new Date(data.closedAt).getTime() / 1000)}:F>` : `<t:${Math.floor(Date.now() / 1000)}:F>`;
   const reasonText = data?.closeReason && String(data.closeReason).trim() ? String(data.closeReason).trim() : "Nessuna motivazione specificata";
+
+  let motivazioneValue = reasonText;
+  if (Number.isFinite(data?.ratingScore) && data.ratingScore >= 1) {
+    const stars = formatRatingStars(data.ratingScore);
+    const byPart = data?.ratingBy ? ` – da <@${data.ratingBy}>` : "";
+    motivazioneValue = `${stars}${byPart}\n${reasonText}`;
+  }
 
   const embed = new EmbedBuilder()
     .setAuthor({ name: data?.guildName || "<:VC_Ticket:1448694637106692156> Sistema Ticket", iconURL: data?.guildIconURL || undefined, })
@@ -28,19 +40,11 @@ function buildTicketClosedEmbed(data) {
       { name: "<:VC_opentime:1478517163022221323> Ora Apertura", value: openedAt, inline: true },
       { name: "<:VC_claim:1478517202016669887> Claimato da", value: data?.claimedBy ? `<@${data.claimedBy}>` : "Non claimato", inline: true },
       { name: "<:VC_close:1478517239136256020> Ora Chiusura", value: closedAt, inline: true },
-      { name: "<:VC_reason:1478517122929004544> Motivazione", value: reasonText, inline: false },
+      { name: "<:VC_reason:1478517122929004544> Motivazione", value: motivazioneValue, inline: false },
     );
 
   const reordered = [embed.data.fields?.[0], embed.data.fields?.[1], embed.data.fields?.[2], embed.data.fields?.[3], embed.data.fields?.[5], embed.data.fields?.[4], embed.data.fields?.[6],].filter(Boolean);
   embed.setFields(reordered);
-
-  if (Number.isFinite(data?.ratingScore) && data.ratingScore >= 1) {
-    embed.addFields({
-      name: "<:VC_EXP:1468714279673925883> Valutazione",
-      value: `${data.ratingScore}/5${data?.ratingBy ? ` - da <@${data.ratingBy}>` : ""}`,
-      inline: false,
-    });
-  }
 
   return embed;
 }

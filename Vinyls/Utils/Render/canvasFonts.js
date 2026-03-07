@@ -12,6 +12,7 @@ const FALLBACK_FONT = "Yu Gothic";
 const BASE_STACK =[`"${COLOR_EMOJI_FONT}"`,'"Noto Sans CJK JP"','"Noto Sans CJK SC"','"Noto Sans CJK TC"','"Noto Sans JP"','"Noto Sans KR"','"Noto Sans SC"','"Noto Sans TC"','"Arial Unicode MS"','"DejaVu Sans"','"Segoe UI"','"Calibri"','"Tahoma"','"Segoe UI Emoji"','"Apple Color Emoji"','"Noto Emoji"',`"${SYMBOLS_FONT}"`,'"Segoe UI Symbol"',`"${MATH_FONT}"`,`"${TIBETAN_FONT}"`,`"${FRAKTUR_FONT}"`,`"${EMOJI_FONT}"`,`"${FALLBACK_FONT}"`,'"Arial"',"sans-serif",];
 const FONT_STACK = [`"${PRIMARY_FONT}"`, ...BASE_STACK].join(", ");
 const NUMERIC_FONT_STACK = [`"${PRIMARY_FONT}"`, '"DejaVu Sans"', '"Segoe UI"', '"Arial"', "sans-serif"].join(", ");
+const PRIMARY_ONLY_STACK = [`"${PRIMARY_FONT}"`, '"DejaVu Sans"', '"Arial"', "sans-serif"].join(", ");
 let registered = false;
 
 function registerCanvasFonts(canvasModule) {
@@ -83,6 +84,11 @@ function fontStackWithPrimary(primary, size, weight) {
   return `${prefix}${size}px ${stack}`;
 }
 
+function fontStackPrimaryOnly(size, weight) {
+  const prefix = weight ? `${weight} ` : "";
+  return `${prefix}${size}px ${PRIMARY_ONLY_STACK}`;
+}
+
 function drawTextWithSpecialFallback(ctx, text, x, y, options = {}) {
   const rawValue = text == null ? "" : String(text);
   let value = options.skipNormalize ? rawValue : normalizeTextForCanvas(rawValue);
@@ -93,9 +99,14 @@ function drawTextWithSpecialFallback(ctx, text, x, y, options = {}) {
   const baseline = options.baseline || ctx.textBaseline || "alphabetic";
   const color = options.color || ctx.fillStyle;
   const useNumericFont = options.useNumericFont === true;
-  const normalFont = useNumericFont ? fontStackNumeric(size, weight) : fontStack(size, weight);
+  const forcePrimaryFont = options.forcePrimaryFont === true;
+  const normalFont = forcePrimaryFont
+    ? fontStackPrimaryOnly(size, weight)
+    : useNumericFont
+      ? fontStackNumeric(size, weight)
+      : fontStack(size, weight);
   const tibetanFont = fontStackWithPrimary(TIBETAN_FONT, size, weight);
-  const hasTibetan = /[\u0F00-\u0FFF]/.test(value);
+  const hasTibetan = !forcePrimaryFont && /[\u0F00-\u0FFF]/.test(value);
   ctx.save();
   ctx.fillStyle = color;
   ctx.textBaseline = baseline;
@@ -143,4 +154,4 @@ function drawTextWithSpecialFallback(ctx, text, x, y, options = {}) {
   ctx.restore();
 }
 
-module.exports = { registerCanvasFonts, fontStack, fontStackWithPrimary, drawTextWithSpecialFallback, PRIMARY_FONT, TIBETAN_FONT, SYMBOLS_FONT, COLOR_EMOJI_FONT, EMOJI_FONT, FRAKTUR_FONT, MATH_FONT, FALLBACK_FONT, FONT_STACK };
+module.exports = { registerCanvasFonts, fontStack, fontStackPrimaryOnly, fontStackWithPrimary, drawTextWithSpecialFallback, PRIMARY_FONT, TIBETAN_FONT, SYMBOLS_FONT, COLOR_EMOJI_FONT, EMOJI_FONT, FRAKTUR_FONT, MATH_FONT, FALLBACK_FONT, FONT_STACK };

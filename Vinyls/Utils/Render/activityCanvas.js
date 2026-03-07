@@ -103,6 +103,7 @@ function drawLabel(
     align = "left",
     baseline = "middle",
     useNumericFont = false,
+    forcePrimaryFont = false,
   } = {},
 ) {
   drawTextWithSpecialFallback(ctx, prepareVisibleText(text), x, y, {
@@ -113,6 +114,7 @@ function drawLabel(
     baseline,
     normalizeCompatibility: false,
     useNumericFont,
+    forcePrimaryFont,
   });
 }
 
@@ -312,6 +314,7 @@ function drawDateBadge(ctx, title, value, x, y, w = 280, h = 80) {
     size: 15,
     weight: "700",
     color: "#e0e5ee",
+    forcePrimaryFont: true,
   });
   drawLabel(ctx, fitText(ctx, value, w - 32, 21, "700"), x + 18, y + 55, {
     size: 21,
@@ -328,6 +331,7 @@ function drawMetricPanel(ctx, title, rows, x, y, w, h) {
     size: 27,
     weight: "700",
     color: "#e2e7ef",
+    forcePrimaryFont: true,
   });
 
   const rowHeight = 56;
@@ -362,6 +366,7 @@ async function drawTopCard(ctx, title, first, second, x, y, w, h, options = {}) 
     size: 27,
     weight: "700",
     color: "#e2e7ef",
+    forcePrimaryFont: true,
   });
 
   await drawTopChip(
@@ -429,16 +434,19 @@ function drawChart(ctx, chart, x, y, w, h) {
     size: 27,
     weight: "700",
     color: "#e2e7ef",
+    forcePrimaryFont: true,
   });
   drawLabel(ctx, "Message", x + w - 220, y + 24, {
     size: 20,
     weight: "700",
     color: "#3ec455",
+    forcePrimaryFont: true,
   });
   drawLabel(ctx, "Voice", x + w - 90, y + 24, {
     size: 20,
     weight: "700",
     color: "#d95095",
+    forcePrimaryFont: true,
   });
 
   const px = x + 16;
@@ -496,6 +504,7 @@ async function drawTopListCard(ctx, title, rows, x, y, w, h, options = {}) {
     size: 22,
     weight: "700",
     color: "#e2e7ef",
+    forcePrimaryFont: true,
   });
 
   const rowHeight = 70;
@@ -663,7 +672,7 @@ async function renderUserActivityCanvas({ guildName, userTag, displayName, avata
     size: 20,
     weight: "700",
     color: "#cfd6e2",
-    useNumericFont: true,
+    forcePrimaryFont: true,
   });
 
   return canvas.toBuffer("image/png");
@@ -811,7 +820,7 @@ async function renderServerActivityCanvas({ guildName, guildIconUrl, createdOn, 
     size: 20,
     weight: "700",
     color: "#cfd6e2",
-    useNumericFont: true,
+    forcePrimaryFont: true,
   });
 
   return canvas.toBuffer("image/png");
@@ -842,12 +851,14 @@ async function renderTopStatisticsCanvas({ guildName, guildIconUrl, lookbackDays
     size: 28,
     weight: "600",
     color: "#bfc8d6",
+    forcePrimaryFont: true,
   });
 
   drawLabel(ctx, "# Messages", 24, 150, {
     size: 44,
     weight: "700",
     color: "#e2e7ef",
+    forcePrimaryFont: true,
   });
 
   await drawTopListCard(
@@ -882,6 +893,7 @@ async function renderTopStatisticsCanvas({ guildName, guildIconUrl, lookbackDays
     size: 44,
     weight: "700",
     color: "#e2e7ef",
+    forcePrimaryFont: true,
   });
 
   await drawTopListCard(
@@ -921,6 +933,7 @@ async function renderTopStatisticsCanvas({ guildName, guildIconUrl, lookbackDays
       size: 20,
       weight: "700",
       color: "#cfd6e2",
+      forcePrimaryFont: true,
     },
   );
 
@@ -952,12 +965,14 @@ async function renderTopStatisticsSingleCanvas({ guildName, guildIconUrl, lookba
     size: 28,
     weight: "600",
     color: "#bfc8d6",
+    forcePrimaryFont: true,
   });
 
   drawLabel(ctx, fitText(ctx, title, 1220, 62, "700"), 24, 172, {
     size: 62,
     weight: "700",
     color: "#e2e7ef",
+    forcePrimaryFont: true,
   });
 
   const normalizedRows = Array.isArray(rows) ? rows.map((x) => ({ label: x?.label || "N/A", value: mode === "voice" ? formatHours(x?.value || 0) : compactNumber(x?.value || 0), })) : [];
@@ -982,7 +997,7 @@ async function renderTopStatisticsSingleCanvas({ guildName, guildIconUrl, lookba
       size: 20,
       weight: "700",
       color: "#cfd6e2",
-      useNumericFont: true,
+      forcePrimaryFont: true,
     },
   );
 
@@ -1073,12 +1088,14 @@ async function renderTopLeaderboardPageCanvas({ guildName, guildIconUrl, lookbac
     size: 28,
     weight: "600",
     color: "#bfc8d6",
+    forcePrimaryFont: true,
   });
 
   drawLabel(ctx, fitText(ctx, title, 1220, 56, "700"), 24, 164, {
     size: 56,
     weight: "700",
     color: "#e2e7ef",
+    forcePrimaryFont: true,
   });
 
   fillRoundRect(ctx, 20, panelY, 1240, panelHeight, 18, "rgba(46, 55, 70, 0.92)");
@@ -1128,6 +1145,7 @@ async function renderTopLeaderboardPageCanvas({ guildName, guildIconUrl, lookbac
       weight: "700",
       color: "#cfd6e2",
       align: "center",
+      forcePrimaryFont: true,
     });
   }
 
@@ -1140,7 +1158,7 @@ async function renderTopLeaderboardPageCanvas({ guildName, guildIconUrl, lookbac
       size: 20,
       weight: "700",
       color: "#cfd6e2",
-      useNumericFont: true,
+      forcePrimaryFont: true,
     },
   );
 
