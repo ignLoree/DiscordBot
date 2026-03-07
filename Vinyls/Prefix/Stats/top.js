@@ -3,7 +3,7 @@ const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const IDs = require("../../Utils/Config/ids");
 const { getServerOverviewStats } = require("../../Services/Community/activityService");
 const { InviteTrack, ExpUser } = require("../../Schemas/Community/communitySchemas");
-const { getLevelInfo } = require("../../Services/Community/expService");
+const { getLevelInfo, getTopExpGainsInPeriod, getTopLevelGainsInPeriod, PERIOD_LOOKBACK_DAYS } = require("../../Services/Community/expService");
 const { renderTopStatisticsCanvas, renderTopLeaderboardPageCanvas } = require("../../Utils/Render/activityCanvas");
 const { upsertChannelSnapshot, syncGuildChannelSnapshots, getChannelSnapshotMap } = require("../../Utils/Community/channelSnapshotUtils");
 const { getGuildMemberCached, getUserCached } = require("../../Utils/Interaction/interactionEntityCache");
@@ -185,10 +185,31 @@ async function resolveTopInviteEntries(
   return out.slice(0, Math.max(1, Number(limit || TOP_PAGE_DATA_LIMIT)));
 }
 
-async function resolveTopExpEntries(guild, guildId, limit = TOP_PAGE_DATA_LIMIT) {
+async function resolveTopExpEntries(guild, guildId, lookbackDays, limit = TOP_PAGE_DATA_LIMIT) {
   const safeGuildId = String(guildId || "").trim();
   if (!safeGuildId) return [];
   const safeLimit = Math.max(1, Math.min(TOP_PAGE_DATA_LIMIT, Number(limit || TOP_PAGE_DATA_LIMIT)));
+  const usePeriod = PERIOD_LOOKBACK_DAYS.includes(Number(lookbackDays));
+
+  if (usePeriod) {
+    const periodEntries = await getTopExpGainsInPeriod(safeGuildId, lookbackDays, safeLimit * 2);
+    const out = [];
+    for (const item of periodEntries) {
+      const userId = String(item?.userId || "").trim();
+      if (!userId) continue;
+      const bot = await isBotUser(guild, userId);
+      if (bot) continue;
+      const rawDisplayName = await resolveDisplayName(guild, userId);
+      out.push({
+        id: userId,
+        label: normalizeCanvasLabel(rawDisplayName, `utente_${userId.slice(-6)}`),
+        value: Math.max(0, Number(item?.expGain || 0)),
+      });
+      if (out.length >= safeLimit) break;
+    }
+    return out;
+  }
+
   const docs = await ExpUser.find({ guildId: safeGuildId })
     .sort({ totalExp: -1 })
     .limit(safeLimit * 2)
@@ -212,10 +233,31 @@ async function resolveTopExpEntries(guild, guildId, limit = TOP_PAGE_DATA_LIMIT)
   return out;
 }
 
-async function resolveTopLevelEntries(guild, guildId, limit = TOP_PAGE_DATA_LIMIT) {
+async function resolveTopLevelEntries(guild, guildId, lookbackDays, limit = TOP_PAGE_DATA_LIMIT) {
   const safeGuildId = String(guildId || "").trim();
   if (!safeGuildId) return [];
   const safeLimit = Math.max(1, Math.min(TOP_PAGE_DATA_LIMIT, Number(limit || TOP_PAGE_DATA_LIMIT)));
+  const usePeriod = PERIOD_LOOKBACK_DAYS.includes(Number(lookbackDays));
+
+  if (usePeriod) {
+    const periodEntries = await getTopLevelGainsInPeriod(safeGuildId, lookbackDays, safeLimit * 2);
+    const out = [];
+    for (const item of periodEntries) {
+      const userId = String(item?.userId || "").trim();
+      if (!userId) continue;
+      const bot = await isBotUser(guild, userId);
+      if (bot) continue;
+      const rawDisplayName = await resolveDisplayName(guild, userId);
+      out.push({
+        id: userId,
+        label: normalizeCanvasLabel(rawDisplayName, `utente_${userId.slice(-6)}`),
+        value: Math.max(0, Number(item?.levelGain || 0)),
+      });
+      if (out.length >= safeLimit) break;
+    }
+    return out;
+  }
+
   const docs = await ExpUser.find({ guildId: safeGuildId })
     .sort({ totalExp: -1 })
     .limit(safeLimit * 2)
@@ -322,8 +364,8 @@ async function getTopSource(guild, lookbackDays) {
     resolveTopUserEntries(guild, stats.topUsersVoice || []),
     resolveTopInviteEntries(guild, guild.id, TOP_PAGE_DATA_LIMIT),
     resolveTopChannelEntries(guild, stats.topChannelsVoice || [], snapshotMap),
-    resolveTopExpEntries(guild, guild.id, TOP_PAGE_DATA_LIMIT),
-    resolveTopLevelEntries(guild, guild.id, TOP_PAGE_DATA_LIMIT),
+    resolveTopExpEntries(guild, guild.id, safeLookback, TOP_PAGE_DATA_LIMIT),
+    resolveTopLevelEntries(guild, guild.id, safeLookback, TOP_PAGE_DATA_LIMIT),
   ]);
 
   const value={topUsersText,topChannelsText,topUsersVoice,topUsersInvites,topChannelsVoice,topUsersExp,topUsersLevel,};
@@ -331,8 +373,9 @@ async function getTopSource(guild, lookbackDays) {
   return value;
 }
 
-function resolveViewConfig(selectedView, source) {
+function resolveViewConfig(selectedView, source, lookbackDays = 14) {
   const safeView = normalizeTopView(selectedView);
+  const periodSuffix = PERIOD_LOOKBACK_DAYS.includes(Number(lookbackDays)) ? ` (${Number(lookbackDays)}d)` : "";
   if (safeView === "message_users") {
     return {
       title: "Top Message Users",
@@ -367,7 +410,7 @@ function resolveViewConfig(selectedView, source) {
   }
   if (safeView === "exp_users") {
     return {
-      title: "Top EXP",
+      title: "Top EXP" + periodSuffix,
       rows: source.topUsersExp || [],
       unit: "EXP",
       mode: "messages",
@@ -375,7 +418,7 @@ function resolveViewConfig(selectedView, source) {
   }
   if (safeView === "level_users") {
     return {
-      title: "Top Livelli",
+      title: "Top Livelli" + periodSuffix,
       rows: source.topUsersLevel || [],
       unit: "livello",
       mode: "messages",
@@ -414,7 +457,7 @@ async function buildTopChannelPayload(
   const source = await getTopSource(message.guild, safeLookback);
 
   const isOverview = safeView === "overview";
-  const viewConfig = !isOverview ? resolveViewConfig(safeView, source) : null;
+  const viewConfig = !isOverview ? resolveViewConfig(safeView, source, safeLookback) : null;
   const totalItems = viewConfig ? viewConfig.rows.length : 0;
   const totalPages = isOverview ? 1 : Math.max(1, Math.ceil(totalItems / 10));
   const safePage = Math.min(Math.max(1, normalizePage(page, 1)), totalPages);

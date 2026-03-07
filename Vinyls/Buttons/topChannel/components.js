@@ -153,8 +153,9 @@ function buildTopChannelComponents(ownerId, lookbackDays, controlsView = "main",
   if (safeView !== "overview") {
     rows.push(buildTopChannelPaginationRow(ownerId, lookbackDays, safeView, page, totalPages, safeControls));
   }
-  rows.push(buildTopChannelMainControlsRow(ownerId, lookbackDays, safeView, page));
-  if (safeControls === "period") {
+  if (safeControls !== "period") {
+    rows.push(buildTopChannelMainControlsRow(ownerId, lookbackDays, safeView, page));
+  } else {
     rows.push(...buildTopChannelPeriodControlsRows(ownerId, lookbackDays, safeView, page));
   }
   return rows;

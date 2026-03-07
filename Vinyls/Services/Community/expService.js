@@ -897,4 +897,41 @@ async function retroSyncGuildLevels(guild, { syncRoles = true } = {}) {
   return { scanned, changed, raised, lowered, roleSynced };
 }
 
-module.exports = { MESSAGE_EXP, VOICE_EXP_PER_MINUTE, addExp, addExpWithLevel, getUserExpStats, getUserRanks, getLevelInfo, getTotalExpForLevel, getGlobalMultiplier, setGlobalMultiplier, setTemporaryEventMultiplier, setActivityEvent, clearActivityEvent, clearStaffEvent, setStaffEvent, getStaffEventSettings, getGuildExpSettings, invalidateSettingsCache, setLevelChannelLocked, setRoleIgnored, shouldIgnoreExpForMember, recordLevelHistory, getRecentLevelHistory, getLevelHistoryPage, syncLevelRolesForMember, retroSyncGuildLevels, getRoleMultiplier, getCurrentWeekKey, ROLE_MULTIPLIERS, isEventStaffMember, scheduleEventLevelUpMessage };
+const DAY_MS = 24 * 60 * 60 * 1000;
+const PERIOD_LOOKBACK_DAYS = [1, 7, 14, 21, 30];
+
+async function getTopExpGainsInPeriod(guildId, lookbackDays, limit = 100) {
+  const safeGuildId = String(guildId || "").trim();
+  if (!safeGuildId) return [];
+  const safeLookback = Number(lookbackDays);
+  if (!Number.isFinite(safeLookback) || safeLookback < 1) return [];
+  const since = new Date(Date.now() - safeLookback * DAY_MS);
+  const safeLimit = Math.max(1, Math.min(500, Number(limit || 100)));
+  const agg = await LevelHistory.aggregate([
+    { $match: { guildId: safeGuildId, createdAt: { $gte: since }, deltaExp: { $gt: 0 } } },
+    { $group: { _id: "$userId", expGain: { $sum: "$deltaExp" } } },
+    { $sort: { expGain: -1 } },
+    { $limit: safeLimit },
+  ]).catch(() => []);
+  return agg.map((x) => ({ userId: String(x._id || ""), expGain: Math.max(0, Math.floor(Number(x.expGain || 0))) }));
+}
+
+async function getTopLevelGainsInPeriod(guildId, lookbackDays, limit = 100) {
+  const safeGuildId = String(guildId || "").trim();
+  if (!safeGuildId) return [];
+  const safeLookback = Number(lookbackDays);
+  if (!Number.isFinite(safeLookback) || safeLookback < 1) return [];
+  const since = new Date(Date.now() - safeLookback * DAY_MS);
+  const safeLimit = Math.max(1, Math.min(500, Number(limit || 100)));
+  const agg = await LevelHistory.aggregate([
+    { $match: { guildId: safeGuildId, createdAt: { $gte: since } } },
+    { $project: { userId: 1, levelGain: { $subtract: ["$afterLevel", "$beforeLevel"] } } },
+    { $match: { levelGain: { $gt: 0 } } },
+    { $group: { _id: "$userId", levelGain: { $sum: "$levelGain" } } },
+    { $sort: { levelGain: -1 } },
+    { $limit: safeLimit },
+  ]).catch(() => []);
+  return agg.map((x) => ({ userId: String(x._id || ""), levelGain: Math.max(0, Math.floor(Number(x.levelGain || 0))) }));
+}
+
+module.exports = { MESSAGE_EXP, VOICE_EXP_PER_MINUTE, addExp, addExpWithLevel, getUserExpStats, getUserRanks, getLevelInfo, getTotalExpForLevel, getGlobalMultiplier, setGlobalMultiplier, setTemporaryEventMultiplier, setActivityEvent, clearActivityEvent, clearStaffEvent, setStaffEvent, getStaffEventSettings, getGuildExpSettings, invalidateSettingsCache, setLevelChannelLocked, setRoleIgnored, shouldIgnoreExpForMember, recordLevelHistory, getRecentLevelHistory, getLevelHistoryPage, syncLevelRolesForMember, retroSyncGuildLevels, getRoleMultiplier, getCurrentWeekKey, ROLE_MULTIPLIERS, isEventStaffMember, scheduleEventLevelUpMessage, getTopExpGainsInPeriod, getTopLevelGainsInPeriod, PERIOD_LOOKBACK_DAYS };
