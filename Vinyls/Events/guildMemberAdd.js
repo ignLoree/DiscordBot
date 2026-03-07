@@ -1,7 +1,7 @@
 const { EmbedBuilder, PermissionsBitField, AuditLogEvent, UserFlagsBitField, } = require("discord.js");
 const { InviteTrack, InviteReminderState, } = require("../Schemas/Community/communitySchemas");
 const IDs = require("../Utils/Config/ids");
-const { getNoDmSet } = require("../Utils/noDmList");
+const { shouldBlockDm } = require("../Utils/noDmList");
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
 const{scheduleMemberCounterRefresh,updateMemberCounterNow,}=require("../Utils/Community/memberCounterUtils");
 const{scheduleStaffListRefresh,memberHasStaffRole}=require("../Utils/Community/staffListUtils");
@@ -1011,8 +1011,7 @@ async function maybeSendInviteNearRewardReminder(member, info) {
   const inviterMember=guild.members.cache.get(inviterId)||(await guild.members.fetch(inviterId).catch(() => null));
   if (!inviterMember || inviterMember.user?.bot) return;
 
-  const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
-  if (noDmSet.has(inviterId)) return;
+  if (await shouldBlockDm(guild.id, inviterId, "invites").catch(() => false)) return;
 
   const state=await InviteReminderState.findOne({guildId:guild.id,userId:inviterId,}).lean().catch(() => null);
   const sentTargets=Array.isArray(state?.inviteNearTargets)?state.inviteNearTargets.map((x) => Number(x)).filter(Number.isFinite):[];

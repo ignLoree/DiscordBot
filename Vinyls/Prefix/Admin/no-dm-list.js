@@ -1,5 +1,6 @@
+const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
-const { getNoDmSet } = require("../../Utils/noDmList");
+const { getAllNoDmPreferences, DM_CATEGORY_LABELS } = require("../../Utils/noDmList");
 
 function chunkLines(lines, maxLen = 1900) {
   const chunks = [];
@@ -17,25 +18,46 @@ function chunkLines(lines, maxLen = 1900) {
   return chunks.length ? chunks : [""];
 }
 
+function formatBlockedLabel(entry) {
+  if (entry.blockAll) return "**Tutto disattivato**";
+  if (!entry.disabled || entry.disabled.length === 0) return "—";
+  const labels = entry.disabled
+    .map((key) => DM_CATEGORY_LABELS[key] || key)
+    .filter(Boolean);
+  return labels.length ? labels.join(", ") : "—";
+}
+
 module.exports = {
   name: "no-dm-list",
   aliases: ["nodmlist"],
   allowEmptyArgs: true,
   async execute(message) {
-    const set = await getNoDmSet(message.guild.id);
-    const ids = Array.from(set);
-    if (!ids.length) {
+    const guildId = message.guild.id;
+    const list = await getAllNoDmPreferences(guildId);
+    if (!list.length) {
       await safeMessageReply(message, {
-        content: "Nessun utente in lista `+dm-disable`.",
+        content: "Nessun utente con preferenze DM in lista `+dm-disable`.",
         allowedMentions: { repliedUser: false },
       });
       return;
     }
 
-    const lines = ids.map((id) => `<@${id}>`);
+    const lines = list.map((entry) => {
+      const label = formatBlockedLabel(entry);
+      return `<@${entry.userId}> — ${label}`;
+    });
     const chunks = chunkLines(lines);
+
+    const embed = new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle("Utenti con preferenze DM")
+      .setDescription(
+        `Elenco utenti che hanno disattivato una o più categorie di DM.\n\n${chunks[0]}`,
+      )
+      .setFooter({ text: "Legenda: «Tutto disattivato» = nessun DM; altrimenti solo le categorie elencate sono bloccate." });
+
     await safeMessageReply(message, {
-      content: `Utenti in \`+dm-disable\`:\n${chunks[0]}`,
+      embeds: [embed],
       allowedMentions: { repliedUser: false },
     });
     for (let i = 1; i < chunks.length; i += 1) {

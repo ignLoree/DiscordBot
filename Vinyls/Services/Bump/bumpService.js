@@ -3,7 +3,7 @@ const DisboardBump = require("../../Schemas/Disboard/disboardBumpSchema");
 const { DiscadiaBump, DiscadiaVoter } = require("../../Schemas/Discadia/discadiaSchemas");
 const BumpVoteReward = require("../../Schemas/Bump/bumpVoteRewardSchema");
 const IDs = require("../../Utils/Config/ids");
-const { getNoDmSet } = require("../../Utils/noDmList");
+const { shouldBlockDm } = require("../../Utils/noDmList");
 const { getClientGuildCached, getGuildMemberCached, getUserCached } = require("../../Utils/Interaction/interactionEntityCache");
 const { addExpWithLevel, shouldIgnoreExpForMember } = require("../Community/expService");
 const discadiaVoteTimers = new Map();
@@ -237,9 +237,7 @@ async function isStaffNoDmBypassUser(client, guildId, userId) {
 }
 
 async function shouldSkipVoteDmByNoDm(client, guildId, userId) {
-  const noDmSet = await getNoDmSet(guildId).catch(() => new Set());
-  if (!noDmSet.has(userId)) return false;
-
+  if (!(await shouldBlockDm(guildId, userId, "bump").catch(() => false))) return false;
   const isStaffBypass = await isStaffNoDmBypassUser(client, guildId, userId);
   return !isStaffBypass;
 }

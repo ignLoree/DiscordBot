@@ -3,7 +3,7 @@ const path = require("path");
 const { randomInt } = require("crypto");
 const { EmbedBuilder } = require("discord.js");
 const IDs = require("../../Utils/Config/ids");
-const { getNoDmSet } = require("../../Utils/noDmList");
+const { shouldBlockDm } = require("../../Utils/noDmList");
 const { ActivityUser } = require("../../Schemas/Community/communitySchemas");
 const { getClientGuildCached, getUserCached, } = require("../../Utils/Interaction/interactionEntityCache");
 const STATE_PATH = path.join(__dirname, "..", "..", "Data", "weeklyDmReminderState.json",);
@@ -720,7 +720,6 @@ function hasRecentReminderForCooldown(historyEntry, cooldownDays) {
 
 async function buildWeeklyJobs(client, guild) {
   await refreshGuildMembersIfNeeded(guild);
-  const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
   const cfg = getCfg(client);
   const timeZone = getTimeZone(client);
   const minMemberAgeDays = getMinMemberAgeDays(client);
@@ -750,7 +749,7 @@ async function buildWeeklyJobs(client, guild) {
     if (isStaffMember(member)) continue;
     if (!isMemberOldEnough(member, minMemberAgeDays)) continue;
     const id = String(member.id);
-    if (noDmSet.has(id)) continue;
+    if (await shouldBlockDm(guild.id, id, "weekly").catch(() => false)) continue;
     candidates.push(member);
   }
 
@@ -867,13 +866,12 @@ async function runStartupBlastOnce(client, guild) {
   saveState();
   try {
     await refreshGuildMembersIfNeeded(guild);
-    const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
     const eligibleMembers = [];
     for (const member of guild.members.cache.values()) {
       if (!member || member.user?.bot) continue;
       if (isStaffMember(member)) continue;
       const userId = String(member.id);
-      if (!userId || noDmSet.has(userId)) continue;
+      if (!userId || (await shouldBlockDm(guild.id, userId, "weekly").catch(() => false))) continue;
       eligibleMembers.push(member);
     }
 
@@ -961,7 +959,6 @@ async function runExternalStartupBlastOnce(client, guild) {
   saveState();
   try {
     await refreshGuildMembersIfNeeded(guild);
-    const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
     const dmIds = collectOpenDmRecipientIds(client);
     const outsideIds = [...dmIds].filter((id) => !guild.members.cache.has(id));
     let sentCount = 0;
@@ -970,7 +967,7 @@ async function runExternalStartupBlastOnce(client, guild) {
     const { secondDelayMs } = getExternalTimelineMs(client);
 
     for (const userId of outsideIds) {
-      if (noDmSet.has(String(userId))) continue;
+      if (await shouldBlockDm(guild.id, String(userId), "weekly").catch(() => false)) continue;
       const existing = entry.externalReminderHistory?.[String(userId)] || {};
       if (existing?.stopped || existing?.returnedOnce) continue;
       const user = await getUserCached(client, String(userId), { ttlMs: 30_000 });
@@ -1021,7 +1018,6 @@ async function sendExternalReturnReminders(client, guild) {
   const entry = getGuildEntry(guild.id);
   if (!entry) return;
   await refreshGuildMembersIfNeeded(guild);
-  const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
   const dmIds = collectOpenDmRecipientIds(client);
   const now = Date.now();
   const { secondDelayMs, finalDelayMs } = getExternalTimelineMs(client);
@@ -1042,7 +1038,7 @@ async function sendExternalReturnReminders(client, guild) {
     const uid = String(userId);
     if (!uid) continue;
     if (guild.members.cache.has(uid)) continue;
-    if (noDmSet.has(uid)) continue;
+    if (await shouldBlockDm(guild.id, uid, "weekly").catch(() => false)) continue;
 
     const history = entry.externalReminderHistory?.[uid] || {};
     if (history?.stopped || history?.returnedOnce) continue;
@@ -1119,7 +1115,6 @@ function shouldRetry(job) {
 async function sendDueJobs(client, guild) {
   const entry = getGuildEntry(guild.id);
   if (!entry) return;
-  const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
   const minMemberAgeDays = getMinMemberAgeDays(client);
   const now = Date.now();
 
@@ -1135,7 +1130,7 @@ async function sendDueJobs(client, guild) {
       continue;
     }
 
-    if (noDmSet.has(userId)) {
+    if (await shouldBlockDm(guild.id, userId, "weekly").catch(() => false)) {
       job.skipped = "no-dm";
       continue;
     }

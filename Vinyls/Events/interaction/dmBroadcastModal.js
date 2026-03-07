@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const { getNoDmSet } = require("../../Utils/noDmList");
+const { shouldBlockDm } = require("../../Utils/noDmList");
 const IDs = require("../../Utils/Config/ids");
 const { getUserCached } = require("../../Utils/Interaction/interactionEntityCache");
 const { splitMessage, chunkLines } = require("../../Utils/Message/messageChunkUtils");
@@ -71,7 +71,7 @@ async function handleDmBroadcastModal(interaction, client) {
   await interaction.deferReply({ flags: 1 << 6 }).catch(() => { });
 
   const staffRoleIds = getStaffRoleIds(client);
-  const noDmSet = await getNoDmSet(interaction.guild.id);
+  const guildId = interaction.guild.id;
   if (!targetId) {
     await interaction.guild.members.fetch().catch(() => { });
   }
@@ -101,7 +101,7 @@ async function handleDmBroadcastModal(interaction, client) {
 
   const targets = [];
   for (const id of targetIds) {
-    if (noDmSet.has(id)) {
+    if (await shouldBlockDm(guildId, id, "broadcast").catch(() => false)) {
       skippedNoDm.push(id);
       continue;
     }
@@ -181,8 +181,7 @@ async function handleDmBroadcastModal(interaction, client) {
     if (failedIds.length) {
       lines.push("<:vegax:1443934876440068179> **Non recapitati:**");
       for (const id of failedIds) {
-        const note = noDmSet.has(id) ? " (no-dm)" : "";
-        lines.push(`<@${id}>${note}`);
+        lines.push(`<@${id}>`);
       }
     }
     if (skippedNoDm.length) {

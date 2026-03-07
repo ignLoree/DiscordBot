@@ -1,6 +1,6 @@
 const { ExpUser, GlobalSettings, LevelHistory, EventUserExpSnapshot, } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");
-const { getNoDmSet } = require("../../Utils/noDmList");
+const { shouldBlockDm } = require("../../Utils/noDmList");
 const EXP_EXCLUDED_CATEGORY_IDS = new Set([IDs.categories.categoryGames].filter(Boolean).map((id) => String(id)),);
 const TIME_ZONE = "Europe/Rome";
 const MESSAGE_EXP = 2;
@@ -486,8 +486,7 @@ async function maybeSendPerkNearReminder(guild, member, result) {
   const reminded = Array.isArray(result.doc.perkNearReminderLevels) ? result.doc.perkNearReminderLevels.map((value) => Number(value)).filter(Number.isFinite) : [];
   if (reminded.includes(nextPerkLevel)) return;
 
-  const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
-  if (noDmSet.has(String(member.id))) return;
+  if (await shouldBlockDm(guild.id, member.id, "perks").catch(() => false)) return;
 
   const targetExp = getTotalExpForLevel(nextPerkLevel);
   const missingExp = Math.max(0, targetExp - Number(result.afterExp || 0));

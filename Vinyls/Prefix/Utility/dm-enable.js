@@ -1,6 +1,5 @@
-const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
-const { getNoDmSet, removeNoDm } = require("../../Utils/noDmList");
+const { runNoDmPanel } = require("../../Utils/noDmPanel");
 
 module.exports = {
   name: "dm-enable",
@@ -13,33 +12,6 @@ module.exports = {
       });
       return;
     }
-
-    const guildId = message.guild.id;
-    const userId = message.author.id;
-    const set = await getNoDmSet(guildId);
-
-    if (!set.has(userId)) {
-      await safeMessageReply(message, {
-        embeds: [
-          new EmbedBuilder()
-            .setColor("#6f4e37")
-            .setDescription(
-              "I DM automatici sono già attivi. Usa `+dm-disable` se vuoi bloccarli.",
-            ),
-        ],
-        allowedMentions: { repliedUser: false },
-      });
-      return;
-    }
-
-    await removeNoDm(guildId, userId);
-    await safeMessageReply(message, {
-      embeds: [
-        new EmbedBuilder()
-          .setColor("#6f4e37")
-          .setDescription("Perfetto! Ora riceverai di nuovo i DM automatici."),
-      ],
-      allowedMentions: { repliedUser: false },
-    });
+    await runNoDmPanel(message, { mode: "enable" });
   },
 };
