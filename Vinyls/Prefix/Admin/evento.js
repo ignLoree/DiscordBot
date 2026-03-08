@@ -89,17 +89,29 @@ module.exports = {
         });
         return;
       }
+      const channel = message.channel;
+      const authorId = message.author?.id;
       await safeMessageReply(message, {
-        content: "<:VC_EXP:1468714279673925883> Assegnazione livelli a chi ha già i ruoli in corso...",
+        content: "<:VC_EXP:1468714279673925883> Assegnazione livelli avviata in background (può richiedere diversi minuti). Ti avviso quando ha finito.",
         allowedMentions: { repliedUser: false },
       }).catch(() => { });
       invalidateSettingsCache(guildId);
-      await grantEventRewardsForExistingRoleMembers(message.guild).catch((err) => {
-        global.logger?.error?.("[evento assegna-ruoli] grantEventRewardsForExistingRoleMembers failed:", err);
-      });
-      await message.channel.send({
-        content: "<:vegacheckmark:1443666279058772028> Fatto. Assegnati i livelli a chi ha già Supporter, Verificato/Verificata o Guilded (solo chi non li aveva già ricevuti per questo evento).",
-      }).catch(() => { });
+      (async () => {
+        try {
+          await grantEventRewardsForExistingRoleMembers(message.guild);
+          const mention = authorId ? `<@${authorId}>` : "";
+          await channel.send({
+            content: `<:vegacheckmark:1443666279058772028> ${mention} Fatto. Assegnati i livelli a chi ha già Supporter, Verificato/Verificata, Guilded o Promoter/Propulsor/Catalyst (solo chi non li aveva già ricevuti per questo evento).`,
+            allowedMentions: { users: authorId ? [authorId] : [] },
+          }).catch(() => {});
+        } catch (err) {
+          global.logger?.error?.("[evento assegna-ruoli] grantEventRewardsForExistingRoleMembers failed:", err);
+          await channel.send({
+            content: authorId ? `<:vegax:1443934876440068179> <@${authorId}> Errore durante l'assegnazione. Controlla i log.` : "<:vegax:1443934876440068179> Errore durante l'assegnazione. Controlla i log.",
+            allowedMentions: authorId ? { users: [authorId] } : {},
+          }).catch(() => {});
+        }
+      })();
       return;
     }
 
@@ -112,18 +124,30 @@ module.exports = {
         });
         return;
       }
-      await safeMessageReply(message, {
-        content: "<:VC_EXP:1468714279673925883> Reset premi in corso: cancellazione registri e riassegnazione a tutti i membri...",
-        allowedMentions: { repliedUser: false },
-      }).catch(() => { });
+      const channel = message.channel;
+      const authorId = message.author?.id;
       const { deleted } = await clearActivityEventRewardsForGuild(guildId);
       invalidateSettingsCache(guildId);
-      await grantEventRewardsForExistingRoleMembers(message.guild).catch((err) => {
-        global.logger?.error?.("[evento reset-premi] grantEventRewardsForExistingRoleMembers failed:", err);
-      });
-      await message.channel.send({
-        content: `<:vegacheckmark:1443666279058772028> Fatto. Cancellati ${deleted} premi registrati e riassegnati i livelli a chi ha Supporter, Verificato/Verificata o Guilded (senza invio annuncio).`,
+      await safeMessageReply(message, {
+        content: "<:VC_EXP:1468714279673925883> Reset premi avviato in background (cancellati " + deleted + " registri; riassegnazione può richiedere diversi minuti). Ti avviso quando ha finito.",
+        allowedMentions: { repliedUser: false },
       }).catch(() => { });
+      (async () => {
+        try {
+          await grantEventRewardsForExistingRoleMembers(message.guild);
+          const mention = authorId ? `<@${authorId}>` : "";
+          await channel.send({
+            content: `<:vegacheckmark:1443666279058772028> ${mention} Fatto. Riassegnati i livelli a chi ha Supporter, Verificato/Verificata, Guilded o Promoter/Propulsor/Catalyst (senza invio annuncio).`,
+            allowedMentions: { users: authorId ? [authorId] : [] },
+          }).catch(() => {});
+        } catch (err) {
+          global.logger?.error?.("[evento reset-premi] grantEventRewardsForExistingRoleMembers failed:", err);
+          await channel.send({
+            content: authorId ? `<:vegax:1443934876440068179> <@${authorId}> Errore durante la riassegnazione. Controlla i log.` : "<:vegax:1443934876440068179> Errore durante la riassegnazione. Controlla i log.",
+            allowedMentions: authorId ? { users: [authorId] } : {},
+          }).catch(() => {});
+        }
+      })();
       return;
     }
 
