@@ -425,6 +425,15 @@ async function sendLevelUpMessage(guild, member, level) {
   await sendLevelUpPayload(channel, member, payload);
 }
 
+async function sendLevelUpAnnouncement(guild, member, level) {
+  if (!guild || !member || !Number.isFinite(level) || level < 1) return;
+  if (LEVEL_ROLE_MAP.has(level)) {
+    await sendPerksLevelMessage(guild, member, level);
+  } else {
+    await sendLevelUpMessage(guild, member, level);
+  }
+}
+
 function buildPerksLevelEmbed(member, level, roleId) {
   return {
     embeds: [
@@ -930,4 +939,4 @@ async function getTopLevelGainsInPeriod(guildId, lookbackDays, limit = 100) {
   return agg.map((x) => ({ userId: String(x._id || ""), levelGain: Math.max(0, Math.floor(Number(x.levelGain || 0))) }));
 }
 
-module.exports = { MESSAGE_EXP, VOICE_EXP_PER_MINUTE, addExp, addExpWithLevel, getUserExpStats, getUserRanks, getLevelInfo, getTotalExpForLevel, getGlobalMultiplier, setGlobalMultiplier, setTemporaryEventMultiplier, setActivityEvent, clearActivityEvent, clearStaffEvent, setStaffEvent, getStaffEventSettings, getGuildExpSettings, invalidateSettingsCache, setLevelChannelLocked, setRoleIgnored, shouldIgnoreExpForMember, recordLevelHistory, getRecentLevelHistory, getLevelHistoryPage, syncLevelRolesForMember, retroSyncGuildLevels, getRoleMultiplier, getCurrentWeekKey, ROLE_MULTIPLIERS, isEventStaffMember, scheduleEventLevelUpMessage, getTopExpGainsInPeriod, getTopLevelGainsInPeriod, PERIOD_LOOKBACK_DAYS };
+module.exports = { MESSAGE_EXP, VOICE_EXP_PER_MINUTE, addExp, addExpWithLevel, getUserExpStats, getUserRanks, getLevelInfo, getTotalExpForLevel, getGlobalMultiplier, setGlobalMultiplier, setTemporaryEventMultiplier, setActivityEvent, clearActivityEvent, clearStaffEvent, setStaffEvent, getStaffEventSettings, getGuildExpSettings, invalidateSettingsCache, setLevelChannelLocked, setRoleIgnored, shouldIgnoreExpForMember, recordLevelHistory, getRecentLevelHistory, getLevelHistoryPage, syncLevelRolesForMember, retroSyncGuildLevels, getRoleMultiplier, getCurrentWeekKey, ROLE_MULTIPLIERS, isEventStaffMember, scheduleEventLevelUpMessage, sendLevelUpMessage, sendLevelUpAnnouncement, getTopExpGainsInPeriod, getTopLevelGainsInPeriod, PERIOD_LOOKBACK_DAYS };

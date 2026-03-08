@@ -1,7 +1,8 @@
 const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { ExpUser } = require("../../Schemas/Community/communitySchemas");
-const{getLevelInfo,getTotalExpForLevel,recordLevelHistory,setLevelChannelLocked,setRoleIgnored,getGuildExpSettings,setTemporaryEventMultiplier,setGlobalMultiplier,syncLevelRolesForMember,}=require("../../Services/Community/expService");
+const { getLevelInfo, getTotalExpForLevel, recordLevelHistory, setLevelChannelLocked, setRoleIgnored, getGuildExpSettings, setTemporaryEventMultiplier, setGlobalMultiplier, syncLevelRolesForMember, sendLevelUpAnnouncement } = require("../../Services/Community/expService");
+const { getGuildMemberCached } = require("../../Utils/Interaction/interactionEntityCache");
 
 async function resolveTargetUser(message, raw) {
   const fromMention = message.mentions?.users?.first();
@@ -260,6 +261,13 @@ module.exports = {
       afterExp: doc.totalExp,
       note: `Comando +level ${sub}`,
     });
+
+    if (doc.level > beforeLevel) {
+      const member = message.guild.members.cache.get(target.id) || await getGuildMemberCached(message.guild, target.id).catch(() => null);
+      if (member) {
+        await sendLevelUpAnnouncement(message.guild, member, doc.level).catch(() => {});
+      }
+    }
 
     const lines=[`- Utente: <@${target.id}>`,
       `-Azione:**${sub}**`,

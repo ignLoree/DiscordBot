@@ -2831,15 +2831,13 @@ function buildGuessAlbumEmbed(rewardExp, durationMs, imageUrlOrAttachment) {
 }
 
 const CENSORED_ARTWORK_MAX_SIDE = 600;
-const CENSOR_BOTTOM_RATIO = 0.52;
-const CENSOR_CENTER_TOP = 0.15;
-const CENSOR_CENTER_BOTTOM = 0.85;
+const CENSOR_MAX_BLUR_PX = 55;
 const CENSOR_STEP_INTERVAL_MS = 60 * 1000;
 
 /**
- * Carica l'artwork e applica overlay di censura con opacità variabile (0 = immagine pulita, 1 = massima censura).
+ * Carica l'artwork e applica blur reale su tutta la copertina (0 = nitida, 1 = massimo blur).
  * @param {string} imageUrl - URL dell'immagine
- * @param {{ attachmentName?: string, overlayAlpha?: number }} [opts] - overlayAlpha in [0,1], 0 = nessun overlay
+ * @param {{ attachmentName?: string, overlayAlpha?: number }} [opts] - overlayAlpha in [0,1]: 0 = nessun blur, 1 = blur massimo
  * @returns {Promise<{ buffer: Buffer, attachmentName: string } | null>}
  */
 async function censorArtworkImage(imageUrl, opts = {}) {
@@ -2867,14 +2865,13 @@ async function censorArtworkImage(imageUrl, opts = {}) {
 
     const canvas = createCanvas(w, h);
     const ctx = canvas.getContext("2d");
-    ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, w, h);
 
     if (overlayAlpha > 0) {
-      const alpha = Math.min(1, overlayAlpha);
-      ctx.fillStyle = `rgba(0,0,0,${alpha})`;
-      ctx.fillRect(0, h * (1 - CENSOR_BOTTOM_RATIO), w, h * CENSOR_BOTTOM_RATIO);
-      ctx.fillRect(0, h * CENSOR_CENTER_TOP, w, h * (CENSOR_CENTER_BOTTOM - CENSOR_CENTER_TOP));
+      const blurPx = (Math.min(w, h) / 400) * CENSOR_MAX_BLUR_PX * overlayAlpha;
+      ctx.filter = `blur(${Math.max(1, Math.round(blurPx))}px)`;
     }
+    ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, w, h);
+    ctx.filter = "none";
 
     const attachmentName = opts?.attachmentName || "minigame_artwork.png";
     return { buffer: canvas.toBuffer("image/png"), attachmentName };
