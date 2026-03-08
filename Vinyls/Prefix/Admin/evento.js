@@ -72,7 +72,7 @@ module.exports = {
     if (!guildId) return;
 
     if (!sub || !["start", "stop", "info", "assegna-ruoli", "reset-premi", "classifica", "staff"].includes(sub)) {
-      const usage = new EmbedBuilder().setColor("#6f4e37").setTitle("Comando evento").setDescription(["`+evento start` – Avvia l’evento Activity EXP.", "`+evento stop` – Termina l’evento e ripristina i moltiplicatori.", "`+evento info` – Mostra stato e configurazione evento.", "`+evento assegna-ruoli` – Assegna i livelli a chi ha già Supporter/Verificato/Guilded (evento attivo).", "`+evento reset-premi` – Cancella i premi già registrati e riassegna a tutti (senza annuncio).", "`+evento classifica` – Classifica per settimana.", "`+evento classifica staff` – Classifica punti evento staff.", "`+evento staff start|stop|addpoints` – Gestione evento staff.",].join("\n"),);
+      const usage = new EmbedBuilder().setColor("#6f4e37").setTitle("Comando evento").setDescription(["`+evento start` – Avvia l’evento Activity EXP.", "`+evento stop` – Termina l’evento e ripristina i moltiplicatori.", "`+evento info` – Mostra stato e configurazione evento.", "`+evento assegna-ruoli` – Assegna i livelli a chi ha già Supporter/Verificato/Guilded/Promoter/Propulsor/Catalyst (evento attivo).", "`+evento reset-premi` – Cancella i premi già registrati e riassegna a tutti (senza annuncio).", "`+evento classifica` – Classifica per settimana.", "`+evento classifica staff` – Classifica punti evento staff.", "`+evento staff start|stop|addpoints` – Gestione evento staff.",].join("\n"),);
       await safeMessageReply(message, {
         embeds: [usage],
         allowedMentions: { repliedUser: false },

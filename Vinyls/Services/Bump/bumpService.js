@@ -202,7 +202,7 @@ function buildVoteReminderEmbed(client) {
     });
 
   const components = [];
-  const VOTE_URL = client?.config?.discadiaVoteReminder?.voteUrl;
+  const VOTE_URL = client?.config?.discadiaVoteReminder?.voteUrl || IDs.links?.vote;
   if (VOTE_URL) {
     components.push(
       new ActionRowBuilder().addComponents(

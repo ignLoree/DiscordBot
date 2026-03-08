@@ -80,8 +80,8 @@ async function sendEventRewardDm(client, userId, guildId, data) {
   const roleId = data?.roleId ? String(data.roleId) : null;
   const week = data?.week != null && Number.isFinite(Number(data.week)) ? Number(data.week) : null;
 
-  const eventName = "<a:VC_Events:1448688007438667796> Activity EXP Event";
-  const lines = [`<:VC_EXP:1468714279673925883> Per **${label}**nell '${eventName} ti è stato assegnato:`, "",];
+  const eventName = "Activity EXP Event";
+  const lines = [`<:VC_EXP:1468714279673925883> Per **${label}** nell'${eventName} ti è stato assegnato:`, "",];
   if (levels != null && levels > 0) {
     lines.push(`<:VC_EXP:1468714279673925883> **+${levels} livelli** al tuo contatore EXP.`, "");
   }

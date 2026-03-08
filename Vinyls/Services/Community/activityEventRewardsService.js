@@ -207,6 +207,15 @@ async function grantEventRewardsForExistingRoleMembers(guild) {
   const verificatoId = IDs.roles.Verificato;
   const verificataId = IDs.roles.Verificata;
   const guildedId = IDs.roles.Guilded;
+  const promoterId = IDs.roles.Promoter;
+  const propulsorId = IDs.roles.Propulsor;
+  const catalystId = IDs.roles.Catalyst;
+  const inviteTiers = [
+    { roleId: catalystId, target: 100, levels: 25 },
+    { roleId: propulsorId, target: 25, levels: 10 },
+    { roleId: promoterId, target: 5, levels: 5 },
+  ].filter((t) => t.roleId);
+
   for (const [, member] of membersToIterate) {
     if (!member?.user?.id) continue;
     if (supporterId && member.roles.cache.has(supporterId)) {
@@ -231,6 +240,16 @@ async function grantEventRewardsForExistingRoleMembers(guild) {
     if (guildedId && member.roles.cache.has(guildedId)) {
       await grantEventRewardOnce(guild.id, member.id, "guilded", {
         levels: 10,
+        member,
+        clientOrGuild: guild,
+        suppressSkipLog: true,
+      }).catch(() => null);
+    }
+    const highestInviteTier = inviteTiers.find((t) => member.roles.cache.has(t.roleId));
+    if (highestInviteTier) {
+      await grantEventRewardOnce(guild.id, member.id, "invite", {
+        levels: highestInviteTier.levels,
+        tier: highestInviteTier.target,
         member,
         clientOrGuild: guild,
         suppressSkipLog: true,
