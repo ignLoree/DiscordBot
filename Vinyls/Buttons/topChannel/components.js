@@ -12,6 +12,7 @@ const TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX = "stats_top_channel_page_last";
 const TOP_CHANNEL_PAGE_MODAL_CUSTOM_ID_PREFIX = "stats_top_channel_page_modal";
 const TOP_CHANNEL_PAGE_MODAL_INPUT_CUSTOM_ID = "stats_top_channel_page_modal_input";
 const TOP_VIEWS = ["overview", "message_users", "voice_users", "message_channels", "voice_channels", "invites_users", "exp_users", "level_users"];
+const ALL_TIME_VIEWS = new Set(["invites_users", "level_users"]);
 
 function normalizeLookbackDays(raw) {
   const parsed = Number(String(raw || "14").toLowerCase().replace(/d$/i, ""));
@@ -63,16 +64,21 @@ function buildTopChannelMainControlsRow(ownerId, lookbackDays, selectedView = "o
   const safeLookback = normalizeLookbackDays(lookbackDays);
   const safeView = normalizeTopView(selectedView);
   const safePage = normalizePage(page, 1);
-  return new ActionRowBuilder().addComponents(
+  const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(`${TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX}:${safeOwner}:${safeLookback}:${safeView}:${safePage}`)
       .setEmoji({ id: "1473359252276904203", name: "VC_Refresh" })
       .setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder()
-      .setCustomId(`${TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX}:${safeOwner}:${safeLookback}:${safeView}:${safePage}`)
-      .setEmoji({ id: "1473359204189474886", name: "VC_Clock" })
-      .setStyle(ButtonStyle.Secondary),
   );
+  if (!ALL_TIME_VIEWS.has(safeView)) {
+    row.addComponents(
+      new ButtonBuilder()
+        .setCustomId(`${TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX}:${safeOwner}:${safeLookback}:${safeView}:${safePage}`)
+        .setEmoji({ id: "1473359204189474886", name: "VC_Clock" })
+        .setStyle(ButtonStyle.Secondary),
+    );
+  }
+  return row;
 }
 
 function buildTopChannelPeriodControlsRows(ownerId, lookbackDays, selectedView = "overview", page = 1) {
@@ -149,11 +155,12 @@ function buildTopChannelPaginationRow(ownerId, lookbackDays, selectedView, page,
 function buildTopChannelComponents(ownerId, lookbackDays, controlsView = "main", selectedView = "overview", page = 1, totalPages = 1) {
   const safeView = normalizeTopView(selectedView);
   const safeControls = normalizeControlsView(controlsView);
+  const effectiveControls = ALL_TIME_VIEWS.has(safeView) ? "main" : safeControls;
   const rows = [buildTopChannelSelectRow(ownerId, lookbackDays, safeView)];
   if (safeView !== "overview") {
-    rows.push(buildTopChannelPaginationRow(ownerId, lookbackDays, safeView, page, totalPages, safeControls));
+    rows.push(buildTopChannelPaginationRow(ownerId, lookbackDays, safeView, page, totalPages, effectiveControls));
   }
-  if (safeControls !== "period") {
+  if (effectiveControls !== "period") {
     rows.push(buildTopChannelMainControlsRow(ownerId, lookbackDays, safeView, page));
   } else {
     rows.push(...buildTopChannelPeriodControlsRows(ownerId, lookbackDays, safeView, page));

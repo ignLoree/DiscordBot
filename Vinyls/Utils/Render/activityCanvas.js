@@ -1052,7 +1052,7 @@ async function drawTopRowsColumn(ctx, rows, { x, y, w, rankStart = 1, unit = "ms
   }
 }
 
-async function renderTopLeaderboardPageCanvas({ guildName, guildIconUrl, lookbackDays = 14, title = "Top Statistics", page = 1, totalPages = 1, rows = [], unit = "msg", mode = "messages" }) {
+async function renderTopLeaderboardPageCanvas({ guildName, guildIconUrl, lookbackDays = 14, title = "Top Statistics", page = 1, totalPages = 1, rows = [], unit = "msg", mode = "messages", allTime = false }) {
   registerCanvasFonts(getCanvasModule());
   const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays)) ? Number(lookbackDays) : 14;
   const safePage = Math.max(1, Number(page || 1));
@@ -1149,18 +1149,14 @@ async function renderTopLeaderboardPageCanvas({ guildName, guildIconUrl, lookbac
     });
   }
 
-  drawLabel(
-    ctx,
-    `Page ${safePage}/${safeTotalPages} | Lookback: Last ${safeLookback} days | Timezone: Europe/Rome`,
-    24,
-    footerY,
-    {
-      size: 20,
-      weight: "700",
-      color: "#cfd6e2",
-      forcePrimaryFont: true,
-    },
-  );
+  drawLabel(ctx, allTime
+    ? `Page ${safePage}/${safeTotalPages} | All-time | Timezone: Europe/Rome`
+    : `Page ${safePage}/${safeTotalPages} | Lookback: Last ${safeLookback} days | Timezone: Europe/Rome`, 24, footerY, {
+    size: 20,
+    weight: "700",
+    color: "#cfd6e2",
+    forcePrimaryFont: true,
+  });
 
   return canvas.toBuffer("image/png");
 }

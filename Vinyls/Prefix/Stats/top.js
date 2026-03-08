@@ -3,10 +3,10 @@ const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const IDs = require("../../Utils/Config/ids");
 const { getServerOverviewStats } = require("../../Services/Community/activityService");
 const { InviteTrack, ExpUser } = require("../../Schemas/Community/communitySchemas");
-const { getLevelInfo, getTopExpGainsInPeriod, getTopLevelGainsInPeriod, PERIOD_LOOKBACK_DAYS } = require("../../Services/Community/expService");
+const { getLevelInfo, getTopExpGainsInPeriod, PERIOD_LOOKBACK_DAYS } = require("../../Services/Community/expService");
 const { renderTopStatisticsCanvas, renderTopLeaderboardPageCanvas } = require("../../Utils/Render/activityCanvas");
 const { upsertChannelSnapshot, syncGuildChannelSnapshots, getChannelSnapshotMap } = require("../../Utils/Community/channelSnapshotUtils");
-const { getGuildMemberCached, getUserCached } = require("../../Utils/Interaction/interactionEntityCache");
+const { getGuildMemberCached } = require("../../Utils/Interaction/interactionEntityCache");
 const topComponents = require("../../Buttons/topChannel/components");
 
 const TOP_CHANNEL_DIRECT_CHANNEL_IDS = new Set([IDs.channels.commands, IDs.channels.staffCmds, IDs.channels.highCmds].filter(Boolean).map(String));
@@ -37,6 +37,7 @@ const TOP_SOURCE_CACHE_TTL_MS = 45 * 1000;
 const SNAPSHOT_SYNC_INTERVAL_MS = 10 * 60 * 1000;
 const topSourceCache = new Map();
 const snapshotSyncByGuild = new Map();
+const ALL_TIME_TOP_VIEWS = new Set(["invites_users", "level_users"]);
 
 function normalizeCanvasLabel(value, fallback) {
   const text=String(value||"").replace(/\s+/g," ").trim();
@@ -51,11 +52,17 @@ async function resolveDisplayName(guild, userId) {
   if (cachedMember) return cachedMember.displayName;
   const fetchedMember = await getGuildMemberCached(guild, userId);
   if (fetchedMember) return fetchedMember.displayName;
-  const cachedUser = guild.client.users.cache.get(userId);
-  if (cachedUser) return cachedUser.username;
-  const fetchedUser = await getUserCached(guild.client, userId);
-  if (fetchedUser) return fetchedUser.username;
   return `utente_${String(userId).slice(-6)}`;
+}
+
+async function resolveActiveHumanMember(guild, userId) {
+  const safeId = String(userId || "").trim();
+  if (!safeId) return null;
+  const cached = guild.members.cache.get(safeId);
+  if (cached) return cached.user?.bot ? null : cached;
+  const fetched = await getGuildMemberCached(guild, safeId);
+  if (!fetched) return null;
+  return fetched.user?.bot ? null : fetched;
 }
 
 function isTextChannelUnderVoiceCategory(guild, channel) {
@@ -90,6 +97,8 @@ async function resolveTopUserEntries(guild, entries = []) {
   const out = [];
   for (const item of entries) {
     const userId = String(item?.id || "");
+    const member = await resolveActiveHumanMember(guild, userId);
+    if (!member) continue;
     const rawDisplayName = await resolveDisplayName(guild, userId);
     out.push({
       id: userId,
@@ -98,20 +107,6 @@ async function resolveTopUserEntries(guild, entries = []) {
     });
   }
   return out;
-}
-
-async function isBotUser(guild, userId) {
-  const memberCached = guild.members.cache.get(userId);
-  if (memberCached) return Boolean(memberCached.user?.bot);
-
-  const memberFetched = await getGuildMemberCached(guild, userId);
-  if (memberFetched) return Boolean(memberFetched.user?.bot);
-
-  const userCached = guild.client.users.cache.get(userId);
-  if (userCached) return Boolean(userCached.bot);
-
-  const userFetched = await getUserCached(guild.client, userId);
-  return Boolean(userFetched?.bot);
 }
 
 async function resolveTopInviteEntries(
@@ -165,8 +160,8 @@ async function resolveTopInviteEntries(
   const out = [];
   for (const userId of inviterIds) {
     if (!userId) continue;
-    const bot = await isBotUser(guild, userId);
-    if (bot) continue;
+    const member = await resolveActiveHumanMember(guild, userId);
+    if (!member) continue;
 
     const trackedTotal = Number(trackedByInviter.get(userId) || 0);
     const liveUses = Number(liveUsesByInviter.get(userId) || 0);
@@ -197,8 +192,8 @@ async function resolveTopExpEntries(guild, guildId, lookbackDays, limit = TOP_PA
     for (const item of periodEntries) {
       const userId = String(item?.userId || "").trim();
       if (!userId) continue;
-      const bot = await isBotUser(guild, userId);
-      if (bot) continue;
+      const member = await resolveActiveHumanMember(guild, userId);
+      if (!member) continue;
       const rawDisplayName = await resolveDisplayName(guild, userId);
       out.push({
         id: userId,
@@ -220,8 +215,8 @@ async function resolveTopExpEntries(guild, guildId, lookbackDays, limit = TOP_PA
   for (const doc of docs) {
     const userId = String(doc?.userId || "").trim();
     if (!userId) continue;
-    const bot = await isBotUser(guild, userId);
-    if (bot) continue;
+    const member = await resolveActiveHumanMember(guild, userId);
+    if (!member) continue;
     const rawDisplayName = await resolveDisplayName(guild, userId);
     out.push({
       id: userId,
@@ -233,30 +228,10 @@ async function resolveTopExpEntries(guild, guildId, lookbackDays, limit = TOP_PA
   return out;
 }
 
-async function resolveTopLevelEntries(guild, guildId, lookbackDays, limit = TOP_PAGE_DATA_LIMIT) {
+async function resolveTopLevelEntries(guild, guildId, _lookbackDays, limit = TOP_PAGE_DATA_LIMIT) {
   const safeGuildId = String(guildId || "").trim();
   if (!safeGuildId) return [];
   const safeLimit = Math.max(1, Math.min(TOP_PAGE_DATA_LIMIT, Number(limit || TOP_PAGE_DATA_LIMIT)));
-  const usePeriod = PERIOD_LOOKBACK_DAYS.includes(Number(lookbackDays));
-
-  if (usePeriod) {
-    const periodEntries = await getTopLevelGainsInPeriod(safeGuildId, lookbackDays, safeLimit * 2);
-    const out = [];
-    for (const item of periodEntries) {
-      const userId = String(item?.userId || "").trim();
-      if (!userId) continue;
-      const bot = await isBotUser(guild, userId);
-      if (bot) continue;
-      const rawDisplayName = await resolveDisplayName(guild, userId);
-      out.push({
-        id: userId,
-        label: normalizeCanvasLabel(rawDisplayName, `utente_${userId.slice(-6)}`),
-        value: Math.max(0, Number(item?.levelGain || 0)),
-      });
-      if (out.length >= safeLimit) break;
-    }
-    if (out.length > 0) return out;
-  }
 
   const docs = await ExpUser.find({ guildId: safeGuildId })
     .sort({ totalExp: -1 })
@@ -272,8 +247,8 @@ async function resolveTopLevelEntries(guild, guildId, lookbackDays, limit = TOP_
   const out = [];
   for (const item of withLevel.slice(0, safeLimit)) {
     const userId = item.userId;
-    const bot = await isBotUser(guild, userId);
-    if (bot) continue;
+    const member = await resolveActiveHumanMember(guild, userId);
+    if (!member) continue;
     const rawDisplayName = await resolveDisplayName(guild, userId);
     out.push({
       id: userId,
@@ -402,7 +377,7 @@ function resolveViewConfig(selectedView, source, lookbackDays = 14) {
   }
   if (safeView === "invites_users") {
     return {
-      title: "Invites User",
+      title: "Invites User (all-time)",
       rows: source.topUsersInvites,
       unit: "invites",
       mode: "messages",
@@ -418,7 +393,7 @@ function resolveViewConfig(selectedView, source, lookbackDays = 14) {
   }
   if (safeView === "level_users") {
     return {
-      title: "Top Livelli" + periodSuffix,
+      title: "Top Livelli (all-time)",
       rows: source.topUsersLevel || [],
       unit: "livello",
       mode: "messages",
@@ -454,10 +429,12 @@ async function buildTopChannelPayload(
   const safeLookback = normalizeLookbackDays(lookbackDays);
   const safeView = normalizeTopView(selectedView);
   const safeControls = normalizeControlsView(controlsView);
-  const source = await getTopSource(message.guild, safeLookback);
+  const effectiveLookback = ALL_TIME_TOP_VIEWS.has(safeView) ? 14 : safeLookback;
+  const effectiveControls = ALL_TIME_TOP_VIEWS.has(safeView) ? "main" : safeControls;
+  const source = await getTopSource(message.guild, effectiveLookback);
 
   const isOverview = safeView === "overview";
-  const viewConfig = !isOverview ? resolveViewConfig(safeView, source, safeLookback) : null;
+  const viewConfig = !isOverview ? resolveViewConfig(safeView, source, effectiveLookback) : null;
   const totalItems = viewConfig ? viewConfig.rows.length : 0;
   const totalPages = isOverview ? 1 : Math.max(1, Math.ceil(totalItems / 10));
   const safePage = Math.min(Math.max(1, normalizePage(page, 1)), totalPages);
@@ -472,20 +449,21 @@ async function buildTopChannelPayload(
       buffer = await renderTopStatisticsCanvas({
         guildName: message.guild?.name || "Server",
         guildIconUrl: message.guild?.iconURL?.({ extension: "png", size: 256 }),
-        lookbackDays: safeLookback,
+        lookbackDays: effectiveLookback,
         ...source,
       });
     } else {
       buffer = await renderTopLeaderboardPageCanvas({
         guildName: message.guild?.name || "Server",
         guildIconUrl: message.guild?.iconURL?.({ extension: "png", size: 256 }),
-        lookbackDays: safeLookback,
+        lookbackDays: effectiveLookback,
         title: viewConfig.title,
         page: safePage,
         totalPages,
         rows: pageRows,
         unit: viewConfig.unit,
         mode: viewConfig.mode,
+        allTime: ALL_TIME_TOP_VIEWS.has(safeView),
       });
     }
 
@@ -495,16 +473,16 @@ async function buildTopChannelPayload(
       content: null,
       components: buildTopChannelComponents(
         ownerId,
-        safeLookback,
-        safeControls,
+        effectiveLookback,
+        effectiveControls,
         safeView,
         safePage,
         totalPages,
       ),
       meta: {
-        lookbackDays: safeLookback,
+        lookbackDays: effectiveLookback,
         selectedView: safeView,
-        controlsView: safeControls,
+        controlsView: effectiveControls,
         page: safePage,
         totalPages,
       },
@@ -517,16 +495,16 @@ async function buildTopChannelPayload(
         "<:vegax:1443934876440068179> Non sono riuscito a generare l'immagine top.",
       components: buildTopChannelComponents(
         ownerId,
-        safeLookback,
-        safeControls,
+        effectiveLookback,
+        effectiveControls,
         safeView,
         safePage,
         totalPages,
       ),
       meta: {
-        lookbackDays: safeLookback,
+        lookbackDays: effectiveLookback,
         selectedView: safeView,
-        controlsView: safeControls,
+        controlsView: effectiveControls,
         page: safePage,
         totalPages,
       },

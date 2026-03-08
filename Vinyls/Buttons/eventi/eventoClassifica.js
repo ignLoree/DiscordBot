@@ -92,8 +92,9 @@ async function filterNonStaffTop(guild, list, limit = 10) {
     const userId = String(item?.userId ?? item?.user ?? "");
     if (!userId) continue;
     const member = guild.members.cache.get(userId) || (await guild.members.fetch(userId).catch(() => null));
-    if (member && isEventStaffMember(member)) continue;
-    out.push(item);
+    if (!member) continue;
+    if (isEventStaffMember(member)) continue;
+    out.push({ ...item, userId });
   }
   return out;
 }

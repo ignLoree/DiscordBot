@@ -185,7 +185,7 @@ async function computeLeaderboardRows(guild, mode = "alltime") {
       })
       .filter((entry) => entry.userId && entry.exp > 0)
       .sort((a, b) => b.exp - a.exp)
-      .slice(0, TOP_LIMIT);
+      .slice(0, TOP_LIMIT * 5);
 
     leaderboardCache.set(key, {
       rows,
@@ -224,7 +224,7 @@ async function computeLeaderboardRows(guild, mode = "alltime") {
     perUser.set(userId, current);
   }
 
-  const rows = Array.from(perUser.values()).map((entry) => { const baseExpFromText = entry.textCount * MESSAGE_EXP; const baseExpFromVoice = Math.floor((entry.voiceSeconds * VOICE_EXP_PER_MINUTE) / 60,); const exp = Math.max(0, Math.floor(baseExpFromText + baseExpFromVoice)); return { userId: entry.userId, exp, level: getLevelInfo(exp).level, }; }).filter((entry) => entry.exp > 0).sort((a, b) => b.exp - a.exp).slice(0, TOP_LIMIT); if (mode === "alltime" && rows.length > 0) {
+  const rows = Array.from(perUser.values()).map((entry) => { const baseExpFromText = entry.textCount * MESSAGE_EXP; const baseExpFromVoice = Math.floor((entry.voiceSeconds * VOICE_EXP_PER_MINUTE) / 60,); const exp = Math.max(0, Math.floor(baseExpFromText + baseExpFromVoice)); return { userId: entry.userId, exp, level: getLevelInfo(exp).level, }; }).filter((entry) => entry.exp > 0).sort((a, b) => b.exp - a.exp).slice(0, TOP_LIMIT * 5); if (mode === "alltime" && rows.length > 0) {
     const userIds = rows.map((r) => r.userId);
     const expUsers = await ExpUser.find({ guildId: guild.id, userId: { $in: userIds }, }).select("userId totalExp level").lean();
     const expByUser = new Map(expUsers.map((d) => [String(d.userId), { totalExp: Number(d.totalExp || 0), level: Number(d.level || 0) }]),);
@@ -244,8 +244,9 @@ async function computeLeaderboardRows(guild, mode = "alltime") {
 }
 
 async function buildWeeklyEmbed(message) {
-  const rows = await computeLeaderboardRows(message.guild, "weekly");
-  const members = await fetchMembers(message.guild, rows.map((r) => r.userId),);
+  const candidateRows = await computeLeaderboardRows(message.guild, "weekly");
+  const members = await fetchMembers(message.guild, candidateRows.map((r) => r.userId),);
+  const rows = candidateRows.filter((row) => members.has(row.userId)).slice(0, TOP_LIMIT);
   const lines = [];
   rows.forEach((row, index) => {
     const member = members.get(row.userId);
@@ -279,8 +280,9 @@ async function buildWeeklyEmbed(message) {
 }
 
 async function buildAllTimeEmbed(message) {
-  const rows = await computeLeaderboardRows(message.guild, "alltime");
-  const members = await fetchMembers(message.guild, rows.map((r) => r.userId),);
+  const candidateRows = await computeLeaderboardRows(message.guild, "alltime");
+  const members = await fetchMembers(message.guild, candidateRows.map((r) => r.userId),);
+  const rows = candidateRows.filter((row) => members.has(row.userId)).slice(0, TOP_LIMIT);
   const lines = [];
   rows.forEach((row, index) => {
     const member = members.get(row.userId);
