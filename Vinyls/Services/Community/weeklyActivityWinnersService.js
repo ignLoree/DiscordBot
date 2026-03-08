@@ -7,6 +7,7 @@ const { giveWeekly20PointsIfEligible, getStaffEventLeaderboard, isStaffButNotHig
 const { sendEventRewardLog, sendEventRewardDm } = require("./eventRewardLogService");
 const { isEventStaffMember } = require("./expService");
 const IDs = require("../../Utils/Config/ids");
+const { isChannelInTicketCategory } = require("../../Utils/Ticket/ticketCategoryUtils");
 const TIME_ZONE = "Europe/Rome";
 const TARGET_CHANNEL_ID = IDs.channels.topWeeklyUser;
 const NEWS_CHANNEL_ID = IDs.channels.news;
@@ -181,10 +182,17 @@ async function resolveMemberRole(guild) {
 async function getEligibleChannelSets(guild) {
   const role = await resolveMemberRole(guild);
   if (!role) return { text: new Set(), voice: new Set() };
+  const excludedChannelIds = new Set(
+    [IDs.channels?.ticket, IDs.channels?.ticketLogs]
+      .filter(Boolean)
+      .map((id) => String(id)),
+  );
 
   const text = new Set();
   const voice = new Set();
   for (const channel of guild.channels.cache.values()) {
+    if (excludedChannelIds.has(String(channel?.id || ""))) continue;
+    if (isChannelInTicketCategory(channel)) continue;
     const perms = channel?.permissionsFor?.(role);
     if (!perms?.has("ViewChannel")) continue;
     if (perms.has("SendMessages")) text.add(String(channel.id));

@@ -3,7 +3,7 @@ const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { ActivityDaily, ActivityUser, ExpUser } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");
 const { MESSAGE_EXP, VOICE_EXP_PER_MINUTE, getLevelInfo, } = require("../../Services/Community/expService");
-
+const { isChannelInTicketCategory } = require("../../Utils/Ticket/ticketCategoryUtils");
 const TOP_LIMIT = 10;
 const LEADERBOARD_CHANNEL_ID = IDs.channels.commands;
 const TIME_ZONE = "Europe/Rome";
@@ -133,8 +133,15 @@ function extractChannelEntries(raw) {
 async function getEligibleChannelIdSet(guild) {
   const role = await resolveMemberRole(guild);
   if (!role) return new Set();
+  const excludedChannelIds = new Set(
+    [IDs.channels?.ticket, IDs.channels?.ticketLogs]
+      .filter(Boolean)
+      .map((id) => String(id)),
+  );
   const set = new Set();
   for (const channel of guild.channels.cache.values()) {
+    if (excludedChannelIds.has(String(channel?.id || ""))) continue;
+    if (isChannelInTicketCategory(channel)) continue;
     const perms = channel?.permissionsFor?.(role);
     if (!perms?.has("ViewChannel")) continue;
     if (perms.has("SendMessages") || perms.has("Connect")) {
@@ -246,7 +253,7 @@ async function buildWeeklyEmbed(message) {
     const exp = Number(row.exp || 0);
     lines.push(`${rankLabel(index)} ${label}`);
     lines.push(
-      `<:VC_Reply:1468262952934314131> __${exp}__ EXP`,
+      `<:VC_Reply:1468262952934314131> __${exp}__ EXP <:VC_EXP:1468714279673925883>`,
     );
   });
 

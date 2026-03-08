@@ -1,10 +1,23 @@
 const { ActivityUser, ActivityDaily, ActivityHourly, } = require("../../Schemas/Community/communitySchemas");
 const { addExpWithLevel, MESSAGE_EXP, VOICE_EXP_PER_MINUTE, shouldIgnoreExpForMember, } = require("./expService");
+const IDs = require("../../Utils/Config/ids");
+const { isChannelInTicketCategory } = require("../../Utils/Ticket/ticketCategoryUtils");
 const TIME_ZONE = "Europe/Rome";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const BACKFILL_HOUR_SUFFIX = "T12";
 const HOURLY_BACKFILL_BATCH = 500;
 const hourlyBackfillByGuild = new Map();
+const EXCLUDED_ACTIVITY_CHANNEL_IDS = new Set(
+  [IDs.channels?.ticket, IDs.channels?.ticketLogs]
+    .filter(Boolean)
+    .map((id) => String(id)),
+);
+
+function isExcludedActivityChannel(channelLike) {
+  const channelId = String(channelLike?.id || channelLike?.channelId || "");
+  if (channelId && EXCLUDED_ACTIVITY_CHANNEL_IDS.has(channelId)) return true;
+  return isChannelInTicketCategory(channelLike);
+}
 
 function pad2(value) {
   return String(value).padStart(2, "0");
@@ -253,6 +266,7 @@ async function getOrCreateActivityUser(guildId, userId) {
 
 async function recordMessageActivity(message) {
   if (!message?.guild || !message.author || message.author.bot) return;
+  if (isExcludedActivityChannel(message.channel)) return;
   const now = new Date();
   const doc = await getOrCreateActivityUser(message.guild.id, message.author.id,);
   ensureMessageKeys(doc, now);
@@ -303,6 +317,8 @@ async function recordVoiceSessionEnd(doc, now, guild, skipExp = false) {
 
 function isCountableVoiceState(state) {
   if (!state?.channelId) return false;
+  const channel = state.channel || state?.guild?.channels?.cache?.get(state.channelId);
+  if (isExcludedActivityChannel(channel || state)) return false;
 
   if (state.selfMute && state.selfDeaf) return false;
   return true;
