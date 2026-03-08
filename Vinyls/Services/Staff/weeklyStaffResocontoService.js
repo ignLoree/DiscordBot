@@ -8,6 +8,12 @@ const { getClientGuildCached, getGuildChannelCached, getGuildMemberCached, } = r
 const TIME_ZONE = "Europe/Rome";
 const STAFF_ACTIVITY_LIMITS = { [String(IDs.roles.Helper)]: { messages: 400, hours: 3.5 }, [String(IDs.roles.Mod)]: { messages: 500, hours: 5 }, [String(IDs.roles.Coordinator)]: { messages: 500, hours: 4.5 }, [String(IDs.roles.Supervisor)]: { messages: 450, hours: 4 }, };
 const STAFF_ROLE_PRIORITY = [String(IDs.roles.Supervisor), String(IDs.roles.Coordinator), String(IDs.roles.Mod), String(IDs.roles.Helper),];
+const ROLE_UP = {
+  [String(IDs.roles.Member || "")]: String(IDs.roles.Helper),
+  [String(IDs.roles.Helper)]: String(IDs.roles.Mod),
+  [String(IDs.roles.Mod)]: String(IDs.roles.Coordinator),
+  [String(IDs.roles.Coordinator)]: String(IDs.roles.Supervisor),
+};
 
 let weeklyStaffResocontoTask = null;
 
@@ -137,8 +143,11 @@ function wasPexedInWeek(staffDoc, weekStart) {
     const when = row?.date ? new Date(row.date) : null;
     if (!when || Number.isNaN(when.getTime())) return false;
     if (when.getTime() < weekStartMs) return false;
-    const reason = String(row?.reason || "").toLowerCase();
-    return reason.includes("pex");
+    const oldRole = String(row?.oldRole || "");
+    const newRole = String(row?.newRole || "");
+    const isPromotion = oldRole && newRole && ROLE_UP[oldRole] === newRole;
+    const reasonHasPex = String(row?.reason || "").toLowerCase().includes("pex");
+    return isPromotion || reasonHasPex;
   });
 }
 
@@ -172,7 +181,21 @@ function computeStaffAction(activityGrade, behaviorGrade, pexedInWeek) {
   return "Nulla";
 }
 
-function computePmAction(weeklyPartners) {
+function wasPmPexedInWeek(staffDoc, weekStart) {
+  const history = Array.isArray(staffDoc?.rolesHistory) ? staffDoc.rolesHistory : [];
+  const weekStartMs = Number(weekStart.getTime());
+  const pmRoleId = String(IDs.roles.PartnerManager || "");
+  if (!pmRoleId) return false;
+  return history.some((row) => {
+    const when = row?.date ? new Date(row.date) : null;
+    if (!when || Number.isNaN(when.getTime())) return false;
+    if (when.getTime() < weekStartMs) return false;
+    return String(row?.newRole || "") === pmRoleId;
+  });
+}
+
+function computePmAction(weeklyPartners, pmPexedInWeek) {
+  if (pmPexedInWeek) return "Nulla";
   const partners = Math.max(0, Math.floor(toSafeNumber(weeklyPartners)));
   if (partners <= 5) return "Depex";
   if (partners <= 10) return "Richiamo";
@@ -337,7 +360,8 @@ async function runWeeklyStaffResoconti(client) {
     if (member.roles.cache.has(String(IDs.roles.PartnerManager))) {
       const pmWindow = getPmResocontoWindow(new Date());
       const weeklyPartners = countPmWeeklyPartners(staffDoc, pmWindow.weekStart, pmWindow.weekEnd,);
-      const action = computePmAction(weeklyPartners);
+      const pmPexedInWeek = wasPmPexedInWeek(staffDoc, pmWindow.weekStart);
+      const action = computePmAction(weeklyPartners, pmPexedInWeek);
 
       await channel
         .send({
