@@ -367,6 +367,22 @@ module.exports = {
             .setDescription("Specifica il motivo del warn.")
             .setRequired(true),
         ),
+    )
+    .addSubcommand((command) =>
+      command.setName("comandi").setDescription("Elenco comandi staff in un unico posto."),
+    )
+    .addSubcommand((command) =>
+      command.setName("runbook").setDescription("Procedure per emergenze (raid, bot down, ecc.)."),
+    )
+    .addSubcommand((command) =>
+      command
+        .setName("checklist")
+        .setDescription("Checklist onboarding nuovo staff.")
+        .addUserOption((option) =>
+          option
+            .setName("utente")
+            .setDescription("Utente di cui mostrare lo stato (opzionale)."),
+        ),
     ),
 
   async execute(interaction) {
@@ -516,6 +532,74 @@ module.exports = {
         global.logger.error(err);
         return replyCommandError(interaction);
       }
+    }
+
+    if (sub === "comandi") {
+      const embed = new EmbedBuilder()
+        .setColor(SUCCESS_COLOR)
+        .setTitle("<:staff:1443651912179388548> Comandi staff – riepilogo")
+        .setDescription(
+          [
+            "**Slash (/**)**",
+            "• `/staff pex` – Promuovi uno staffer",
+            "• `/staff depex` – Depexa uno staffer",
+            "• `/staff warn` – Assegna un warn staff",
+            "• `/staff comandi` – Questo elenco",
+            "• `/staff runbook` – Procedure emergenze",
+            "• `/staff checklist` – Onboarding nuovo staff",
+            "",
+            "**Prefix (+)**",
+            "• `+level set/add/remove/reset` – Gestione EXP/livelli (Admin)",
+            "• `+level config/lock/unlock/ignore` – Configurazione level",
+            "• `+valutazione` – Valutazione positiva/negativa da resoconto",
+            "• `+modlogs [id]` – Log moderazione utente",
+            "• `+moderations [id]` – Sanzioni utente",
+            "• `+case [n]` – Dettaglio case",
+            `• \`+warn / +kick / +ban / +mute / +unmute\` – Moderazione (in <#${IDs.channels?.sanzioniUtenti || "1442569245878648924"}>)`,
+            "• `+duration / +reason` – Modifica durata/motivo case",
+            "",
+            `**Resoconto** – Ogni domenica in <#${IDs.channels?.resocontiStaff || "1442569270784692306"}>: applica Pex/Depex/Valutazioni dai thread.`,
+          ].join("\n"),
+        );
+      return safeEditReply(interaction, { embeds: [embed], flags: PRIVATE_FLAG });
+    }
+
+    if (sub === "runbook") {
+      const embed = new EmbedBuilder()
+        .setColor(0x3498db)
+        .setTitle("<a:VC_Alert:1448670089670037675> Runbook – Emergenze")
+        .setDescription(
+          [
+            "**Raid / flood** – Lock canali se necessario, segnalare in moderazione, coinvolgere High Staff.",
+            "**Bot non risponde** – Controllare canale errori, verificare processo, riavvio solo se autorizzato.",
+            "**Database / dati corrotti** – Non scrivere su DB, contattare gestore host/backup, restore se disponibile.",
+            "**Abuso / sospetto su staff** – Prove in DM a High Staff, nessuna discussione in pubblico.",
+            "**Canale/messaggio eliminato** – Audit log server e log bot se configurati.",
+          ].join("\n\n"),
+        );
+      return safeEditReply(interaction, { embeds: [embed], flags: PRIVATE_FLAG });
+    }
+
+    if (sub === "checklist") {
+      const targetUser = interaction.options.getUser("utente");
+      const checklistLines = [
+        "☐ Lettura completa guida staff (#guida-staff)",
+        "☐ Ruoli assegnati correttamente",
+        "☐ Accesso a canali staff e modLogs",
+        "☐ Primo ticket claimato o prima azione mod seguita",
+        "☐ Comandi base: +modlogs, +warn, +mute, +kick",
+        "☐ Resoconto (domenica, Pex/Depex/Valutazioni)",
+      ];
+      let description = "**Checklist onboarding**\n\n" + checklistLines.join("\n");
+      if (targetUser) {
+        const member = interaction.guild.members.cache.get(targetUser.id) || await interaction.guild.members.fetch(targetUser.id).catch(() => null);
+        const hasStaffRole = member && [ROLE_STAFF, ROLE_HELPER, ROLE_MODERATOR, ROLE_COORDINATOR, ROLE_SUPERVISOR].some((id) => member.roles.cache.has(id));
+        description += `\n\n**Stato per ${targetUser.username}:** Ruolo staff ${hasStaffRole ? "presente" : "da verificare"}. Completamento da verificare manualmente.`;
+      } else {
+        description += "\n\nUsa `/staff checklist @utente` per un promemoria su un neo-assunto.";
+      }
+      const embed = new EmbedBuilder().setColor(SUCCESS_COLOR).setTitle("<:staff:1443651912179388548> Onboarding staff").setDescription(description);
+      return safeEditReply(interaction, { embeds: [embed], flags: PRIVATE_FLAG });
     }
 
   },

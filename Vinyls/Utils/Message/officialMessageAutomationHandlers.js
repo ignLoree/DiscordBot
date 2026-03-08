@@ -551,7 +551,7 @@ async function handlePauseChannelMessage(message) {
   const rawStart = String(match[1] || "").trim();
   const rawEnd = String(match[2] || "").trim();
   const reason = String(match[3] || "").trim();
-  const result = await createPauseRequest({ guild: message.guild, userId: message.author.id, requesterMention: String(message.author), rawStart, rawEnd, reason, });
+  const result = await createPauseRequest({ guild: message.guild, userId: message.author.id, requesterMention: String(message.author), rawStart, rawEnd, reason, member: message.member, });
   if (!result.ok) {
     const warning = await message.channel.send({ content: `${message.author} <:vegax:1443934876440068179> ${result.error}` }).catch(() => null);
     await message.delete().catch(() => { });

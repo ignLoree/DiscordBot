@@ -119,6 +119,24 @@ async function sendValutazioneLogEmbed(guild, actor, targetUser, reason, positiv
   await channel.send({ content: `<@${targetUser.id}>`, embeds: [embed] }).catch(() => null);
 }
 
+async function applyAutomaticValutazione(guild, client, targetUser, positive, reason) {
+  if (!guild || !client?.user || !targetUser?.id) return;
+  const staffDoc = await getOrCreateStaffDoc(guild.id, targetUser.id);
+  const reasonStr = String(reason || "").trim() || (positive ? "Limite sanzioni settimanale completato" : "Limite sanzioni settimanale non completato");
+  staffDoc.valutazioniCount = Math.max(0, Number(staffDoc.valutazioniCount || 0)) + 1;
+  if (positive) {
+    staffDoc.positiveCount = Math.max(0, Number(staffDoc.positiveCount || 0)) + 1;
+    if (!Array.isArray(staffDoc.positiveReasons)) staffDoc.positiveReasons = [];
+    staffDoc.positiveReasons.push(reasonStr);
+  } else {
+    staffDoc.negativeCount = Math.max(0, Number(staffDoc.negativeCount || 0)) + 1;
+    if (!Array.isArray(staffDoc.negativeReasons)) staffDoc.negativeReasons = [];
+    staffDoc.negativeReasons.push(reasonStr);
+  }
+  await staffDoc.save();
+  await sendValutazioneLogEmbed(guild, client.user, targetUser, reasonStr, positive);
+}
+
 async function applyPexSideEffects(guild, member, roleId) {
   if (roleId === ROLE_HELPER) {
     return ensureRoleAdded(guild, member, ROLE_STAFF);
@@ -452,4 +470,4 @@ async function handleResocontoActionInteraction(interaction) {
   return false;
 }
 
-module.exports = { RESOCONTO_APPLY_PREFIX, RESOCONTO_REJECT_PREFIX, handleResocontoActionInteraction };
+module.exports = { RESOCONTO_APPLY_PREFIX, RESOCONTO_REJECT_PREFIX, applyAutomaticValutazione, handleResocontoActionInteraction };

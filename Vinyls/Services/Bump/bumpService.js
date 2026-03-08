@@ -193,9 +193,10 @@ function getVoteReminderText(client) {
 
 function buildVoteReminderEmbed(client) {
   const text = getVoteReminderText(client);
+  const description = Array.isArray(text) ? text.join("\n") : (text ?? "");
   const embed = new EmbedBuilder()
     .setColor(client?.config?.embedInfo || "#6f4e37")
-    .setDescription(text)
+    .setDescription(description)
     .setFooter({
       text: "Per non ricevere più DM automatici usa +dm-disable (blocca anche avvisi importanti).",
     });

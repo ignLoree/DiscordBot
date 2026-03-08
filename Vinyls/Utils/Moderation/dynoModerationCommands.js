@@ -3,7 +3,7 @@ const IDs = require("../Config/ids");
 const { ModCase } = require("../../Schemas/Moderation/moderationSchemas");
 const { appendCaseEdit, closeCase, createModCase, getModConfig, logModCase, parseDuration, formatDuration } = require("./moderation");
 const { resolveTarget } = require("./prefixModeration");
-const { resolveModLogChannel, sendStaffActionToModLogs } = require("../Logging/modAuditLogUtils");
+const { resolveModLogChannel, sendStaffActionToModLogs, sendModCommandUsageToModLogs } = require("../Logging/modAuditLogUtils");
 const { sendDm } = require("../noDmList");
 const { grantTemporaryRole, revokeTemporaryRole } = require("../../Services/Community/temporaryRoleService");
 
@@ -1104,6 +1104,9 @@ async function runNamed(name, message, args, client) {
 }
 
 async function executeDynoModerationCommand(commandName, message, args, client) {
+  if (message?.guild) {
+    sendModCommandUsageToModLogs(message.guild, message, commandName).catch(() => null);
+  }
   await message.channel.sendTyping().catch(() => { });
   return runNamed(commandName, message, Array.isArray(args) ? args : [], client);
 }

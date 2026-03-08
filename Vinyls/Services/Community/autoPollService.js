@@ -7,7 +7,7 @@ const TIMEZONE = "Europe/Rome";
 const COUNTER_FILTER_QUESTION = "__counter__";
 const DEFAULT_WINDOW_START_HOUR = 19;
 const DEFAULT_WINDOW_START_MINUTE = 0;
-const DEFAULT_WINDOW_END_HOUR = 21;
+const DEFAULT_WINDOW_END_HOUR = 20;
 const DEFAULT_WINDOW_END_MINUTE = 59;
 const DEFAULT_SOURCES = ["openrouter", "local"];
 const DEFAULT_OPENROUTER_MODELS = ["google/gemma-3-12b-it:free", "google/gemma-3-27b-it:free",];
@@ -425,7 +425,7 @@ function startAutoPollLoop(client) {
   }
 
   client._autoPollTask = cron.schedule(
-    "0 21 * * *",
+    "0 20 * * *",
     () => {
       runAutoPoll(client).catch((error) => {
         global.logger?.error?.("[poll.auto] run failed:", error);

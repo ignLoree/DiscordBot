@@ -1,6 +1,7 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType } = require("discord.js");
 const Staff = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../Config/ids");
+const { getOnePausePerMonthWarning, getOneWeekBetweenWarning, isHelperFirstWeek } = require("./pauseHandlersUtils");
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const IT_MONTHS = { gennaio: 1, feb: 2, febbraio: 2, mar: 3, marzo: 3, apr: 4, aprile: 4, mag: 5, maggio: 5, giu: 6, giugno: 6, lug: 7, luglio: 7, ago: 8, agosto: 8, set: 9, sett: 9, settembre: 9, ott: 10, ottobre: 10, nov: 11, novembre: 11, dic: 12, dicembre: 12 };
 const PAUSE_REQUEST_ROLE_IDS = [IDs.roles.PartnerManager, IDs.roles.Staff, IDs.roles.HighStaff].filter(Boolean);
@@ -102,7 +103,7 @@ async function getOrCreateStaffDoc(guildId, userId) {
   return stafferDoc;
 }
 
-async function createPauseRequest({ guild, userId, requesterMention, rawStart, rawEnd, reason }) {
+async function createPauseRequest({ guild, userId, requesterMention, rawStart, rawEnd, reason, member = null }) {
   const guildId = guild?.id;
   if (!guild || !guildId || !userId) return { ok: false, error: "<a:VC_Alert:1448670089670037675> Dati pausa non validi." };
   const pauseChannel = guild.channels.cache.get(IDs.channels?.pause);
@@ -117,16 +118,57 @@ async function createPauseRequest({ guild, userId, requesterMention, rawStart, r
     return { ok: false, error: "<a:VC_Alert:1448670089670037675> Canale pause non disponibile." };
   }
   const stafferDoc = await getOrCreateStaffDoc(guildId, userId);
-  stafferDoc.pauses.push({ dataRichiesta: normalized.dataRichiesta, dataRitorno: normalized.dataRitorno, motivazione: reason, status: "pending" });
+  stafferDoc.pauses.push({
+    dataRichiesta: normalized.dataRichiesta,
+    dataRitorno: normalized.dataRitorno,
+    motivazione: reason,
+    status: "pending",
+    createdAt: new Date(),
+  });
   await stafferDoc.save();
   const createdPause = stafferDoc.pauses[stafferDoc.pauses.length - 1];
   const pauseId = String(createdPause?._id || "");
-  const posted = await pauseChannel.send({
-    content: `<:staff:1443651912179388548> <@&${IDs.roles.HighStaff}> ${requesterMention} ha richiesto una pausa.\n<a:VC_Calendar:1448670320180592724> Data richiesta: ${normalized.dataRichiesta}\n Data ritorno: ${normalized.dataRitorno}\n<:VC_reason:1478517122929004544> Motivo: ${reason}`,
+
+  const requisitiNonRispettati = [];
+  if (getOnePausePerMonthWarning(stafferDoc, { ...normalized, excludePauseId: pauseId })) {
+    requisitiNonRispettati.push("<:VC_Attention:1443933073438675016> **Una pausa al mese:** hai già una richiesta pausa in questo mese.");
+  }
+  if (getOneWeekBetweenWarning(stafferDoc, pauseId)) {
+    requisitiNonRispettati.push("<:VC_Attention:1443933073438675016> **Almeno 1 settimana tra richieste:** l'ultima richiesta pausa è stata fatta da meno di 7 giorni.");
+  }
+  if (member && isHelperFirstWeek(member, stafferDoc)) {
+    requisitiNonRispettati.push("<:VC_Attention:1443933073438675016> **Helper in prima settimana:** le pause richieste dagli Helper nella prima settimana sono consentite solo per problemi personali o familiari gravi.");
+  }
+  const warningBlock = requisitiNonRispettati.length
+    ? "\n\n<a:VC_Alert:1448670089670037675> **Requisiti non rispettati:**\n" + requisitiNonRispettati.map((r) => `• ${r}`).join("\n") + "\n\n_L'High Staff può accettare comunque._"
+    : "";
+
+  let thread = null;
+  try {
+    thread = await pauseChannel.threads.create({
+      name: `Pausa – ${(member?.user?.username || userId).toString().slice(0, 80)}`,
+      type: ChannelType.PrivateThread,
+      reason: "Richiesta pausa staff",
+    });
+  } catch (e) {
+    return { ok: false, error: "<a:VC_Alert:1448670089670037675> Impossibile creare il thread privato per la richiesta." };
+  }
+  await thread.members.add(userId).catch(() => null);
+  const highStaffRoleId = String(IDs.roles.HighStaff || "");
+  if (highStaffRoleId) {
+    const membersWithHighStaff = guild.members.cache.filter((m) => m.roles.cache.has(highStaffRoleId));
+    for (const m of membersWithHighStaff.values()) {
+      await thread.members.add(m.id).catch(() => null);
+    }
+  }
+  const content = `<:staff:1443651912179388548> <@&${IDs.roles.HighStaff}> ${requesterMention} ha richiesto una pausa.\n<a:VC_Calendar:1448670320180592724> Data richiesta: ${normalized.dataRichiesta}\n Data ritorno: ${normalized.dataRitorno}\n<:VC_reason:1478517122929004544> Motivo: ${reason}${warningBlock}`;
+  const posted = await thread.send({
+    content,
     components: pauseId ? [buildPauseRequestButtonsRow(userId, pauseId)] : [],
   }).catch(() => null);
   if (!posted) {
-    return { ok: false, error: "<a:VC_Alert:1448670089670037675> Non sono riuscito a inviare la richiesta all'High Staff." };
+    await thread.delete().catch(() => null);
+    return { ok: false, error: "<a:VC_Alert:1448670089670037675> Non sono riuscito a inviare la richiesta nel thread." };
   }
   return { ok: true, pauseId };
 }

@@ -125,4 +125,33 @@ async function sendStaffActionToModLogs(guild, modCase, options = {}) {
   await channel.send({ embeds: [embed] }).catch(() => null);
 }
 
-module.exports = { resolveModLogChannel, fetchRecentAuditEntry, formatResponsible, nowDiscordTs, formatDurationForModLog, buildStaffActionModLogEmbed, sendStaffActionToModLogs };
+/**
+ * Log uso comando moderazione in #modLogs in stile Dyno: autore (avatar + username), "Used `command` in #channel", comando completo, timestamp DD/MM/YYYY HH:MM.
+ * @param {import("discord.js").Guild} guild
+ * @param {import("discord.js").Message} message - messaggio che ha invocato il comando (author, channel, content)
+ * @param {string} commandName - nome comando (es. "warn", "modlogs")
+ */
+async function sendModCommandUsageToModLogs(guild, message, commandName) {
+  const channel = await resolveModLogChannel(guild);
+  if (!channel?.isTextBased?.() || !message?.author) return;
+  const channelLabel = message.channel?.name ? `# ${message.channel.name}` : "# canale";
+  const fullCommand = String(message.content || "").trim() || `+${commandName}`;
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const year = now.getFullYear();
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const timestamp = `${day}/${month}/${year} ${hours}:${minutes}`;
+  const embed = new EmbedBuilder()
+    .setColor(0x3498db)
+    .setAuthor({
+      name: message.author.username,
+      iconURL: message.author.displayAvatarURL({ size: 32 }),
+    })
+    .setDescription(`Used \`${commandName}\` command in ${channelLabel}\n\n\`${fullCommand}\``)
+    .setFooter({ text: timestamp });
+  await channel.send({ embeds: [embed] }).catch(() => null);
+}
+
+module.exports = { resolveModLogChannel, fetchRecentAuditEntry, formatResponsible, nowDiscordTs, formatDurationForModLog, buildStaffActionModLogEmbed, sendStaffActionToModLogs, sendModCommandUsageToModLogs };

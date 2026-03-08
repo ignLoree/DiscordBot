@@ -769,7 +769,7 @@ module.exports = {
         return;
       }
 
-      const closeReason = null;
+      const closeReason = normalizedRest.join(" ").trim() || claimed.closeReason || null;
       let ticketNumber = Number(claimed.ticketNumber || 0);
       if (!ticketNumber) ticketNumber = await getNextTicketId();
       const transcriptTXT = await createTranscript(message.channel).catch(() => "",);

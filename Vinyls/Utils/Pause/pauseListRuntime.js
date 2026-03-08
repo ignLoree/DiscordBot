@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const Staff = require("../../Schemas/Staff/staffSchema");
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const { MS_PER_DAY, countOverlapDays, countEffectiveOverlapDays } = require("./pauseHandlersUtils");
 
 function parseItalianDate(value) {
   if (!value || typeof value !== "string") return null;
@@ -26,14 +26,6 @@ function getCurrentYearBoundsUtc() {
   return { yearStart: new Date(Date.UTC(year, 0, 1)), yearEnd: new Date(Date.UTC(year, 11, 31)) };
 }
 
-function countOverlapDays(start, end, windowStart, windowEnd) {
-  if (!start || !end || end < start) return 0;
-  const overlapStart = start > windowStart ? start : windowStart;
-  const overlapEnd = end < windowEnd ? end : windowEnd;
-  if (overlapEnd < overlapStart) return 0;
-  return Math.floor((overlapEnd - overlapStart) / MS_PER_DAY) + 1;
-}
-
 function getCancelledPauseEffectiveEnd(pause, start, plannedEnd) {
   let effectiveEnd = null;
   if (pause.cancelledAt) {
@@ -56,11 +48,11 @@ function computePauseScaledDaysThisYear(pause, todayUtc, yearStart, yearEnd) {
   const plannedEnd = parseItalianDate(pause?.dataRitorno);
   if (!start || !plannedEnd) return 0;
   if (pause.status === "cancelled") {
-    return countOverlapDays(start, getCancelledPauseEffectiveEnd(pause, start, plannedEnd), yearStart, yearEnd);
+    return countEffectiveOverlapDays(start, getCancelledPauseEffectiveEnd(pause, start, plannedEnd), yearStart, yearEnd);
   }
   if (pause.status === "accepted") {
     if (todayUtc < start) return 0;
-    return countOverlapDays(start, todayUtc > plannedEnd ? plannedEnd : todayUtc, yearStart, yearEnd);
+    return countEffectiveOverlapDays(start, todayUtc > plannedEnd ? plannedEnd : todayUtc, yearStart, yearEnd);
   }
   return 0;
 }
@@ -73,10 +65,10 @@ function computeConsumedPauseDays(pauses) {
     const start = parseItalianDate(pause.dataRichiesta);
     const plannedEnd = parseItalianDate(pause.dataRitorno);
     if (pause.status === "accepted") {
-      return total + countOverlapDays(start, plannedEnd, yearStart, yearEnd);
+      return total + countEffectiveOverlapDays(start, plannedEnd, yearStart, yearEnd);
     }
     if (pause.status === "cancelled") {
-      return total + countOverlapDays(start, getCancelledPauseEffectiveEnd(pause, start, plannedEnd), yearStart, yearEnd);
+      return total + countEffectiveOverlapDays(start, getCancelledPauseEffectiveEnd(pause, start, plannedEnd), yearStart, yearEnd);
     }
     return total;
   }, 0);

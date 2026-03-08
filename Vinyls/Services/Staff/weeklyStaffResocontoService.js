@@ -2,11 +2,14 @@ const cron = require("node-cron");
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, } = require("discord.js");
 const IDs = require("../../Utils/Config/ids");
 const StaffModel = require("../../Schemas/Staff/staffSchema");
-const { RESOCONTO_APPLY_PREFIX, RESOCONTO_REJECT_PREFIX, } = require("../../Events/interaction/resocontoHandlers");
+const { ModCase } = require("../../Schemas/Moderation/moderationSchemas");
+const { RESOCONTO_APPLY_PREFIX, RESOCONTO_REJECT_PREFIX, applyAutomaticValutazione } = require("../../Events/interaction/resocontoHandlers");
 const { getUserOverviewStats } = require("../Community/activityService");
 const { getClientGuildCached, getGuildChannelCached, getGuildMemberCached, } = require("../../Utils/Interaction/interactionEntityCache");
 const TIME_ZONE = "Europe/Rome";
 const STAFF_ACTIVITY_LIMITS = { [String(IDs.roles.Helper)]: { messages: 400, hours: 3.5 }, [String(IDs.roles.Mod)]: { messages: 500, hours: 5 }, [String(IDs.roles.Coordinator)]: { messages: 500, hours: 4.5 }, [String(IDs.roles.Supervisor)]: { messages: 450, hours: 4 }, };
+const STAFF_SANCTION_LIMITS = { [String(IDs.roles.Mod)]: 3, [String(IDs.roles.Coordinator)]: 4, [String(IDs.roles.Supervisor)]: 4 };
+const SANCTION_ACTIONS = new Set(["WARN", "MUTE", "KICK", "BAN"]);
 const STAFF_ROLE_PRIORITY = [String(IDs.roles.Supervisor), String(IDs.roles.Coordinator), String(IDs.roles.Mod), String(IDs.roles.Helper),];
 const ROLE_UP = {
   [String(IDs.roles.Member || "")]: String(IDs.roles.Helper),
@@ -93,6 +96,85 @@ function getWeekStartDate(now = new Date()) {
   const date = new Date(now);
   date.setDate(date.getDate() - 7);
   return date;
+}
+
+const COSTANZA_BARS = "\u2581\u2582\u2583\u2584\u2585\u2586\u2587\u2588";
+
+function dayKeyToWeekdayLabel(dayKey) {
+  if (!dayKey || typeof dayKey !== "string") return "?";
+  const [y, m, d] = dayKey.split("-").map(Number);
+  if (!y || !m || !d) return "?";
+  const date = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+  const formatter = new Intl.DateTimeFormat("it-IT", { timeZone: TIME_ZONE, weekday: "short" });
+  return formatter.format(date).replace(".", "").slice(0, 3);
+}
+
+function buildCostanzaLines(overview) {
+  const chart = Array.isArray(overview?.chart) ? overview.chart : [];
+  if (!chart.length) return [];
+  const points = chart.slice(-7);
+  const maxText = Math.max(1, ...points.map((p) => Math.max(0, Number(p?.text ?? 0))));
+  const bars = points.map((p) => {
+    const text = Math.max(0, Number(p?.text ?? 0));
+    const level = maxText > 0 ? Math.min(7, Math.floor((7 * text) / maxText)) : 0;
+    return COSTANZA_BARS[level];
+  });
+  const activeDays = points.filter((p) => (Number(p?.text ?? 0) > 0) || (Number(p?.voiceSeconds ?? 0) >= 600)).length;
+  const labels = points.map((p) => dayKeyToWeekdayLabel(p?.dayKey)).join(" ");
+  const barLine = bars.join(" ");
+  return [
+    `<:VC_Clock:1473359204189474886> **Costanza:** __${activeDays}/${points.length}__ giorni attivi`,
+    `\`${labels}\``,
+    `\`${barLine}\` messaggi per giorno`,
+  ];
+}
+
+function parseItalianDate(value) {
+  if (!value || typeof value !== "string") return null;
+  const m = value.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return null;
+  const d = Number(m[1]);
+  const mo = Number(m[2]);
+  const y = Number(m[3]);
+  const date = new Date(Date.UTC(y, mo - 1, d));
+  if (date.getUTCFullYear() !== y || date.getUTCMonth() !== mo - 1 || date.getUTCDate() !== d) return null;
+  return date;
+}
+
+function getStaffPauseLine(staffDoc) {
+  const pauses = Array.isArray(staffDoc?.pauses) ? staffDoc.pauses : [];
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+  for (const p of pauses) {
+    if (!p || p.status !== "accepted") continue;
+    const start = parseItalianDate(p.dataRichiesta);
+    const end = parseItalianDate(p.dataRitorno);
+    if (!start || !end) continue;
+    if (today >= start && today <= end) {
+      return `<a:VC_Calendar:1448670320180592724> **In pausa** fino al ${p.dataRitorno}`;
+    }
+    if (end < today && end >= sevenDaysAgo) {
+      return `<a:VC_Calendar:1448670320180592724> **Rientrato** il ${p.dataRitorno}`;
+    }
+  }
+  return null;
+}
+
+function wasInPauseDuringWeek(staffDoc, weekStart, weekEnd) {
+  const pauses = Array.isArray(staffDoc?.pauses) ? staffDoc.pauses : [];
+  const ws = weekStart.getTime();
+  const we = weekEnd.getTime();
+  for (const p of pauses) {
+    if (!p || p.status !== "accepted") continue;
+    const start = parseItalianDate(p.dataRichiesta);
+    const end = parseItalianDate(p.dataRitorno);
+    if (!start || !end) continue;
+    const ps = start.getTime();
+    const pe = end.getTime();
+    if (ps <= we && pe >= ws) return true;
+  }
+  return false;
 }
 
 function resolveStaffRole(member) {
@@ -272,6 +354,18 @@ function countPmWeeklyPartners(staffDoc, weekStart, weekEnd) {
   return count;
 }
 
+async function getWeeklySanctionCountByMod(guildId, weekStart, weekEnd) {
+  const map = new Map();
+  const counts = await ModCase.aggregate([
+    { $match: { guildId, createdAt: { $gte: weekStart, $lte: weekEnd }, action: { $in: Array.from(SANCTION_ACTIONS) } } },
+    { $group: { _id: "$modId", count: { $sum: 1 } } },
+  ]).catch(() => []);
+  for (const row of counts) {
+    if (row?._id) map.set(String(row._id), Math.max(0, Number(row.count) || 0));
+  }
+  return map;
+}
+
 async function resolveChannel(client, channelId) {
   if (!channelId) return null;
   return client.channels.cache.get(channelId) ||
@@ -290,8 +384,10 @@ async function runWeeklyStaffResoconti(client) {
   const channel = await resolveChannel(client, channelId);
   if (!channel?.isTextBased?.()) return;
 
-  const weekStart = getWeekStartDate(new Date());
-  const staffDocs = await StaffModel.find({ guildId }, { userId: 1, positiveCount: 1, negativeCount: 1, rolesHistory: 1, partnerActions: 1 }).lean().catch(() => []);
+  const now = new Date();
+  const weekStart = getWeekStartDate(now);
+  const weekEnd = now;
+  const staffDocs = await StaffModel.find({ guildId }, { userId: 1, positiveCount: 1, negativeCount: 1, rolesHistory: 1, partnerActions: 1, pauses: 1 }).lean().catch(() => []);
 
   const knownStaffUserIds = Array.from(new Set((Array.isArray(staffDocs) ? staffDocs : []).map((row) => String(row?.userId || "")).filter(Boolean),),);
   if (!knownStaffUserIds.length) return;
@@ -317,6 +413,7 @@ async function runWeeklyStaffResoconti(client) {
   const staffUserIds = candidateMembers.filter((m) => resolveStaffRole(m)).map((m) => String(m.id));
   const overviewResults = await Promise.all(staffUserIds.map((uid) => getUserOverviewStats(guildId, uid, 7)),);
   const overviewMap = new Map(staffUserIds.map((id, i) => [id, overviewResults[i] || null]),);
+  const sanctionCountByModId = await getWeeklySanctionCountByMod(guildId, weekStart, weekEnd);
 
   for (const member of candidateMembers) {
     const userId = String(member.id);
@@ -332,18 +429,37 @@ async function runWeeklyStaffResoconti(client) {
       const activityGrade = computeActivityGrade(staffRoleId, weeklyMessages, weeklyVoiceHours,);
       const behaviorGrade = computeBehaviorGrade(staffDoc?.positiveCount, staffDoc?.negativeCount,);
       const pexedInWeek = wasPexedInWeek(staffDoc, weekStart);
-      const action = computeStaffAction(activityGrade, behaviorGrade, pexedInWeek);
+      const inPauseDuringWeek = wasInPauseDuringWeek(staffDoc, weekStart, weekEnd);
+
+      const sanctionLimit = STAFF_SANCTION_LIMITS[String(staffRoleId)];
+      const contentLines = [
+        `<:staff:1443651912179388548> **Staffer:** __**<@${userId}>**__`,
+        `<:VC_Mention:1443994358201323681> **Ruolo:** __<@&${staffRoleId}>__`,
+        `<:VC_Chat:1448694742237053061> **Messaggi in una settimana:** __${weeklyMessages}__`,
+        `<:voice:1467639623735054509> **Ore in una settimana:** __${formatHoursFromSeconds(weeklyVoiceSeconds)}__`,
+        ...buildCostanzaLines(overview),
+        `<a:VC_Exclamation:1448687427836444854>  **Attività:** __${activityGrade}__`,
+        `<:VC_Eye:1331619214410383381> **Condotta:** __${behaviorGrade}__`,
+      ];
+      if (sanctionLimit != null) {
+        const weeklySanctions = sanctionCountByModId.get(userId) || 0;
+        contentLines.push(`<:VC_Dot:1443660294596329582> **Sanzioni nella settimana:** __${weeklySanctions}__ (minimo __${sanctionLimit}__)`);
+      }
+      const action = inPauseDuringWeek ? "Nulla" : computeStaffAction(activityGrade, behaviorGrade, pexedInWeek);
+      contentLines.push(`<:VC_BanHammer:1443933132645732362> **Azione:** __${action}__`);
+      const pauseLine = getStaffPauseLine(staffDoc);
+      if (pauseLine) contentLines.push(pauseLine);
+
+      if (sanctionLimit != null && !inPauseDuringWeek) {
+        const weeklySanctions = sanctionCountByModId.get(userId) || 0;
+        const sanctionMet = weeklySanctions >= sanctionLimit;
+        const reason = sanctionMet ? "Limite sanzioni settimanale completato" : "Limite sanzioni settimanale non completato";
+        await applyAutomaticValutazione(guild, client, member.user, sanctionMet, reason).catch(() => null);
+      }
 
       await channel
         .send({
-          content: `
-<:staff:1443651912179388548> **Staffer:** __**<@${userId}>**__
-<:VC_Mention:1443994358201323681> **Ruolo:** __<@&${staffRoleId}>__
-<:VC_Chat:1448694742237053061> **Messaggi in una settimana:** __${weeklyMessages}__
-<:voice:1467639623735054509> **Ore in una settimana:** __${formatHoursFromSeconds(weeklyVoiceSeconds)}__
-<a:VC_Exclamation:1448687427836444854>  **Attività:** __${activityGrade}__
-<:VC_Eye:1331619214410383381> **Condotta:** __${behaviorGrade}__
-<:VC_BanHammer:1443933132645732362> **Azione:** __${action}__`,
+          content: contentLines.join("\n"),
           components: [
             buildResocontoButtons(
               "s",
@@ -361,17 +477,87 @@ async function runWeeklyStaffResoconti(client) {
       const pmWindow = getPmResocontoWindow(new Date());
       const weeklyPartners = countPmWeeklyPartners(staffDoc, pmWindow.weekStart, pmWindow.weekEnd,);
       const pmPexedInWeek = wasPmPexedInWeek(staffDoc, pmWindow.weekStart);
-      const action = computePmAction(weeklyPartners, pmPexedInWeek);
+      const pmInPauseDuringWeek = wasInPauseDuringWeek(staffDoc, pmWindow.weekStart, pmWindow.weekEnd);
+      const action = pmInPauseDuringWeek ? "Nulla" : computePmAction(weeklyPartners, pmPexedInWeek);
+      const pmPauseLine = getStaffPauseLine(staffDoc);
+      const pmContentLines = [
+        `<:partnermanager:1443651916838998099> **Partner Manager:** __<@${userId}>__`,
+        `<:partneredserverowner:1443651871125409812> **Partner:** __${weeklyPartners}__`,
+        `<:VC_BanHammer:1443933132645732362> **Azione:** __${action}__`,
+      ];
+      if (pmPauseLine) pmContentLines.push(pmPauseLine);
 
       await channel
         .send({
-          content: `<:partnermanager:1443651916838998099> **Partner Manager:** __<@${userId}>__
-<:partneredserverowner:1443651871125409812> **Partner:** __${weeklyPartners}__
-<:VC_BanHammer:1443933132645732362> **Azione:** __${action}__`,
+          content: pmContentLines.join("\n"),
           components: [buildResocontoButtons("p", userId, pmActionToKey(action))],
         })
         .then((msg) => createResocontoThread(msg, userId, member.user?.username))
         .catch(() => null);
+    }
+  }
+}
+
+async function runPreResocontoReminders(client) {
+  const guildId = String(IDs.guilds?.main || "");
+  if (!guildId) return;
+  const guild = await getClientGuildCached(client, guildId);
+  if (!guild) return;
+
+  const staffDocs = await StaffModel.find({ guildId }, { userId: 1, pauses: 1 }).lean().catch(() => []);
+  const staffUserIds = Array.from(new Set((staffDocs || []).map((r) => String(r?.userId || "")).filter((id) => /^\d{16,20}$/.test(id))));
+  if (!staffUserIds.length) return;
+
+  const fetchedMembers = await Promise.all(staffUserIds.map((id) => getGuildMemberCached(guild, id)));
+  const hasStaffRole = (m) => Boolean(resolveStaffRole(m));
+  const hasPmRole = (m) => m.roles.cache.has(String(IDs.roles.PartnerManager));
+  const reminderMembers = fetchedMembers.filter(
+    (m) => m && !m.user?.bot && !m.roles.cache.has(String(IDs.roles.HighStaff)) && (hasStaffRole(m) || hasPmRole(m)),
+  );
+  if (!reminderMembers.length) return;
+
+  const staffMap = new Map((staffDocs || []).map((r) => [String(r.userId), r]));
+  const staffOnlyIds = reminderMembers.filter(hasStaffRole).map((m) => m.id);
+  const overviewResults = await Promise.all(staffOnlyIds.map((uid) => getUserOverviewStats(guildId, uid, 7)));
+  const overviewByUserId = new Map(staffOnlyIds.map((id, i) => [String(id), overviewResults[i] || null]));
+  const resocontoTime = "**domenica alle 15:00**";
+
+  for (const member of reminderMembers) {
+    const userId = String(member.id);
+    const staffDoc = staffMap.get(userId);
+    const pauseLine = getStaffPauseLine(staffDoc);
+    if (pauseLine) {
+      await member.send({
+        content: `<:staff:1443651912179388548> **Promemoria resoconto**\n\nIl resoconto staff è ${resocontoTime}.\n\n${pauseLine} – non hai obiettivi di messaggi/vocale per questa settimana.`,
+      }).catch(() => null);
+      continue;
+    }
+
+    const staffRoleId = resolveStaffRole(member);
+    if (staffRoleId) {
+      const limits = STAFF_ACTIVITY_LIMITS[String(staffRoleId)];
+      if (limits) {
+        const overview = overviewByUserId.get(userId);
+        const d7 = overview?.windows?.d7;
+        const msg = Math.max(0, Math.floor(toSafeNumber(d7?.text ?? 0)));
+        const voiceSec = Math.max(0, Math.floor(toSafeNumber(d7?.voiceSeconds ?? 0)));
+        const hours = voiceSec / 3600;
+        const needMsg = Math.max(0, limits.messages - msg);
+        const needHours = Math.max(0, limits.hours - hours);
+        if (needMsg <= 0 && needHours <= 0) continue;
+        const parts = [];
+        if (needMsg > 0) parts.push(`**${needMsg}** messaggi`);
+        if (needHours > 0) parts.push(`**${needHours.toFixed(2)}** ore in vocale`);
+        const text = `<:staff:1443651912179388548> **Promemoria resoconto**\n\nIl resoconto staff è ${resocontoTime}.\n\nPer rientrare nei limiti ti mancano: ${parts.join(" e ")}.`;
+        await member.send({ content: text }).catch(() => null);
+        continue;
+      }
+    }
+
+    if (hasPmRole(member)) {
+      await member.send({
+        content: `<:partnermanager:1443651916838998099> **Promemoria resoconto**\n\nIl resoconto staff è ${resocontoTime}.\n\nCome Partner Manager la tua azione dipende dal numero di partner della settimana (almeno 5 per evitare Depex).`,
+      }).catch(() => null);
     }
   }
 }
@@ -388,6 +574,17 @@ function startWeeklyStaffResocontoLoop(client) {
     },
     { timezone: TIME_ZONE },
   );
+
+  const preResocontoTask = cron.schedule(
+    "0 18 * * 5",
+    async () => {
+      await runPreResocontoReminders(client).catch((err) => {
+        global.logger?.error?.("[WEEKLY STAFF RESOCONTO] Pre-reminder failed", err);
+      });
+    },
+    { timezone: TIME_ZONE },
+  );
+  if (typeof preResocontoTask?.ref === "function") preResocontoTask.ref();
 
   return weeklyStaffResocontoTask;
 }

@@ -3171,7 +3171,7 @@ function buildRevealHint(value, revealRatio = 0.4, includeEmoji = false) {
   const isLetterOrDigit = (c) => /[a-z0-9]/i.test(c);
   if (indices.length <= 2) {
     const out = chars.map((c, i) => (indices.includes(i) ? c : isLetterOrDigit(c) ? "_" : c)).join("");
-    return wrap(out);
+    return wrap(out.replace(/_/g, "\\_"));
   }
   const toReveal = Math.max(2, Math.min(indices.length, Math.round(indices.length * Math.min(0.5, Math.max(0.35, revealRatio)))));
   const revealedSet = new Set([indices[0], indices[indices.length - 1]]);
@@ -3185,7 +3185,9 @@ function buildRevealHint(value, revealRatio = 0.4, includeEmoji = false) {
     if (isLetterOrDigit(c)) return "_";
     return c;
   });
-  return wrap(out.join(""));
+  const rawOut = out.join("");
+  const escapedForDiscord = rawOut.replace(/_/g, "\\_");
+  return wrap(escapedForDiscord);
 }
 
 function buildCountryHint(country) {
@@ -3242,6 +3244,16 @@ function buildHintEmbed(isHigher) {
       isHigher
         ? "<:thumbsup:1471292172145004768> <a:VC_Arrow:1448672967721615452> Più alto!"
         : "<:thumbsdown:1471292163957457013> <a:VC_Arrow:1448672967721615452> Più basso!",
+    );
+}
+
+function buildYearHintEmbed(guessBeforeTarget) {
+  return new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setDescription(
+      guessBeforeTarget
+        ? "<:thumbsup:1471292172145004768> <a:VC_Arrow:1448672967721615452> Dopo!"
+        : "<:thumbsdown:1471292163957457013> <a:VC_Arrow:1448672967721615452> Prima!",
     );
 }
 
@@ -5250,7 +5262,9 @@ async function startGuessEmojiGame(client, cfg) {
   const channelId = cfg.channelId;
   if (!channelId || activeGames.has(channelId)) return false;
   const bank = getGuessEmojiBank();
-  const pick = pickQuestionAvoidRecent(channelId, "guessEmoji", bank, (r) => r.emojis, 15);
+  if (!Array.isArray(bank) || !bank.length) return false;
+  let pick = pickQuestionAvoidRecent(channelId, "guessEmoji", bank, (r) => r.emojis, 15);
+  if (!pick) pick = pickRandomItem(bank);
   if (!pick) return false;
   const rewardExp = Number(cfg?.guessEmoji?.rewardExp || 150);
   const durationMs = Math.max(60000, Number(cfg?.guessEmoji?.durationMs || 180000));
@@ -5261,6 +5275,7 @@ async function startGuessEmojiGame(client, cfg) {
   const imageUrl = attachment ? `attachment://${attachment.name}` : null;
   const embed = buildGuessEmojiEmbed(pick.emojis, rewardExp, durationMs, imageUrl);
   const gameMessage = await channel.send({ embeds: [embed], files: attachment ? [attachment] : [] }).catch(() => null);
+  if (!gameMessage) return false;
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
     if (!game) return;
@@ -5274,7 +5289,8 @@ async function startGuessEmojiGame(client, cfg) {
   const hintText = `Risposta: ${buildRevealHint(pick.answers[0])}`;
   const hintTimeout = await scheduleGenericHint(client, channelId, durationMs, hintText);
   const answers = (pick.answers || []).map((a) => normalizeCountryName(a)).filter(Boolean);
-  if (!answers.length) answers.push(normalizeCountryName(pick.answers[0]));
+  if (!answers.length && pick.answers?.[0]) answers.push(String(pick.answers[0]).trim() || normalizeCountryName(pick.answers[0]));
+  if (!answers.length) return false;
   activeGames.set(channelId, {
     type: "guessEmoji",
     emojis: pick.emojis,
@@ -6239,6 +6255,9 @@ async function handleMinigameMessage(message, client) {
     const diff = Math.abs(guessNum - game.year);
     if (diff <= 2) await message.react("<a:VC_Flame:1473106990493335665>").catch(() => {});
     else await message.react(MINIGAME_WRONG_EMOJI).catch(() => {});
+    await message
+      .reply({ embeds: [buildYearHintEmbed(guessNum < game.year)] })
+      .catch(() => {});
     return true;
   }
 

@@ -111,7 +111,7 @@ async function handleStaffButtons(interaction) {
 
             <:dot:1443660294596329582> __Non__ passare la maggior parte del **tempo** nei **canali vocali privati**, poich? non vengono **conteggiati** al fine dei __limiti settimanali__
 
-            <:dot:1443660294596329582> __Non__ **stare da soli** in una __vocale pubblica__ se in un'altra vi ? gi? un altro **staffer** da solo. Inoltre, almeno uno dei due **deve** essere __smutato__`);
+            <:dot:1443660294596329582> __Non__ **stare da soli** in una __vocale pubblica__ se in un'altra vi è già un altro **staffer** da solo. Inoltre, almeno uno dei due **deve** essere __smutato__`);
     await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
   }
