@@ -1,7 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { getGuildExpSettings, setActivityEvent, clearActivityEvent, setStaffEvent, clearStaffEvent, getStaffEventSettings, invalidateSettingsCache } = require("../../Services/Community/expService");
-const { grantEventRewardsForExistingRoleMembers, grantEventRewardsForSameDayReviewAndVote, clearActivityEventRewardsForGuild } = require("../../Services/Community/activityEventRewardsService");
+const { grantEventRewardsForExistingRoleMembers, grantEventRewardsForSameDayReviewAndVote, clearActivityEventRewardsForGuild, getEventWeekNumber } = require("../../Services/Community/activityEventRewardsService");
 const { givePmStaff15PointsAtStart, giveExistingInvitesPointsAtStart, addStaffEventPoints, getStaffEventLeaderboard, isStaffButNotHighStaff } = require("../../Services/Community/staffEventService");
 const { buildEventoClassificaPayload } = require("../../Services/Community/eventoClassificaService");
 const { getEventDiagnostics } = require("../../Services/Community/weeklyActivityWinnersService");
@@ -186,7 +186,8 @@ module.exports = {
         });
         return;
       }
-      const payload = await buildEventoClassificaPayload(message.guild, message.client, settings, 1,);
+      const currentWeek = Math.max(1, Math.min(4, Number(getEventWeekNumber(settings) || 1)));
+      const payload = await buildEventoClassificaPayload(message.guild, message.client, settings, currentWeek,);
       await safeMessageReply(message, {
         ...payload,
         allowedMentions: { repliedUser: false },
