@@ -5266,6 +5266,21 @@ async function startGuessEmojiGame(client, cfg) {
   let pick = pickQuestionAvoidRecent(channelId, "guessEmoji", bank, (r) => r.emojis, 15);
   if (!pick) pick = pickRandomItem(bank);
   if (!pick) return false;
+  const sourceAnswers = Array.isArray(pick.answers) && pick.answers.length
+    ? pick.answers
+    : (pick.answer ? [pick.answer] : []);
+  const displayAnswer = String(sourceAnswers[0] || "").trim();
+  const answers = Array.from(
+    new Set(
+      sourceAnswers.flatMap((value) => {
+        const raw = String(value || "").trim();
+        const normalized = normalizeCountryName(raw);
+        const compact = compactNoSpaces(normalized || raw);
+        return [normalized, compact];
+      }).filter(Boolean),
+    ),
+  );
+  if (!answers.length) return false;
   const rewardExp = Number(cfg?.guessEmoji?.rewardExp || 150);
   const durationMs = Math.max(60000, Number(cfg?.guessEmoji?.durationMs || 180000));
   const channel = await getChannelCached(client, channelId);
@@ -5282,18 +5297,16 @@ async function startGuessEmojiGame(client, cfg) {
     recordNoParticipationIfNeeded(channelId, game);
     activeGames.delete(channelId);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
-    await channel.send({ embeds: [buildTimeoutGuessEmojiEmbed(game.emojis, game.answers[0])] }).catch(() => {});
+    await channel.send({ embeds: [buildTimeoutGuessEmojiEmbed(game.emojis, game.displayAnswer || game.answers[0] || "")] }).catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
   timeout.unref?.();
-  const hintText = `Risposta: ${buildRevealHint(pick.answers[0])}`;
+  const hintText = `Risposta: ${buildRevealHint(displayAnswer || sourceAnswers[0] || "")}`;
   const hintTimeout = await scheduleGenericHint(client, channelId, durationMs, hintText);
-  const answers = (pick.answers || []).map((a) => normalizeCountryName(a)).filter(Boolean);
-  if (!answers.length && pick.answers?.[0]) answers.push(String(pick.answers[0]).trim() || normalizeCountryName(pick.answers[0]));
-  if (!answers.length) return false;
   activeGames.set(channelId, {
     type: "guessEmoji",
     emojis: pick.emojis,
+    displayAnswer,
     answers,
     rewardExp,
     startedAt: Date.now(),
@@ -5304,7 +5317,7 @@ async function startGuessEmojiGame(client, cfg) {
   });
   await saveActiveGame(client, cfg, {
     type: "guessEmoji",
-    target: JSON.stringify({ emojis: pick.emojis, answers: pick.answers }),
+    target: JSON.stringify({ emojis: pick.emojis, answers: sourceAnswers, displayAnswer }),
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
@@ -7149,14 +7162,24 @@ async function restoreActiveGames(client) {
   }
   if (state.type === "guessEmoji") {
     const parsed = parseStateTarget(state.target);
-    const answers = Array.isArray(parsed?.answers) ? parsed.answers : [];
+    const sourceAnswers = Array.isArray(parsed?.answers) && parsed.answers.length
+      ? parsed.answers
+      : (parsed?.answer ? [parsed.answer] : []);
+    const answers = Array.from(
+      new Set(
+        sourceAnswers.map((value) => normalizeCountryName(value)).filter(Boolean),
+      ),
+    );
+    const displayAnswer = String(parsed?.displayAnswer || sourceAnswers[0] || answers[0] || "").trim();
+    if (!answers.length) return;
     const emojis = parsed?.emojis || "";
-    const timeout = setTimeout(async () => { const game = activeGames.get(cfg.channelId); if (!game) return; recordNoParticipationIfNeeded(cfg.channelId, game); activeGames.delete(cfg.channelId); if (game.hintTimeout) clearTimeout(game.hintTimeout); await channel.send({ embeds: [buildTimeoutGuessEmojiEmbed(game.emojis, game.answers?.[0] || "")] }).catch(() => { }); await clearActiveGame(client, cfg); }, remainingMs); timeout.unref?.();
-    const hintText = `Risposta: ${buildRevealHint(answers[0] || "")}`;
+    const timeout = setTimeout(async () => { const game = activeGames.get(cfg.channelId); if (!game) return; recordNoParticipationIfNeeded(cfg.channelId, game); activeGames.delete(cfg.channelId); if (game.hintTimeout) clearTimeout(game.hintTimeout); await channel.send({ embeds: [buildTimeoutGuessEmojiEmbed(game.emojis, game.displayAnswer || game.answers?.[0] || "")] }).catch(() => { }); await clearActiveGame(client, cfg); }, remainingMs); timeout.unref?.();
+    const hintText = `Risposta: ${buildRevealHint(displayAnswer || answers[0] || "")}`;
     const hintTimeout = await scheduleGenericHint(client, cfg.channelId, remainingMs, hintText);
     activeGames.set(cfg.channelId, {
       type: "guessEmoji",
       answers,
+      displayAnswer,
       emojis,
       rewardExp: Number(state.rewardExp || 0),
       startedAt: new Date(state.startedAt).getTime(),

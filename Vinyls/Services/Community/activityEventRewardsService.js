@@ -35,30 +35,50 @@ function getRomeDayBoundsForDate(date = new Date()) {
   return { startRome, endRome };
 }
 
-function normalizeEventWeekStartMs(startDateRaw) {
-  const startDate = new Date(startDateRaw);
-  const startMs = startDate.getTime();
-  if (!Number.isFinite(startMs)) return startMs;
+function getRomeDateTimeParts(date = new Date()) {
   const fmt = new Intl.DateTimeFormat("en-CA", {
     timeZone: TIME_ZONE_ROME,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
+    weekday: "short",
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
     hour12: false,
   });
-  const parts = fmt.formatToParts(startDate).reduce((acc, part) => {
+  const parts = fmt.formatToParts(date).reduce((acc, part) => {
     if (part.type !== "literal") acc[part.type] = part.value;
     return acc;
   }, {});
-  const hour = Number(parts.hour || 0);
-  if (hour !== 21) return startMs;
-  const year = Number(parts.year || 0);
-  const month = Number(parts.month || 1);
-  const day = Number(parts.day || 1);
-  return createUtcFromRomeLocal(year, month, day, 21, 0, 0).getTime();
+  const weekdayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  return {
+    year: Number(parts.year || 0),
+    month: Number(parts.month || 1),
+    day: Number(parts.day || 1),
+    hour: Number(parts.hour || 0),
+    minute: Number(parts.minute || 0),
+    second: Number(parts.second || 0),
+    weekday: weekdayMap[String(parts.weekday || "Sun")] ?? 0,
+  };
+}
+
+function getFirstSunday21BoundaryAtOrAfter(startMs) {
+  if (!Number.isFinite(startMs)) return startMs;
+  const p = getRomeDateTimeParts(new Date(startMs));
+  const daysUntilSunday = (7 - Number(p.weekday || 0)) % 7;
+  let boundaryMs = createUtcFromRomeLocal(
+    p.year,
+    p.month,
+    p.day + daysUntilSunday,
+    21,
+    0,
+    0,
+  ).getTime();
+  if (daysUntilSunday === 0 && startMs >= boundaryMs) {
+    boundaryMs += 7 * 24 * 60 * 60 * 1000;
+  }
+  return boundaryMs;
 }
 
 async function isEventActive(guildId) {
@@ -310,13 +330,17 @@ async function grantEventRewardsForSameDayReviewAndVote(guild, eventStartDate) {
 function getEventWeekNumber(settings) {
   if (!settings?.eventStartedAt || !settings?.eventExpiresAt) return 0;
   const now = Date.now();
-  const start = normalizeEventWeekStartMs(settings.eventStartedAt);
+  const start = new Date(settings.eventStartedAt).getTime();
   const end = new Date(settings.eventExpiresAt).getTime();
   if (now < start || now > end) return 0;
   const weekMs = 7 * 24 * 60 * 60 * 1000;
-  const weekIndex = Math.floor((now - start) / weekMs);
-  if (weekIndex < 0) return 0;
-  return Math.min(4, weekIndex + 1);
+  let week = 1;
+  let boundary = getFirstSunday21BoundaryAtOrAfter(start);
+  while (week < 4 && now >= boundary) {
+    week += 1;
+    boundary += weekMs;
+  }
+  return week;
 }
 
 async function getTop10ExpDuringEvent(guildId, limit = 10) {

@@ -1,6 +1,6 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
-const { ActivityDaily, ExpUser } = require("../../Schemas/Community/communitySchemas");
+const { ActivityDaily, ActivityUser, ExpUser } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");
 const { MESSAGE_EXP, VOICE_EXP_PER_MINUTE, getLevelInfo, } = require("../../Services/Community/expService");
 
@@ -32,7 +32,7 @@ function escapeInlineMarkdown(value) {
 
 function formatUserLabel(member, userId) {
   if (member) {
-    const username=escapeInlineMarkdown(member.user?.username||member.user?.tag||member.displayName||"utente",);
+    const username = escapeInlineMarkdown(member.user?.username || member.user?.tag || member.displayName || "utente",);
     return `${member} (${username})`;
   }
   return `<@${userId}>`;
@@ -48,7 +48,7 @@ async function fetchMembers(guild, userIds) {
     if (cached) out.set(id, cached);
     else missingIds.push(id);
   }
-  const fetchedMembers=await Promise.all(missingIds.map((id) => guild.members.fetch(id).catch(() => null)),);
+  const fetchedMembers = await Promise.all(missingIds.map((id) => guild.members.fetch(id).catch(() => null)),);
   for (let index = 0; index < missingIds.length; index += 1) {
     const member = fetchedMembers[index];
     if (member) out.set(missingIds[index], member);
@@ -61,16 +61,27 @@ function pad2(value) {
 }
 
 function getRomeDayParts(date) {
-  const formatter=new Intl.DateTimeFormat("en-GB",{timeZone:TIME_ZONE,year:"numeric",month:"2-digit",day:"2-digit",weekday:"short",});
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short",
+    hour: "2-digit",
+    hour12: false,
+  });
   const parts = formatter.formatToParts(date);
   const map = {};
   for (const part of parts) {
     if (part.type !== "literal") map[part.type] = part.value;
   }
+  const weekdayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
   return {
     year: Number(map.year),
     month: Number(map.month),
     day: Number(map.day),
+    hour: Number(map.hour || 0),
+    weekday: weekdayMap[String(map.weekday || "Sun")] ?? 0,
   };
 }
 
@@ -79,25 +90,34 @@ function getRomeDayKey(date) {
   return `${year}-${pad2(month)}-${pad2(day)}`;
 }
 
-function getCurrentWeekDateKeysRome() {
-  const now = new Date();
-  const { year, month, day } = getRomeDayParts(now);
+function getWeekKeyRome(date = new Date()) {
+  const { year, month, day } = getRomeDayParts(date);
   const utcDate = new Date(Date.UTC(year, month - 1, day));
   const dayNr = (utcDate.getUTCDay() + 6) % 7;
-  utcDate.setUTCDate(utcDate.getUTCDate() - dayNr);
-  const keys = [];
-  for (let i = 0; i < 7; i += 1) {
-    const d = new Date(utcDate.getTime() + i * 24 * 60 * 60 * 1000);
-    keys.push(getRomeDayKey(d));
+  utcDate.setUTCDate(utcDate.getUTCDate() - dayNr + 3);
+  const firstThursday = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 4));
+  const weekNr = 1 + Math.round((utcDate - firstThursday) / (7 * 24 * 60 * 60 * 1000));
+  return `${utcDate.getUTCFullYear()}-W${pad2(weekNr)}`;
+}
+
+function getNextWeekKeyRome(date = new Date()) {
+  const next = new Date(date.getTime() + 24 * 60 * 60 * 1000);
+  return getWeekKeyRome(next);
+}
+
+function getActiveWeeklyKeyRome(date = new Date()) {
+  const parts = getRomeDayParts(date);
+  if (parts.weekday === 0 && parts.hour >= 21) {
+    return getNextWeekKeyRome(date);
   }
-  return keys;
+  return getWeekKeyRome(date);
 }
 
 async function resolveMemberRole(guild) {
   if (!guild) return null;
   const configuredId = String(IDs.roles?.Member || "").trim();
   if (configuredId) {
-    const role=guild.roles?.cache?.get(configuredId)||(await guild.roles?.fetch(configuredId).catch(() => null));
+    const role = guild.roles?.cache?.get(configuredId) || (await guild.roles?.fetch(configuredId).catch(() => null));
     if (role) return role;
   }
   return guild.roles?.everyone || null;
@@ -126,20 +146,53 @@ async function getEligibleChannelIdSet(guild) {
 
 async function computeLeaderboardRows(guild, mode = "alltime") {
   if (!guild?.id) return [];
-  const key = `${guild.id}:${mode}`;
+  const activeWeeklyKey = mode === "weekly" ? getActiveWeeklyKeyRome(new Date()) : "";
+  const key = `${guild.id}:${mode}:${activeWeeklyKey}`;
   const cached = leaderboardCache.get(key);
   if (cached && cached.expiresAt > Date.now()) return cached.rows;
+
+  if (mode === "weekly") {
+    const docs = await ActivityUser.find(
+      {
+        guildId: guild.id,
+        $or: [
+          { "messages.weeklyKey": activeWeeklyKey },
+          { "voice.weeklyKey": activeWeeklyKey },
+        ],
+      },
+      { userId: 1, messages: 1, voice: 1 },
+    ).lean().catch(() => []);
+
+    const rows = docs
+      .map((doc) => {
+        const textCount = Math.max(0, Number(doc?.messages?.weekly || 0));
+        const voiceSeconds = Math.max(0, Number(doc?.voice?.weeklySeconds || 0));
+        const baseExpFromText = textCount * MESSAGE_EXP;
+        const baseExpFromVoice = Math.floor((voiceSeconds * VOICE_EXP_PER_MINUTE) / 60);
+        const exp = Math.max(0, Math.floor(baseExpFromText + baseExpFromVoice));
+        return {
+          userId: String(doc?.userId || ""),
+          exp,
+          level: getLevelInfo(exp).level,
+        };
+      })
+      .filter((entry) => entry.userId && entry.exp > 0)
+      .sort((a, b) => b.exp - a.exp)
+      .slice(0, TOP_LIMIT);
+
+    leaderboardCache.set(key, {
+      rows,
+      expiresAt: Date.now() + LEADERBOARD_CACHE_TTL_MS,
+    });
+    return rows;
+  }
 
   const eligibleChannels = await getEligibleChannelIdSet(guild);
   if (!eligibleChannels.size) return [];
 
   const filter = { guildId: guild.id };
-  if (mode === "weekly") {
-    filter.dateKey = { $in: getCurrentWeekDateKeysRome() };
-  }
-
   const perUser = new Map();
-  const cursor=ActivityDaily.find(filter).select("userId textChannels voiceChannels").lean().cursor();
+  const cursor = ActivityDaily.find(filter).select("userId textChannels voiceChannels").lean().cursor();
 
   for await (const row of cursor) {
     const userId = String(row?.userId || "");
@@ -164,10 +217,10 @@ async function computeLeaderboardRows(guild, mode = "alltime") {
     perUser.set(userId, current);
   }
 
-  const rows=Array.from(perUser.values()).map((entry) => {const baseExpFromText=entry.textCount*MESSAGE_EXP;const baseExpFromVoice=Math.floor((entry.voiceSeconds*VOICE_EXP_PER_MINUTE)/60,);const exp=Math.max(0,Math.floor(baseExpFromText+baseExpFromVoice));return{userId:entry.userId,exp,level:getLevelInfo(exp).level,};}).filter((entry) => entry.exp>0).sort((a,b) => b.exp-a.exp).slice(0,TOP_LIMIT);if(mode==="alltime" && rows.length > 0) {
+  const rows = Array.from(perUser.values()).map((entry) => { const baseExpFromText = entry.textCount * MESSAGE_EXP; const baseExpFromVoice = Math.floor((entry.voiceSeconds * VOICE_EXP_PER_MINUTE) / 60,); const exp = Math.max(0, Math.floor(baseExpFromText + baseExpFromVoice)); return { userId: entry.userId, exp, level: getLevelInfo(exp).level, }; }).filter((entry) => entry.exp > 0).sort((a, b) => b.exp - a.exp).slice(0, TOP_LIMIT); if (mode === "alltime" && rows.length > 0) {
     const userIds = rows.map((r) => r.userId);
-    const expUsers=await ExpUser.find({guildId:guild.id,userId:{$in:userIds},}).select("userId totalExp level").lean();
-    const expByUser=new Map(expUsers.map((d) => [String(d.userId),{totalExp:Number(d.totalExp||0),level:Number(d.level||0)}]),);
+    const expUsers = await ExpUser.find({ guildId: guild.id, userId: { $in: userIds }, }).select("userId totalExp level").lean();
+    const expByUser = new Map(expUsers.map((d) => [String(d.userId), { totalExp: Number(d.totalExp || 0), level: Number(d.level || 0) }]),);
     for (const row of rows) {
       const eu = expByUser.get(row.userId);
       if (eu != null) {
@@ -185,7 +238,7 @@ async function computeLeaderboardRows(guild, mode = "alltime") {
 
 async function buildWeeklyEmbed(message) {
   const rows = await computeLeaderboardRows(message.guild, "weekly");
-  const members=await fetchMembers(message.guild,rows.map((r) => r.userId),);
+  const members = await fetchMembers(message.guild, rows.map((r) => r.userId),);
   const lines = [];
   rows.forEach((row, index) => {
     const member = members.get(row.userId);
@@ -193,7 +246,7 @@ async function buildWeeklyEmbed(message) {
     const exp = Number(row.exp || 0);
     lines.push(`${rankLabel(index)} ${label}`);
     lines.push(
-      `<:VC_Reply:1468262952934314131> Weekly Base <:VC_EXP:1468714279673925883> __${exp}__ EXP`,
+      `<:VC_Reply:1468262952934314131> __${exp}__ EXP`,
     );
   });
 
@@ -211,8 +264,7 @@ async function buildWeeklyEmbed(message) {
     .setThumbnail(message.guild.iconURL({ size: 128 }))
     .setDescription(
       [
-        "<a:VC_Sparkles:1468546911936974889> I 10 utenti con più exp guadagnati in settimana (aggiornata ogni Lunedì)",
-        "<:VC_Reply:1468262952934314131> Conteggio weekly senza moltiplicatori (base EXP) e solo canali visibili/interagibili da Member.",
+        "<a:VC_Sparkles:1468546911936974889> I 10 utenti con più exp guadagnati in settimana",
         "",
         lines.join("\n"),
       ].join("\n"),
@@ -221,7 +273,7 @@ async function buildWeeklyEmbed(message) {
 
 async function buildAllTimeEmbed(message) {
   const rows = await computeLeaderboardRows(message.guild, "alltime");
-  const members=await fetchMembers(message.guild,rows.map((r) => r.userId),);
+  const members = await fetchMembers(message.guild, rows.map((r) => r.userId),);
   const lines = [];
   rows.forEach((row, index) => {
     const member = members.get(row.userId);
@@ -248,7 +300,7 @@ async function buildAllTimeEmbed(message) {
     .setThumbnail(message.guild.iconURL({ size: 128 }))
     .setDescription(
       [
-        "<a:VC_Sparkles:1468546911936974889> I 10 utenti più attivi all-time (solo canali visibili/interagibili da Member).",
+        "<a:VC_Sparkles:1468546911936974889> I 10 utenti con più exp guadagnati",
         "",
         lines.join("\n"),
       ].join("\n"),
@@ -269,8 +321,8 @@ module.exports = {
     await message.channel.sendTyping();
     const invoked = getInvokedCommand(message);
     const rawMode = String(args[0] || "").toLowerCase();
-    const normalizedMode=["weekly","settimanale","week","w"].includes(rawMode,)?"weekly":["alltime","all","totale","general","generale","a"].includes(rawMode,)?"alltime":null;
-    const mode=normalizedMode||(invoked==="cs"||invoked==="classificasettimanale"?"weekly":"alltime");
+    const normalizedMode = ["weekly", "settimanale", "week", "w"].includes(rawMode,) ? "weekly" : ["alltime", "all", "totale", "general", "generale", "a"].includes(rawMode,) ? "alltime" : null;
+    const mode = normalizedMode || (invoked === "cs" || invoked === "classificasettimanale" ? "weekly" : "alltime");
     const isWeekly = mode === "weekly";
 
     if (rawMode && !normalizedMode) {
@@ -282,7 +334,7 @@ module.exports = {
       return;
     }
 
-    const embed=isWeekly?await buildWeeklyEmbed(message):await buildAllTimeEmbed(message);
+    const embed = isWeekly ? await buildWeeklyEmbed(message) : await buildAllTimeEmbed(message);
 
     const shouldRedirect = message.channel.id !== LEADERBOARD_CHANNEL_ID;
     if (!shouldRedirect) {
@@ -293,7 +345,7 @@ module.exports = {
       return;
     }
 
-    const leaderboardChannel=message.guild.channels.cache.get(LEADERBOARD_CHANNEL_ID)||(await message.guild.channels.fetch(LEADERBOARD_CHANNEL_ID).catch(() => null));
+    const leaderboardChannel = message.guild.channels.cache.get(LEADERBOARD_CHANNEL_ID) || (await message.guild.channels.fetch(LEADERBOARD_CHANNEL_ID).catch(() => null));
 
     if (!leaderboardChannel || !leaderboardChannel.isTextBased()) {
       await safeMessageReply(message, {
@@ -312,13 +364,13 @@ module.exports = {
       return;
     }
 
-    const label=isWeekly?"Vai alla classifica settimanale":"Vai alla classifica generale";
-    const redirectEmbed=new EmbedBuilder().setColor("#6f4e37").setDescription(`Per evitare di intasare la chat, la classifica ${isWeekly?"settimanale":"generale"}` +
-          `è stata generata nel canale<#${LEADERBOARD_CHANNEL_ID}>.` +
-          `[Clicca qui per vederla](${sent.url})o utilizza il bottone sottostante.`,
-      );
+    const label = isWeekly ? "Vai alla classifica settimanale" : "Vai alla classifica generale";
+    const redirectEmbed = new EmbedBuilder().setColor("#6f4e37").setDescription(`Per evitare di intasare la chat, la classifica ${isWeekly ? "settimanale" : "generale"}` +
+      `è stata generata nel canale<#${LEADERBOARD_CHANNEL_ID}>.` +
+      `[Clicca qui per vederla](${sent.url})o utilizza il bottone sottostante.`,
+    );
 
-    const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel(label).setURL(sent.url),);
+    const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel(label).setURL(sent.url),);
 
     await safeMessageReply(message, {
       embeds: [redirectEmbed],

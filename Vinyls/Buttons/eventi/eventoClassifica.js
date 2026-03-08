@@ -3,6 +3,7 @@ const { EVENTO_CLASSIFICA_PREFIX } = require("../ids/stats");
 const { getEventWeekDateKeys, loadActivityRowsFromDateKeys } = require("../../Services/Community/weeklyActivityWinnersService");
 const { getEventWeekNumber, getTop10ExpDuringEvent } = require("../../Services/Community/activityEventRewardsService");
 const { isEventStaffMember, getGuildExpSettings } = require("../../Services/Community/expService");
+const { ActivityUser } = require("../../Schemas/Community/communitySchemas");
 
 const name = "eventoClassifica";
 const label = "Evento Classifica";
@@ -10,12 +11,70 @@ const description = "Pulsanti settimana per la classifica evento EXP.";
 const order = 9;
 
 const MAX_WEEKS = 4;
+const TIME_ZONE = "Europe/Rome";
 
 function formatVoiceHours(seconds) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   if (h > 0) return `${h}h ${m}m`;
   return `${m}m`;
+}
+
+function pad2(value) {
+  return String(value).padStart(2, "0");
+}
+
+function getTimeParts(date) {
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+  });
+  const parts = formatter.formatToParts(date);
+  const map = {};
+  for (const part of parts) {
+    if (part.type !== "literal") map[part.type] = part.value;
+  }
+  return {
+    year: Number(map.year),
+    month: Number(map.month),
+    day: Number(map.day),
+    hour: Number(map.hour),
+  };
+}
+
+function getWeekdayRome(date) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: TIME_ZONE,
+    weekday: "short",
+  });
+  return formatter.format(date);
+}
+
+function getWeekKey(date) {
+  const { year, month, day } = getTimeParts(date);
+  const utcDate = new Date(Date.UTC(year, month - 1, day));
+  const dayNr = (utcDate.getUTCDay() + 6) % 7;
+  utcDate.setUTCDate(utcDate.getUTCDate() - dayNr + 3);
+  const firstThursday = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 4));
+  const weekNr = 1 + Math.round((utcDate - firstThursday) / (7 * 24 * 60 * 60 * 1000));
+  return `${utcDate.getUTCFullYear()}-W${pad2(weekNr)}`;
+}
+
+function getNextWeekKey(date) {
+  const next = new Date(date.getTime() + 24 * 60 * 60 * 1000);
+  return getWeekKey(next);
+}
+
+function getActiveWeeklyKey(date = new Date()) {
+  const weekday = getWeekdayRome(date);
+  const { hour } = getTimeParts(date);
+  if (weekday === "Sun" && hour >= 21) {
+    return getNextWeekKey(date);
+  }
+  return getWeekKey(date);
 }
 
 async function resolveUserTag(client, userId) {
@@ -62,9 +121,30 @@ function buildWeekButtonsRow(settings, selectedWeek) {
 
 async function buildEventoClassificaPayload(guild, client, settings, weekNum) {
   const week = Math.max(1, Math.min(MAX_WEEKS, Number(weekNum) || 1));
-  const eventStart = settings?.eventStartedAt ? new Date(settings.eventStartedAt) : null;
-  const dateKeys = eventStart ? getEventWeekDateKeys(eventStart, week) : [];
-  const rows = dateKeys.length ? await loadActivityRowsFromDateKeys(guild, dateKeys) : [];
+  const currentEventWeek = settings ? getEventWeekNumber(settings) : 0;
+  let rows = [];
+  if (week === currentEventWeek && currentEventWeek >= 1) {
+    const activeWeeklyKey = getActiveWeeklyKey(new Date());
+    const weeklyRows = await ActivityUser.find(
+      {
+        guildId: guild.id,
+        $or: [
+          { "messages.weeklyKey": activeWeeklyKey },
+          { "voice.weeklyKey": activeWeeklyKey },
+        ],
+      },
+      { userId: 1, messages: 1, voice: 1 },
+    ).lean().catch(() => []);
+    rows = weeklyRows.map((row) => ({
+      userId: String(row?.userId || ""),
+      messageCount: Math.max(0, Number(row?.messages?.weekly || 0)),
+      voiceSeconds: Math.max(0, Number(row?.voice?.weeklySeconds || 0)),
+    }));
+  } else {
+    const eventStart = settings?.eventStartedAt ? new Date(settings.eventStartedAt) : null;
+    const dateKeys = eventStart ? getEventWeekDateKeys(eventStart, week) : [];
+    rows = dateKeys.length ? await loadActivityRowsFromDateKeys(guild, dateKeys) : [];
+  }
 
   const sortedMessages = [...rows].sort((a, b) => (b.messageCount || 0) - (a.messageCount || 0)).slice(0, 25);
   const sortedVoice = [...rows].sort((a, b) => (b.voiceSeconds || 0) - (a.voiceSeconds || 0)).slice(0, 25);
@@ -112,7 +192,6 @@ async function buildEventoClassificaPayload(guild, client, settings, weekNum) {
     .setFooter({ text: "Aggiornata in tempo reale • Cambia settimana con i pulsanti" })
     .setTimestamp();
 
-  const currentEventWeek = settings ? getEventWeekNumber(settings) : 0;
   const hasWeekButtons = currentEventWeek >= 2;
   if (!hasWeekButtons) embed.setFooter({ text: "Aggiornata in tempo reale" });
 
