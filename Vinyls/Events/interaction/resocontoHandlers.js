@@ -1,7 +1,8 @@
-const { EmbedBuilder, ModalBuilder, ActionRowBuilder, TextInputBuilder, TextInputStyle, } = require("discord.js");
+const { EmbedBuilder, ModalBuilder, ActionRowBuilder, TextInputBuilder, TextInputStyle, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const IDs = require("../../Utils/Config/ids");
 const { getGuildChannelCached, getGuildMemberCached, } = require("../../Utils/Interaction/interactionEntityCache");
 const { getOrCreateStaffDoc, deleteThreadForMessage } = require("../../Utils/Staff/staffDocUtils");
+const { addStaffWarnFromNegatives, applyFullDepex } = require("../../Services/Staff/staffWarnService");
 const RESOCONTO_APPLY_PREFIX = "resoconto_apply";
 const RESOCONTO_REJECT_PREFIX = "resoconto_reject";
 const RESOCONTO_REASON_MODAL_PREFIX = "resoconto_reason";
@@ -255,6 +256,44 @@ async function applyStaffAction(guild, actor, payload, reasonOverride = null) {
     staffDoc.negativeReasons.push(reason);
     await staffDoc.save();
     await sendValutazioneLogEmbed(guild, actor, targetUser, reason, false);
+
+    const warnResult = await addStaffWarnFromNegatives(guild.id, payload.userId, staffDoc.negativeCount, reason);
+    if (warnResult.added) {
+      const warnChannel = await getGuildChannelCached(guild, IDs.channels?.warnStaff);
+      if (warnChannel?.isTextBased?.()) {
+        const warnLogEmbed = new EmbedBuilder()
+          .setAuthor({ name: `Warn automatico (3 valutazioni negative) da ${actor.username}`, iconURL: actor.displayAvatarURL() })
+          .setTitle(`<a:VC_Alert:1448670089670037675> • **__WARN STAFF__** \`#${warnResult.warnCount}\``)
+          .setThumbnail(targetUser.displayAvatarURL())
+          .setDescription(`<@${payload.userId}>\n<:VC_reason:1478517122929004544> __${String(reason).slice(0, 400)}__`)
+          .setColor("#E74C3C");
+        await warnChannel.send({ content: `<@${payload.userId}>`, embeds: [warnLogEmbed] }).catch(() => null);
+        if (warnResult.shouldAskDepex) {
+          const embed = new EmbedBuilder()
+            .setColor("#E74C3C")
+            .setTitle("<a:VC_Alert:1448670089670037675> 2 warn staff — Decidi azione")
+            .setDescription(
+              `<@${payload.userId}> ha raggiunto **2 warn staff** (da valutazioni negative).\n\n` +
+              "**Depex ora** = un livello in basso (Mod → depex completo; Coord → Mod; Super → Coord; Admin → Super; …).\n" +
+              "**No** = nessuna azione ora; al **3° warn** scatterà il **depex completo** (ruolo + staff).",
+            )
+            .setThumbnail(targetUser.displayAvatarURL());
+          const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId(`staff_warn_depex:${payload.userId}:yes`).setLabel("Depex ora").setStyle(ButtonStyle.Danger),
+            new ButtonBuilder().setCustomId(`staff_warn_depex:${payload.userId}:no`).setLabel("No (al 3° warn depex completo)").setStyle(ButtonStyle.Secondary),
+          );
+          await warnChannel.send({ content: `<@${payload.userId}>`, embeds: [embed], components: [row] }).catch(() => null);
+        }
+      }
+    }
+    if (warnResult.added && warnResult.shouldFullDepex) {
+      const roleId = String(payload.roleId || "");
+      const fullResult = await applyFullDepex(guild, member, roleId || null);
+      if (fullResult.ok) {
+        const roleAfterId = ROLE_DOWN[roleId] ?? "";
+        await sendPexDepexLog(guild, "depex", targetUser, roleId, roleAfterId, `Depex automatico: 3 warn staff (valutazioni negative).`);
+      }
+    }
     return "<:thumbsdown:1471292163957457013> Registrata Valutazione Negativa.";
   }
 
@@ -470,4 +509,4 @@ async function handleResocontoActionInteraction(interaction) {
   return false;
 }
 
-module.exports = { RESOCONTO_APPLY_PREFIX, RESOCONTO_REJECT_PREFIX, applyAutomaticValutazione, handleResocontoActionInteraction };
+module.exports = { RESOCONTO_APPLY_PREFIX, RESOCONTO_REJECT_PREFIX, applyAutomaticValutazione, handleResocontoActionInteraction, applyDepexSideEffects, sendPexDepexLog };

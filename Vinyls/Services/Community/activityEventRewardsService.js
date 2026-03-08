@@ -35,6 +35,32 @@ function getRomeDayBoundsForDate(date = new Date()) {
   return { startRome, endRome };
 }
 
+function normalizeEventWeekStartMs(startDateRaw) {
+  const startDate = new Date(startDateRaw);
+  const startMs = startDate.getTime();
+  if (!Number.isFinite(startMs)) return startMs;
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIME_ZONE_ROME,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+  const parts = fmt.formatToParts(startDate).reduce((acc, part) => {
+    if (part.type !== "literal") acc[part.type] = part.value;
+    return acc;
+  }, {});
+  const hour = Number(parts.hour || 0);
+  if (hour !== 21) return startMs;
+  const year = Number(parts.year || 0);
+  const month = Number(parts.month || 1);
+  const day = Number(parts.day || 1);
+  return createUtcFromRomeLocal(year, month, day, 21, 0, 0).getTime();
+}
+
 async function isEventActive(guildId) {
   if (!guildId) return false;
   const settings = await getGuildExpSettings(guildId);
@@ -284,7 +310,7 @@ async function grantEventRewardsForSameDayReviewAndVote(guild, eventStartDate) {
 function getEventWeekNumber(settings) {
   if (!settings?.eventStartedAt || !settings?.eventExpiresAt) return 0;
   const now = Date.now();
-  const start = new Date(settings.eventStartedAt).getTime();
+  const start = normalizeEventWeekStartMs(settings.eventStartedAt);
   const end = new Date(settings.eventExpiresAt).getTime();
   if (now < start || now > end) return 0;
   const weekMs = 7 * 24 * 60 * 60 * 1000;

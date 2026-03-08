@@ -20,6 +20,7 @@ const { startTicketAutoClosePromptLoop, startTranscriptCleanupLoop, } = require(
 const { startAutoBackupLoop } = require("../Services/Backup/autoBackupService");
 const { startModCaseLifecycleLoop } = require("../Services/Moderation/modCaseLifecycleService");
 const{startWeeklyStaffResocontoLoop,}=require("../Services/Staff/weeklyStaffResocontoService");
+const { startStaffWarnResetLoop } = require("../Services/Staff/staffWarnService");
 const { runScheduledEnds } = require("../Services/Giveaway/giveawayService");
 const { retroSyncGuildLevels } = require("../Services/Community/expService");
 const IDs = require("../Utils/Config/ids");
@@ -316,6 +317,7 @@ function startPrimaryLoops(client, engagementTick) {
     ["[TICKET AUTO CLOSE PROMPT] Failed to start loop", () => startTicketAutoClosePromptLoop(client)],
     ["[TRANSCRIPT CLEANUP] Failed to start loop", () => startTranscriptCleanupLoop()],
     ["[WEEKLY STAFF RESOCONTO] Failed to start loop", () => startWeeklyStaffResocontoLoop(client)],
+    ["[STAFF WARN RESET 6M] Failed to start loop", () => startStaffWarnResetLoop(client)],
     ["[JOIN RAID RESTORE] Failed to start loop", () => {
       const tick = async () => {
         const guilds = [...client.guilds.cache.values()];

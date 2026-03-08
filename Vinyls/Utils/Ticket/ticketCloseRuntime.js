@@ -22,28 +22,28 @@ function buildTicketClosedEmbed(data) {
   const closedAt = data?.closedAt ? `<t:${Math.floor(new Date(data.closedAt).getTime() / 1000)}:F>` : `<t:${Math.floor(Date.now() / 1000)}:F>`;
   const reasonText = data?.closeReason && String(data.closeReason).trim() ? String(data.closeReason).trim() : "Nessuna motivazione specificata";
 
-  let motivazioneValue = reasonText;
+  const fields = [
+    { name: "<:VC_id:1478517313618575419> ID Ticket", value: String(data?.ticketNumber || "N/D"), inline: true },
+    { name: "<:VC_open:1478517277279129712> Aperto da", value: data?.userId ? `<@${data.userId}>` : "Sconosciuto", inline: true },
+    { name: "<:VC_close:1478517239136256020> Chiuso da", value: data?.closedBy ? `<@${data.closedBy}>` : "Sconosciuto", inline: true },
+    { name: "<:VC_opentime:1478517163022221323> Ora Apertura", value: openedAt, inline: true },
+    { name: "<:VC_claim:1478517202016669887> Claimato da", value: data?.claimedBy ? `<@${data.claimedBy}>` : "Non claimato", inline: true },
+    { name: "<:VC_close:1478517239136256020> Ora Chiusura", value: closedAt, inline: true },
+  ];
   if (Number.isFinite(data?.ratingScore) && data.ratingScore >= 1) {
     const stars = formatRatingStars(data.ratingScore);
     const byPart = data?.ratingBy ? ` – da <@${data.ratingBy}>` : "";
-    motivazioneValue = `${stars}${byPart}\n${reasonText}`;
+    fields.push({ name: "<:VC_EXP:1468714279673925883> Valutazione", value: `${stars}${byPart}`, inline: false });
   }
+  fields.push({ name: "<:VC_reason:1478517122929004544> Motivazione", value: reasonText, inline: false });
 
   const embed = new EmbedBuilder()
     .setAuthor({ name: data?.guildName || "<:VC_Ticket:1448694637106692156> Sistema Ticket", iconURL: data?.guildIconURL || undefined, })
     .setTitle("<:VC_Ticket:1448694637106692156> Ticket Chiuso")
     .setColor("#6f4e37")
-    .addFields(
-      { name: "<:VC_id:1478517313618575419> ID Ticket", value: String(data?.ticketNumber || "N/D"), inline: true },
-      { name: "<:VC_open:1478517277279129712> Aperto da", value: data?.userId ? `<@${data.userId}>` : "Sconosciuto", inline: true },
-      { name: "<:VC_close:1478517239136256020> Chiuso da", value: data?.closedBy ? `<@${data.closedBy}>` : "Sconosciuto", inline: true },
-      { name: "<:VC_opentime:1478517163022221323> Ora Apertura", value: openedAt, inline: true },
-      { name: "<:VC_claim:1478517202016669887> Claimato da", value: data?.claimedBy ? `<@${data.claimedBy}>` : "Non claimato", inline: true },
-      { name: "<:VC_close:1478517239136256020> Ora Chiusura", value: closedAt, inline: true },
-      { name: "<:VC_reason:1478517122929004544> Motivazione", value: motivazioneValue, inline: false },
-    );
+    .addFields(fields);
 
-  const reordered = [embed.data.fields?.[0], embed.data.fields?.[1], embed.data.fields?.[2], embed.data.fields?.[3], embed.data.fields?.[5], embed.data.fields?.[4], embed.data.fields?.[6],].filter(Boolean);
+  const reordered = [embed.data.fields?.[0], embed.data.fields?.[1], embed.data.fields?.[2], embed.data.fields?.[3], embed.data.fields?.[5], embed.data.fields?.[4], embed.data.fields?.[6], embed.data.fields?.[7],].filter(Boolean);
   embed.setFields(reordered);
 
   return embed;

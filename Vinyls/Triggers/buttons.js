@@ -3,7 +3,9 @@ const { decrementQuoteCount } = require("../Utils/Quote/quoteCounter");
 const { ROLE_MULTIPLIERS } = require("../Services/Community/expService");
 const { AvatarPrivacy, BannerPrivacy, } = require("../Schemas/Community/communitySchemas");
 const IDs = require("../Utils/Config/ids");
-const { getGuildMemberCached, getUserCached, } = require("../Utils/Interaction/interactionEntityCache");
+const { getGuildMemberCached, getUserCached, getGuildChannelCached, } = require("../Utils/Interaction/interactionEntityCache");
+const { applyDepexOneLevel } = require("../Services/Staff/staffWarnService");
+const { sendPexDepexLog } = require("../Events/interaction/resocontoHandlers");
 const { checkButtonPermission, checkStringSelectPermission, buildGlobalPermissionDeniedEmbed, buildGlobalNotYourControlEmbed, } = require("../Utils/Moderation/commandPermissions");
 const DIVIDER_URL = "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
 const PRIVATE_FLAG = 1 << 6;
@@ -11,6 +13,47 @@ const MONO_GUILD_DENIED_TEXT = "Questo bot è utilizzabile solo sul server princ
 
 async function handleStaffButtons(interaction) {
   if (!interaction.isButton()) return false;
+
+  if (interaction.customId && interaction.customId.startsWith("staff_warn_depex:")) {
+    const parts = String(interaction.customId).split(":");
+    const userId = parts[1];
+    const choice = parts[2];
+    if (!userId || !/^\d{16,20}$/.test(userId) || !["yes", "no"].includes(choice)) return false;
+    const hasHighStaff = interaction.member?.roles?.cache?.has?.(IDs.roles?.HighStaff);
+    if (!hasHighStaff) {
+      await interaction.reply({ content: "<a:VC_Alert:1448670089670037675> Solo l'High Staff può usare questo pulsante.", flags: PRIVATE_FLAG }).catch(() => null);
+      return true;
+    }
+    const guild = interaction.guild;
+    const member = await getGuildMemberCached(guild, userId);
+    const targetUser = member?.user;
+    if (choice === "no") {
+      await interaction.update({
+        content: "<:VC_OnlineStatus:1472011187569950751> Nessuna azione. Al **3° warn staff** scatterà il depex completo (ruolo + staff).",
+        embeds: [],
+        components: [],
+      }).catch(() => null);
+      return true;
+    }
+    if (!member) {
+      await interaction.reply({ content: "<a:VC_Alert:1448670089670037675> Utente non trovato nel server.", flags: PRIVATE_FLAG }).catch(() => null);
+      return true;
+    }
+    const result = await applyDepexOneLevel(guild, member);
+    if (!result.ok) {
+      await interaction.reply({ content: `<a:VC_Alert:1448670089670037675> ${result.reason || "Depex non applicato."}`, flags: PRIVATE_FLAG }).catch(() => null);
+      return true;
+    }
+    const oldRoleId = result.roleRemoved;
+    const newRoleId = result.newRole || (result.fullDepex ? String(IDs.roles?.Member || "") : "");
+    await sendPexDepexLog(guild, "depex", targetUser, oldRoleId, newRoleId, "Depex da 2 warn staff (scelta High Staff).");
+    await interaction.update({
+      content: "<:vegacheckmark:1443666279058772028> Depex applicato (un livello in basso).",
+      embeds: [],
+      components: [],
+    }).catch(() => null);
+    return true;
+  }
 
   if (interaction.customId == "sanzioni") {
     const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setDescription(

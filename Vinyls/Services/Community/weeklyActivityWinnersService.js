@@ -325,15 +325,24 @@ function formatVoiceDuration(seconds) {
   return `${m}m`;
 }
 
+function getEventWeeklyRewardLabel(week) {
+  const w = Number(week || 0);
+  if (w === 1) return "10 livelli";
+  if (w === 2) return "un colore gradiente a scelta";
+  if (w === 3) return "un ruolo custom e vocale privata permanente";
+  if (w === 4) return "ruolo VIP permanente";
+  return "ricompensa evento";
+}
+
 async function sendEventWeekAnnouncementToNews(client, guild, eventWeek, topMessages, topVoice) {
   const newsChannel = client.channels.cache.get(NEWS_CHANNEL_ID) || (await client.channels.fetch(NEWS_CHANNEL_ID).catch(() => null));
   if (!newsChannel?.guild) return;
   const msgLines = topMessages.length ? topMessages.map((item, i) => {
-    const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}>—**${item.messageCount}** <:VC_Message:1448670089670037675>`;
+    const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}> <a:VC_Arrow:1448672967721615452> **${item.messageCount}** _messaggi_`;
   })
     : ["<:VC_Info:1448670089670037675> - Nessun dato per la classifica testuale."];
   const voiceLines = topVoice.length ? topVoice.map((item, i) => {
-    const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}>—**${formatVoiceDuration(item.voiceSeconds)}** <:VC_Voice:1448670089670037675>`;
+    const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}> <a:VC_Arrow:1448672967721615452> **${formatVoiceDuration(item.voiceSeconds)}** _in vocale_`;
   })
     : ["<:VC_Info:1448670089670037675> - Nessun dato per la classifica vocale."];
   const embed = new EmbedBuilder().setColor("#6f4e37").setTitle(`<:VC_Leaderboard:1469659357678669958> Evento Activity EXP — Settimana ${eventWeek}`)
@@ -348,7 +357,14 @@ async function sendEventWeekAnnouncementToNews(client, guild, eventWeek, topMess
     )
     .setThumbnail(guild.iconURL({ size: 256 }) || null)
     .setFooter({ text: `Settimana ${eventWeek} di ${eventWeek === 1 ? "evento" : "evento"} • Premi assegnati ai vincitori` }).setTimestamp();
-  await newsChannel.send({ embeds: [embed] }).catch((err) => {
+  await newsChannel.send({
+    content: `<@&1442568949605597264>
+<a:VC_Winner:1448687700235256009> Ciao a tutti! Annunciamo i vincitori dell'Activity Event EXP della settimana ${eventWeek}
+<:VC_EXP:1468714279673925883> Avete ricevuto __${getEventWeeklyRewardLabel(eventWeek)}__ come ricompensa di questa settimana
+
+<a:VC_Events:1448688007438667796> Vi aspettiamo la prossima settimana, con i vincitori che vinceranno __${getEventWeeklyRewardLabel(eventWeek + 1)}__`,
+    embeds: [embed],
+  }).catch((err) => {
     global.logger?.error?.("[WEEKLY ACTIVITY] Event week announcement to news failed:", err);
   });
 }
@@ -645,15 +661,6 @@ function startWeeklyActivityWinnersLoop(client) {
 async function getEventDiagnostics(guild) {
   if (!guild?.id) return null;
   const settings = await getGuildExpSettings(guild.id).catch(() => null);
-  const getEventWeekNumber = (s) => {
-    if (!s?.eventStartedAt || !s?.eventExpiresAt) return 0;
-    const now = Date.now();
-    const start = new Date(s.eventStartedAt).getTime();
-    const end = new Date(s.eventExpiresAt).getTime();
-    if (now < start || now > end) return 0;
-    const weekMs = 7 * 24 * 60 * 60 * 1000;
-    return Math.min(4, Math.max(1, Math.floor((now - start) / weekMs) + 1));
-  };
   const eventWeek = settings ? getEventWeekNumber(settings) : 0;
   const eligible = await getEligibleChannelSets(guild);
   let dateKeys = [];

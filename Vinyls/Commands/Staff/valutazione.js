@@ -1,7 +1,9 @@
 const { safeEditReply } = require("../../../shared/discord/replyRuntime");
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const Staff = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../../Utils/Config/ids");
+const { getGuildChannelCached, getGuildMemberCached } = require("../../Utils/Interaction/interactionEntityCache");
+const { addStaffWarnFromNegatives, applyFullDepex, getHighestStaffRoleId } = require("../../Services/Staff/staffWarnService");
 const EPHEMERAL_FLAG = 1 << 6;
 
 function errorEmbed(description) {
@@ -165,6 +167,53 @@ async function handleNegativeAdd(
   const embed = makeLogEmbed(interaction, staffUser, `<:thumbsdown:1471292163957457013> **__VALUTAZIONE NEGATIVA__** #${staffDoc.negativeCount}\``, reason, staffDoc.valutazioniCount,);
 
   await sendChannelEmbed(channel, { content: `${staffUser}`, embeds: [embed] });
+
+  const guild = interaction.guild;
+  const warnResult = await addStaffWarnFromNegatives(guild.id, staffUser.id, staffDoc.negativeCount, reason);
+  const warnChannel = guild.channels.cache.get(IDs.channels?.warnStaff) || (await getGuildChannelCached(guild, IDs.channels?.warnStaff));
+  if (warnResult.added && warnChannel?.isTextBased?.()) {
+    const warnEmbed = new EmbedBuilder()
+      .setAuthor({ name: `Warn automatico (3 valutazioni negative) da ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
+      .setTitle(`<a:VC_Alert:1448670089670037675> • **__WARN STAFF__** \`#${warnResult.warnCount}\``)
+      .setThumbnail(staffUser.displayAvatarURL())
+      .setDescription(`${staffUser}\n<:VC_reason:1478517122929004544> __${String(reason).slice(0, 400)}__`)
+      .setColor("#E74C3C");
+    await warnChannel.send({ content: `${staffUser}`, embeds: [warnEmbed] }).catch(() => null);
+    if (warnResult.shouldAskDepex) {
+      const promptEmbed = new EmbedBuilder()
+        .setColor("#E74C3C")
+        .setTitle("<a:VC_Alert:1448670089670037675> 2 warn staff — Decidi azione")
+        .setDescription(
+          `${staffUser} ha raggiunto **2 warn staff** (da valutazioni negative).\n\n` +
+          "**Depex ora** = un livello in basso (Mod → depex completo; Coord → Mod; …).\n" +
+          "**No** = nessuna azione ora; al **3° warn** scatterà il **depex completo** (ruolo + staff).",
+        )
+        .setThumbnail(staffUser.displayAvatarURL());
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId(`staff_warn_depex:${staffUser.id}:yes`).setLabel("Depex ora").setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId(`staff_warn_depex:${staffUser.id}:no`).setLabel("No (al 3° warn depex completo)").setStyle(ButtonStyle.Secondary),
+      );
+      await warnChannel.send({ content: `${staffUser}`, embeds: [promptEmbed], components: [row] }).catch(() => null);
+    }
+  }
+  if (warnResult.added && warnResult.shouldFullDepex) {
+    const member = await getGuildMemberCached(guild, staffUser.id);
+    if (member) {
+      const currentRoleId = getHighestStaffRoleId(member);
+      const fullResult = await applyFullDepex(guild, member, currentRoleId);
+      if (fullResult.ok) {
+        const pexDepexChannel = await getGuildChannelCached(guild, IDs.channels?.pexDepex);
+        if (pexDepexChannel?.isTextBased?.()) {
+          await pexDepexChannel.send({
+            content: `**<:cancel:1461730653677551691> DEPEX** ${staffUser}\n` +
+              `<:staff:1443651912179388548> \`${currentRoleId}\` <a:VC_Arrow:1448672967721615452> Nessuno\n` +
+              `<:VC_reason:1478517122929004544> __Depex automatico: 3 warn staff (valutazioni negative).__`,
+          }).catch(() => null);
+        }
+      }
+    }
+  }
+
   return safeEditReply(interaction, {
     embeds: [
       successEmbed(
