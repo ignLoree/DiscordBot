@@ -130,7 +130,7 @@ function buildTicketClosedEmbed(data) {
       { name: "<:VC_opentime:1478517163022221323> Ora Apertura", value: openedAt, inline: true },
       { name: "<:VC_claim:1478517202016669887> Claimato da", value: data?.claimedBy ? `<@${data.claimedBy}>` : "Non claimato", inline: true },
       { name: "<:VC_close:1478517239136256020> Ora Chiusura", value: closedAt, inline: true },
-      { name: "<:VC_reason:1478517122929004544> Motivazione", value: motivazioneValue, inline: false },
+      { name: "<:VC_reason:1478517122929004544> Motivazione", value: reasonValue, inline: false },
     );
 
   const reordered = [embed.data.fields?.[0], embed.data.fields?.[1], embed.data.fields?.[2], embed.data.fields?.[3], embed.data.fields?.[5], embed.data.fields?.[4], embed.data.fields?.[6],].filter(Boolean);
