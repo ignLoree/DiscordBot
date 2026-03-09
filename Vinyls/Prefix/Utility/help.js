@@ -14,6 +14,8 @@ const PAGE_ROLE_IDS=[IDs.roles.Member,IDs.roles.Staff,IDs.roles.HighStaff,IDs.ro
 const PAGE_TITLES={[IDs.roles.Member]:"Comandi Utente",[IDs.roles.Staff]:"Comandi Staff",[IDs.roles.HighStaff]:"Comandi High Staff",[IDs.roles.Founder]:"Comandi Dev",all:"Comandi Disponibili",};
 const CATEGORY_LABELS={utility:"Utility",tts:"TTS",level:"Level",minigames:"Minigames",stats:"Stats",partner:"Partner",ticket:"Ticket",moderation:"Moderation",admin:"Admin",staff:"Staff",vip:"VIP",dev:"Dev",};
 const CATEGORY_ORDER=["utility","tts","level","minigames","stats","vip","partner","ticket","moderation","admin","staff","dev",];
+const HELP_NEW_EMOJI = "<:LC_wNew:1471891729471770819>";
+const HELP_NEW_INVOKES = new Set(["birthday", "embed", "no-dm-list", "block", "unblock", "reaction", "customrole", "customvoc", "quote", "dm-disable", "dm-enable", "no-dm", "moderations", "modstats", "recensione", "temprole", "perms",]);
 const HELP_PAGE_SIZE = 18;
 const MAX_HELP_TEXT_LENGTH = 3900;
 const PREFIX_HELP_DESCRIPTIONS={help:"Mostra tutti i comandi disponibili con il bot.",afk:"Imposta il tuo stato AFK con un messaggio personalizzato.",avatar:"Mostra l'avatar di un utente o l'icona del server.",banner:"Mostra il banner di un utente o del server.",block:"Blocca privacy contenuti: avatar, banner, quotes.",invites:"Mostra le statistiche inviti di un utente.",voices:"Mostra le voci TTS disponibili.",membercount:"Mostra il numero totale di membri del server.","no-dm":"Pannello per disattivare/attivare le categorie di DM (promemoria, bump, broadcast, inviti, livelli).","dm-enable":"Pannello per riattivare le categorie di DM o attivare tutto.",ping:"Mostra latenza bot, database e informazioni di uptime.",set:"Impostazioni TTS: autojoin e voce personale.",ship:"Calcola la compatibilità tra due utenti.",adorable:"Genera un avatar stile fun partendo da un seed o testo.",birb:"Invia un'immagine casuale di un uccellino.",cat:"Invia un'immagine casuale di un gatto.",catfacts:"Mostra una curiosità casuale sui gatti.",chucknorris:"Mostra una battuta casuale su Chuck Norris.",country:"Mostra informazioni su un paese.",dadjoke:"Mostra una battuta spiritosa casuale.",define:"Cerca la definizione di una parola.",dog:"Invia un'immagine casuale di un cane.",dogfacts:"Mostra una curiosità casuale sui cani.",flip:"Lancia una moneta.",github:"Cerca un repository GitHub per nome o keyword.",itunes:"Cerca una traccia musicale su iTunes.",joke:"Mostra una battuta casuale.",math:"Calcola espressioni matematiche o mostra curiosità sui numeri.",movie:"Cerca informazioni su un film.",pokemon:"Mostra info e stats base di un Pokémon.",pug:"Invia un'immagine casuale di un pug.",quotes:"Mostra una citazione casuale testuale.",roll:"Tira uno o più dadi.",rps:"Gioca a sasso, carta, forbici contro il bot.",slots:"Gioca alle slot machine.",space:"Mostra posizione ISS e persone nello spazio.",steamstatus:"Mostra lo stato dei servizi Steam.",weather:"Mostra il meteo per una località.",snipe:"Recupera l'ultimo messaggio eliminato nel canale.",join:"Fa entrare il bot nel tuo canale vocale.",leave:"Fa uscire il bot dal canale vocale.",unblock:"Sblocca privacy contenuti: avatar, banner, quotes.",classifica:"Mostra la classifica livelli.",mstats:"Mostra statistiche minigiochi di un utente.",me:"Mostra le tue statistiche attività.",user:"Mostra le statistiche attività di un utente specifico.",server:"Mostra statistiche attività del server.",top:"Mostra la top completa utenti/canali.",rank:"Mostra livello, exp e posizione in classifica di un utente.",birthday:"Imposta o modifica la tua data di compleanno, età e privacy.","dm-disable":"Pannello per disattivare le categorie di DM o disattivare tutto.",embed:"Apre il builder embed interattivo per creare e inviare embed personalizzati.",info:"Mostra una scheda completa di un utente: account, ruoli, permessi, strike e stato sicurezza.",reaction:"Configura le reaction quando sei menzionato e le regole di risposta automatica a parole o frasi.",description:"Invia nel ticket la descrizione ufficiale del server.","no-dm-list":"Mostra la lista utenti con preferenze DM e cosa hanno disattivato (categorie o tutto).",purge:"Elimina messaggi da un canale.",ban:"Banna un utente.",unban:"Rimuove il ban di un utente.",kick:"Kicka un utente dal server.",mute:"Applica timeout a un utente.",unmute:"Rimuove il timeout da un utente.",warn:"Warna un utente.",warnings:"Mostra i warn attivi di un utente.",delwarn:"Rimuove un warn attivo da un utente.",clearwarn:"Rimuove tutti i warning attivi da un utente.",case:"Mostra una singola case moderazione.",reason:"Aggiorna il motivo di una case.",duration:"Aggiorna la durata di una case temporanea.",modlogs:"Mostra gli ultimi log moderazione di un utente.",moderations:"Mostra tutte le moderazioni temporanee attive (mute/ban). Senza utente: elenco globale; con utente: solo le sue.",modstats:"Mostra statistiche moderazione per staffer.",lock:"Blocca un canale.",unlock:"Sblocca un canale.",recensione:"Premia una recensione assegnando livelli.",ticket:"Gestisce i ticket.",verify:"Verifica manualmente un utente.",perms:"Assegna o revoca permessi temporanei su comandi e imposta quali canali possono usare un comando.",temprole:"Assegna o rimuove ruoli temporanei agli utenti.",security:"Hub sicurezza: status globale e gestione panic.",level:"Configura il sistema EXP/livelli: imposta o modifica exp, blocca canali, moltiplicatori, ruoli ignorati.",customrole:"Crea o modifica il tuo ruolo personalizzato e gestisci chi può usarlo.",customvoc:"Crea e gestisce la tua vocale privata.",quote:"Genera una quote da un messaggio.",};
@@ -23,6 +25,11 @@ const CONTEXT_CATEGORY_OVERRIDES={partnership:"partner",};
 const PERMISSIONS_CACHE_TTL_MS = 30_000;
 let permissionsCache = null;
 let permissionsCacheAt = 0;
+
+function isNewHelpEntry(entry) {
+  const token = (normalizeInvokeLookup(entry.invoke) || "").split(" ")[0];
+  return token && HELP_NEW_INVOKES.has(token.toLowerCase());
+}
 
 function buildMiniHelpNotFoundEmbed(query) {
   return new EmbedBuilder()
@@ -226,13 +233,7 @@ function normalizePermissionRoles(value) {
   return null;
 }
 
-function getSubcommandEntries(
-  commandName,
-  dataJson,
-  permissionConfig,
-  commandType,
-  category,
-) {
+function getSubcommandEntries(commandName, dataJson, permissionConfig, commandType, category) {
   const entries = [];
   const options = Array.isArray(dataJson?.options) ? dataJson.options : [];
   if (commandType !== ApplicationCommandType.ChatInput) return entries;
@@ -491,7 +492,7 @@ function renderPageText(page) {
   for (const categoryKey of orderedKeys) {
     const categoryEntries=(grouped.get(categoryKey)||[]).slice().sort((a,b) => String(a.invoke||"").localeCompare(String(b.invoke||""),"it"),);
     const categoryLabel=CATEGORY_LABELS[categoryKey]||categoryKey.charAt(0).toUpperCase()+categoryKey.slice(1);
-    const rows=categoryEntries.map((entry) => {const invokeNorm=normalizeInvokeLookup(entry.invoke);const prefixForAlias=entry.prefixBase!=null?String(entry.prefixBase):"+";let aliasList=Array.isArray(entry.aliases)&&entry.aliases.length?entry.aliases.map((a) => String(a||"").trim()).filter((a) => a&&normalizeInvokeLookup(prefixForAlias+a.replace(/^[/+]+/,""))!==invokeNorm):[];const isTicketCommand=invokeNorm.startsWith("ticket")||String(entry.invoke||"").toLowerCase().startsWith("+ticket");if(isTicketCommand&&Array.isArray(entry.subAliases)&&entry.subAliases.length){const existingNorm=new Set(aliasList.map((a) => normalizeInvokeLookup(prefixForAlias+a.replace(/^[/+]+/,""))));for(const a of entry.subAliases){const s=String(a||"").trim();if(!s)continue;const norm=normalizeInvokeLookup(prefixForAlias+s.replace(/^[/+]+/,""));if(norm!==invokeNorm&&!existingNorm.has(norm)){existingNorm.add(norm);aliasList.push(s);}}}const aliasPart=aliasList.length?" | "+aliasList.map((a) => "`"+(a.startsWith("+")||a.startsWith("/")?a:prefixForAlias+a)+"`").join(", "):"";const onlyMemberRole=Array.isArray(entry.roles)&&entry.roles.length===1&&String(entry.roles[0])===String(IDs.roles.Member);const roleHint=Array.isArray(entry.roles)&&entry.roles.length>0&&!onlyMemberRole?` *(Richiede: ${entry.roles.map((id) => `<@&${id}>`).join(", ")})*`:"";return`- \`${entry.invoke}\`${aliasPart}-${entry.description}${roleHint}`;
+    const rows=categoryEntries.map((entry) => {const invokeNorm=normalizeInvokeLookup(entry.invoke);const prefixForAlias=entry.prefixBase!=null?String(entry.prefixBase):"+";let aliasList=Array.isArray(entry.aliases)&&entry.aliases.length?entry.aliases.map((a) => String(a||"").trim()).filter((a) => a&&normalizeInvokeLookup(prefixForAlias+a.replace(/^[/+]+/,""))!==invokeNorm):[];const isTicketCommand=invokeNorm.startsWith("ticket")||String(entry.invoke||"").toLowerCase().startsWith("+ticket");if(isTicketCommand&&Array.isArray(entry.subAliases)&&entry.subAliases.length){const existingNorm=new Set(aliasList.map((a) => normalizeInvokeLookup(prefixForAlias+a.replace(/^[/+]+/,""))));for(const a of entry.subAliases){const s=String(a||"").trim();if(!s)continue;const norm=normalizeInvokeLookup(prefixForAlias+s.replace(/^[/+]+/,""));if(norm!==invokeNorm&&!existingNorm.has(norm)){existingNorm.add(norm);aliasList.push(s);}}}const aliasPart=aliasList.length?" | "+aliasList.map((a) => "`"+(a.startsWith("+")||a.startsWith("/")?a:prefixForAlias+a)+"`").join(", "):"";const onlyMemberRole=Array.isArray(entry.roles)&&entry.roles.length===1&&String(entry.roles[0])===String(IDs.roles.Member);const roleHint=Array.isArray(entry.roles)&&entry.roles.length>0&&!onlyMemberRole?` *(Richiede: ${entry.roles.map((id) => `<@&${id}>`).join(", ")})*`:"";const newBadge=isNewHelpEntry(entry)?` ${HELP_NEW_EMOJI}`:"";return`- \`${entry.invoke}\`${newBadge}${aliasPart}-${entry.description}${roleHint}`;
     });
     sections.push(`**${categoryLabel}**\n${rows.join("\n")}`);
   }
@@ -707,13 +708,7 @@ function collectCommandUsageSnippets(command, commandName, prefixBase) {
   return ordered.slice(0, 12);
 }
 
-function collectPrefixExampleLines(
-  command,
-  commandName,
-  prefixBase,
-  subEntries = [],
-  requestedSub = null,
-) {
+function collectPrefixExampleLines(command, commandName, prefixBase, subEntries = [], requestedSub = null) {
   const out = [];
   const push=(line) => {const value=String(line||"").trim();if(!value)return;if(!out.includes(value))out.push(value);};
 
@@ -778,7 +773,6 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
   const prefixBase = getPrefixBase(command);
   const visibleForCommand=entries.filter((entry) => {if(entry.type!=="prefix")return false;const invoke=normalizeInvokeLookup(entry.invoke);return invoke.split(" ")[0]===commandName;});
   if (!visibleForCommand.length) return null;
-
   const permissions = context?.permissions || {};
   const permConfig = getPrefixPermissionConfig(permissions, commandName);
   const subAliasesMap=command?.subcommandAliases&&typeof command.subcommandAliases==="object"?command.subcommandAliases:{};
@@ -819,7 +813,7 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
     subLines.push(
       `- \`${prefixBase}${commandName} ${subName}\`${subAliasPart} - ${entry.description}`,
     );
-    subLines.push(`  Ruoli: ${formatRoleMentions(subRoleIds)}`);
+    subLines.push(`Ruoli: ${formatRoleMentions(subRoleIds)}`);
   }
   if (requestedSub && !subLines.length) {
     const allKnownSubs=listPrefixSubcommandsForCommand(command,commandName,permissions,);
@@ -879,12 +873,7 @@ function getSlashSampleValueByType(optionType) {
   return "valore";
 }
 
-function buildSlashExampleLine(
-  commandName,
-  groupName,
-  subName,
-  optionList = [],
-) {
+function buildSlashExampleLine( commandName, groupName, subName, optionList = [] ) {
   const parts = [`/${commandName}`];
   if (groupName) parts.push(groupName);
   if (subName) parts.push(subName);
@@ -1018,7 +1007,6 @@ function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
   const perm = context?.permissions?.slash?.[commandName];
   const roleIds=Array.isArray(perm)?perm:Array.isArray(perm?.roles)?perm.roles:null;
   const effectiveSyntax=syntaxLines.length?syntaxLines:[`\`/${commandName}\``];
-
   const embed=new EmbedBuilder().setColor("#6f4e37").setTitle(`Guida comando: /${commandName}`)
     .setDescription(
       normalizeDescription(hit.dataJson.description, "Comando slash."),
@@ -1207,7 +1195,7 @@ function buildMiniHelpEmbed(query, entries, context = {}) {
   }
 
   const limited = matches.slice(0, 20);
-  const lines=limited.map((entry) => {const categoryKey=String(entry.category||"").toLowerCase();const categoryLabel=CATEGORY_LABELS[categoryKey]||categoryKey||"Misc";const invokeNorm=normalizeInvokeLookup(entry.invoke);const prefixForAlias=entry.prefixBase!=null?String(entry.prefixBase):"+";let aliasList=Array.isArray(entry.aliases)&&entry.aliases.length?entry.aliases.map((a) => String(a||"").trim()).filter((a) => a&&normalizeInvokeLookup(prefixForAlias+a.replace(/^[/+]+/,""))!==invokeNorm):[];const isTicketCommand=invokeNorm.startsWith("ticket")||String(entry.invoke||"").toLowerCase().startsWith("+ticket");if(isTicketCommand&&Array.isArray(entry.subAliases)&&entry.subAliases.length){const existingNorm=new Set(aliasList.map((a) => normalizeInvokeLookup(prefixForAlias+a.replace(/^[/+]+/,""))));for(const a of entry.subAliases){const s=String(a||"").trim();if(!s)continue;const norm=normalizeInvokeLookup(prefixForAlias+s.replace(/^[/+]+/,""));if(norm!==invokeNorm&&!existingNorm.has(norm)){existingNorm.add(norm);aliasList.push(s);}}}const aliasPart=aliasList.length?" | "+aliasList.map((a) => "`"+(a.startsWith("+")||a.startsWith("/")?a:prefixForAlias+a)+"`").join(", "):"";const onlyMemberRole=Array.isArray(entry.roles)&&entry.roles.length===1&&String(entry.roles[0])===String(IDs.roles.Member);const roleHint=Array.isArray(entry.roles)&&entry.roles.length>0&&!onlyMemberRole?`\n  \`Ruolo:\` ${entry.roles.map((id) => `<@&${id}>`).join(", ")}`:"";return`- \`${entry.invoke}\`${aliasPart}-${entry.description}\n\`Categoria:\` ${categoryLabel}${roleHint}`;
+  const lines=limited.map((entry) => {const categoryKey=String(entry.category||"").toLowerCase();const categoryLabel=CATEGORY_LABELS[categoryKey]||categoryKey||"Misc";const invokeNorm=normalizeInvokeLookup(entry.invoke);const prefixForAlias=entry.prefixBase!=null?String(entry.prefixBase):"+";let aliasList=Array.isArray(entry.aliases)&&entry.aliases.length?entry.aliases.map((a) => String(a||"").trim()).filter((a) => a&&normalizeInvokeLookup(prefixForAlias+a.replace(/^[/+]+/,""))!==invokeNorm):[];const isTicketCommand=invokeNorm.startsWith("ticket")||String(entry.invoke||"").toLowerCase().startsWith("+ticket");if(isTicketCommand&&Array.isArray(entry.subAliases)&&entry.subAliases.length){const existingNorm=new Set(aliasList.map((a) => normalizeInvokeLookup(prefixForAlias+a.replace(/^[/+]+/,""))));for(const a of entry.subAliases){const s=String(a||"").trim();if(!s)continue;const norm=normalizeInvokeLookup(prefixForAlias+s.replace(/^[/+]+/,""));if(norm!==invokeNorm&&!existingNorm.has(norm)){existingNorm.add(norm);aliasList.push(s);}}}const aliasPart=aliasList.length?" | "+aliasList.map((a) => "`"+(a.startsWith("+")||a.startsWith("/")?a:prefixForAlias+a)+"`").join(", "):"";const onlyMemberRole=Array.isArray(entry.roles)&&entry.roles.length===1&&String(entry.roles[0])===String(IDs.roles.Member);const roleHint=Array.isArray(entry.roles)&&entry.roles.length>0&&!onlyMemberRole?`\n  \`Ruolo:\` ${entry.roles.map((id) => `<@&${id}>`).join(", ")}`:"";const newBadge=isNewHelpEntry(entry)?` ${HELP_NEW_EMOJI}`:"";return`- \`${entry.invoke}\`${newBadge}${aliasPart}-${entry.description}\n\`Categoria:\` ${categoryLabel}${roleHint}`;
   });
   const extra=matches.length>limited.length?`\n\n...e altri**${matches.length-limited.length}**risultati.`
       : "";
@@ -1224,10 +1212,8 @@ module.exports = {
   async execute(message, args, client) {
     if (!message.guild || !message.member) return;
     await message.channel.sendTyping().catch(() => { });
-
     const permissions = loadPermissions();
     const allEntries = buildEntries(client, permissions);
-
     const freshMember=await getGuildMemberCached(message.guild,message.author.id,{ttlMs:20_000,preferFresh:true,});
     const resolvedMember = freshMember || message.member;
     const memberRoles = resolvedMember?.roles?.cache || new Map();

@@ -1,13 +1,6 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require("discord.js");
 const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
-const {
-  getNoDmPreferences,
-  setNoDmCategories,
-  DM_CATEGORIES,
-  DM_CATEGORY_ALL,
-  DM_CATEGORY_LABELS,
-} = require("./noDmList");
-
+const { getNoDmPreferences, setNoDmCategories, DM_CATEGORIES, DM_CATEGORY_ALL, DM_CATEGORY_LABELS } = require("./noDmList");
 const PREFIX = "nodm_panel_";
 const EMOJI_OFF = "<:VC_OfflineStatus:1472011150081130751>";
 const EMOJI_ON = "<:VC_OnlineStatus:1472011187569950751>";
@@ -20,27 +13,27 @@ function buildPanelEmbed(prefs, mode = "disable") {
   });
   const intro =
     mode === "enable"
-      ? "Scegli **quali DM** attivare. Clicca un pulsante per attivare/disattivare quella categoria."
-      : "Scegli **quali DM** disattivare. Clicca un pulsante per attivare/disattivare quella categoria.";
+      ? "<:PinkQuestionMark:1471892611026391306> Scegli **quali DM** attivare. Clicca un pulsante per attivare/disattivare quella categoria."
+      : "<:PinkQuestionMark:1471892611026391306>Scegli **quali DM** disattivare. Clicca un pulsante per attivare/disattivare quella categoria.";
   const footerText =
     mode === "enable"
-      ? "Usa +dm-disable per disattivare categorie."
-      : "Usa +dm-enable per riattivare tutto.";
+      ? "<:VC_Info:1460670816214585481> Usa +dm-disable per disattivare categorie."
+      : "<:VC_Info:1460670816214585481> Usa +dm-enable per riattivare tutto.";
   const desc = [
     `<:VC_Ticket:1448694637106692156> ${intro}`,
     "",
     ...lines,
     "",
     isAll
-      ? "⚠️ **Tutti i DM sono attualmente disattivati.** Clicca una categoria per ricevere solo quella, o **Attiva tutto**."
-      : "Usa **Disattiva tutto** per bloccare tutti i DM, o **Attiva tutto** per riceverli tutti.",
+      ? "<:attentionfromvega:1443651874032062505> **Tutti i DM sono attualmente disattivati.** Clicca una categoria per ricevere solo quella, o **Attiva tutto**."
+      : "<a:VC_Alert:1448670089670037675> Usa **Disattiva tutto** per bloccare tutti i DM, o **Attiva tutto** per riceverli tutti.",
     "",
-    "Ticket, moderazione e messaggi importanti restano sempre inviati.",
+    "<a:VC_Exclamation:1448687427836444854> Ticket, moderazione e messaggi importanti restano sempre inviati.",
   ].join("\n");
 
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Preferenze DM")
+    .setTitle("<a:VC_Announce:1448687280381235443> Preferenze DM")
     .setDescription(desc)
     .setFooter({ text: footerText });
 }
@@ -63,17 +56,17 @@ function buildRows(prefs, uniqueKey) {
       .setCustomId(`${PREFIX}all_${uniqueKey}`)
       .setLabel("Disattiva tutto")
       .setStyle(isAll ? ButtonStyle.Danger : ButtonStyle.Secondary)
-      .setEmoji("🚫"),
+      .setEmoji("<:cancel:1461730653677551691>"),
     new ButtonBuilder()
       .setCustomId(`${PREFIX}none_${uniqueKey}`)
       .setLabel("Attiva tutto")
       .setStyle(!isAll && prefs.disabled.size === 0 ? ButtonStyle.Success : ButtonStyle.Secondary)
-      .setEmoji("✅"),
+      .setEmoji("<:success:1461731530333229226>"),
     new ButtonBuilder()
       .setCustomId(`${PREFIX}done_${uniqueKey}`)
       .setLabel("Fine")
       .setStyle(ButtonStyle.Primary)
-      .setEmoji("✔️"),
+      .setEmoji("<:vegacheckmark:1443666279058772028>"),
   );
   return [row1, row2];
 }
@@ -114,7 +107,7 @@ async function runNoDmPanel(message, options = {}) {
     if (id.includes("_toggle_")) {
       const afterToggle = id.slice((PREFIX + "toggle_").length);
       const cat = afterToggle.slice(0, afterToggle.indexOf("_"));
-      if (!DM_CATEGORIES.includes(cat)) return interaction.deferUpdate().catch(() => {});
+      if (!DM_CATEGORIES.includes(cat)) return interaction.deferUpdate().catch(() => { });
       const prefs2 = await getNoDmPreferences(guildId, userId);
       const isAll = prefs2.blockAll || prefs2.disabled.has(DM_CATEGORY_ALL);
       let next;
@@ -137,7 +130,7 @@ async function runNoDmPanel(message, options = {}) {
           embeds: [buildPanelEmbed(prefs3, mode)],
           components: buildRows(prefs3, uniqueKey),
         })
-        .catch(() => {});
+        .catch(() => { });
       return;
     }
     if (id.includes("_all_")) {
@@ -148,7 +141,7 @@ async function runNoDmPanel(message, options = {}) {
           embeds: [buildPanelEmbed(prefs2, mode)],
           components: buildRows(prefs2, uniqueKey),
         })
-        .catch(() => {});
+        .catch(() => { });
       return;
     }
     if (id.includes("_none_")) {
@@ -159,7 +152,7 @@ async function runNoDmPanel(message, options = {}) {
           embeds: [buildPanelEmbed(prefs2, mode)],
           components: buildRows(prefs2, uniqueKey),
         })
-        .catch(() => {});
+        .catch(() => { });
       return;
     }
     if (id.includes("_done_")) {
@@ -169,14 +162,14 @@ async function runNoDmPanel(message, options = {}) {
           embeds: [
             new EmbedBuilder()
               .setColor("#6f4e37")
-              .setTitle("Preferenze DM salvate")
+              .setTitle("<:VC_Success:1468685897389052008> Preferenze DM salvate")
               .setDescription(
-                "Le tue preferenze sono state aggiornate. Usa `+dm-disable` o `+dm-enable` per modificarle.",
+                "<:VC_Info:1448670089670037675> Le tue preferenze sono state aggiornate. Usa `+dm-disable` o `+dm-enable` per modificarle.",
               ),
           ],
           components: [],
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   });
 
@@ -189,7 +182,7 @@ async function runNoDmPanel(message, options = {}) {
           ...row.components.map((c) => ButtonBuilder.from(c).setDisabled(true)),
         ),
       );
-      await promptMessage.edit({ components: disabledRows }).catch(() => {});
+      await promptMessage.edit({ components: disabledRows }).catch(() => { });
     } catch (err) {
       global.logger?.warn?.("[noDmPanel] edit components:", err?.message || err);
     }

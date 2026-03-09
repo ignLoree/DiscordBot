@@ -273,16 +273,17 @@ async function resolveTopThreeUsers(client, guild, docs, valueGetter) {
 async function removeRoleFromAllMembers(guild, roleId, keepUserId = "") {
   if (!roleId) return;
   await guild.members.fetch().catch(() => null);
-  const role = guild.roles.cache.get(roleId) || (await guild.roles.fetch(roleId).catch(() => null));
-  if (!role) return;
-
-  for (const member of role.members.values()) {
-    if (keepUserId && String(member.id) === String(keepUserId)) continue;
-    await member.roles.remove(roleId).catch(() => { });
-    const refreshedMember = await guild.members.fetch(member.id).catch(() => null);
-    if (refreshedMember?.roles?.cache?.has(roleId)) {
-      global.logger?.warn?.("[WEEKLY ACTIVITY WINNERS] failed to remove role from member:", guild.id, member.id, roleId);
-    }
+  const keep = keepUserId ? String(keepUserId) : "";
+  const toRemove = [];
+  for (const [, member] of guild.members.cache) {
+    if (!member.roles.cache.has(roleId)) continue;
+    if (keep && String(member.id) === keep) continue;
+    toRemove.push(member);
+  }
+  for (const member of toRemove) {
+    await member.roles.remove(roleId).catch((err) => {
+      global.logger?.warn?.("[WEEKLY ACTIVITY WINNERS] remove role failed:", member.id, roleId, err?.message || err);
+    });
   }
 }
 
@@ -313,13 +314,13 @@ async function updateWeeklyWinnerRoles(guild, topMessages, topVoice) {
   if (voiceWinner) chosenUserIds.add(voiceWinner.userId);
 
   await Promise.all([
-    assignRoleToUser(guild, messageWinner?.userId, MESSAGE_WINNER_ROLE_ID),
-    assignRoleToUser(guild, voiceWinner?.userId, VOICE_WINNER_ROLE_ID),
+    removeRoleFromAllMembers(guild, MESSAGE_WINNER_ROLE_ID, messageWinner?.userId),
+    removeRoleFromAllMembers(guild, VOICE_WINNER_ROLE_ID, voiceWinner?.userId),
   ]);
 
   await Promise.all([
-    removeRoleFromAllMembers(guild, MESSAGE_WINNER_ROLE_ID, messageWinner?.userId),
-    removeRoleFromAllMembers(guild, VOICE_WINNER_ROLE_ID, voiceWinner?.userId),
+    assignRoleToUser(guild, messageWinner?.userId, MESSAGE_WINNER_ROLE_ID),
+    assignRoleToUser(guild, voiceWinner?.userId, VOICE_WINNER_ROLE_ID),
   ]);
 
   return { messageWinner, voiceWinner };

@@ -249,7 +249,6 @@ function getRomeDateParts(date) {
   return { year: Number(year), month: Number(month), day: Number(day) };
 }
 
-/** Mese (Rome) a cui la pausa conta per il limite una pausa al mese: a cavallo di due mesi, ritorno entro il 5° → mese inizio; dopo il 5° → mese ritorno. */
 function getMonthKeyForPauseCount(dataRichiesta, dataRitorno) {
   const start = parseItalianDate(dataRichiesta);
   const end = parseItalianDate(dataRitorno);
@@ -389,12 +388,10 @@ function buildRequestButtonsRow(userId, pauseId, disabled = false) {
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(`pause_accept:${userId}:${pauseId}`)
-      .setLabel("Accetta")
       .setEmoji(`<:vegacheckmark:1443666279058772028>`)
       .setStyle(ButtonStyle.Success),
     new ButtonBuilder()
       .setCustomId(`pause_reject:${userId}:${pauseId}`)
-      .setLabel("Rifiuta")
       .setEmoji(`<:vegax:1443934876440068179>`)
       .setStyle(ButtonStyle.Danger),
   );

@@ -129,11 +129,8 @@ async function migrateFileToDbOnce() {
   return migrationPromise;
 }
 
-/** Categorie supportate per preferenze DM (chiavi interne). */
 const DM_CATEGORIES = Object.freeze(["weekly", "bump", "broadcast", "invites", "perks"]);
 const DM_CATEGORY_ALL = "all";
-
-/** Etichette per lista admin no-dm-list. */
 const DM_CATEGORY_LABELS = Object.freeze({
   weekly: "Promemoria settimanali",
   bump: "Avvisi Bump",
@@ -193,9 +190,6 @@ async function getNoDmPreferences(guildId, userId) {
   return inList ? { blockAll: true, disabled: new Set([DM_CATEGORY_ALL]) } : { blockAll: false, disabled: new Set() };
 }
 
-/**
- * Imposta le categorie disattivate per un utente. categories: ["all"] = blocca tutto; [] = ricevi tutto; ["weekly","bump"] = solo quelle.
- */
 async function setNoDmCategories(guildId, userId, categories) {
   const key = String(guildId);
   const uid = String(userId);
@@ -205,7 +199,7 @@ async function setNoDmCategories(guildId, userId, categories) {
     await migrateFileToDbOnce();
     if (list.length === 0) {
       await NoDmPreference.deleteOne({ guildId: key, userId: uid });
-      await mirrorRemoveFromFile(key, uid).catch(() => {});
+      await mirrorRemoveFromFile(key, uid).catch(() => { });
       return;
     }
     await NoDmPreference.updateOne(
@@ -213,7 +207,7 @@ async function setNoDmCategories(guildId, userId, categories) {
       { $set: { guildId: key, userId: uid, categories: list } },
       { upsert: true },
     );
-    await mirrorAddToFile(key, uid).catch(() => {});
+    await mirrorAddToFile(key, uid).catch(() => { });
     return;
   }
 
@@ -228,9 +222,6 @@ async function shouldBlockDm(guildId, userId, category) {
   return prefs.disabled.has(category);
 }
 
-/**
- * Tutte le preferenze no-DM della guild (per lista admin). Ritorna [{ userId, blockAll, disabled: string[] }].
- */
 async function getAllNoDmPreferences(guildId) {
   const key = String(guildId);
 
@@ -264,7 +255,7 @@ async function addNoDm(guildId, userId) {
       { $set: { guildId: key, userId: uid, categories: [DM_CATEGORY_ALL] } },
       { upsert: true },
     );
-    await mirrorAddToFile(key, uid).catch(() => {});
+    await mirrorAddToFile(key, uid).catch(() => { });
     return;
   }
 
@@ -309,16 +300,4 @@ async function sendDm(user, payload, options = {}) {
   return user.send(payload).catch(() => null);
 }
 
-module.exports = {
-  getNoDmSet,
-  addNoDm,
-  removeNoDm,
-  sendDm,
-  getNoDmPreferences,
-  setNoDmCategories,
-  shouldBlockDm,
-  getAllNoDmPreferences,
-  DM_CATEGORIES,
-  DM_CATEGORY_ALL,
-  DM_CATEGORY_LABELS,
-};
+module.exports = { getNoDmSet, addNoDm, removeNoDm, sendDm, getNoDmPreferences, setNoDmCategories, shouldBlockDm, getAllNoDmPreferences, DM_CATEGORIES, DM_CATEGORY_ALL, DM_CATEGORY_LABELS };
