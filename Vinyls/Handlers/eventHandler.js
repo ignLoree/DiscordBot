@@ -47,16 +47,23 @@ module.exports = (client) => {
     }
 
     const table = new ascii().setHeading("Folder", "File", "Status");
+    const maxFolder = 18;
+    const maxFile = 32;
+    const maxStatus = 18;
     for (const [rel, status] of Array.from(statusMap.entries()).sort((a, b) =>
       a[0].localeCompare(b[0]),
     )) {
       const folder = path.dirname(rel).replace(/\\/g, "/");
       const file = path.basename(rel);
-      const folderLabel = folder === "." ? "Events" : `Events/${folder}`;
-      table.addRow(folderLabel, file, status);
+      let folderLabel = folder === "." ? "Events" : `Events/${folder}`;
+      if (folderLabel.length > maxFolder) folderLabel = folderLabel.slice(0, maxFolder - 1) + "…";
+      const fileShort = file.length > maxFile ? file.slice(0, maxFile - 1) + "…" : file;
+      const statusShort = status.length > maxStatus ? status.slice(0, maxStatus - 1) + "…" : status;
+      table.addRow(folderLabel, fileShort, statusShort);
     }
 
-    global.logger.info(table.toString());
+    const tableStr = table.toString();
+    tableStr.split("\n").forEach((line) => global.logger.info(line));
     global.logger.info(`[EVENTS] Loaded ${loaded} events.`);
   };
 };

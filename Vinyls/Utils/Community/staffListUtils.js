@@ -3,13 +3,8 @@ const StaffModel = require("../../Schemas/Staff/staffSchema");
 const STAFF_LIST_MARKER = "staff list";
 const STAFF_NEW_EMOJI = "<:VC_New:1471891729471770819>";
 const STAFF_NEW_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-const ROLE_UP = {
-  [String(IDs.roles.Member || "")]: String(IDs.roles.Helper),
-  [String(IDs.roles.Helper)]: String(IDs.roles.Mod),
-  [String(IDs.roles.Mod)]: String(IDs.roles.Coordinator),
-  [String(IDs.roles.Coordinator)]: String(IDs.roles.Supervisor),
-};
-const ROLE_EMOJIS = { [IDs.roles.PartnerManager]: { emoji: "<:partnermanager:1443651916838998099>", number: "∞", }, [IDs.roles.Helper]: { emoji: "<:helper:1443651909448630312>", number: "∞" }, [IDs.roles.Mod]: { emoji: "<:mod:1443651914209165454>", number: "6" }, [IDs.roles.Coordinator]: { emoji: "<:coordinator:1443651923168202824>", number: "4", }, [IDs.roles.Supervisor]: { emoji: "<:supervisor:1443651907900932157>", number: "4", }, [IDs.roles.Admin]: { emoji: "<:admin:1443651911059247225>", number: "4" }, [IDs.roles.Manager]: { emoji: "<:manager:1443651919829536940>", number: "1" }, [IDs.roles.CoFounder]: { emoji: "<:cofounder:1443651915752804392>", number: "2", }, [IDs.roles.Founder]: { emoji: "<:founder:1443651924674216128>", number: "1" }, };
+const ROLE_UP = { [String(IDs.roles.Member || "")]: String(IDs.roles.Helper), [String(IDs.roles.Helper)]: String(IDs.roles.Mod), [String(IDs.roles.Mod)]: String(IDs.roles.Coordinator), [String(IDs.roles.Coordinator)]: String(IDs.roles.Supervisor) };
+const ROLE_EMOJIS = { [IDs.roles.PartnerManager]: { emoji: "<:partnermanager:1443651916838998099>"}, [IDs.roles.Helper]: { emoji: "<:helper:1443651909448630312>" }, [IDs.roles.Mod]: { emoji: "<:mod:1443651914209165454>" }, [IDs.roles.Coordinator]: { emoji: "<:coordinator:1443651923168202824>" }, [IDs.roles.Supervisor]: { emoji: "<:supervisor:1443651907900932157>" }, [IDs.roles.Admin]: { emoji: "<:admin:1443651911059247225>" }, [IDs.roles.Manager]: { emoji: "<:manager:1443651919829536940>" }, [IDs.roles.CoFounder]: { emoji: "<:cofounder:1443651915752804392>" }, [IDs.roles.Founder]: { emoji: "<:founder:1443651924674216128>" }, };
 const ROLE_EXCLUSIONS = { [IDs.roles.PartnerManager]: ["1442568907801100419"], };
 const STAFF_ROLE_IDS = Object.keys(ROLE_EMOJIS);
 
@@ -79,8 +74,7 @@ async function getStaffPexedLast7Days(guildId) {
 
 function buildContent(guild, membersSource = guild.members.cache, pexedLast7Days = new Set()) {
   const staffRoleIds = STAFF_ROLE_IDS.slice().reverse();
-  let content =
-    "<:pinnednew:1443670849990430750> La __**staff list**__ serve per sapere i __**limiti di ogni ruolo**__, per capire __**quanti staffer ci sono**__ e per poter capire a chi __**chiedere assistenza**__.\n\n";
+  let content = "## STAFF LIST";
 
   for (const roleId of staffRoleIds) {
     const role = guild.roles.cache.get(roleId);
@@ -95,7 +89,7 @@ function buildContent(guild, membersSource = guild.members.cache, pexedLast7Days
     }
 
     const memberCount = filteredMembers.length;
-    const { emoji, number } = ROLE_EMOJIS[roleId];
+    const { emoji } = ROLE_EMOJIS[roleId];
     const membersList = filteredMembers
       .map((member) => {
         const newBadge = pexedLast7Days.has(member.id) ? ` ${STAFF_NEW_EMOJI}` : "";
@@ -103,7 +97,7 @@ function buildContent(guild, membersSource = guild.members.cache, pexedLast7Days
       })
       .join("\n") || "<:dot:1443660294596329582>";
 
-    content += `${emoji} • **<@&${roleId}>︲\`${memberCount}/${number}\`**\n\n${membersList}\n\n`;
+    content += `${emoji} **<@&${roleId}>︲\`${memberCount}\`**\n\n${membersList}\n\n`;
   }
 
   return content;
@@ -146,11 +140,7 @@ async function fetchMembersForStaffList(guild) {
   return all.size ? all : guild.members.cache;
 }
 
-async function refreshStaffList(
-  client,
-  guildId = IDs.guilds.main,
-  { force = false } = {},
-) {
+async function refreshStaffList(client, guildId = IDs.guilds.main, { force = false } = {}) {
   const state = ensureState(client);
   const guild = client.guilds.cache.get(guildId) || (await client.guilds.fetch(guildId).catch(() => null));
   if (!guild) return;
