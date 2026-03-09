@@ -239,6 +239,35 @@ function resolveCommandChannelPolicy(data, keys) {
   return null;
 }
 
+function resolvePrefixCommandChannels(data, commandName, subcommandName = null) {
+  const cmd = data?.prefix?.[commandName];
+  if (!cmd || typeof cmd !== "object") return null;
+  const subcommands = cmd.subcommands || {};
+  if (subcommandName && subcommands[subcommandName] && typeof subcommands[subcommandName] === "object" && Array.isArray(subcommands[subcommandName].channels)) {
+    return normalizeChannelList(subcommands[subcommandName].channels);
+  }
+  if (Array.isArray(cmd.channels)) return normalizeChannelList(cmd.channels);
+  return null;
+}
+
+function resolveSlashCommandChannels(data, commandName, groupName = null, subcommandName = null) {
+  const cmd = data?.slash?.[commandName];
+  if (!cmd || typeof cmd !== "object") return null;
+  const subcommands = cmd.subcommands || {};
+  if (groupName && subcommandName) {
+    const key = `${groupName}.${subcommandName}`;
+    const subCfg = subcommands[key];
+    if (subCfg && typeof subCfg === "object" && Array.isArray(subCfg.channels)) {
+      return normalizeChannelList(subCfg.channels);
+    }
+  }
+  if (subcommandName && subcommands[subcommandName] && typeof subcommands[subcommandName] === "object" && Array.isArray(subcommands[subcommandName].channels)) {
+    return normalizeChannelList(subcommands[subcommandName].channels);
+  }
+  if (Array.isArray(cmd.channels)) return normalizeChannelList(cmd.channels);
+  return null;
+}
+
 function collectMemberRoleIds(member) {
   if (!member) return new Set();
   const ids = new Set();
@@ -610,7 +639,7 @@ async function checkSlashPermission(interaction, options = {}) {
   const data = loadPermissions();
   const group = interaction.options?.getSubcommandGroup?.(false) || null;
   const sub = interaction.options?.getSubcommand?.(false) || null;
-  const channelPolicy = resolveCommandChannelPolicy(data, buildSlashLookupKeys(interaction.commandName, group, sub),);
+  const channelPolicy = resolveSlashCommandChannels(data, String(interaction.commandName || "").toLowerCase(), group, sub) ?? resolveCommandChannelPolicy(data, buildSlashLookupKeys(interaction.commandName, group, sub));
   const bypassChannelPolicyForAntiNuke = String(interaction?.commandName || "").toLowerCase() === "antinuke";
   if (Array.isArray(channelPolicy) && !bypassChannelPolicyForAntiNuke) {
     const channelId = interaction?.channelId || interaction?.channel?.id || null;
@@ -701,7 +730,7 @@ async function checkPrefixPermission(message, commandName, subcommandName = null
   }
 
   const data = loadPermissions();
-  const channelPolicy = resolveCommandChannelPolicy(data, buildPrefixLookupKeys(commandName, subcommandName),);
+  const channelPolicy = resolvePrefixCommandChannels(data, safeCommand, subcommandName) ?? resolveCommandChannelPolicy(data, buildPrefixLookupKeys(commandName, subcommandName));
   const bypassChannelPolicyForAntiNuke = safeCommand === "antinuke";
   if (Array.isArray(channelPolicy) && !bypassChannelPolicyForAntiNuke) {
     const channelId = message?.channelId || message?.channel?.id || null;
