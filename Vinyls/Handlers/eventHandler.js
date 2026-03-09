@@ -1,24 +1,7 @@
 const ascii = require("ascii-table");
 const path = require("path");
 const { listJsFilesRecursive } = require("../../shared/runtime/fsRuntime");
-const{clearBoundHandlers,normalizeLifecycleEventName,trackBoundHandler,}=require("../../shared/runtime/loaderRuntime");
-const{inferGuildIdFromEventArgs,isEventExecutionAllowed,maybeMirrorEventToRoute,}=require("../Services/Dashboard/controlCenterService");
-
-function findGuildFromArgs(args = [], guildId = "") {
-  if (guildId) {
-    const direct=args.find((x) => String(x?.id||"")===guildId&&x?.channels?.cache,);
-    if (direct) return direct;
-
-    const byNested = args.find((x) => String(x?.guild?.id || "") === guildId);
-    if (byNested?.guild) return byNested.guild;
-  }
-
-  for (const arg of args) {
-    if (arg?.channels?.cache && arg?.members?.cache && arg?.id) return arg;
-    if (arg?.guild?.channels?.cache && arg?.guild?.id) return arg.guild;
-  }
-  return null;
-}
+const { clearBoundHandlers, normalizeLifecycleEventName, trackBoundHandler } = require("../../shared/runtime/loaderRuntime");
 
 module.exports = (client) => {
   if (!client._eventHandlers) client._eventHandlers = new Map();
@@ -41,7 +24,9 @@ module.exports = (client) => {
         }
 
         const eventName = normalizeLifecycleEventName(event.name);
-        const handler=async(...args) => {const guildId=inferGuildIdFromEventArgs(args);const gate=isEventExecutionAllowed({eventName,guildId});await maybeMirrorEventToRoute({guild:findGuildFromArgs(args,guildId),guildId,eventName,args,allowed:gate.allowed,}).catch(() => null);if(!gate.allowed)return;return Promise.resolve(event.execute(...args,client)).catch((err) => {global.logger?.error?.(`[EVENT ${eventName}]`, err);
+        const handler = async (...args) => {
+          return Promise.resolve(event.execute(...args, client)).catch((err) => {
+            global.logger?.error?.(`[EVENT ${eventName}]`, err);
           });
         };
 

@@ -53,7 +53,6 @@ function wickPerms(guild, member, automodExempt, antiNukeExempt) {
   if (isOwner) perms.push("Owner");
   if (antiNukeExempt) perms.push("Full Immunity");
   if (automodExempt) perms.push("Automod Immunity");
-  if (hasAdmin) perms.push("Dashboard Access");
   if (member.permissions.has(PermissionsBitField.Flags.BanMembers)) perms.push("Ban Command");
   if (member.permissions.has(PermissionsBitField.Flags.KickMembers)) perms.push("Kick Command");
   if (member.permissions.has(PermissionsBitField.Flags.ModerateMembers)) perms.push("Timeout Command");

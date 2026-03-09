@@ -7,7 +7,6 @@ const { buildErrorLogEmbed } = require("../../shared/discord/errorLogEmbed");
 const { getCentralChannel } = require("../Logging/commandUsageLogger");
 const { shouldBlockModerationCommands } = require("../../Services/Moderation/antiNukeService");
 const { getSecurityLockState } = require("../../Services/Moderation/securityOrchestratorService");
-const { getCommandExecutionGate, inferModuleKeyFromPrefixCommand, } = require("../../Services/Dashboard/controlCenterService");
 const { showPrefixUsageGuide } = require("../Moderation/prefixUsageGuide");
 const IDs = require("../Config/ids");
 const PREFIX_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.Staff;
@@ -295,18 +294,6 @@ async function handleOfficialPrefixMessage({ message, resolvedClient, defaultPre
 
   const command = overrideCommand || resolvedClient.pcommands.get(cmd) || resolvedClient.pcommands.get(resolvedClient.aliases.get(cmd));
   if (!command) return;
-
-  const dashboardGate = getCommandExecutionGate({ guildId: message.guild?.id, commandType: "prefix", commandName: command?.name, moduleKey: inferModuleKeyFromPrefixCommand(command), member: message.member, guildOwnerId: message.guild?.ownerId, });
-  if (!dashboardGate.allowed) {
-    await deleteCommandMessage();
-    const reasonText = dashboardGate.reason === "module_disabled" || dashboardGate.reason === "command_disabled" ? "Comando disattivato dalla dashboard." : "Comando in manutenzione dalla dashboard.";
-    await sendTemporaryMessage(
-      message.channel,
-      { content: `<:VC_Lock:1468544444113617063> ${reasonText}` },
-      5000,
-    );
-    return;
-  }
 
   const isAntiNukeRecoveryCommand = ["antinuke", "security"].includes(String(command?.name || "").toLowerCase(),);
   const securityLockState = await resolveWithTimeout(() => getSecurityLockState(message.guild), { active: false, joinLockActive: false, commandLockActive: false, sources: [], commandSources: [], }, "security lock precheck",);

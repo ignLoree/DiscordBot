@@ -5,7 +5,6 @@ const Partials = discord.Partials || {};
 const fs = require("fs");
 const path = require("path");
 const APP_ROOT = __dirname;
-const { startDashboardServer } = require("./Services/Dashboard/dashboardServer");
 const { acquireSingleInstanceLock, installHandlers, listFoldersIfExists, loadEnvFiles, } = require("../shared/runtime/fsRuntime");
 const { initializeCommandCollections } = require("../shared/runtime/clientRuntime");
 
@@ -21,9 +20,6 @@ const pcommandFolders = listFoldersIfExists(path.join(APP_ROOT, "Prefix"));
 const commandFolders = listFoldersIfExists(path.join(APP_ROOT, "Commands"));
 
 let client;
-function shouldStartDashboard(currentClient) {
-  return !currentClient?.shard || currentClient.shard.ids?.[0] === 0;
-}
 
 try {
   installEmbedFooterPatch();
@@ -132,9 +128,6 @@ initializeCommandCollections(client, { includeSnipes: true });
     await client.handleCommands(commandFolders, path.join(APP_ROOT, "Commands"));
     await client.prefixCommands(pcommandFolders, path.join(APP_ROOT, "Prefix"));
     await client.loadButtonHandlers(path.join(APP_ROOT, "Buttons"));
-    if (shouldStartDashboard(client)) {
-      startDashboardServer(client);
-    }
 
     if (typeof client.logBootTables === "function") {
       client.logBootTables();

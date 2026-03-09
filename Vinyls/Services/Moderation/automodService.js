@@ -2522,47 +2522,6 @@ async function runAutoModMessage(message) {
   return { blocked: false, action: "heat", heat: state.heat };
 }
 
-function summarizeMapEntries(source, limit = 10) {
-  const entries = Object.entries(source || {}).map(([key, value]) => [key, Number(value || 0),]);
-  entries.sort((a, b) => b[1] - a[1]);
-  return entries.slice(0, Math.max(1, Number(limit || 10)));
-}
-
-function getAutoModDashboardData(guildId, options = {}) {
-  const gid = String(guildId || "");
-  const days = Math.max(1, Math.min(30, Number(options.days || 1)));
-  const limit = Math.max(1, Math.min(20, Number(options.limit || 10)));
-  const now = Date.now();
-  const guildData = automodMetrics?.guilds?.[gid]?.days || {};
-  const aggregate = { actions: {}, rules: {}, channels: {}, users: {}, panicEnabled: 0, };
-  for (let i = 0; i < days; i += 1) {
-    const dayKey = dayKeyFromMs(now - i * 24 * 60 * 60_000);
-    const row = guildData[dayKey];
-    if (!row) continue;
-    for (const [k, v] of Object.entries(row.actions || {})) {
-      aggregate.actions[k] = Number(aggregate.actions[k] || 0) + Number(v || 0);
-    }
-    for (const [k, v] of Object.entries(row.rules || {})) {
-      aggregate.rules[k] = Number(aggregate.rules[k] || 0) + Number(v || 0);
-    }
-    for (const [k, v] of Object.entries(row.channels || {})) {
-      aggregate.channels[k] = Number(aggregate.channels[k] || 0) + Number(v || 0);
-    }
-    for (const [k, v] of Object.entries(row.users || {})) {
-      aggregate.users[k] = Number(aggregate.users[k] || 0) + Number(v || 0);
-    }
-    aggregate.panicEnabled += Number(row.panicEnabled || 0);
-  }
-  return {
-    days,
-    panicEnabled: aggregate.panicEnabled,
-    actions: aggregate.actions,
-    topRules: summarizeMapEntries(aggregate.rules, limit),
-    topChannels: summarizeMapEntries(aggregate.channels, limit),
-    topUsers: summarizeMapEntries(aggregate.users, limit),
-  };
-}
-
 function getAutoModConfigSnapshot() {
   return JSON.parse(JSON.stringify(automodRuntimeConfig || DEFAULT_AUTOMOD_RUNTIME));
 }
@@ -2699,4 +2658,4 @@ function updateAutoModConfig(pathExpr, value) {
   return { ok: true, config: getAutoModConfigSnapshot() };
 }
 
-module.exports = { runAutoModMessage, getAutoModMemberSnapshot, isAutoModRoleExemptMember, getAutoModDashboardData, getAutoModConfigSnapshot, getAutoModRulesSnapshot, updateAutoModConfig, isPanicModeActiveForGuild: isPanicModeActive, getAutoModPanicSnapshot, triggerAutoModPanicExternal, __test: { isLikelyCommandMessage, buildAutoModDecisionExplain } };
+module.exports = { runAutoModMessage, getAutoModMemberSnapshot, isAutoModRoleExemptMember, getAutoModConfigSnapshot, getAutoModRulesSnapshot, updateAutoModConfig, isPanicModeActiveForGuild: isPanicModeActive, getAutoModPanicSnapshot, triggerAutoModPanicExternal, __test: { isLikelyCommandMessage, buildAutoModDecisionExplain } };

@@ -9,7 +9,6 @@ const { getCentralChannel } = require("../../Utils/Logging/commandUsageLogger");
 const IDs = require("../../Utils/Config/ids");
 const { shouldBlockModerationCommands } = require("../../Services/Moderation/antiNukeService");
 const { getSecurityLockState } = require("../../Services/Moderation/securityOrchestratorService");
-const{getCommandExecutionGate,inferModuleKeyFromSlashCommand,}=require("../../Services/Dashboard/controlCenterService");
 const SLASH_COOLDOWN_BYPASS_ROLE_ID = IDs.roles?.Staff || null;
 const STAFF_BYPASS_PERMISSIONS=[PermissionFlagsBits.Administrator,PermissionFlagsBits.ManageGuild,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.ManageRoles,PermissionFlagsBits.ManageMessages,PermissionFlagsBits.KickMembers,PermissionFlagsBits.BanMembers,PermissionFlagsBits.ModerateMembers,];
 const SLASH_EXECUTION_TIMEOUT_MS=Math.max(15_000,Number(process.env.SLASH_EXECUTION_TIMEOUT_MS||120_000),);
@@ -42,16 +41,6 @@ async function handleAutocomplete(interaction, client) {
 async function handleSlashCommand(interaction, client) {
   const command=client.commands.get(getCommandKey(interaction.commandName,interaction.commandType),);
   if (!command) return;
-  const dashboardGate=getCommandExecutionGate({guildId:interaction.guildId,commandType:"slash",commandName:command?.name||interaction.commandName,moduleKey:inferModuleKeyFromSlashCommand(command),member:interaction.member,guildOwnerId:interaction.guild?.ownerId,});
-  if (!dashboardGate.allowed) {
-    return interaction.reply({
-      content:
-        dashboardGate.reason === "module_disabled" || dashboardGate.reason === "command_disabled"
-          ? "<:VC_OfflineStatus:1472011150081130751> Comando disattivato dalla dashboard."
-          : "<:VC_InactiveStatus:1472011031709745307> Comando in manutenzione dalla dashboard.",
-      flags: 1 << 6,
-    });
-  }
   const isAntiNukeRecoveryCommand=["antinuke","security"].includes(String(command?.name||"").toLowerCase(),);
   const securityLockState = await getSecurityLockState(interaction.guild);
   if (
