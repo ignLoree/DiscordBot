@@ -705,4 +705,4 @@ async function getEventDiagnostics(guild) {
   };
 }
 
-module.exports = { startWeeklyActivityWinnersLoop, publishWeeklyActivityWinners, resetWeeklyActivityCounters, getEventWeekDateKeys, loadActivityRowsFromDateKeys, getEventDiagnostics };
+module.exports = { startWeeklyActivityWinnersLoop, publishWeeklyActivityWinners, resetWeeklyActivityCounters, getEventWeekDateKeys, loadActivityRowsFromDateKeys, getEventDiagnostics, getEventWeekTopThreeTextAndVoice };

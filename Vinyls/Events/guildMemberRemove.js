@@ -309,7 +309,6 @@ async function handlePartnershipOnLeave(member, client) {
     const mainGuild = client.guilds.cache.get(mainGuildId) || (await client.guilds.fetch(mainGuildId).catch(() => null));
     if (!mainGuild) return;
 
-    await logManagerLeave(mainGuild, member, partnerships);
     await sendRejoinDm(member);
     schedulePartnershipRollback(member, partnerships);
   } catch (err) {

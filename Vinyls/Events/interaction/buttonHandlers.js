@@ -1,6 +1,7 @@
 module.exports = {
   async handleButtonInteraction(interaction, client) {
-    if (!interaction?.isButton?.() && !interaction?.isStringSelectMenu?.()) {
+    const isComponent = interaction?.isButton?.() || interaction?.isStringSelectMenu?.() || interaction?.isModalSubmit?.();
+    if (!isComponent) {
       return false;
     }
     const handlers = client?.buttonHandlers;

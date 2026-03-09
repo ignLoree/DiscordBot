@@ -4,6 +4,8 @@ const BUTTON_SPAM_COOLDOWN_MS = 1200;
 const BUTTON_INFLIGHT_TTL_MS = 15000;
 const MONO_GUILD_DENIED = "Questo bot è utilizzabile solo nei server autorizzati.";
 const TICKET_OPEN_CONTROLS = new Set(["ticket_partnership", "ticket_highstaff", "ticket_supporto", "ticket_open_menu",]);
+/** Pulsanti verifica: non applicare cooldown/inFlight per evitare di bloccare il primo click o click dopo altro bottone. */
+const VERIFY_CONTROLS = new Set(["verify_start", "verify_enter"]);
 
 function isAckError(error) {
   const code = error?.code || error?.rawError?.code;
@@ -64,7 +66,7 @@ function acquireButtonSpamGuard(interaction, client) {
   const messageId = String(interaction.message?.id || "no-message");
   const customId = String(interaction.customId || "no-custom-id");
 
-  if (TICKET_OPEN_CONTROLS.has(customId)) {
+  if (TICKET_OPEN_CONTROLS.has(customId) || VERIFY_CONTROLS.has(customId)) {
     return {
       blocked: false,
       release: () => { },
