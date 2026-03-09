@@ -389,6 +389,7 @@ async function handleOfficialPrefixMessage({ message, resolvedClient, defaultPre
     if (!cooldownResult.ok) {
       const remaining = Math.max(1, Math.ceil(cooldownResult.remainingMs / 1000));
       const embed = buildCooldownErrorEmbed(remaining);
+      await deleteCommandMessage();
       await message.channel.send({ embeds: [embed] }).catch(() => null);
       return;
     }
