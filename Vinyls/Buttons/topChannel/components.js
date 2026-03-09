@@ -1,13 +1,4 @@
-const {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  StringSelectMenuBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-} = require("discord.js");
-
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require("discord.js");
 const TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX = "top_channel_refresh";
 const TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX = "top_channel_period_open";
 const TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX = "top_channel_period_set";
@@ -20,7 +11,6 @@ const TOP_CHANNEL_PAGE_NEXT_CUSTOM_ID_PREFIX = "top_channel_page_next";
 const TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX = "top_channel_page_last";
 const TOP_CHANNEL_PAGE_MODAL_CUSTOM_ID_PREFIX = "top_page_modal";
 const TOP_CHANNEL_PAGE_MODAL_INPUT_CUSTOM_ID = "top_page_input";
-
 const ALLOWED_LOOKBACK = [1, 7, 14, 21, 30];
 const ALLOWED_VIEWS = [
   { value: "overview", label: "Overview" },
@@ -75,11 +65,11 @@ function buildTopChannelComponents(ownerId, lookbackDays, controlsView, selected
   const viewSelectId = ownerId ? `${TOP_CHANNEL_VIEW_SELECT_CUSTOM_ID_PREFIX}:${ownerId}:${safeLookback}` : `${TOP_CHANNEL_VIEW_SELECT_CUSTOM_ID_PREFIX}:${safeLookback}`;
 
   const row1 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(refreshId).setLabel("Aggiorna").setStyle(ButtonStyle.Secondary).setEmoji("🔄"),
-    new ButtonBuilder().setCustomId(periodOpenId).setLabel("Periodo").setStyle(ButtonStyle.Secondary).setEmoji("📅"),
+    new ButtonBuilder().setCustomId(refreshId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_Refresh:1473359252276904203> "),
+    new ButtonBuilder().setCustomId(periodOpenId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_Clock:1473359204189474886>"),
     new StringSelectMenuBuilder()
       .setCustomId(viewSelectId)
-      .setPlaceholder("Vista")
+      .setPlaceholder("📊 Overview")
       .addOptions(
         ALLOWED_VIEWS.map((o) => ({
           label: o.label,
@@ -96,11 +86,11 @@ function buildTopChannelComponents(ownerId, lookbackDays, controlsView, selected
   const lastId = `${TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX}:${suffix}`;
 
   const row2 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(firstId).setLabel("Prima").setStyle(ButtonStyle.Secondary).setEmoji("⏮️").setDisabled(safePage <= 1),
-    new ButtonBuilder().setCustomId(prevId).setLabel("Prec").setStyle(ButtonStyle.Secondary).setEmoji("◀️").setDisabled(safePage <= 1),
-    new ButtonBuilder().setCustomId(modalOpenId).setLabel("Vai a pagina").setStyle(ButtonStyle.Primary).setEmoji("🔢"),
-    new ButtonBuilder().setCustomId(nextId).setLabel("Succ").setStyle(ButtonStyle.Secondary).setEmoji("▶️").setDisabled(safePage >= safeTotal),
-    new ButtonBuilder().setCustomId(lastId).setLabel("Ultima").setStyle(ButtonStyle.Secondary).setEmoji("⏭️").setDisabled(safePage >= safeTotal)
+    new ButtonBuilder().setCustomId(firstId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page1:1463196324156674289>").setDisabled(safePage <= 1),
+    new ButtonBuilder().setCustomId(prevId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page5:1463196506143326261>").setDisabled(safePage <= 1),
+    new ButtonBuilder().setCustomId(modalOpenId).setStyle(ButtonStyle.Primary).setEmoji("<:VC_page2:1463196369123676414> "),
+    new ButtonBuilder().setCustomId(nextId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page4:1463196456964980808>").setDisabled(safePage >= safeTotal),
+    new ButtonBuilder().setCustomId(lastId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page3:1463196404120813766>").setDisabled(safePage >= safeTotal)
   );
 
   return [row1, row2];
@@ -132,23 +122,4 @@ function buildTopPageJumpModal(ownerId, lookbackDays, controlsView, selectedView
   return modal;
 }
 
-module.exports = {
-  TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_VIEW_SELECT_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PAGE_FIRST_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PAGE_PREV_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PAGE_MODAL_OPEN_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PAGE_NEXT_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PAGE_MODAL_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PAGE_MODAL_INPUT_CUSTOM_ID,
-  normalizeLookbackDays,
-  normalizeTopView,
-  normalizeControlsView,
-  normalizePage,
-  buildTopChannelComponents,
-  buildTopPageJumpModal,
-};
+module.exports = { TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX, TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX, TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX, TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX, TOP_CHANNEL_VIEW_SELECT_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_FIRST_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_PREV_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_MODAL_OPEN_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_NEXT_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_MODAL_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_MODAL_INPUT_CUSTOM_ID, normalizeLookbackDays, normalizeTopView, normalizeControlsView, normalizePage, buildTopChannelComponents, buildTopPageJumpModal };

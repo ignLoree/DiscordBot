@@ -1,5 +1,4 @@
 const { handlePauseButton } = require("../Events/interaction/pauseHandlers");
-
 const PREFIXES = ["pause_accept:", "pause_reject:", "pause_cancel:", "pause_list:"];
 
 function match(interaction) {

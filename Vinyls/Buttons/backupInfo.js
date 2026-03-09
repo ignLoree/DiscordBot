@@ -2,7 +2,6 @@ const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("
 const { readBackupByIdGlobal, deleteBackupByIdGlobal } = require("../Services/Backup/serverBackupService");
 const { createLoadSession, buildLoadWarningEmbed, buildLoadComponents } = require("../Services/Backup/backupLoadService");
 const { safeEditReply } = require("../../shared/discord/replyRuntime");
-
 const PREFIX_LOAD = "backup_info_load:";
 const PREFIX_DELETE = "backup_info_delete:";
 const PREFIX_CONFIRM = "backup_delete_confirm:";
@@ -16,7 +15,7 @@ function match(interaction) {
   );
 }
 
-async function execute(interaction, client) {
+async function execute(interaction) {
   const customId = interaction.customId || "";
   const EPHEMERAL = 1 << 6;
 
@@ -24,7 +23,7 @@ async function execute(interaction, client) {
     const parts = customId.slice(PREFIX_LOAD.length).split(":");
     const [backupId, userId, guildId] = parts;
     if (!backupId || interaction.user?.id !== userId) {
-      await interaction.reply({ content: "<a:VC_Alert:1448670089670037675> Non autorizzato.", flags: EPHEMERAL }).catch(() => {});
+      await interaction.reply({ content: "<a:VC_Alert:1448670089670037675> Non autorizzato.", flags: EPHEMERAL }).catch(() => { });
       return true;
     }
     try {
@@ -56,7 +55,7 @@ async function execute(interaction, client) {
     const parts = customId.slice(PREFIX_DELETE.length).split(":");
     const [backupId, userId, guildId] = parts;
     if (!backupId || interaction.user?.id !== userId) {
-      await interaction.reply({ content: "<a:VC_Alert:1448670089670037675> Non autorizzato.", flags: EPHEMERAL }).catch(() => {});
+      await interaction.reply({ content: "<a:VC_Alert:1448670089670037675> Non autorizzato.", flags: EPHEMERAL }).catch(() => { });
       return true;
     }
     await safeEditReply(interaction, {
@@ -72,7 +71,7 @@ async function execute(interaction, client) {
     const parts = rest.split(":");
     const [backupId, userId] = parts;
     if (!backupId || interaction.user?.id !== userId) {
-      await interaction.reply({ content: "<a:VC_Alert:1448670089670037675> Non autorizzato.", flags: EPHEMERAL }).catch(() => {});
+      await interaction.reply({ content: "<a:VC_Alert:1448670089670037675> Non autorizzato.", flags: EPHEMERAL }).catch(() => { });
       return true;
     }
     await safeEditReply(interaction, {
@@ -88,7 +87,7 @@ async function execute(interaction, client) {
     const parts = rest.split(":");
     const [backupId, userId, guildId] = parts;
     if (!backupId || interaction.user?.id !== userId) {
-      await interaction.reply({ content: "<a:VC_Alert:1448670089670037675> Non autorizzato.", flags: EPHEMERAL }).catch(() => {});
+      await interaction.reply({ content: "<a:VC_Alert:1448670089670037675> Non autorizzato.", flags: EPHEMERAL }).catch(() => { });
       return true;
     }
     try {
@@ -128,12 +127,10 @@ function buildInfoButtons(backupId, userId, guildId) {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(loadId)
-      .setLabel("Carica backup")
       .setStyle(ButtonStyle.Primary)
       .setEmoji("<a:VC_Loading:1462504528774430962>"),
     new ButtonBuilder()
       .setCustomId(deleteId)
-      .setLabel("Elimina")
       .setStyle(ButtonStyle.Danger)
       .setEmoji("<:VC_Trash:1460645075242451025>")
   );
@@ -145,12 +142,10 @@ function buildDeleteConfirmButtons(backupId, userId, guildId) {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(confirmId)
-      .setLabel("Conferma eliminazione")
       .setStyle(ButtonStyle.Danger)
       .setEmoji("<:success:1461731530333229226>"),
     new ButtonBuilder()
       .setCustomId(cancelId)
-      .setLabel("Annulla")
       .setStyle(ButtonStyle.Secondary)
       .setEmoji("<:cancel:1461730653677551691>")
   );
@@ -161,16 +156,8 @@ function buildDeleteWarningEmbed() {
     .setColor("#e74c3c")
     .setTitle("<:VC_Alert:1448670089670037675> Conferma eliminazione")
     .setDescription(
-      "Sei sicuro di voler **eliminare** questo backup? L'operazione è **irreversibile** e non potrai recuperare i dati."
+      "<:PinkQuestionMark:1471892611026391306> Sei sicuro di voler **eliminare** questo backup? L'operazione è **irreversibile** e non potrai recuperare i dati."
     );
 }
 
-module.exports = {
-  name: "backupInfo",
-  order: 8,
-  match,
-  execute,
-  buildInfoButtons,
-  buildDeleteConfirmButtons,
-  buildDeleteWarningEmbed,
-};
+module.exports = { name: "backupInfo", order: 8, match, execute, buildInfoButtons, buildDeleteConfirmButtons, buildDeleteWarningEmbed };

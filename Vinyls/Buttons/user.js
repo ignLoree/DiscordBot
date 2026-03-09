@@ -1,13 +1,12 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require("discord.js");
 const { getUserOverviewStats } = require("../Services/Community/activityService");
 const { renderUserActivityCanvas } = require("../Utils/Render/activityCanvas");
-
 const USER_REFRESH_CUSTOM_ID_PREFIX = "user_refresh";
 const USER_PERIOD_OPEN_CUSTOM_ID_PREFIX = "user_period_open";
 const USER_PERIOD_SET_CUSTOM_ID_PREFIX = "user_period_set";
 const USER_PERIOD_BACK_CUSTOM_ID_PREFIX = "user_period_back";
-
 const ALLOWED_LOOKBACK = [1, 7, 14, 21, 30];
+
 function normalizeLookbackDays(x) {
   if (x == null || x === "") return 14;
   const s = String(x).replace(/d$/i, "").trim();
@@ -42,10 +41,10 @@ async function execute(interaction, client) {
       components: buildUserComponents(parsed.ownerId || interaction.user?.id, targetUserId, parsed.lookbackDays, "main"),
     };
     if (interaction.deferred || interaction.replied) {
-      await interaction.editReply(payloadWithComponents).catch(() => interaction.followUp(payloadWithComponents).catch(() => {}));
+      await interaction.editReply(payloadWithComponents).catch(() => interaction.followUp(payloadWithComponents).catch(() => { }));
     } else {
       await interaction.update(payloadWithComponents).catch(async () => {
-        await interaction.reply({ ...payloadWithComponents, ephemeral: true }).catch(() => {});
+        await interaction.reply({ ...payloadWithComponents, ephemeral: true }).catch(() => { });
       });
     }
     return true;
@@ -59,15 +58,10 @@ async function execute(interaction, client) {
 async function buildUserOverviewPayload(guild, targetId, lookbackDays, view, client) {
   const safeLookback = normalizeLookbackDays(lookbackDays);
   if (!guild?.id || !targetId) return { embeds: [], components: [], files: [] };
-
   const stats = await getUserOverviewStats(guild.id, targetId, safeLookback);
-
   let user = null;
   let member = null;
-  try {
-    member = await guild.members.fetch(targetId).catch(() => null);
-    user = member?.user ?? null;
-  } catch (_) {}
+  try { member = await guild.members.fetch(targetId).catch(() => null); user = member?.user ?? null; } catch (_) { }
   if (!user && (client?.users?.fetch || guild.client?.users?.fetch)) {
     const c = client || guild.client;
     user = await c.users.fetch(targetId).catch(() => null);
@@ -77,22 +71,7 @@ async function buildUserOverviewPayload(guild, targetId, lookbackDays, view, cli
   const avatarUrl = user?.displayAvatarURL?.({ size: 256, extension: "png" }) || null;
   const createdOn = user?.createdAt ?? new Date(0);
   const joinedOn = (member?.joinedAt && member.joinedAt instanceof Date) ? member.joinedAt : (member?.joinedTimestamp ? new Date(member.joinedTimestamp) : createdOn);
-
-  const buffer = await renderUserActivityCanvas({
-    guildName: guild.name || "Server",
-    userTag,
-    displayName,
-    avatarUrl,
-    createdOn,
-    joinedOn,
-    lookbackDays: safeLookback,
-    windows: stats.windows,
-    ranks: stats.ranks,
-    topChannelsText: stats.topChannelsText,
-    topChannelsVoice: stats.topChannelsVoice,
-    chart: stats.chart,
-  });
-
+  const buffer = await renderUserActivityCanvas({ guildName: guild.name || "Server", userTag, displayName, avatarUrl, createdOn, joinedOn, lookbackDays: safeLookback, windows: stats.windows, ranks: stats.ranks, topChannelsText: stats.topChannelsText, topChannelsVoice: stats.topChannelsVoice, chart: stats.chart });
   const file = new AttachmentBuilder(buffer, { name: "user-activity.png" });
   return { files: [file], components: buildUserComponents(null, targetId, safeLookback, view) };
 }
@@ -105,9 +84,9 @@ function buildUserComponents(ownerId, targetUserId, lookbackDays, view) {
   const periodBack = `${USER_PERIOD_BACK_CUSTOM_ID_PREFIX}:${o}:${targetUserId}:${safeLookback}:embed`;
 
   const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(base).setLabel("Aggiorna").setStyle(ButtonStyle.Secondary).setEmoji("🔄"),
-    new ButtonBuilder().setCustomId(periodOpen).setLabel("Periodo").setStyle(ButtonStyle.Secondary).setEmoji("📅"),
-    new ButtonBuilder().setCustomId(periodBack).setLabel("Indietro").setStyle(ButtonStyle.Secondary).setEmoji("◀️")
+    new ButtonBuilder().setCustomId(base).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_Refresh:1473359252276904203> "),
+    new ButtonBuilder().setCustomId(periodOpen).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_Clock:1473359204189474886>"),
+    new ButtonBuilder().setCustomId(periodBack).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page5:1463196506143326261> ")
   );
   return [row];
 }
@@ -119,16 +98,4 @@ function parseUserActivityArgs(args) {
   return { targetId, lookbackDays: normalizeLookbackDays(lookback) };
 }
 
-module.exports = {
-  name: "user",
-  order: 7,
-  match,
-  execute,
-  USER_REFRESH_CUSTOM_ID_PREFIX,
-  USER_PERIOD_OPEN_CUSTOM_ID_PREFIX,
-  USER_PERIOD_SET_CUSTOM_ID_PREFIX,
-  USER_PERIOD_BACK_CUSTOM_ID_PREFIX,
-  buildUserOverviewPayload,
-  buildUserComponents,
-  parseUserActivityArgs,
-};
+module.exports = { name: "user", order: 7, match, execute, USER_REFRESH_CUSTOM_ID_PREFIX, USER_PERIOD_OPEN_CUSTOM_ID_PREFIX, USER_PERIOD_SET_CUSTOM_ID_PREFIX, USER_PERIOD_BACK_CUSTOM_ID_PREFIX, buildUserOverviewPayload, buildUserComponents, parseUserActivityArgs };

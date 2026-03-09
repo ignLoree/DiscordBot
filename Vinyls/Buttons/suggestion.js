@@ -1,5 +1,4 @@
 const { handleSuggestionVote } = require("../Events/interaction/suggestionHandlers");
-
 const SUGGESTION_BUTTON_IDS = new Set(["upv", "downv", "suggestion_staff_accept", "suggestion_staff_reject"]);
 const SUGGESTION_MODAL_PREFIX = "suggestion_staff_modal";
 

@@ -1,6 +1,5 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("discord.js");
 const { listAllBackupMetasPaginated } = require("../Services/Backup/serverBackupService");
-
 const PREFIX_PREV = "backup_list_prev:";
 const PREFIX_NEXT = "backup_list_next:";
 
@@ -9,7 +8,7 @@ function match(interaction) {
   return interaction.isButton() && (id.startsWith(PREFIX_PREV) || id.startsWith(PREFIX_NEXT));
 }
 
-async function execute(interaction, client) {
+async function execute(interaction) {
   const customId = interaction.customId || "";
   const userId = interaction.user?.id;
   if (!userId) return false;
@@ -35,7 +34,7 @@ async function execute(interaction, client) {
   }
 }
 
-async function renderList(interaction, userId, page = 1) {
+async function renderList(userId, page = 1) {
   const pageSize = 10;
   const { items, total, totalPages, page: currentPage } = await listAllBackupMetasPaginated({ page, pageSize });
 
@@ -50,20 +49,16 @@ async function renderList(interaction, userId, page = 1) {
     .setFooter({ text: `Pagina ${currentPage}/${totalPages} • ${total} backup totali` })
     .setTimestamp();
 
-  const prevPage = Math.max(1, currentPage - 1);
-  const nextPage = Math.min(totalPages, currentPage + 1);
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(`${PREFIX_PREV}${userId}:${currentPage}`)
-      .setLabel("Indietro")
       .setStyle(ButtonStyle.Secondary)
-      .setEmoji("◀️")
+      .setEmoji("<:VC_page5:1463196506143326261> ")
       .setDisabled(currentPage <= 1),
     new ButtonBuilder()
       .setCustomId(`${PREFIX_NEXT}${userId}:${currentPage}`)
-      .setLabel("Avanti")
       .setStyle(ButtonStyle.Secondary)
-      .setEmoji("▶️")
+      .setEmoji("<:VC_page4:1463196456964980808>")
       .setDisabled(currentPage >= totalPages)
   );
 
@@ -77,18 +72,11 @@ function buildListSelectionInfoEmbed(selectedBackup) {
     .setTitle("<:VC_Info:1460670816214585481> Backup selezionato")
     .setDescription(
       [
-        `**Server:** ${String(m?.guildName || "?").replace(/\*\*/g, "")}`,
-        `**Backup ID:** \`${m?.backupId || "?"}\``,
-        `**Creato:** ${m?.createdAt ? `<t:${Math.floor(Number(m.createdAt) / 1000)}:F>` : "N/D"}`,
+        `<:VC_Mention:1443994358201323681> **Server:** ${String(m?.guildName || "?").replace(/\*\*/g, "")}`,
+        `<:VC_id:1478517313618575419> **Backup ID:** \`${m?.backupId || "?"}\``,
+        `<:VC_opentime:1478517163022221323> **Creato:** ${m?.createdAt ? `<t:${Math.floor(Number(m.createdAt) / 1000)}:F>` : "N/D"}`,
       ].join("\n")
     );
 }
 
-module.exports = {
-  name: "backupList",
-  order: 9,
-  match,
-  execute,
-  renderList,
-  buildListSelectionInfoEmbed,
-};
+module.exports = { name: "backupList", order: 9, match, execute, renderList, buildListSelectionInfoEmbed };

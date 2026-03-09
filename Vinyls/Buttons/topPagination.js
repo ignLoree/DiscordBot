@@ -1,5 +1,4 @@
 const { handleTopPaginationModal } = require("../Events/interaction/topPaginationHandlers");
-
 const TOP_PAGE_MODAL_PREFIX = "top_page_modal";
 
 function match(interaction) {

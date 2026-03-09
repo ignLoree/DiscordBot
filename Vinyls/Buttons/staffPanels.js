@@ -1,5 +1,4 @@
 const { handleStaffButtons } = require("../Triggers/buttons");
-
 const STAFF_IDS = new Set(["sanzioni", "warnstaff", "valutazioni", "pause", "limiti", "regolamento", "generalimoderazione", "testualimoderazione", "vocalimoderazione", "metodi", "ping", "info_rules", "info_donations", "info_sponsor", "info_tags", "candidature_premi_partner", "info_verifica", "info_boost_levels", "info_levels", "info_level", "torna_indietro", "info_badges_roles", "r_multiplier_info", "avatar_views", "banner_views"]);
 
 function match(interaction) {

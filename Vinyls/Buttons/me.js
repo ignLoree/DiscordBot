@@ -1,7 +1,6 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require("discord.js");
 const { getUserOverviewStats } = require("../Services/Community/activityService");
 const { renderUserActivityCanvas } = require("../Utils/Render/activityCanvas");
-
 const ME_REFRESH_CUSTOM_ID_PREFIX = "me_refresh";
 const ME_PERIOD_OPEN_CUSTOM_ID_PREFIX = "me_period_open";
 const ME_PERIOD_SET_CUSTOM_ID_PREFIX = "me_period_set";
@@ -40,10 +39,10 @@ async function execute(interaction, client) {
     const user = member?.user ?? interaction.user;
     const payload = await buildMeOverviewPayload(guild, user, member, parsed.lookbackDays, "main");
     if (interaction.deferred || interaction.replied) {
-      await interaction.editReply(payload).catch(() => interaction.followUp(payload).catch(() => {}));
+      await interaction.editReply(payload).catch(() => interaction.followUp(payload).catch(() => { }));
     } else {
       await interaction.update(payload).catch(async () => {
-        await interaction.reply({ ...payload, ephemeral: true }).catch(() => {});
+        await interaction.reply({ ...payload, ephemeral: true }).catch(() => { });
       });
     }
     return true;
@@ -67,22 +66,7 @@ async function buildMeOverviewPayload(guild, author, member, lookbackDays, view)
   const avatarUrl = author?.displayAvatarURL?.({ size: 256, extension: "png" }) || null;
   const createdOn = author?.createdAt ?? new Date(0);
   const joinedOn = (member?.joinedAt && member.joinedAt instanceof Date) ? member.joinedAt : (member?.joinedTimestamp ? new Date(member.joinedTimestamp) : createdOn);
-
-  const buffer = await renderUserActivityCanvas({
-    guildName,
-    userTag,
-    displayName,
-    avatarUrl,
-    createdOn,
-    joinedOn,
-    lookbackDays: safeLookback,
-    windows: stats.windows,
-    ranks: stats.ranks,
-    topChannelsText: stats.topChannelsText,
-    topChannelsVoice: stats.topChannelsVoice,
-    chart: stats.chart,
-  });
-
+  const buffer = await renderUserActivityCanvas({ guildName, userTag, displayName, avatarUrl, createdOn, joinedOn, lookbackDays: safeLookback, windows: stats.windows, ranks: stats.ranks, topChannelsText: stats.topChannelsText, topChannelsVoice: stats.topChannelsVoice, chart: stats.chart });
   const components = buildMeComponents(userId, safeLookback, view);
   const file = new AttachmentBuilder(buffer, { name: "me-activity.png" });
   return { files: [file], components };
@@ -95,9 +79,9 @@ function buildMeComponents(ownerId, lookbackDays, view) {
   const periodBack = ownerId ? `${ME_PERIOD_BACK_CUSTOM_ID_PREFIX}:${ownerId}:${safeLookback}:embed` : `${ME_PERIOD_BACK_CUSTOM_ID_PREFIX}:${safeLookback}:embed`;
 
   const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(base).setLabel("Aggiorna").setStyle(ButtonStyle.Secondary).setEmoji("🔄"),
-    new ButtonBuilder().setCustomId(periodOpen).setLabel("Periodo").setStyle(ButtonStyle.Secondary).setEmoji("📅"),
-    new ButtonBuilder().setCustomId(periodBack).setLabel("Indietro").setStyle(ButtonStyle.Secondary).setEmoji("◀️")
+    new ButtonBuilder().setCustomId(base).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_Refresh:1473359252276904203> "),
+    new ButtonBuilder().setCustomId(periodOpen).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_Clock:1473359204189474886>"),
+    new ButtonBuilder().setCustomId(periodBack).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page5:1463196506143326261> ")
   );
   return [row];
 }
@@ -108,17 +92,4 @@ function parseMyActivityArgs(args) {
   return { lookbackDays: normalizeLookbackDays(lookback) };
 }
 
-module.exports = {
-  name: "me",
-  order: 6,
-  match,
-  execute,
-  ME_REFRESH_CUSTOM_ID_PREFIX,
-  ME_PERIOD_OPEN_CUSTOM_ID_PREFIX,
-  ME_PERIOD_SET_CUSTOM_ID_PREFIX,
-  ME_PERIOD_BACK_CUSTOM_ID_PREFIX,
-  normalizeLookbackDays,
-  buildMeOverviewPayload,
-  buildMeComponents,
-  parseMyActivityArgs,
-};
+module.exports = { name: "me", order: 6, match, execute, ME_REFRESH_CUSTOM_ID_PREFIX, ME_PERIOD_OPEN_CUSTOM_ID_PREFIX, ME_PERIOD_SET_CUSTOM_ID_PREFIX, ME_PERIOD_BACK_CUSTOM_ID_PREFIX, normalizeLookbackDays, buildMeOverviewPayload, buildMeComponents, parseMyActivityArgs };

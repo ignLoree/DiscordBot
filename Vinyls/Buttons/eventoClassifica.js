@@ -1,10 +1,8 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("discord.js");
 const { getGuildExpSettings } = require("../Services/Community/expService");
 const { getEventWeekTopThreeTextAndVoice } = require("../Services/Community/weeklyActivityWinnersService");
-
 const EVENTO_CLASSIFICA_PREFIX = "evento_classifica:";
 const MAX_WEEKS = 4;
-
 const TROPHY_LABELS = ["<:VC_Podio1:1469659449974329598>", "<:VC_Podio2:1469659512863592500>", "<:VC_Podio3:1469659557696504024>"];
 
 function formatVoiceDuration(seconds) {
@@ -31,28 +29,28 @@ async function execute(interaction, client) {
   if (!guild) return false;
   const settings = await getGuildExpSettings(guild.id).catch(() => null);
   if (!settings?.eventExpiresAt || !settings?.eventStartedAt) {
-    await interaction.reply({ content: "<:vegax:1443934876440068179> Nessun evento attivo.", flags: 1 << 6 }).catch(() => {});
+    await interaction.reply({ content: "<:vegax:1443934876440068179> Nessun evento attivo.", flags: 1 << 6 }).catch(() => { });
     return true;
   }
 
   try {
     const payload = await buildEventoClassificaPayload(guild, client, settings, week);
     if (interaction.deferred || interaction.replied) {
-      await interaction.editReply(payload).catch(() => interaction.followUp(payload).catch(() => {}));
+      await interaction.editReply(payload).catch(() => interaction.followUp(payload).catch(() => { }));
     } else {
       await interaction.update(payload).catch(async () => {
-        await interaction.reply({ ...payload, ephemeral: true }).catch(() => {});
+        await interaction.reply({ ...payload, ephemeral: true }).catch(() => { });
       });
     }
     return true;
   } catch (err) {
     global.logger?.error?.("[Buttons/eventoClassifica] execute", err);
-    await interaction.reply({ content: "<:vegax:1443934876440068179> Errore durante l'aggiornamento.", flags: 1 << 6 }).catch(() => {});
+    await interaction.reply({ content: "<:vegax:1443934876440068179> Errore durante l'aggiornamento.", flags: 1 << 6 }).catch(() => { });
     return true;
   }
 }
 
-async function buildEventoClassificaPayload(guild, client, settings, currentWeek) {
+async function buildEventoClassificaPayload(guild, currentWeek) {
   const { topMessages, topVoice } = await getEventWeekTopThreeTextAndVoice(guild, currentWeek);
 
   const msgLines = topMessages.length
@@ -83,7 +81,7 @@ async function buildEventoClassificaPayload(guild, client, settings, currentWeek
     row.addComponents(
       new ButtonBuilder()
         .setCustomId(`${EVENTO_CLASSIFICA_PREFIX}${w}`)
-        .setLabel(`Sett. ${w}`)
+        .setEmoji(`<a:VC_Calendar:1448670320180592724>`)
         .setStyle(w === currentWeek ? ButtonStyle.Primary : ButtonStyle.Secondary)
     );
   }
@@ -91,12 +89,4 @@ async function buildEventoClassificaPayload(guild, client, settings, currentWeek
   return { embeds: [embed], components: [row] };
 }
 
-module.exports = {
-  name: "eventoClassifica",
-  order: 10,
-  match,
-  execute,
-  EVENTO_CLASSIFICA_PREFIX,
-  MAX_WEEKS,
-  buildEventoClassificaPayload,
-};
+module.exports = { name: "eventoClassifica", order: 10, match, execute, EVENTO_CLASSIFICA_PREFIX, MAX_WEEKS, buildEventoClassificaPayload };
