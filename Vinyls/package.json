@@ -8,12 +8,12 @@
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning index.js",
     "start:sharded": "node --disable-warning=ExperimentalWarning run-sharded.js",
-    "check:mojibake": "node scripts/check-mojibake.js",
-    "fix:mojibake": "node scripts/check-mojibake.js --fix",
-    "automod:sync-words": "node scripts/sync-automod-wordlists.js",
-    "test:critical": "node scripts/test-critical-systems.js",
-    "test:prefix-metadata": "node scripts/test-prefix-metadata.js",
-    "docs:commands": "node scripts/generate-prefix-docs.js"
+    "check:mojibake": "node ../scripts/check-mojibake.js Vinyls",
+    "fix:mojibake": "node ../scripts/check-mojibake.js Vinyls --fix",
+    "automod:sync-words": "node ../scripts/sync-automod-wordlists.js Vinyls",
+    "test:critical": "node ../scripts/test-critical-systems.js Vinyls",
+    "test:prefix-metadata": "node ../scripts/test-prefix-metadata.js Vinyls",
+    "docs:commands": "node ../scripts/generate-prefix-docs.js Vinyls"
   },
   "dependencies": {
     "@discord-player/extractor": "^7.1.0",

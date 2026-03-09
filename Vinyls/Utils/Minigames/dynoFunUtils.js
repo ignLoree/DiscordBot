@@ -1,6 +1,6 @@
 const axios = require("axios");
 const { EmbedBuilder } = require("discord.js");
-const { safeMessageReply } = require("../../shared/discord/replyRuntime");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const TRANSLATE_CACHE = new Map();
 
 function buildEmbed(color, description, title = null) {

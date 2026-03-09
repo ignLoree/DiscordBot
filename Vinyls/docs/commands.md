@@ -1,31 +1,6 @@
 # Prefix Commands
 
-Generato automaticamente il 2026-03-04T14:34:54.515Z.
-
-## +adorable
-- Categoria: `Minigames`
-- Alias: -
-- Uso: `+adorable`
-- Subcommand: -
-- Esempi:
-- `+adorable`
-
-## +afk
-- Categoria: `Utility`
-- Alias: -
-- Uso: `+afk`
-- Subcommand: -
-- Esempi:
-- `+afk`
-
-## +avatar
-- Categoria: `Utility`
-- Alias: `av`
-- Uso: `+avatar[server|user|guild]`
-- Subcommand: `server`, `user`, `guild`
-- Esempi:
-- `+avatarserver`
-- `+avataruser`
+Generato automaticamente il 2026-03-09T15:43:33.153Z.
 
 ## +ban
 - Categoria: `Moderation`
@@ -35,41 +10,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Esempi:
 - `+ban`
 
-## +banner
-- Categoria: `Utility`
-- Alias: `bn`
-- Uso: `+banner[user|server|guild]`
-- Subcommand: `user`, `server`, `guild`
-- Esempi:
-- `+banneruser`
-- `+bannerserver`
-
-## +birb
-- Categoria: `Minigames`
-- Alias: `bird`
-- Uso: `+birb`
-- Subcommand: -
-- Esempi:
-- `+birb`
-
-## +birthday
-- Categoria: `Utility`
-- Alias: `bh`
-- Uso: `+birthday<set|edit|remove>`
-- Subcommand: `set`, `edit`, `remove`
-- Esempi:
-- `+birthdayset`
-- `+birthdayedit`
-
-## +block
-- Categoria: `Utility`
-- Alias: `blockav`, `blockbn`, `blockquotes`
-- Uso: `+block[avatar|banner|quotes|av|bn|quote|q]`
-- Subcommand: `avatar`, `banner`, `quotes`, `av`, `bn`, `quote`, `q`
-- Esempi:
-- `+blockavatar`
-- `+blockbanner`
-
 ## +case
 - Categoria: `Moderation`
 - Alias: -
@@ -77,14 +17,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Subcommand: -
 - Esempi:
 - `+case`
-
-## +cat
-- Categoria: `Minigames`
-- Alias: -
-- Uso: `+cat`
-- Subcommand: -
-- Esempi:
-- `+cat`
 
 ## +catfacts
 - Categoria: `Minigames`
@@ -102,15 +34,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Esempi:
 - `+chucknorris`
 
-## +classifica
-- Categoria: `Level`
-- Alias: `c`, `cs`, `classificasettimanale`
-- Uso: `+classifica[alltime|weekly|cs|classificasettimanale|settimanale|week|w|all]`
-- Subcommand: `alltime`, `weekly`, `cs`, `classificasettimanale`, `settimanale`, `week`, `w`, `all`, `totale`, `general`, `generale`, `a`
-- Esempi:
-- `+classificaalltime`
-- `+classificaweekly`
-
 ## +clearwarn
 - Categoria: `Moderation`
 - Alias: -
@@ -118,31 +41,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Subcommand: -
 - Esempi:
 - `+clearwarn`
-
-## +country
-- Categoria: `Minigames`
-- Alias: `nazione`
-- Uso: `+country`
-- Subcommand: -
-- Esempi:
-- `+country`
-
-## +customrole
-- Categoria: `VIP`
-- Alias: -
-- Uso: `+customrole[create|modify|add|remove]`
-- Subcommand: `create`, `modify`, `add`, `remove`
-- Esempi:
-- `+customrolecreate`
-- `+customrolemodify`
-
-## +customvoc
-- Categoria: `VIP`
-- Alias: -
-- Uso: `+customvoc`
-- Subcommand: -
-- Esempi:
-- `+customvoc`
 
 ## +dadjoke
 - Categoria: `Minigames`
@@ -152,14 +50,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Esempi:
 - `+dadjoke`
 
-## +define
-- Categoria: `Minigames`
-- Alias: `definizione`
-- Uso: `+define`
-- Subcommand: -
-- Esempi:
-- `+define`
-
 ## +delwarn
 - Categoria: `Moderation`
 - Alias: -
@@ -167,39 +57,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Subcommand: -
 - Esempi:
 - `+delwarn`
-
-## +description
-- Categoria: `Partner`
-- Alias: `desc`
-- Uso: `+description[user|utente|id]`
-- Subcommand: `user`, `utente`, `id`
-- Esempi:
-- `+descriptionuser`
-- `+descriptionutente`
-
-## +dm-disable
-- Categoria: `Utility`
-- Alias: `no-dm`
-- Uso: `+dm-disable`
-- Subcommand: -
-- Esempi:
-- `+dm-disable`
-
-## +dm-enable
-- Categoria: `Utility`
-- Alias: -
-- Uso: `+dm-enable`
-- Subcommand: -
-- Esempi:
-- `+dm-enable`
-
-## +dog
-- Categoria: `Minigames`
-- Alias: -
-- Uso: `+dog`
-- Subcommand: -
-- Esempi:
-- `+dog`
 
 ## +dogfacts
 - Categoria: `Minigames`
@@ -217,24 +74,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Esempi:
 - `+duration`
 
-## +embed
-- Categoria: `Admin`
-- Alias: -
-- Uso: `+embed[create]`
-- Subcommand: `create`
-- Esempi:
-- `+embedcreate`
-- `+embed`
-
-## +evento
-- Categoria: `Admin`
-- Alias: -
-- Uso: `+evento<start|stop|info|classifica|staff|assegna-ruoli|reset-premi|addpoints>`
-- Subcommand: `start`, `stop`, `info`, `classifica`, `staff`, `assegna-ruoli`, `reset-premi`, `addpoints`
-- Esempi:
-- `+eventostart`
-- `+eventostop`
-
 ## +flip
 - Categoria: `Minigames`
 - Alias: `coinflip`
@@ -242,55 +81,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Subcommand: -
 - Esempi:
 - `+flip`
-
-## +github
-- Categoria: `Minigames`
-- Alias: -
-- Uso: `+github`
-- Subcommand: -
-- Esempi:
-- `+github`
-
-## +help
-- Categoria: `Utility`
-- Alias: -
-- Uso: `+help`
-- Subcommand: -
-- Esempi:
-- `+help`
-
-## +info
-- Categoria: `Moderation`
-- Alias: `whois`
-- Uso: `+info`
-- Subcommand: -
-- Esempi:
-- `+info`
-
-## +invites
-- Categoria: `Stats`
-- Alias: -
-- Uso: `+invites`
-- Subcommand: -
-- Esempi:
-- `+invites`
-
-## +itunes
-- Categoria: `Minigames`
-- Alias: -
-- Uso: `+itunes`
-- Subcommand: -
-- Esempi:
-- `+itunes`
-
-## +join
-- Categoria: `TTS`
-- Alias: -
-- Uso: `+join[music]`
-- Subcommand: `music`
-- Esempi:
-- `+joinmusic`
-- `+join`
 
 ## +joke
 - Categoria: `Minigames`
@@ -308,23 +98,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Esempi:
 - `+kick`
 
-## +leave
-- Categoria: `TTS`
-- Alias: -
-- Uso: `+leave`
-- Subcommand: -
-- Esempi:
-- `+leave`
-
-## +level
-- Categoria: `Admin`
-- Alias: `gmulti`, `levelset`, `leveladdexp`, `levelremoveexp`, `levelreset`, `levellock`, `levelunlock`, `levelmultiplier`, `levelignore`, `levelunignore`, `levelconfig`, `levelgmulti`
-- Uso: `+level<gmulti|set|add|remove|reset|lock|unlock|multiplier>`
-- Subcommand: `gmulti`, `set`, `add`, `remove`, `reset`, `lock`, `unlock`, `multiplier`, `ignore`, `unignore`, `config`, `levelset`, `leveladdexp`, `levelremoveexp`, `levelreset`, `levellock`, `levelunlock`, `levelmultiplier`, `levelignore`, `levelunignore`, `levelconfig`, `levelgmulti`, `exp`, `level`
-- Esempi:
-- `+levelgmulti`
-- `+levelset`
-
 ## +lock
 - Categoria: `Moderation`
 - Alias: -
@@ -333,15 +106,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Esempi:
 - `+lock`
 
-## +lyrics
-- Categoria: `Music`
-- Alias: `ly`
-- Uso: `+lyrics [nome canzone]`
-- Subcommand: -
-- Esempi:
-- `+lyrics`
-- `+lyrics POLIETILENE TonyPitony`
-
 ## +math
 - Categoria: `Minigames`
 - Alias: -
@@ -349,22 +113,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Subcommand: -
 - Esempi:
 - `+math`
-
-## +me
-- Categoria: `Stats`
-- Alias: -
-- Uso: `+me`
-- Subcommand: -
-- Esempi:
-- `+me`
-
-## +membercount
-- Categoria: `Stats`
-- Alias: -
-- Uso: `+membercount`
-- Subcommand: -
-- Esempi:
-- `+membercount`
 
 ## +moderations
 - Categoria: `Moderation`
@@ -390,22 +138,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Esempi:
 - `+modstats`
 
-## +movie
-- Categoria: `Minigames`
-- Alias: `film`
-- Uso: `+movie`
-- Subcommand: -
-- Esempi:
-- `+movie`
-
-## +mstats
-- Categoria: `Level`
-- Alias: -
-- Uso: `+mstats`
-- Subcommand: -
-- Esempi:
-- `+mstats`
-
 ## +mute
 - Categoria: `Moderation`
 - Alias: -
@@ -413,73 +145,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Subcommand: -
 - Esempi:
 - `+mute`
-
-## +no-dm-list
-- Categoria: `Admin`
-- Alias: `nodmlist`
-- Uso: `+no-dm-list`
-- Subcommand: -
-- Esempi:
-- `+no-dm-list`
-
-## +nowplaying
-- Categoria: `Music`
-- Alias: `np`
-- Uso: `+nowplaying`
-- Subcommand: -
-- Esempi:
-- `+np`
-
-## +pause
-- Categoria: `Staff`
-- Alias: `pausa`
-- Uso: `+pause list [@staffer|id|username]`
-- Subcommand: `list`
-- Esempi:
-- `+pauselist`
-- `+pause`
-
-## +perms
-- Categoria: `Admin`
-- Alias: `perm`
-- Uso: `+perms<grant|revoke|list|clear|permgrant|permrevoke|permlist|permclear>`
-- Subcommand: `grant`, `revoke`, `list`, `clear`, `permgrant`, `permrevoke`, `permlist`, `permclear`
-- Esempi:
-- `+permsgrant`
-- `+permsrevoke`
-
-## +ping
-- Categoria: `Utility`
-- Alias: -
-- Uso: `+ping`
-- Subcommand: -
-- Esempi:
-- `+ping`
-
-## +play
-- Categoria: `Music`
-- Alias: `p`
-- Uso: `+play <link o ricerca>`
-- Subcommand: `queued`
-- Esempi:
-- `+play Tanti auguri a te`
-- `+play https://open.spotify.com/track/...`
-
-## +pokemon
-- Categoria: `Minigames`
-- Alias: -
-- Uso: `+pokemon`
-- Subcommand: -
-- Esempi:
-- `+pokemon`
-
-## +pug
-- Categoria: `Minigames`
-- Alias: -
-- Uso: `+pug`
-- Subcommand: -
-- Esempi:
-- `+pug`
 
 ## +purge
 - Categoria: `Moderation`
@@ -489,47 +154,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Esempi:
 - `+purge`
 
-## +quote
-- Categoria: `VIP`
-- Alias: -
-- Uso: `+quote`
-- Subcommand: -
-- Esempi:
-- `+quote`
-
-## +quotes
-- Categoria: `Minigames`
-- Alias: -
-- Uso: `+quotes`
-- Subcommand: -
-- Esempi:
-- `+quotes`
-
-## +radio
-- Categoria: `Music`
-- Alias: -
-- Uso: `+radio`
-- Subcommand: -
-- Esempi:
-- `+radio`
-
-## +rank
-- Categoria: `Level`
-- Alias: `r`
-- Uso: `+rank`
-- Subcommand: -
-- Esempi:
-- `+rank`
-
-## +reaction
-- Categoria: `Admin`
-- Alias: `autoreaction`, `autoresponder`
-- Uso: `+reaction<mention|auto|mentions|me|mine|autoresponder|ar>`
-- Subcommand: `mention`, `auto`, `mentions`, `me`, `mine`, `autoresponder`, `ar`
-- Esempi:
-- `+reactionmention`
-- `+reactionauto`
-
 ## +reason
 - Categoria: `Moderation`
 - Alias: -
@@ -537,22 +161,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Subcommand: -
 - Esempi:
 - `+reason`
-
-## +recensione
-- Categoria: `Admin`
-- Alias: -
-- Uso: `+recensione`
-- Subcommand: -
-- Esempi:
-- `+recensione`
-
-## +restart
-- Categoria: `Dev`
-- Alias: `rs`
-- Uso: `+restart`
-- Subcommand: -
-- Esempi:
-- `+restart`
 
 ## +roll
 - Categoria: `Minigames`
@@ -570,40 +178,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Esempi:
 - `+rps`
 
-## +security
-- Categoria: `Admin`
-- Alias: -
-- Uso: `+security[status|statics|enable|disable|panic|panic status|panic enable|panic disable]`
-- Subcommand: `status`, `statics`, `enable`, `disable`, `panic`, `panic status`, `panic enable`, `panic disable`
-- Esempi:
-- `+securitystatus`
-- `+securitystatics`
-
-## +server
-- Categoria: `Stats`
-- Alias: -
-- Uso: `+server`
-- Subcommand: -
-- Esempi:
-- `+server`
-
-## +set
-- Categoria: `TTS`
-- Alias: -
-- Uso: `+set <voice|autojoin> <valore>`
-- Subcommand: `voice`, `autojoin`, `reset`, `default`, `off`, `none`
-- Esempi:
-- `+setvoice`
-- `+setautojoin`
-
-## +ship
-- Categoria: `Minigames`
-- Alias: -
-- Uso: `+ship`
-- Subcommand: -
-- Esempi:
-- `+ship`
-
 ## +slots
 - Categoria: `Minigames`
 - Alias: -
@@ -611,30 +185,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Subcommand: -
 - Esempi:
 - `+slots`
-
-## +snipe
-- Categoria: `Utility`
-- Alias: -
-- Uso: `+snipe`
-- Subcommand: -
-- Esempi:
-- `+snipe`
-
-## +space
-- Categoria: `Minigames`
-- Alias: -
-- Uso: `+space`
-- Subcommand: -
-- Esempi:
-- `+space`
-
-## +steamstatus
-- Categoria: `Minigames`
-- Alias: `steam`
-- Uso: `+steamstatus`
-- Subcommand: -
-- Esempi:
-- `+steamstatus`
 
 ## +temprole
 - Categoria: `Moderation`
@@ -645,23 +195,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - `+temproleadd`
 - `+temproleremove`
 
-## +ticket
-- Categoria: `Ticket`
-- Alias: `add`, `remove`, `claim`, `unclaim`, `close`, `closerequest`, `switchpanel`, `rename`, `reopen`, `ticketadd`, `ticketremove`, `ticketclose`, `ticketclaim`, `ticketunclaim`, `ticketreopen`, `ticketrename`, `ticketswitchpanel`, `ticketcloserequest`, `tadd`, `tremove`, `trename`
-- Uso: `+ticket[add|remove|closerequest|close|claim|unclaim|switchpanel|rename]`
-- Subcommand: `add`, `remove`, `closerequest`, `close`, `claim`, `unclaim`, `switchpanel`, `rename`, `reopen`, `ticketswitchpanel`, `ticketrename`, `ticketreopen`, `trename`, `ticketclose`, `ticketclaim`, `ticketunclaim`, `tadd`, `tremove`, `ticketadd`, `ticketremove`, `ticketcloserequest`, `partnership`, `supporto`, `high`
-- Esempi:
-- `+ticketadd`
-- `+ticketremove`
-
-## +top
-- Categoria: `Stats`
-- Alias: -
-- Uso: `+top`
-- Subcommand: -
-- Esempi:
-- `+top`
-
 ## +unban
 - Categoria: `Moderation`
 - Alias: -
@@ -669,15 +202,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Subcommand: -
 - Esempi:
 - `+unban`
-
-## +unblock
-- Categoria: `Utility`
-- Alias: `unblockav`, `unblockbn`, `unblockquotes`
-- Uso: `+unblock[avatar|banner|quotes|av|bn|quote|q]`
-- Subcommand: `avatar`, `banner`, `quotes`, `av`, `bn`, `quote`, `q`
-- Esempi:
-- `+unblockavatar`
-- `+unblockbanner`
 
 ## +unlock
 - Categoria: `Moderation`
@@ -695,15 +219,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Esempi:
 - `+unmute`
 
-## +user
-- Categoria: `Stats`
-- Alias: -
-- Uso: `+user <userId> [1d|7d|14d|21d|30d] [embed]`
-- Subcommand: -
-- Esempi:
-- `+user 123456789012345678`
-- `+user 123456789012345678 30d embed`
-
 ## +verify
 - Categoria: `Moderation`
 - Alias: -
@@ -711,14 +226,6 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Subcommand: -
 - Esempi:
 - `+verify`
-
-## +voices
-- Categoria: `TTS`
-- Alias: -
-- Uso: `+voices`
-- Subcommand: -
-- Esempi:
-- `+voices`
 
 ## +warn
 - Categoria: `Moderation`
@@ -735,12 +242,4 @@ Generato automaticamente il 2026-03-04T14:34:54.515Z.
 - Subcommand: -
 - Esempi:
 - `+warnings`
-
-## +weather
-- Categoria: `Minigames`
-- Alias: `meteo`
-- Uso: `+weather`
-- Subcommand: -
-- Esempi:
-- `+weather`
 

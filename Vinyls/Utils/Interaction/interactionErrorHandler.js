@@ -1,5 +1,5 @@
 const IDs = require("../Config/ids");
-const { buildErrorLogEmbed } = require("../../shared/discord/errorLogEmbed");
+const { buildErrorLogEmbed } = require("../../../shared/discord/errorLogEmbed");
 const { getCentralChannel } = require("../Logging/commandUsageLogger");
 const { isAckError, isTransientDiscordError, sendPrivateInteractionResponse, } = require("./interactionRuntimeGuards");
 const PRIVATE_FLAG = 1 << 6;

@@ -1,14 +1,18 @@
-"use strict";
-
 const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
 
-const ROOT = path.resolve(__dirname, "..");
-const SOURCES_PATH=path.resolve(ROOT,"Utils/Config/automodRacistWords/sources.json",);
-const OUTPUT_PATH=path.resolve(ROOT,"Utils/Config/automodRacistWords/auto.multilang.json",);
-const MANUAL_BASE_PATH = path.resolve(ROOT, "Utils/Config/automodRacistWords.json");
-const EXTRA_ALLOWED_STEMS=["beaner","chink","chingchong","cingen","chernozhopy","coon","dago","gook","honky","kike","nigg","paki","porchmonkey","raghead","sandnigger","spic","wetback","zingar",];
+function getBotRoot() {
+  const workspaceRoot = path.resolve(__dirname, "..");
+  const botFolder = process.argv[2] || process.env.BOT_FOLDER || "Vinyls";
+  return path.join(workspaceRoot, botFolder);
+}
+
+const EXTRA_ALLOWED_STEMS = [
+  "beaner", "chink", "chingchong", "cingen", "chernozhopy", "coon", "dago",
+  "gook", "honky", "kike", "nigg", "paki", "porchmonkey", "raghead", "sandnigger",
+  "spic", "wetback", "zingar",
+];
 
 function ensureDir(filePath) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -33,10 +37,10 @@ function compactWord(word) {
   return String(word || "").replace(/[^a-z0-9]+/g, "");
 }
 
-function loadManualBaseWords() {
+function loadManualBaseWords(root, manualBasePath) {
   try {
-    if (!fs.existsSync(MANUAL_BASE_PATH)) return [];
-    const raw = fs.readFileSync(MANUAL_BASE_PATH, "utf8");
+    if (!fs.existsSync(manualBasePath)) return [];
+    const raw = fs.readFileSync(manualBasePath, "utf8");
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
     return parsed
@@ -47,8 +51,8 @@ function loadManualBaseWords() {
   }
 }
 
-function buildAllowedStems() {
-  const manual = loadManualBaseWords();
+function buildAllowedStems(manualBasePath) {
+  const manual = loadManualBaseWords(null, manualBasePath);
   const stems = new Set(EXTRA_ALLOWED_STEMS.map((x) => compactWord(normalizeWord(x))));
   for (const word of manual) {
     const compact = compactWord(word);
@@ -68,20 +72,32 @@ function isAllowedRacistCandidate(word, allowedStems) {
 }
 
 async function fetchSource(url) {
-  const res=await axios.get(url,{timeout:20_000,maxContentLength:4*1024*1024,responseType:"text",validateStatus:(s) => s>=200&&s<300,});
+  const res = await axios.get(url, {
+    timeout: 20_000,
+    maxContentLength: 4 * 1024 * 1024,
+    responseType: "text",
+    validateStatus: (s) => s >= 200 && s < 300,
+  });
   return parseRawList(res.data);
 }
 
-async function main() {
-  if (!fs.existsSync(SOURCES_PATH)) {
-    throw new Error(`Missing sources file: ${SOURCES_PATH}`);
-  }
-  const sources = JSON.parse(fs.readFileSync(SOURCES_PATH, "utf8"));
-  if (!Array.isArray(sources) || !sources.length) {
-    throw new Error("sources.json must be a non-empty JSON array of URLs");
+async function run(root) {
+  const sourcesPath = path.join(root, "Utils", "Config", "automodRacistWords", "sources.json");
+  const outputPath = path.join(root, "Utils", "Config", "automodRacistWords", "auto.multilang.json");
+  const manualBasePath = path.join(root, "Utils", "Config", "automodRacistWords.json");
+
+  if (!fs.existsSync(sourcesPath)) {
+    console.log(`[sync-automod-wordlists] ${path.basename(root)}: no automod config (sources.json missing), skip.`);
+    return;
   }
 
-  const allowedStems = buildAllowedStems();
+  const sources = JSON.parse(fs.readFileSync(sourcesPath, "utf8"));
+  if (!Array.isArray(sources) || !sources.length) {
+    console.warn(`[sync-automod-wordlists] ${path.basename(root)}: sources.json empty, skip.`);
+    return;
+  }
+
+  const allowedStems = buildAllowedStems(manualBasePath);
   if (!allowedStems.length) {
     throw new Error("No allowed racist stems available for filtering");
   }
@@ -103,19 +119,21 @@ async function main() {
   }
 
   const list = [...all].sort((a, b) => a.localeCompare(b));
-  ensureDir(OUTPUT_PATH);
-  fs.writeFileSync(OUTPUT_PATH, `${JSON.stringify(list, null, 2)}\n`, "utf8");
-  console.log(
-    `[sync-automod-wordlists] wrote ${list.length} terms to ${OUTPUT_PATH}`,
-  );
+  ensureDir(outputPath);
+  fs.writeFileSync(outputPath, `${JSON.stringify(list, null, 2)}\n`, "utf8");
+  console.log(`[sync-automod-wordlists] wrote ${list.length} terms to ${path.relative(root, outputPath)}`);
   if (failed.length) {
-    console.warn(
-      `[sync-automod-wordlists] failed sources: ${failed.length}/${sources.length}`,
-    );
+    console.warn(`[sync-automod-wordlists] failed sources: ${failed.length}/${sources.length}`);
   }
 }
 
-main().catch((err) => {
-  console.error(`[sync-automod-wordlists] fatal: ${err.stack || err.message}`);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  const root = getBotRoot();
+  const botName = path.basename(root);
+  run(root).catch((err) => {
+    console.error(`[sync-automod-wordlists] ${botName} fatal: ${err.stack || err.message}`);
+    process.exit(1);
+  });
+} else {
+  module.exports = run;
+}

@@ -1,5 +1,5 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require("discord.js");
-const { safeMessageReply } = require("../../shared/discord/replyRuntime");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const {
   getNoDmPreferences,
   setNoDmCategories,

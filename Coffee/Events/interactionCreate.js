@@ -1,8 +1,8 @@
 const { InteractionType, EmbedBuilder } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
-const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
+const { buildErrorLogEmbed } = require("../../shared/discord/errorLogEmbed");
 const { checkButtonPermission, checkStringSelectPermission, checkModalPermission, checkSlashPermission, buildGlobalPermissionDeniedEmbed, buildGlobalNotYourControlEmbed, } = require("../Utils/Moderation/commandPermissions");
-const { safeReply } = require("../Utils/Moderation/reply");
+const { safeReply } = require("../../shared/discord/replyRuntime");
 const { getClientChannelCached } = require("../Utils/Interaction/entityCache");
 const PRIVATE_FLAG = 1 << 6;
 const BUTTON_SPAM_COOLDOWN_MS = 1200;

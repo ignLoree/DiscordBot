@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const IDs = require("../Config/ids");
-const { buildErrorLogEmbed } = require("../Logging/errorLogEmbed");
+const { buildErrorLogEmbed } = require("../../../shared/discord/errorLogEmbed");
 const { checkPrefixPermission, getPrefixRequiredRoles, buildGlobalPermissionDeniedEmbed, } = require("../Moderation/commandPermissions");
 const { showPrefixUsageGuide } = require("../Moderation/prefixUsageGuide");
 

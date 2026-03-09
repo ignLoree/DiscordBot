@@ -1,6 +1,6 @@
 const IDs = require("../../Utils/Config/ids");
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ApplicationCommandType, ComponentType, MessageFlags, } = require("discord.js");
-const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { getGuildMemberCached } = require("../../Utils/Interaction/entityCache");
 const { loadPermissions } = require("../../Utils/Moderation/permissionsStore");
 const MAX_HELP_COLLECTOR_MS = 24 * 60 * 60 * 1000;

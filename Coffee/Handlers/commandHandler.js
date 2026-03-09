@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const ascii = require("ascii-table");
 const IDs = require("../Utils/Config/ids");
-const {isCommandDeployRequired,markCommandDeployComplete,}= require("../../shared/runtime/commandDeployCache");
+const { clearCommandDeployCache, isCommandDeployRequired, markCommandDeployComplete } = require("../../shared/runtime/commandDeployCache");
 
 function toArrayUnique(values = []) {
   return Array.from(new Set(values.filter(Boolean).map((x) => String(x))));
@@ -105,6 +105,10 @@ module.exports = (client) => {
 
     const allowedGuildIds = toArrayUnique([IDs?.guilds?.main, IDs?.guilds?.test]);
     const forceDeployEmpty = client.commandArray.length === 0;
+    if (forceDeployEmpty) {
+      clearCommandDeployCache(BOT_DEPLOY_CACHE_KEY);
+      global.logger?.info?.("[COMMANDS] Lista slash vuota: cache deploy azzerata per forzare invio lista vuota a Discord (rimozione comandi fantasma).");
+    }
     for (const guildId of allowedGuildIds) {
       const deployCheck = isCommandDeployRequired(BOT_DEPLOY_CACHE_KEY,{clientId,guildId},client.commandArray,);
       const forceDeploy = shouldForceSlashDeploy() || forceDeployEmpty;

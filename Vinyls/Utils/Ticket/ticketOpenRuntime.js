@@ -2,7 +2,7 @@ const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFl
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
 const { getNextTicketId } = require("./ticketIdUtils");
 const { TICKETS_CATEGORY_NAME, isTicketCategoryName, } = require("./ticketCategoryUtils");
-const { safeEditReply: safeEditReplyHelper } = require("../../shared/discord/replyRuntime");
+const { safeEditReply: safeEditReplyHelper } = require("../../../shared/discord/replyRuntime");
 const IDs = require("../Config/ids");
 const { findOpenTicketByUser, warmGuildChannels } = require("./ticketInteractionRuntime");
 const { buildTicketChannelName } = require("./ticketNamingRuntime");

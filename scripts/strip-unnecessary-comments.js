@@ -1,7 +1,12 @@
 const fs = require("fs");
 const path = require("path");
 
-const ROOT = path.resolve(__dirname, "..");
+function getBotRoot() {
+  const workspaceRoot = path.resolve(__dirname, "..");
+  const botFolder = process.argv[2] || process.env.BOT_FOLDER || "Vinyls";
+  return path.join(workspaceRoot, botFolder);
+}
+
 const SKIP_DIRS = new Set([".git", "node_modules", "dist", "build", "coverage", "scripts"]);
 const SKIP_FILES = new Set(["strip-unnecessary-comments.js", "check-mojibake.js"]);
 
@@ -72,15 +77,23 @@ function stripFile(filePath) {
   return true;
 }
 
-const files = walk(ROOT);
-let changed = 0;
-for (const file of files) {
-  const rel = path.relative(ROOT, file);
-  const base = path.basename(file);
-  if (SKIP_FILES.has(base)) continue;
-  if (stripFile(file)) {
-    changed++;
-    console.log(rel);
+function run(root) {
+  const files = walk(root);
+  let changed = 0;
+  for (const file of files) {
+    const rel = path.relative(root, file);
+    const base = path.basename(file);
+    if (SKIP_FILES.has(base)) continue;
+    if (stripFile(file)) {
+      changed++;
+      console.log(rel);
+    }
   }
+  console.log(`Done. Modified ${changed} files.`);
 }
-console.log(`Done. Modified ${changed} files.`);
+
+if (require.main === module) {
+  run(getBotRoot());
+} else {
+  module.exports = run;
+}
