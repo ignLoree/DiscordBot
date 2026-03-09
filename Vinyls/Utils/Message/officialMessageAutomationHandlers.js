@@ -478,7 +478,7 @@ async function handleSuggestionChannelMessage(message) {
       .setColor("#6f4e37")
       .setDescription(`**<:VC_Mention:1443994358201323681> Mandato da:**\n${message.author.username}
     
-    **<:PinkQuestionMark:1471892611026391306> Suggerimento:**
+    **<:VC_PinkQuestionMark:1471892611026391306> Suggerimento:**
     
     ${suggestionText}
     

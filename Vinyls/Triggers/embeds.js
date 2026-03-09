@@ -551,17 +551,17 @@ function buildSponsorTagEmbed(config, boosterRoleMention) {
     .setColor(SPONSOR_PANEL_COLOR)
     .setDescription(
       [
-        `## <:LC_wNew:1471891729471770819> ── .✦ <a:VC_RightWing:1448672889845973214> ₊⋆˚｡ ${config.tagName}'s Guild-TAG`,
+        `## <:VC_New:1471891729471770819> ── .✦ <a:VC_RightWing:1448672889845973214> ₊⋆˚｡ ${config.tagName}'s Guild-TAG`,
         sponsorDividerLine(),
         "",
         "",
-        "**<a:VC_Arrow:1448672967721615452> Come mantenere la Guild-TAG <:PinkQuestionMark:1471892611026391306>**",
+        "**<a:VC_Arrow:1448672967721615452> Come mantenere la Guild-TAG <:VC_PinkQuestionMark:1471892611026391306>**",
         "────────୨ৎ────────",
         "<a:VC_Exclamation:1448687427836444854> Ti basta essere parte di https://discord.gg/viniliecaffe oppure",
         `boostare questo server (<a:flyingnitroboost:1443652205705170986> ${boosterRoleMention})`,
         "",
         "",
-        "**<a:VC_Arrow:1448672967721615452> How to keep the Guild-TAG <:PinkQuestionMark:1471892611026391306>**",
+        "**<a:VC_Arrow:1448672967721615452> How to keep the Guild-TAG <:VC_PinkQuestionMark:1471892611026391306>**",
         "────────୨ৎ────────",
         "<a:VC_Exclamation:1448687427836444854> You just need to be in https://discord.gg/viniliecaffe or boost",
         `this server (<a:flyingnitroboost:1443652205705170986> ${boosterRoleMention})`,

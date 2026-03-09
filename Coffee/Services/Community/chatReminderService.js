@@ -170,7 +170,7 @@ const reminderPool = [
       .setColor("#6f4e37")
       .setTitle("<:VC_Eye:1331619214410383381> Non sai da dove partire?")
       .setDescription([
-        "<a:S_News_3:1471891662786527253> Scrivi **`+help`** per vedere tutti i comandi bot, giochi e funzioni!",
+        "<a:VC_NewsExclamation:1471891662786527253> Scrivi **`+help`** per vedere tutti i comandi bot, giochi e funzioni!",
         "",
         `<:VC_Info:1460670816214585481> Per info su livelli, ruoli, minigiochi e regole: <#1442569111119990887>. Trovi davvero tutto lì!`,
       ].join("\n")),

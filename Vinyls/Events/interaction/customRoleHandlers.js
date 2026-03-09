@@ -145,7 +145,7 @@ async function createCustomRoleGrantRequest({
   );
   const dmEmbed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<:PinkQuestionMark:1471892611026391306> Richiesta ruolo personalizzato")
+    .setTitle("<:VC_PinkQuestionMark:1471892611026391306> Richiesta ruolo personalizzato")
     .setDescription(
       `${requesterMember} vuole aggiungerti il ruolo **${role.name}** nel server. Accetti?`,
     );

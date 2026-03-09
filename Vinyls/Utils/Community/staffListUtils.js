@@ -1,7 +1,7 @@
 const IDs = require("../Config/ids");
 const StaffModel = require("../../Schemas/Staff/staffSchema");
 const STAFF_LIST_MARKER = "staff list";
-const STAFF_NEW_EMOJI = "<:LC_wNew:1471891729471770819>";
+const STAFF_NEW_EMOJI = "<:VC_New:1471891729471770819>";
 const STAFF_NEW_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 const ROLE_UP = {
   [String(IDs.roles.Member || "")]: String(IDs.roles.Helper),
@@ -51,7 +51,8 @@ function isPexEntry(row) {
   const newRole = String(row?.newRole || "");
   const isPromotion = oldRole && newRole && ROLE_UP[oldRole] === newRole;
   const reasonHasPex = String(row?.reason || "").toLowerCase().includes("pex");
-  return isPromotion || reasonHasPex;
+  const isPartnerManagerPex = newRole === String(IDs.roles.PartnerManager || "");
+  return isPromotion || reasonHasPex || isPartnerManagerPex;
 }
 
 async function getStaffPexedLast7Days(guildId) {

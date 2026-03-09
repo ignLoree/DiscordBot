@@ -156,7 +156,7 @@ function buildDeleteWarningEmbed() {
     .setColor("#e74c3c")
     .setTitle("<:VC_Alert:1448670089670037675> Conferma eliminazione")
     .setDescription(
-      "<:PinkQuestionMark:1471892611026391306> Sei sicuro di voler **eliminare** questo backup? L'operazione è **irreversibile** e non potrai recuperare i dati."
+      "<:VC_PinkQuestionMark:1471892611026391306> Sei sicuro di voler **eliminare** questo backup? L'operazione è **irreversibile** e non potrai recuperare i dati."
     );
 }
 

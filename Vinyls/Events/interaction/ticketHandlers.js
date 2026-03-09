@@ -1103,7 +1103,7 @@ async function handleTicketInteraction(interaction) {
           .update({
             embeds: [
               new EmbedBuilder()
-                .setTitle("<:PinkQuestionMark:1471892611026391306> • **__RICHIESTA DI CHIUSURA__**")
+                .setTitle("<:VC_PinkQuestionMark:1471892611026391306> • **__RICHIESTA DI CHIUSURA__**")
                 .setDescription(
                   `<:vegax:1443934876440068179> ${interaction.user} ha rifiutato la richiesta di chiusura`,
                 )
@@ -1183,7 +1183,7 @@ async function handleTicketInteraction(interaction) {
             .update({
               embeds: [
                 new EmbedBuilder()
-                  .setTitle("<:PinkQuestionMark:1471892611026391306> • **__RICHIESTA DI CHIUSURA__**")
+                  .setTitle("<:VC_PinkQuestionMark:1471892611026391306> • **__RICHIESTA DI CHIUSURA__**")
                   .setDescription(
                     `<:vegax:1443934876440068179> ${interaction.user} ha rifiutato la richiesta automatica di chiusura`,
                   )

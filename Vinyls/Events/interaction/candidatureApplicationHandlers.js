@@ -824,7 +824,7 @@ async function handleModalSubmit(interaction, type, stepRaw) {
     const row = new ActionRowBuilder().addComponents(...controls);
     const pageRow = buildPagePickerRow(type, interaction.user.id, chunks.length, nextStep);
     await interaction.reply({
-      content: "<:PinkQuestionMark:1471892611026391306> Puoi continuare oppure tornare indietro per correggere le risposte.",
+      content: "<:VC_PinkQuestionMark:1471892611026391306> Puoi continuare oppure tornare indietro per correggere le risposte.",
       components: [row, pageRow],
       flags: 1 << 6,
     }).catch(() => null);

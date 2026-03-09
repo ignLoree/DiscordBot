@@ -101,7 +101,7 @@ function buildPollMessageContent(pollNumber, question, answersText) {
   return `
 <:VC_id:1478517313618575419> __Poll #${pollNumber}__
 
-<:PinkQuestionMark:1471892611026391306> **${question}**
+<:VC_PinkQuestionMark:1471892611026391306> **${question}**
 
 ${answersText}
 

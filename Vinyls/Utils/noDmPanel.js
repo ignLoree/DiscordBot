@@ -1,6 +1,24 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require("discord.js");
-const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { getNoDmPreferences, setNoDmCategories, DM_CATEGORIES, DM_CATEGORY_ALL, DM_CATEGORY_LABELS } = require("./noDmList");
+
+function _stripRef(p) {
+  if (!p || typeof p !== "object") return p;
+  const o = { ...p }; delete o.reply; delete o.messageReference; delete o.failIfNotExists;
+  if (o.allowedMentions && typeof o.allowedMentions === "object") o.allowedMentions = { ...o.allowedMentions, repliedUser: false };
+  return o;
+}
+async function _reply(message, payload) {
+  if (!message || typeof message.reply !== "function") {
+    return (message.channel && message.channel.send) ? message.channel.send(_stripRef(payload)).catch(() => null) : null;
+  }
+  try { return await message.reply(payload); } catch (e) {
+    if (e && e.code === 10008) return null;
+    if (e && e.code === 50035 && e.rawError && e.rawError.errors && e.rawError.errors.message_reference) {
+      return message.channel.send(_stripRef(payload)).catch(() => null);
+    }
+    return null;
+  }
+}
 const PREFIX = "nodm_panel_";
 const EMOJI_OFF = "<:VC_OfflineStatus:1472011150081130751>";
 const EMOJI_ON = "<:VC_OnlineStatus:1472011187569950751>";
@@ -13,8 +31,8 @@ function buildPanelEmbed(prefs, mode = "disable") {
   });
   const intro =
     mode === "enable"
-      ? "<:PinkQuestionMark:1471892611026391306> Scegli **quali DM** attivare. Clicca un pulsante per attivare/disattivare quella categoria."
-      : "<:PinkQuestionMark:1471892611026391306>Scegli **quali DM** disattivare. Clicca un pulsante per attivare/disattivare quella categoria.";
+      ? "<:VC_PinkQuestionMark:1471892611026391306> Scegli **quali DM** attivare. Clicca un pulsante per attivare/disattivare quella categoria."
+      : "<:VC_PinkQuestionMark:1471892611026391306>Scegli **quali DM** disattivare. Clicca un pulsante per attivare/disattivare quella categoria.";
   const footerText =
     mode === "enable"
       ? "<:VC_Info:1460670816214585481> Usa +dm-disable per disattivare categorie."
@@ -86,7 +104,7 @@ async function runNoDmPanel(message, options = {}) {
   const embed = buildPanelEmbed(prefs, mode);
   const components = buildRows(prefs, uniqueKey);
 
-  const promptMessage = await safeMessageReply(message, {
+  const promptMessage = await _reply(message, {
     embeds: [embed],
     components,
     allowedMentions: { repliedUser: false },
