@@ -19,9 +19,12 @@ function getEndDateAt21Rome(now, giorniDaOggi = 30) {
   const endDay = new Date(now.getTime() + giorniDaOggi * 24 * 60 * 60 * 1000);
   const formatter = new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit", });
   const parts = formatter.formatToParts(endDay);
-  const year = parseInt(parts.find((p) => p.type === "year").value, 10);
-  const month = parseInt(parts.find((p) => p.type === "month").value, 10) - 1;
-  const day = parseInt(parts.find((p) => p.type === "day").value, 10);
+  const yearPart = parts.find((p) => p.type === "year");
+  const monthPart = parts.find((p) => p.type === "month");
+  const dayPart = parts.find((p) => p.type === "day");
+  const year = parseInt(yearPart?.value ?? "0", 10);
+  const month = Math.max(0, parseInt(monthPart?.value ?? "1", 10) - 1);
+  const day = parseInt(dayPart?.value ?? "0", 10);
   const hour21CET = new Date(Date.UTC(year, month, day, 20, 0, 0));
   const hour21CEST = new Date(Date.UTC(year, month, day, 19, 0, 0));
   const fmt = new Intl.DateTimeFormat("it-IT", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit", hour12: false, });
