@@ -217,7 +217,9 @@ module.exports = {
       if (i.customId === noId) {
         try {
           await i.update({ embeds: [buildCancelledEmbed()], components: [] });
-        } catch {}
+        } catch (err) {
+          global.logger?.warn?.("[verify] collector:", err?.message || err);
+        }
         return;
       }
       const success = [];
@@ -280,7 +282,9 @@ module.exports = {
         if (!i.deferred && !i.replied) {
           await i.deferUpdate();
         }
-      } catch {}
+      } catch (err) {
+        global.logger?.warn?.("[verify] deferUpdate:", err?.message || err);
+      }
       await promptMsg.delete().catch(() => {});
       await message.delete().catch(() => {});
       const resultMsg=await message.channel.send({embeds:[buildResultEmbed(message.author.id,message.guild?.ownerId,success,fail,),],allowedMentions:{users:[]},});

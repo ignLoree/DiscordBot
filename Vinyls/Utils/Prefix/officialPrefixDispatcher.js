@@ -153,7 +153,7 @@ async function executePrefixCommandRuntime({
   };
 
   if (originalSendTyping) {
-    const sendTypingSafe = async () => { if (commandFinished) return; try { await originalSendTyping(); } catch { } };
+    const sendTypingSafe = async () => { if (commandFinished) return; try { await originalSendTyping(); } catch (err) { global.logger?.warn?.("[prefixDispatcher] sendTyping:", err?.message || err); } };
 
     typingStartTimer = setTimeout(async () => {
       if (commandFinished) return;
@@ -219,20 +219,24 @@ async function executePrefixCommandRuntime({
             return;
           }
 
+          await btn.deferUpdate();
+          const embedData = errorEmbed.toJSON ? errorEmbed.toJSON() : errorEmbed.data;
+          const updatedEmbed = new EmbedBuilder(embedData);
+          let statusText = "";
           if (btn.customId === "error_pending") {
-            errorEmbed.setColor("Yellow");
-            await btn.reply({ content: "In risoluzione.", flags: 1 << 6 }).catch(() => null);
+            updatedEmbed.setColor(0xf1c40f);
+            statusText = "In risoluzione";
           }
           if (btn.customId === "error_solved") {
-            errorEmbed.setColor("Green");
-            await btn.reply({ content: "Risolto.", flags: 1 << 6 }).catch(() => null);
+            updatedEmbed.setColor(0x2ecc71);
+            statusText = "Risolto";
           }
           if (btn.customId === "error_unsolved") {
-            errorEmbed.setColor("Red");
-            await btn.reply({ content: "Irrisolto.", flags: 1 << 6 }).catch(() => null);
+            updatedEmbed.setColor(0xe74c3c);
+            statusText = "Irrisolto";
           }
-
-          await sentError.edit({ embeds: [errorEmbed], components: [row] }).catch(() => null);
+          if (statusText) updatedEmbed.setFooter({ text: `Stato: ${statusText}` });
+          await sentError.edit({ embeds: [updatedEmbed], components: [row] }).catch(() => null);
         });
       }
     }
@@ -249,7 +253,7 @@ async function executePrefixCommandRuntime({
 }
 
 async function drainPrefixQueue(lockId, resolvedClient) {
-  const resolveQueuedMessage = async (payload) => { const fallback = payload?.message || null; const channelId = String(payload?.channelId || fallback?.channelId || ""); const messageId = String(payload?.messageId || fallback?.id || ""); if (!channelId || !messageId) return fallback; try { const channel = resolvedClient.channels?.cache?.get(channelId) || (await resolvedClient.channels.fetch(channelId).catch(() => null)); if (!channel?.messages?.fetch) return fallback; return (await channel.messages.fetch(messageId).catch(() => null)) || fallback; } catch { return fallback; } }; const removeLoadingReaction = async (msg) => { try { const loadingId = IDs.emojis?.loadingAnimatedId; const fallbackId = IDs.emojis?.loadingFallbackId; const emoji = loadingId ? msg.client?.emojis?.cache?.get(loadingId) : null; if (emoji) { const react = msg.reactions.resolve(emoji.id); if (react) await react.users.remove(resolvedClient.user.id); } const fallback = msg.reactions.resolve("VC_Loading") || (fallbackId ? msg.reactions.resolve(fallbackId) : null); if (fallback) await fallback.users.remove(resolvedClient.user.id); } catch { } }; let queue = resolvedClient.prefixCommandQueue.get(lockId);
+  const resolveQueuedMessage = async (payload) => { const fallback = payload?.message || null; const channelId = String(payload?.channelId || fallback?.channelId || ""); const messageId = String(payload?.messageId || fallback?.id || ""); if (!channelId || !messageId) return fallback; try { const channel = resolvedClient.channels?.cache?.get(channelId) || (await resolvedClient.channels.fetch(channelId).catch(() => null)); if (!channel?.messages?.fetch) return fallback; return (await channel.messages.fetch(messageId).catch(() => null)) || fallback; } catch (err) { global.logger?.warn?.("[prefixDispatcher] resolveQueuedMessage:", err?.message || err); return fallback; } }; const removeLoadingReaction = async (msg) => { try { const loadingId = IDs.emojis?.loadingAnimatedId; const fallbackId = IDs.emojis?.loadingFallbackId; const emoji = loadingId ? msg.client?.emojis?.cache?.get(loadingId) : null; if (emoji) { const react = msg.reactions.resolve(emoji.id); if (react) await react.users.remove(resolvedClient.user.id); } const fallback = msg.reactions.resolve("VC_Loading") || (fallbackId ? msg.reactions.resolve(fallbackId) : null); if (fallback) await fallback.users.remove(resolvedClient.user.id); } catch (err) { global.logger?.warn?.("[prefixDispatcher] removeLoadingReaction:", err?.message || err); } }; let queue = resolvedClient.prefixCommandQueue.get(lockId);
   while (queue && queue.length > 0) {
     const next = queue.shift();
     const hydratedMessage = await resolveQueuedMessage(next);

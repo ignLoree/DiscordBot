@@ -500,7 +500,8 @@ function loadCustomRacistWords() {
         for (const word of parseWordArrayFile(file)) all.add(word);
       }
     }
-  } catch {
+  } catch (err) {
+    global.logger?.warn?.("[automod] ", err?.message || err);
   }
   return [...all];
 }
@@ -1045,7 +1046,8 @@ async function markBadUserTrigger(message, violations, heatValue) {
       { upsert: true },
     );
     BAD_USER_CACHE.delete(userId);
-  } catch {
+  } catch (err) {
+    global.logger?.warn?.("[automod] ", err?.message || err);
   }
 }
 
@@ -1075,7 +1077,8 @@ async function markBadUserAction(message, action, violations = []) {
       { upsert: true },
     );
     BAD_USER_CACHE.delete(userId);
-  } catch {
+  } catch (err) {
+    global.logger?.warn?.("[automod] ", err?.message || err);
   }
 }
 
@@ -1510,7 +1513,9 @@ async function isVerifiedBotMessage(message) {
     try {
       const flags = message.author.flags || (typeof message.author.fetchFlags === "function" ? await message.author.fetchFlags().catch(() => null) : null);
       if (flags?.has?.(UserFlagsBitField.Flags.VerifiedBot)) return true;
-    } catch { }
+    } catch (err) {
+      global.logger?.warn?.("[automod] ", err?.message || err);
+    }
   }
   return false;
 }
@@ -1586,7 +1591,9 @@ async function getAutoModMemberSnapshot(member) {
         .map((x) => String(x || "").trim())
         .filter(Boolean)
       : [];
-  } catch { }
+      } catch (err) {
+        global.logger?.warn?.("[automod] ", err?.message || err);
+      }
 
   return {
     heat,
@@ -2389,7 +2396,9 @@ async function runAutoModMessage(message) {
     if (fetchedMember) {
       try {
         message.member = fetchedMember;
-      } catch { }
+      } catch (err) {
+      global.logger?.warn?.("[automod] ", err?.message || err);
+    }
     }
   }
   if (!message?.member) return { blocked: false };

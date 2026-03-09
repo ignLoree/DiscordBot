@@ -39,7 +39,6 @@ function stripLinksFromDescription(text) {
           ? match
           : " ",
     );
-  // Collapse only horizontal space (preserve newlines), then normalize line breaks
   return withoutNonInviteUrls
     .replace(/[ \t]+/g, " ")
     .replace(/ *\n */g, "\n")

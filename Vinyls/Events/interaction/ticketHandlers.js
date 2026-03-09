@@ -257,7 +257,9 @@ async function handleTicketInteraction(interaction) {
         if (!interaction.deferred && !interaction.replied) {
           try {
             await interaction.deferReply({ flags: 1 << 6 }).catch(() => { });
-          } catch { }
+          } catch (err) {
+            global.logger?.warn?.("[ticketHandlers] ", err?.message || err);
+          }
         }
         if (!interaction.client.ticketOpenLocks) {
           interaction.client.ticketOpenLocks = new Set();
@@ -1012,7 +1014,9 @@ async function handleTicketInteraction(interaction) {
             .deferReply({ flags: 1 << 6 })
             .catch(() => { })
             .catch(() => { });
-        } catch { }
+        } catch (err) {
+          global.logger?.warn?.("[ticketHandlers] ", err?.message || err);
+        }
         await runtimeCloseTicket(interaction, null, {
           safeReply,
           safeEditReply,
@@ -1054,7 +1058,9 @@ async function handleTicketInteraction(interaction) {
             .deferReply({ flags: 1 << 6 })
             .catch(() => { })
             .catch(() => { });
-        } catch { }
+        } catch (err) {
+          global.logger?.warn?.("[ticketHandlers] ", err?.message || err);
+        }
         const motivo = ticketDoc.closeReason || "Nessun motivo inserito";
         await runtimeCloseTicket(interaction, motivo, {
           safeReply,
@@ -1159,7 +1165,9 @@ async function handleTicketInteraction(interaction) {
                 .deferReply({ flags: 1 << 6 })
                 .catch(() => { })
                 .catch(() => { });
-            } catch { }
+            } catch (err) {
+            global.logger?.warn?.("[ticketHandlers] ", err?.message || err);
+          }
             const motivo = ticketDoc.closeReason || "Chiusura automatica dopo 24h.";
             await runtimeCloseTicket(interaction, motivo, {
               safeReply,
@@ -1209,7 +1217,9 @@ async function handleTicketInteraction(interaction) {
           .deferReply({ flags: 1 << 6 })
           .catch(() => { })
           .catch(() => { });
-      } catch { }
+      } catch (err) {
+        global.logger?.warn?.("[ticketHandlers] ", err?.message || err);
+      }
       const ticketDoc = await runtimeLoadTicketForChannelOrReply({ interaction, safeReply, makeErrorEmbed, channelId: interaction.channel?.id, missingDescription: "<:vegax:1443934876440068179> Ticket non trovato", });
       if (!ticketDoc) return true;
       const canClose = await runtimeEnsureClosableTicketOrReply({ interaction, safeReply, makeErrorEmbed, ticketDoc, highStaff: isHighStaffActor(), });
@@ -1217,7 +1227,9 @@ async function handleTicketInteraction(interaction) {
       let motivo = null;
       try {
         motivo = interaction.fields.getTextInputValue("motivo")?.trim() || null;
-      } catch (_) { }
+      } catch (err) {
+        global.logger?.warn?.("[ticketHandlers] getTextInputValue motivo:", err?.message || err);
+      }
       if (!motivo && interaction.fields?.fields) {
         const first = interaction.fields.fields.first();
         if (first?.value) motivo = String(first.value).trim() || null;

@@ -290,7 +290,6 @@ const GUESS_CITY_BANK = [
   { landmark: "Torre di Tokyo", city: "Tokyo", country: "Giappone" },
 ];
 
-// ---------- Capital quiz (paese → capitale) ----------
 const CAPITAL_QUIZ_BANK = [
   { country: "Italia", answers: ["Roma"] },
   { country: "Francia", answers: ["Parigi", "Paris"] },
@@ -447,7 +446,6 @@ const FLAG_WELL_KNOWN_COUNTRIES_ARRAY = [
 ];
 const FLAG_WELL_KNOWN_COUNTRIES = new Set(FLAG_WELL_KNOWN_COUNTRIES_ARRAY);
 
-// ---------- Regione italiana → capoluogo ----------
 const ITALIAN_REGION_CAPITAL_BANK = [
   { region: "Abruzzo", answers: ["L'Aquila", "L Aquila"] },
   { region: "Basilicata", answers: ["Potenza"] },
@@ -471,7 +469,6 @@ const ITALIAN_REGION_CAPITAL_BANK = [
   { region: "Veneto", answers: ["Venezia"] },
 ];
 
-// ---------- Cultura generale italiana ----------
 const ITALIAN_GK_BANK = [
   { question: "Qual è il fiume più lungo d'Italia?", answers: ["Po"] },
   { question: "In che anno è stata proclamata l'unità d'Italia?", answers: ["1861"] },
@@ -500,7 +497,6 @@ const ITALIAN_GK_BANK = [
   { question: "Qual è la regione più a sud d'Italia?", answers: ["Sicilia", "Calabria"] },
 ];
 
-// ---------- Quiz patente (vero/falso e multipla) ----------
 const DRIVING_TRUE_FALSE_BANK = [
   { statement: "In autostrada, salvo diversa segnalazione, il limite per le auto è 130 km/h.", answer: true },
   { statement: "Con semaforo rosso puoi passare se non arriva nessuno.", answer: false },
@@ -578,7 +574,6 @@ const DRIVING_SIGN_QUESTIONS = [
   { signType: "priority_road", statement: "Cosa indica questo segnale?", options: ["Strada con diritto di precedenza", "Dare la precedenza", "Incrocio con strada prioritaria", "Fine diritto di precedenza"], correctIndex: 0 },
 ];
 
-// ---------- Fast typing (frasi locali) ----------
 const FAST_TYPING_PHRASES = [
   "la costanza batte il talento",
   "non mollare proprio adesso",
@@ -610,7 +605,6 @@ const FAST_TYPING_PHRASES = [
   "chi non risica non rosica",
 ];
 
-// ---------- Impiccato (parole) ----------
 const HANGMAN_WORDS = [
   "computer", "tastiera", "discord", "capitale", "bandiera", "calciatore", "canzone", "album", "regione", "patente",
   "vinile", "caffè", "musica", "film", "serie", "libro", "roma", "milano", "napoli", "venezia",

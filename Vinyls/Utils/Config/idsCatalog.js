@@ -1,5 +1,3 @@
-'use strict';
-
 function parseNameIdText(text) {
   return String(text || '')
     .split(/\r?\n/)

@@ -314,7 +314,9 @@ async function resolveMentionLabel(interaction, userId) {
 
     const user = await getUserCached(interaction.client, userId);
     if (user) label = `<@${user.id}>`;
-  } catch { }
+  } catch (err) {
+    global.logger?.warn?.("[buttons] ", err?.message || err);
+  }
   return label;
 }
 
@@ -442,7 +444,9 @@ module.exports = {
           },
           { upsert: true, new: true, setDefaultsOnInsert: true },
         );
-      } catch { }
+      } catch (err) {
+    global.logger?.warn?.("[buttons] ", err?.message || err);
+  }
       const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setTitle("Comando sbloccato").setDescription("Hai sbloccato con successo la visualizzazione del tuo avatar.",);
       return interaction.reply({ embeds: [embed] });
     }
@@ -474,7 +478,9 @@ module.exports = {
           },
           { upsert: true, new: true, setDefaultsOnInsert: true },
         );
-      } catch { }
+      } catch (err) {
+    global.logger?.warn?.("[buttons] ", err?.message || err);
+  }
       const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setTitle("Comando sbloccato").setDescription("Hai sbloccato con successo la visualizzazione del tuo banner.",);
       return interaction.reply({ embeds: [embed] });
     }
@@ -522,7 +528,9 @@ module.exports = {
       }
       try {
         await decrementQuoteCount(interaction.guild?.id);
-      } catch { }
+      } catch (err) {
+    global.logger?.warn?.("[buttons] ", err?.message || err);
+  }
       return interaction
         .update({ embeds: [removedEmbed], components: [], files: [] })
         .catch(async () => {

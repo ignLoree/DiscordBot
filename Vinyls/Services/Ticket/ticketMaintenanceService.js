@@ -110,7 +110,9 @@ function cleanupOldTranscripts() {
       if (now - stat.mtimeMs > MAX_AGE_MS) {
         fs.unlinkSync(file);
       }
-    } catch { }
+    } catch (err) {
+      global.logger?.warn?.("[ticketMaintenance] ", err?.message || err);
+    }
   }
 }
 

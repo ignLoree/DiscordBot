@@ -88,7 +88,9 @@ module.exports = {
         { $setOnInsert: { guildId: message.guild.id, userId: user.id } },
         { upsert: true, new: true, setDefaultsOnInsert: true },
       );
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[banner] fetch:", err?.message || err);
+    }
 
     if (Boolean(privacyDoc?.blocked)) {
       const blockedEmbed = new EmbedBuilder()
@@ -114,7 +116,9 @@ module.exports = {
     let fetchedUser = user;
     try {
       fetchedUser = await user.fetch();
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[banner] fetch:", err?.message || err);
+    }
 
     const bannerUrl = fetchedUser.bannerURL({ size: 4096 });
     if (!bannerUrl) {
@@ -136,7 +140,9 @@ module.exports = {
         { $inc: { views: 1 } },
         { new: true },
       );
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[banner] fetch:", err?.message || err);
+    }
 
     const totalViews = Number(privacyCount?.views || 0);
     const authorLabel=member?.displayName||member?.user?.username||user.tag;

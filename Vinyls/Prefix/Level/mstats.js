@@ -37,7 +37,9 @@ module.exports = {
       totalExp = Number(doc?.totalExp || 0);
       currentStreak = Number(doc?.currentStreak ?? 0);
       bestStreak = Number(doc?.bestStreak ?? 0);
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[mstats] MinigameUser find:", err?.message || err);
+    }
 
     const unlocked = getUnlockedRewards(totalExp);
     const unlockedText = unlocked.length ? unlocked.map((reward) => `<a:VC_Arrow:1448672967721615452> <@&${reward.roleId}>`).join("\n") : "Nessun ruolo ancora sbloccato";

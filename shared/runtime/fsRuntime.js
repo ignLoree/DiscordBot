@@ -82,7 +82,9 @@ function acquireSingleInstanceLock(lockName) {
     let existingPid = null;
     try {
       existingPid = Number.parseInt(fs.readFileSync(lockPath, "utf8"), 10);
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[fsRuntime] ", err?.message || err);
+    }
 
     if (isPidAlive(existingPid)) {
       global.logger?.error?.(
@@ -93,12 +95,14 @@ function acquireSingleInstanceLock(lockName) {
 
     try {
       fs.unlinkSync(lockPath);
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[fsRuntime] ", err?.message || err);
+    }
 
     writeLock();
   }
 
-  const release=()=>{try {const current=Number.parseInt(fs.readFileSync(lockPath,"utf8"),10);if(current===pid)fs.unlinkSync(lockPath);} catch {}};
+  const release=()=>{try {const current=Number.parseInt(fs.readFileSync(lockPath,"utf8"),10);if(current===pid)fs.unlinkSync(lockPath);} catch(err){global.logger?.warn?.("[fsRuntime] release:",err?.message||err);}};
 
   process.on("exit", release);
   process.on("SIGINT", () => {

@@ -421,7 +421,9 @@ function startAutoPollLoop(client) {
   if (client._autoPollTask?.stop) {
     try {
       client._autoPollTask.stop();
-    } catch { }
+    } catch (err) {
+      global.logger?.warn?.("[autoPoll] ", err?.message || err);
+    }
   }
 
   client._autoPollTask = cron.schedule(

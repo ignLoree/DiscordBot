@@ -7,7 +7,6 @@ const baseDir = __dirname;
 const ENABLE_LOADER_GIT_PULL = false;
 const ENABLE_LOADER_NPM_INSTALL = true;
 const BOTS=[{key:'vinyls',label:'Vinyls',folderSuffix:'Vinyls',startupDelayMs:0},{key:'Coffee',label:'Coffee',folderSuffix:'Coffee',startupDelayMs:7000}];
-const FORCE_KILL_DELAY_MS = 8000;
 const NPM_CACHE_DIR = path.join(os.tmpdir(), '.npm-global');
 const processRefs = {};
 const npmInstallInProgressByDir = {};
@@ -79,7 +78,8 @@ function resolveNodeExecutable() {
         if (candidates.length > 0) {
             return candidates[0].fullPath;
         }
-    } catch {
+    } catch (err) {
+      console.warn("[Loader]", err?.message || err);
     }
 
     return 'node';
@@ -130,7 +130,8 @@ function killPidTree(pid) {
             return;
         }
         process.kill(pid, 'SIGTERM');
-    } catch {
+    } catch (err) {
+      console.warn("[Loader]", err?.message || err);
     }
 }
 
@@ -142,8 +143,10 @@ function cleanupStalePid(botKey) {
 
     if (processRefs[botKey] && pid && processRefs[botKey].pid === pid) return;
     if (pid && !Number.isNaN(pid)) killPidTree(pid);
-    try { fs.unlinkSync(file); } catch { }
-}
+    try { fs.unlinkSync(file); } catch (err) {
+      console.warn("[Loader]", err?.message || err);
+    }
+  }
 
 function writePid(botKey, pid) {
     try {
@@ -256,14 +259,18 @@ function spawnBotProcess(bot, workingDir, file, resolve) {
     writePid(bot.key, proc.pid);
 
     proc.on('error', (err) => {
-        try { fs.unlinkSync(pidFile(bot.key)); } catch { }
+        try { fs.unlinkSync(pidFile(bot.key)); } catch (e) {
+          console.warn("[Loader]", e?.message || e);
+        }
         processRefs[bot.key] = null;
         console.log(`[Loader] Errore avvio ${bot.label}: ${err?.message || err}`);
         resolve();
     });
 
     proc.on('exit', (code) => {
-        try { fs.unlinkSync(pidFile(bot.key)); } catch { }
+        try { fs.unlinkSync(pidFile(bot.key)); } catch (e) {
+          console.warn("[Loader]", e?.message || e);
+        }
         processRefs[bot.key] = null;
         console.log(`[Loader] ${bot.label} fermato (code ${code})`);
         resolve();

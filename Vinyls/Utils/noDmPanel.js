@@ -190,7 +190,9 @@ async function runNoDmPanel(message, options = {}) {
         ),
       );
       await promptMessage.edit({ components: disabledRows }).catch(() => {});
-    } catch (_) {}
+    } catch (err) {
+      global.logger?.warn?.("[noDmPanel] edit components:", err?.message || err);
+    }
   });
 }
 

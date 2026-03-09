@@ -14,7 +14,8 @@ module.exports = {
         data = await fetchJson("https://api.quotable.io/random");
         content = clamp(data?.content || "");
         author = String(data?.author || "Sconosciuto");
-      } catch {
+      } catch (err) {
+        global.logger?.warn?.("[quotes] ", err?.message || err);
       }
 
       if (!content) {

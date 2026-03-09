@@ -737,7 +737,6 @@ async function handleAddRemoveSelectMenus(interaction) {
   return false;
 }
 
-
 async function handleCustomVocButton(interaction) {
   if (!interaction.isButton()) return false;
   const parsed = parseVoiceActionId(interaction.customId);

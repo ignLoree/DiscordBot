@@ -3,7 +3,9 @@ const configPath = path.join(__dirname, "..", "..", "config.json");
 let config = {};
 try {
   config = require(configPath);
-} catch (e) {}
+} catch (err) {
+  global.logger?.warn?.("[ids] config load:", err?.message || err);
+}
 
 const MAIN_GUILD_ID = config.mainGuildId || process.env.MAIN_GUILD_ID || "1329080093599076474";
 const GUILD_TEST_ID = "1462458562507964584";

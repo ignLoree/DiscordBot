@@ -31,7 +31,9 @@ module.exports = {
           },
           { upsert: true, new: true, setDefaultsOnInsert: true },
         );
-      } catch {}
+      } catch (err) {
+        global.logger?.warn?.("[unblock] save:", err?.message || err);
+      }
 
       const embed = new EmbedBuilder()
         .setColor("#6f4e37")
@@ -50,7 +52,9 @@ module.exports = {
           },
           { upsert: true, new: true, setDefaultsOnInsert: true },
         );
-      } catch {}
+      } catch (err) {
+        global.logger?.warn?.("[unblock] save:", err?.message || err);
+      }
 
       const embed = new EmbedBuilder()
         .setColor("#6f4e37")
@@ -69,7 +73,9 @@ module.exports = {
           },
           { upsert: true, new: true, setDefaultsOnInsert: true },
         );
-      } catch {}
+      } catch (err) {
+        global.logger?.warn?.("[unblock] save:", err?.message || err);
+      }
 
       const now = new Date();
       const date = now.toLocaleDateString("it-IT");

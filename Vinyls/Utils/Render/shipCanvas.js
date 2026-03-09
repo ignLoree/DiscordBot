@@ -191,7 +191,6 @@ module.exports = async function renderShipCanvas({ leftAvatarUrl, rightAvatarUrl
 
   drawHeart(ctx, width / 2, 228, 54);
 
-  // Percentuale: un solo pass con stesso font (stroke + fill) per evitare doppio disegno/ghosting
   const percentText = `${finalPercent}%`;
   const percentX = width / 2;
   const percentY = 300;

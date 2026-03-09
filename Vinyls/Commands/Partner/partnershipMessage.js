@@ -27,7 +27,6 @@ function extractDescription(message) {
   const firstEmbed = message.embeds?.[0];
   const content = (message.content || "").trim();
   const embedDescription = (firstEmbed?.description || "").trim();
-  // Prefer the actual message text so we don't get only link-unfurl embed text
   const source = content ? content : embedDescription;
   if (!source) return "";
 

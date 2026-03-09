@@ -37,7 +37,8 @@ function hasMessageFlag(message, flag) {
     if (typeof message.flags?.has === "function") {
       return Boolean(message.flags.has(flag));
     }
-  } catch {
+  } catch (err) {
+    global.logger?.warn?.("[messageDeleteBulk] ", err?.message || err);
   }
   const raw = message?.flags?.bitfield ?? message?.flags ?? 0;
   try {

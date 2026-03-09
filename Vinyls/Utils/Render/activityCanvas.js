@@ -219,11 +219,12 @@ function tokenWidth(ctx, token, size, weight) {
   return textWidth(ctx, token.value, size, weight);
 }
 
-async function drawLabelWithEmoji(ctx, text, x, y, { size = 16, weight = "600", color = "#d7dbe3", align = "left", baseline = "middle" } = {}) {
+async function drawLabelWithEmoji(ctx, text, x, y, { size = 16, weight = "600", color = "#d7dbe3", align = "left", baseline = "middle", forcePrimaryFont = false, useNumericFont = false } = {}) {
+  const labelOpts = { size, weight, color, align, baseline, forcePrimaryFont, useNumericFont };
   const tokens = tokenizeEmojiText(text);
   const hasEmoji = tokens.some((t) => t.type === "emoji" || t.type === "custom_emoji",);
   if (!hasEmoji) {
-    drawLabel(ctx, text, x, y, { size, weight, color, align, baseline });
+    drawLabel(ctx, text, x, y, labelOpts);
     return;
   }
 
@@ -235,13 +236,7 @@ async function drawLabelWithEmoji(ctx, text, x, y, { size = 16, weight = "600", 
   for (const token of tokens) {
     if (token.type === "text") {
       if (token.value) {
-        drawLabel(ctx, token.value, cursorX, y, {
-          size,
-          weight,
-          color,
-          align: "left",
-          baseline,
-        });
+        drawLabel(ctx, token.value, cursorX, y, { ...labelOpts, align: "left" });
         cursorX += textWidth(ctx, token.value, size, weight);
       }
       continue;
@@ -254,13 +249,7 @@ async function drawLabelWithEmoji(ctx, text, x, y, { size = 16, weight = "600", 
       ctx.drawImage(img, cursorX, topY, drawSize, drawSize);
       cursorX += drawSize + 1;
     } else {
-      drawLabel(ctx, token.value, cursorX, y, {
-        size,
-        weight,
-        color,
-        align: "left",
-        baseline,
-      });
+      drawLabel(ctx, token.value, cursorX, y, { ...labelOpts, align: "left" });
       cursorX += textWidth(ctx, token.value, size, weight);
     }
   }
@@ -587,14 +576,14 @@ async function renderUserActivityCanvas({ guildName, userTag, displayName, avata
     fitText(ctx, `${displayName || userTag}`, 560, 52, "700"),
     124,
     52,
-    { size: 52, weight: "700", color: "#eef3fb" },
+    { size: 52, weight: "700", color: "#eef3fb", forcePrimaryFont: true },
   );
   await drawLabelWithEmoji(
     ctx,
     fitText(ctx, `${guildName || "Server"} / My Activity`, 560, 28, "600"),
     124,
     88,
-    { size: 28, weight: "600", color: "#bfc8d6" },
+    { size: 28, weight: "600", color: "#bfc8d6", forcePrimaryFont: true },
   );
 
   drawDateBadge(ctx, "Created On", dateText(createdOn), 700, 24, 250, 80);

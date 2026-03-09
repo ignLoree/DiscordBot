@@ -10,7 +10,9 @@ let LoadType = null;
 let Constants = { State: { CONNECTED: "CONNECTED" } };
 try {
   ({ Shoukaku, Connectors, LoadType, Constants } = require("shoukaku"));
-} catch (_) { }
+} catch (err) {
+  global.logger?.warn?.("[musicService] shoukaku optional load:", err?.message || err);
+}
 
 const queues = new Map();
 const inactivityTimers = new Map();

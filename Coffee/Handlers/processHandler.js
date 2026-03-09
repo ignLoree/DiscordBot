@@ -4,7 +4,7 @@ module.exports = function installProcessHandlers() {
 
   const logs = require("../Utils/Moderation/logs");
 
-  const error =(msg)=>{try{logs.error(`[ERROR] ${msg}`);}catch{}};
+  const error =(msg)=>{try{logs.error(`[ERROR] ${msg}`);}catch(err){global.logger?.warn?.("[processHandler] logs.error:",err?.message||err);}};
 
   process.on("SIGINT", () => {
     error("SIGINT: Exiting...");

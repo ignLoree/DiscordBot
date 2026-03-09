@@ -416,7 +416,9 @@ async function handleBotJoin(member, joinGateConfig) {
         })
         .catch(() => {});
     }
-  } catch {}
+  } catch (err) {
+    global.logger?.warn?.("[guildMemberAdd] ", err?.message || err);
+  }
 }
 
 function isTooYoungAccount(member, minAgeDays = 3) {
@@ -1201,7 +1203,6 @@ module.exports = {
         global.logger.info("[guildMemberAdd] Welcome channel not found.");
       }
 
-      // Welcome e "è entratx con il link" subito in chat
       let info = null;
       if (welcomeChannel) {
         await welcomeChannel
@@ -1215,7 +1216,6 @@ module.exports = {
         await announceInviteInfo(member, welcomeChannel, info);
       }
 
-      // Il resto (counter, DM, track inviti, reward, log) in background per non bloccare il prossimo guildMemberAdd
       setImmediate(() => {
         (async () => {
           try {

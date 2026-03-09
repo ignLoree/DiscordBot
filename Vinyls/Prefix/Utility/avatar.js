@@ -88,7 +88,9 @@ module.exports = {
         { $setOnInsert: { guildId: message.guild.id, userId: user.id } },
         { upsert: true, new: true, setDefaultsOnInsert: true },
       );
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[avatar] fetch:", err?.message || err);
+    }
 
     if (Boolean(privacyDoc?.blocked)) {
       const blockedEmbed = new EmbedBuilder()
@@ -132,7 +134,9 @@ module.exports = {
         { $inc: { views: 1 } },
         { new: true },
       );
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[avatar] fetch:", err?.message || err);
+    }
 
     const totalViews = Number(privacyCount?.views || 0);
     const isUser = sub === "user";

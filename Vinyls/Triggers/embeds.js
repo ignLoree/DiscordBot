@@ -7,11 +7,9 @@ async function runEmbedCandidaturePanelAuto(client) {
   const CANDIDATURE_MEDIA_PATH = path.join(__dirname, "..", "Photos", CANDIDATURE_MEDIA_NAME,);
   const DIVIDER_URL = "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
   const candidatureChannel = client.channels.cache.get(IDs.channels.candidatureStaff) || (await client.channels.fetch(IDs.channels.candidatureStaff).catch(() => null));
+  
   if (!candidatureChannel?.isTextBased?.()) {
-    global.logger.warn(
-      "[CLIENT READY] Candidature panel channel missing/unusable:",
-      IDs.channels.candidatureStaff,
-    );
+    global.logger.warn("[CLIENT READY] Candidature panel channel missing/unusable:", IDs.channels.candidatureStaff);
     return;
   }
 
@@ -148,7 +146,9 @@ async function runInfoPanelAuto(client) {
       { $setOnInsert: { guildId, channelId: INFO_CHANNEL_ID } },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
-  } catch { }
+  } catch (err) {
+    global.logger?.warn?.("[embeds] ", err?.message || err);
+  }
 
   const msg1 = await upsertPanelMessage(channel, client, { messageId: panel?.infoMessageId1 || null, files: [attachment], embeds: [embed1], components: [row1], attachmentName: INFO_MEDIA_NAME, });
   const msg2 = await upsertPanelMessage(channel, client, { messageId: panel?.infoMessageId2 || null, embeds: [embed2], components: [row2], });
@@ -311,7 +311,9 @@ async function runVerifyPanelAuto(client) {
       { $setOnInsert: { guildId, channelId: VERIFY_CHANNEL_ID } },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
-  } catch { }
+  } catch (err) {
+    global.logger?.warn?.("[embeds] ", err?.message || err);
+  }
 
   const infoMessage = await upsertPanelMessage(channel, client, { messageId: panelDoc?.verifyInfoMessageId || null, files: [attachment], embeds: [verifyInfoEmbed], components: [], attachmentName: VERIFY_MEDIA_NAME, });
 
@@ -425,9 +427,11 @@ async function runRuoliPanelAuto(client) {
       { $setOnInsert: { guildId, channelId: CHANNEL_ID } },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
-  } catch { }
+  } catch (err) {
+    global.logger?.warn?.("[embeds] ", err?.message || err);
+  }
 
-  const updatePanel = async (personalityMessageId, mentionsMessageId, colorsMessageId, plusColorsMessageId,) => { try { await PersonalityPanel.updateOne({ guildId, channelId: CHANNEL_ID }, { $set: { personalityMessageId, mentionsMessageId, colorsMessageId, plusColorsMessageId, }, },); } catch { } };
+  const updatePanel = async (personalityMessageId, mentionsMessageId, colorsMessageId, plusColorsMessageId,) => { try { await PersonalityPanel.updateOne({ guildId, channelId: CHANNEL_ID }, { $set: { personalityMessageId, mentionsMessageId, colorsMessageId, plusColorsMessageId, }, },); } catch (err) { global.logger?.warn?.("[embeds] updatePanel:", err?.message || err); } };
   const personalityMessage = await upsertPanelMessage(channel, client, { messageId: panel?.personalityMessageId || null, embeds: [embed], components: [pronouns, age, region, dmStatus, relationship], files: attachment ? [attachment] : [], attachmentName: attachment ? IMAGE_NAME : undefined, });
   const mentionsMessage = await upsertPanelMessage(channel, client, { messageId: panel?.mentionsMessageId || null, embeds: [mentionsEmbed], components: [mentionsMenu], files: mentionsAttachment ? [mentionsAttachment] : [], attachmentName: mentionsAttachment ? MENTIONS_IMAGE_NAME : undefined, });
   const colorsMessage = await upsertPanelMessage(channel, client, { messageId: panel?.colorsMessageId || null, embeds: [colorsEmbed], components: [colorsMenu1, colorsMenu2], files: colorsAttachment ? [colorsAttachment] : [], attachmentName: colorsAttachment ? COLORS_IMAGE_NAME : undefined, });
@@ -506,7 +510,9 @@ async function runTicketPanelAuto(client) {
       { $setOnInsert: { guildId, channelId: TICKET_CHANNEL_ID } },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
-  } catch { }
+  } catch (err) {
+    global.logger?.warn?.("[embeds] ", err?.message || err);
+  }
 
   const infoMessage = await upsertPanelMessage(channel, client, { messageId: panelDoc?.ticketInfoMessageId || null, files: [attachment], embeds: [ticketInfoEmbed], components: [], attachmentName: TICKET_MEDIA_NAME, });
   const panelMessage = await upsertPanelMessage(channel, client, { messageId: panelDoc?.ticketPanelMessageId || null, embeds: [ticketPanelEmbed], components: [ticketSelectRow], });
@@ -813,7 +819,6 @@ async function runSponsorTicketPanels(client) {
     );
   }
 }
-
 
 async function runStaffListAuto(client) {
   const IDs = require("../Utils/Config/ids");

@@ -44,7 +44,9 @@ function loadCooldownMap() {
       const ts = Number(until || 0);
       if (Number.isFinite(ts) && ts > now) cooldownByUser.set(String(userId), ts);
     }
-  } catch { }
+  } catch (err) {
+    global.logger?.warn?.("[candidature] load:", err?.message || err);
+  }
 }
 
 function persistCooldownMap() {
@@ -57,7 +59,9 @@ function persistCooldownMap() {
       if (Number(until) > now) out[userId] = Number(until);
     }
     fs.writeFileSync(APPLICATION_COOLDOWN_PATH, JSON.stringify(out, null, 2), "utf8");
-  } catch { }
+  } catch (err) {
+    global.logger?.warn?.("[candidature] load:", err?.message || err);
+  }
 }
 
 loadCooldownMap();
@@ -73,7 +77,9 @@ function loadApplicationCounters() {
     applicationCounters.helper = Number.isFinite(helper) && helper > 0 ? Math.floor(helper) : 0;
     applicationCounters.partnermanager =
       Number.isFinite(pm) && pm > 0 ? Math.floor(pm) : 0;
-  } catch { }
+  } catch (err) {
+    global.logger?.warn?.("[candidature] load:", err?.message || err);
+  }
 }
 
 function persistApplicationCounters() {
@@ -85,7 +91,9 @@ function persistApplicationCounters() {
       JSON.stringify(applicationCounters, null, 2),
       "utf8",
     );
-  } catch { }
+  } catch (err) {
+    global.logger?.warn?.("[candidature] load:", err?.message || err);
+  }
 }
 
 function nextApplicationNumber(type) {
@@ -118,7 +126,9 @@ function loadDraftMap() {
         updatedAt,
       });
     }
-  } catch { }
+  } catch (err) {
+    global.logger?.warn?.("[candidature] load:", err?.message || err);
+  }
 }
 
 function persistDraftMap() {
@@ -139,7 +149,9 @@ function persistDraftMap() {
       };
     }
     fs.writeFileSync(APPLICATION_DRAFTS_PATH, JSON.stringify(out, null, 2), "utf8");
-  } catch { }
+  } catch (err) {
+    global.logger?.warn?.("[candidature] load:", err?.message || err);
+  }
 }
 
 function setDraftState(stateKey, answers, nextStep) {

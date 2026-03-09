@@ -18,7 +18,9 @@ function getBotIconUrl(guild) {
   if (botUser && typeof botUser.displayAvatarURL === "function") {
     try {
       return botUser.displayAvatarURL({ size: 64 });
-    } catch { }
+    } catch (err) {
+      global.logger?.warn?.("[defaultFooter] ", err?.message || err);
+    }
   }
   return null;
 }
@@ -27,7 +29,9 @@ function getGlobalBotIconUrl() {
   if (botUser && typeof botUser.displayAvatarURL === "function") {
     try {
       return botUser.displayAvatarURL({ size: 64 });
-    } catch { }
+    } catch (err) {
+      global.logger?.warn?.("[defaultFooter] ", err?.message || err);
+    }
   }
   return null;
 }
@@ -37,7 +41,9 @@ function getGuildIconUrl(guild) {
     if (typeof guild.iconURL === "function") {
       return guild.iconURL({ size: 64 });
     }
-  } catch { }
+  } catch (err) {
+    global.logger?.warn?.("[defaultFooter] ", err?.message || err);
+  }
   return null;
 }
 function isErrorEmbedInstance(embed) {

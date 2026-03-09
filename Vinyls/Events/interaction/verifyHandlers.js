@@ -224,7 +224,9 @@ async function handleVerifyInteraction(interaction) {
             verifyState.set(stateKey, state);
           }
         }
-      } catch { }
+      } catch (err) {
+        global.logger?.warn?.("[verifyHandlers] ", err?.message || err);
+      }
 
       return true;
     }

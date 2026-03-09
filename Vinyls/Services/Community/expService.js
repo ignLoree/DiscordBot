@@ -194,7 +194,9 @@ async function getGuildExpSettings(guildId) {
       },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
-  } catch { }
+  } catch (err) {
+    global.logger?.warn?.("[expService] update:", err?.message || err);
+  }
 
   if (
     doc?.expEventMultiplierExpiresAt &&
@@ -206,7 +208,9 @@ async function getGuildExpSettings(guildId) {
         { $set: { expEventMultiplier: 1 } },
         { new: true },
       );
-    } catch { }
+    } catch (err) {
+      global.logger?.warn?.("[expService] multiplier reset:", err?.message || err);
+    }
   }
 
   const normalized = normalizeSettingsDoc(doc);

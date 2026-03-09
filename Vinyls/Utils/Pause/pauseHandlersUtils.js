@@ -84,7 +84,6 @@ const PAUSE_ROLE_LIMITS = {
   PartnerManager: null,
 };
 
-
 function parseItalianDate(value) {
   if (!value || typeof value !== "string") return null;
   const match = value.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -444,7 +443,9 @@ function schedulePauseButtonsRemoval(guild, channelId, messageId, pauseEndRaw) {
         .replace(" è in pausa.", " è stato in pausa.")
         .replace(" sarà in pausa.", " è stato in pausa.");
       await msg.edit({ content: nextContent, components: [] }).catch(() => null);
-    } catch { }
+    } catch (err) {
+      global.logger?.warn?.("[pauseHandlers] ", err?.message || err);
+    }
   }, delayMs);
   if (typeof timer?.unref === "function") timer.unref();
 }

@@ -28,42 +28,58 @@ function registerCanvasFonts(canvasModule) {
   if (fs.existsSync(notoPath)) {
     try {
       canvasModule.registerFont(notoPath, { family: PRIMARY_FONT });
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[canvasFonts] registerFont:", err?.message || err);
+    }
   }
   if (fs.existsSync(tibetanPath)) {
     try {
       canvasModule.registerFont(tibetanPath, { family: TIBETAN_FONT });
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[canvasFonts] registerFont:", err?.message || err);
+    }
   }
   if (fs.existsSync(symbolsPath)) {
     try {
       canvasModule.registerFont(symbolsPath, { family: SYMBOLS_FONT });
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[canvasFonts] registerFont:", err?.message || err);
+    }
   }
   if (fs.existsSync(colorEmojiPath)) {
     try {
       canvasModule.registerFont(colorEmojiPath, { family: COLOR_EMOJI_FONT });
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[canvasFonts] registerFont:", err?.message || err);
+    }
   }
   if (fs.existsSync(mojanglesPath)) {
     try {
       canvasModule.registerFont(mojanglesPath, { family: EMOJI_FONT });
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[canvasFonts] registerFont:", err?.message || err);
+    }
   }
   if (fs.existsSync(frakturPath)) {
     try {
       canvasModule.registerFont(frakturPath, { family: FRAKTUR_FONT });
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[canvasFonts] registerFont:", err?.message || err);
+    }
   }
   if (fs.existsSync(mathPath)) {
     try {
       canvasModule.registerFont(mathPath, { family: MATH_FONT });
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[canvasFonts] registerFont:", err?.message || err);
+    }
   }
   if (fs.existsSync(yuPath)) {
     try {
       canvasModule.registerFont(yuPath, { family: FALLBACK_FONT });
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[canvasFonts] registerFont:", err?.message || err);
+    }
   }
   registered = true;
 }

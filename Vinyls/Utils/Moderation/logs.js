@@ -24,7 +24,9 @@ function pushConsole(level, message) {
     if (consoleBuffer.length > CONSOLE_BUFFER_MAX) {
       consoleBuffer.length = CONSOLE_BUFFER_MAX;
     }
-  } catch {}
+  } catch (err) {
+    global.logger?.warn?.("[logs] ", err?.message || err);
+  }
 }
 
 function getTimestamp() {
@@ -80,7 +82,9 @@ function error(message) {
       message: typeof message === "string" ? message : inspect(message, { depth: 3, colors: false }),
     });
     if (errorBuffer.length > ERROR_BUFFER_MAX) errorBuffer.length = ERROR_BUFFER_MAX;
-  } catch {}
+  } catch (err) {
+    global.logger?.warn?.("[logs] ", err?.message || err);
+  }
   return write(message, `${color.red}[${getTimestamp()}] `, false);
 }
 function success(message) {

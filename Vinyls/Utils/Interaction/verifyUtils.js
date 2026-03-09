@@ -3,20 +3,12 @@ const { PassThrough } = require("stream");
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const PImage = require("pureimage");
 const IDs = require("../Config/ids");
-const { getClientGuildCached, getGuildChannelCached, getGuildMemberCached, getGuildRoleCached } = require("./interactionEntityCache");
+const { getClientGuildCached, getGuildMemberCached, getGuildRoleCached } = require("./interactionEntityCache");
 const VERIFY_CODE_TTL_MS = 5 * 60 * 1000;
 const VERIFY_MAX_ATTEMPTS = 3;
 const CENTRAL_VERIFY_LOG_CHANNEL_ID = IDs.channels.verifyLogs || IDs.channels.modLogs || "1442569294796820541";
 const VERIFY_PING_CHANNEL_IDS = [IDs.channels.news, IDs.channels.candidatureStaff].filter(Boolean);
-const VERIFY_CAPTCHA = {
-  width: 300,
-  height: 100,
-  fontSize: 40,
-  fontColor: "#33d17a",
-  codeLength: 6,
-  charset: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-  decoys: { trace: true, mixedUnderEach: true, spreadAround: true },
-};
+const VERIFY_CAPTCHA = { width: 300, height: 100, fontSize: 40, fontColor: "#33d17a", codeLength: 6, charset: "ABCDEFGHIJKLMNOPQRSTUVWXYZ", decoys: { trace: true, mixedUnderEach: true, spreadAround: true } };
 const MAIN_GUILD_ID = IDs.guilds?.main || "1329080093599076474";
 const MAIN_VERIFIED_ROLE_ID = IDs.roles?.Member || null;
 const verifyState = new Map();

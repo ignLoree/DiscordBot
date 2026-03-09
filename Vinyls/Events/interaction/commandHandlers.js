@@ -163,7 +163,9 @@ async function handleSlashCommand(interaction, client) {
       if (interaction.deferred && !interaction.replied) {
         try {
           return await interaction.editReply(sanitizeEditPayload(payload));
-        } catch {}
+        } catch (err) {
+          global.logger?.warn?.("[commandHandlers] ", err?.message || err);
+        }
       }
       try {
         return await originalFollowUp(payload);
@@ -255,13 +257,23 @@ async function handleSlashCommand(interaction, client) {
             }).catch(() => null);
           }
           await btn.deferUpdate();
-          const updatedEmbed = EmbedBuilder.from(staffEmbed);
-          if (btn.customId === "error_pending")
-            updatedEmbed.setColor("#f1c40f");
-          if (btn.customId === "error_solved") updatedEmbed.setColor("#2ecc71");
-          if (btn.customId === "error_unsolved")
-            updatedEmbed.setColor("#e74c3c");
-          await msg.edit({ embeds: [updatedEmbed] }).catch(() => null);
+          const data = staffEmbed.toJSON ? staffEmbed.toJSON() : staffEmbed.data;
+          const updatedEmbed = new EmbedBuilder(data);
+          let statusText = "";
+          if (btn.customId === "error_pending") {
+            updatedEmbed.setColor(0xf1c40f);
+            statusText = "In risoluzione";
+          }
+          if (btn.customId === "error_solved") {
+            updatedEmbed.setColor(0x2ecc71);
+            statusText = "Risolto";
+          }
+          if (btn.customId === "error_unsolved") {
+            updatedEmbed.setColor(0xe74c3c);
+            statusText = "Irrisolto";
+          }
+          if (statusText) updatedEmbed.setFooter({ text: `Stato: ${statusText}` });
+          await msg.edit({ embeds: [updatedEmbed], components: [row] }).catch(() => null);
         } catch (collectorErr) {
           global.logger?.error?.(
             "[commandHandlers] error collector failure",
@@ -273,7 +285,9 @@ async function handleSlashCommand(interaction, client) {
         try {
           row.components.forEach((b) => b.setDisabled(true));
           await msg.edit({ components: [row] }).catch(() => null);
-        } catch {}
+        } catch (err) {
+          global.logger?.warn?.("[commandHandlers] ", err?.message || err);
+        }
       });
     }
     const userEmbed = buildInternalCommandErrorEmbed(errorText);

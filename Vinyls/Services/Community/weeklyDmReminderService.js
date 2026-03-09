@@ -359,7 +359,9 @@ function writeJson(filePath, payload) {
   try {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, JSON.stringify(payload, null, 2), "utf8");
-  } catch { }
+  } catch (err) {
+    global.logger?.warn?.("[weeklyDmReminder] write:", err?.message || err);
+  }
 }
 
 function ensureState() {
@@ -1143,7 +1145,9 @@ async function sendExternalReturnReminders(client, guild) {
         stopped: shouldStop,
         returnedOnce: Boolean(history?.returnedOnce),
       };
-    } catch { }
+    } catch (err) {
+      global.logger?.warn?.("[weeklyDmReminder] history:", err?.message || err);
+    }
   }
 
   saveState();

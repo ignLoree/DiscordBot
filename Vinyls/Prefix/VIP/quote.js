@@ -103,7 +103,9 @@ module.exports = {
           allowedMentions: { repliedUser: false },
         });
       }
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[quote] ", err?.message || err);
+    }
 
     let buffer;
     try {

@@ -271,7 +271,9 @@ async function handleRemove(interaction) {
   try {
     const message = await channel.messages.fetch(lastPoll.messageId);
     await message.delete();
-  } catch { }
+  } catch (err) {
+    global.logger?.warn?.("[poll] delete message:", err?.message || err);
+  }
 
   await lastPoll.deleteOne();
   const replacementLastPoll = await Poll.findOne(buildGuildPollFilter(guildId)).sort({ pollcount: -1 }).select({ pollcount: 1 }).lean();

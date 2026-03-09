@@ -217,7 +217,9 @@ function getState(voiceChannel) {
       if (state.currentTtsFile) {
         try {
           fs.unlinkSync(state.currentTtsFile);
-        } catch (_) {}
+        } catch (err) {
+          global.logger?.warn?.("[TTS] unlink temp file:", err?.message || err);
+        }
         state.currentTtsFile = null;
       }
       state.playing = false;
@@ -258,7 +260,9 @@ async function ensureConnection(state, voiceChannel) {
   if (state.connection) {
     try {
       state.connection.destroy();
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[TTS] connection destroy:", err?.message || err);
+    }
   }
   const connection = joinVoiceChannel({channelId:voiceChannel.id,guildId:voiceChannel.guild.id,adapterCreator:voiceChannel.guild.voiceAdapterCreator,selfDeaf:false,});
   state.connection = connection;
@@ -286,7 +290,9 @@ async function playNext(state) {
       if (state.currentTtsFile)
         try {
           fs.unlinkSync(state.currentTtsFile);
-        } catch (_) {}
+        } catch (err) {
+          global.logger?.warn?.("[TTS] unlink temp file:", err?.message || err);
+        }
       state.currentTtsFile = null;
       playNext(state);
       return;
@@ -301,7 +307,9 @@ async function playNext(state) {
     if (state.currentTtsFile)
       try {
         fs.unlinkSync(state.currentTtsFile);
-      } catch (_) {}
+      } catch (err) {
+        global.logger?.warn?.("[TTS] unlink temp file:", err?.message || err);
+      }
     state.currentTtsFile = null;
     state.playing = false;
     playNext(state);
@@ -324,7 +332,9 @@ async function handleTtsMessage(message, client, prefix) {
           ttlMs: 20_000,
           preferFresh: true,
         })) || message.member;
-    } catch (_) {}
+    } catch (err) {
+      global.logger?.warn?.("[TTS] member fetch:", err?.message || err);
+    }
   }
   let voiceChannel = null;
   if (message.channel.isVoiceBased?.() && !message.channel.isThread?.()) {
@@ -403,7 +413,9 @@ async function leaveTtsGuild(guildId, client) {
             const conn = joinVoiceChannel({channelId:channel.id,guildId:guild.id,adapterCreator:guild.voiceAdapterCreator,selfDeaf:false,});
             conn.destroy();
           }
-        } catch (_) {}
+        } catch (err) {
+          global.logger?.warn?.("[TTS] disconnect cleanup:", err?.message || err);
+        }
       }
     }
     await clearVoiceState(guildId);
@@ -417,16 +429,22 @@ async function leaveTtsGuild(guildId, client) {
     if (state.currentTtsFile) {
       try {
         fs.unlinkSync(state.currentTtsFile);
-      } catch (_) {}
+      } catch (err) {
+        global.logger?.warn?.("[TTS] unlink temp file:", err?.message || err);
+      }
       state.currentTtsFile = null;
     }
     try {
       state.player.stop();
-    } catch {}
+    } catch (err) {
+      global.logger?.warn?.("[TTS] player stop:", err?.message || err);
+    }
     if (state.connection) {
       try {
         state.connection.destroy();
-      } catch {}
+      } catch (err) {
+        global.logger?.warn?.("[TTS] connection destroy:", err?.message || err);
+      }
       state.connection = null;
     }
     clearLockedChannel(guildId, lockedChannelId);
