@@ -5,7 +5,8 @@
                 "roles.Founder"
             ],
             "channels": [
-                "1442569288161558528"
+                "channels.highCmds",
+                "channels.staffCmds"
             ],
             "subcommands": {
                 "info": [
@@ -55,9 +56,9 @@
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569209849843823",
-                "1442569262689554444",
-                "1442569288161558528"
+                "channels.partnersChat",
+                "channels.staffCmds",
+                "channels.highCmds"
             ]
         },
         "partner": {
@@ -65,9 +66,9 @@
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569209849843823",
-                "1442569262689554444",
-                "1442569288161558528"
+                "channels.partnersChat",
+                "channels.staffCmds",
+                "channels.highCmds"
             ],
             "subcommands": {
                 "modifypoint.add": {
@@ -136,9 +137,9 @@
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569209849843823",
-                "1442569262689554444",
-                "1442569288161558528"
+                "channels.partnersChat",
+                "channels.staffCmds",
+                "channels.highCmds"
             ],
             "subcommands": {
                 "pex": [
@@ -153,10 +154,12 @@
             }
         },
         "valutazione": {
-            "roles": "roles.HighStaff",
+            "roles": [
+                "roles.HighStaff"
+            ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528"
+                "channels.staffCmds",
+                "channels.highCmds"
             ],
             "subcommands": {
                 "positiva.add": [
@@ -256,7 +259,8 @@
                 "roles.CoFounder"
             ],
             "channels": [
-                "1442569288161558528"
+                "channels.highCmds",
+                "channels.staffCmds"
             ],
             "subcommands": {
                 "status": [
@@ -289,7 +293,7 @@
                 "roles.Level70"
             ],
             "channels": [
-                "1442569138114662490"
+                "channels.commands"
             ],
             "subcommands": {
                 "create": [
@@ -326,7 +330,7 @@
                 "roles.Level70"
             ],
             "channels": [
-                "1442569138114662490"
+                "channels.commands"
             ]
         },
         "description": [
@@ -337,7 +341,7 @@
                 "roles.Member"
             ],
             "channels": [
-                "1442569138114662490"
+                "channels.commands"
             ]
         },
         "dm-enable": {
@@ -345,7 +349,7 @@
                 "roles.Member"
             ],
             "channels": [
-                "1442569138114662490"
+                "channels.commands"
             ]
         },
         "no-dm": {
@@ -353,7 +357,7 @@
                 "roles.Member"
             ],
             "channels": [
-                "1442569138114662490"
+                "channels.commands"
             ]
         },
         "bh": {
@@ -361,7 +365,7 @@
                 "roles.Member"
             ],
             "channels": [
-                "1442569138114662490"
+                "channels.commands"
             ],
             "subcommands": {
                 "set": [
@@ -380,7 +384,7 @@
                 "roles.Member"
             ],
             "channels": [
-                "1442569138114662490"
+                "channels.commands"
             ],
             "subcommands": {
                 "set": [
@@ -399,7 +403,7 @@
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569288161558528"
+                "channels.highCmds"
             ],
             "subcommands": {
                 "create": [
@@ -412,23 +416,15 @@
                 "roles.Member"
             ],
             "channels": [
-                "1442569138114662490"
+                "channels.commands"
             ]
         },
         "info": {
             "roles": [
-                "roles.Staff"
+                "roles.HighStaff"
             ],
             "channels": [
-                "1442569288161558528"
-            ]
-        },
-        "invites": {
-            "roles": [
-                "roles.Member"
-            ],
-            "channels": [
-                "1442569138114662490"
+                "channels.highCmds"
             ]
         },
         "join": {
@@ -442,11 +438,11 @@
             ]
         },
         "level": {
-            "roles": [
-                "roles.HighStaff"
-            ],
+                "roles": [
+                    "roles.HighStaff"
+                ],
             "channels": [
-                "1442569288161558528"
+                "channels.highCmds"
             ],
             "subcommands": {
                 "set": [
@@ -518,9 +514,12 @@
             }
         },
         "evento": {
+            "roles": [
+                "roles.HighStaff"
+            ],
             "channels": [
-                "1442569288161558528",
-                "1442569138114662490"
+                "channels.highCmds",
+                "channels.staffCmds"
             ],
             "subcommands": {
                 "start": [
@@ -551,12 +550,19 @@
                 "roles.Member"
             ],
             "channels": [
-                "1442569138114662490"
+                "channels.commands",
+                "channels.staffCmds",
+                "channels.highCmds"
             ]
         },
         "user": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.commands",
+                "channels.staffCmds",
+                "channels.highCmds"
             ]
         },
         "membercount": {
@@ -564,15 +570,22 @@
                 "roles.Member"
             ]
         },
-        "mstats": [
-            "roles.Member"
-        ],
+        "mstats": {
+            "roles": [
+                "roles.Member"
+            ],
+            "channels": [
+                "channels.commands",
+                "channels.staffCmds",
+                "channels.highCmds"
+            ]
+        },
         "no-dm-list": {
             "roles": [
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569288161558528"
+                "channels.highCmds"
             ]
         },
         "nodmlist": {
@@ -580,7 +593,7 @@
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569288161558528"
+                "channels.highCmds"
             ]
         },
         "perms": {
@@ -588,7 +601,7 @@
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569288161558528"
+                "channels.highCmds"
             ],
             "subcommands": {
                 "grant": [
@@ -622,9 +635,9 @@
                 "roles.Member"
             ],
             "channels": [
-                "1442569138114662490",
-                "1442569262689554444",
-                "1442569288161558528"
+                "channels.commands",
+                "channels.staffCmds",
+                "channels.highCmds"
             ]
         },
         "pause": {
@@ -634,9 +647,9 @@
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569209849843823",
-                "1442569262689554444",
-                "1442569288161558528"
+                "channels.partnersChat",
+                "channels.staffCmds",
+                "channels.highCmds"
             ],
             "subcommands": {
                 "list": [
@@ -657,22 +670,29 @@
                 "roles.Level10"
             ],
             "channels": [
-                "1442569130573303898",
-                "1442569136067575809",
-                "1442569138114662490",
-                "1442569141717438495"
+                "channels.chat",
+                "channels.media",
+                "channels.commands",
+                "channels.forum"
             ]
         },
-        "rank": [
-            "roles.Member"
-        ],
+        "rank": {
+            "roles": [
+                "roles.Member"
+            ],
+            "channels": [
+                "channels.commands",
+                "channels.staffCmds",
+                "channels.highCmds"
+            ]
+        },
         "reaction": {
             "roles": [
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528"
+                "channels.staffCmds",
+                "channels.highCmds"
             ],
             "subcommands": {
                 "mention": [
@@ -698,18 +718,17 @@
                 ]
             }
         },
-        "recensione": [
-            "roles.HighStaff"
-        ],
-        "restart": [
-            "roles.Founder"
-        ],
+        "recensione": {
+            "roles": [
+                "roles.HighStaff"
+            ]
+        },
         "server": {
             "roles": [
                 "roles.Member"
             ],
             "channels": [
-                "1442569138114662490"
+                "channels.commands"
             ]
         },
         "ship": {
@@ -717,18 +736,20 @@
                 "roles.Member"
             ],
             "channels": [
-                "1469685688814407726"
+                "channels.ship"
             ]
         },
-        "snipe": [
-            "roles.Member"
-        ],
+        "snipe": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
         "temprole": {
             "roles": [
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569288161558528"
+                "channels.highCmds"
             ],
             "subcommands": {
                 "add": [
@@ -741,68 +762,41 @@
         },
         "ticket": {
             "roles": [
-                "roles.Founder",
-                "roles.CoFounder",
-                "roles.HighStaff",
                 "roles.Staff",
                 "roles.PartnerManager"
             ],
             "subcommands": {
                 "add": [
-                    "roles.Founder",
-                    "roles.CoFounder",
-                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ],
                 "remove": [
-                    "roles.Founder",
-                    "roles.CoFounder",
-                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ],
                 "closerequest": [
-                    "roles.Founder",
-                    "roles.CoFounder",
-                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ],
                 "close": [
-                    "roles.Founder",
-                    "roles.CoFounder",
-                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ],
                 "claim": [
-                    "roles.Founder",
-                    "roles.CoFounder",
-                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ],
                 "unclaim": [
-                    "roles.Founder",
-                    "roles.CoFounder",
-                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ],
                 "switchpanel": [
-                    "roles.Founder",
-                    "roles.CoFounder",
                     "roles.HighStaff"
                 ],
                 "rename": [
-                    "roles.Founder",
-                    "roles.CoFounder",
                     "roles.HighStaff"
                 ],
                 "reopen": [
-                    "roles.Founder",
-                    "roles.CoFounder",
                     "roles.HighStaff"
                 ]
             }
@@ -812,7 +806,9 @@
                 "roles.Member"
             ],
             "channels": [
-                "1442569138114662490"
+                "channels.commands",
+                "channels.staffCmds",
+                "channels.highCmds"
             ]
         },
         "unblock": {
@@ -839,126 +835,201 @@
         "adorable": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "birb": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "cat": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "catfacts": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "chucknorris": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "country": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "dadjoke": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "define": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "dog": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "dogfacts": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "flip": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "github": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "itunes": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "joke": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "math": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "movie": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "pokemon": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "pug": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "quotes": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "roll": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "rps": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "slots": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "space": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "steamstatus": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "weather": {
             "roles": [
                 "roles.Member"
+            ],
+            "channels": [
+                "channels.ship"
             ]
         },
         "ban": {
@@ -966,9 +1037,9 @@
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528",
-                "1442569245878648924"
+                "channels.staffCmds",
+                "channels.highCmds",
+                "channels.sanzioniUtenti"
             ]
         },
         "case": {
@@ -976,9 +1047,9 @@
                 "roles.Staff"
             ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528",
-                "1442569245878648924"
+                "channels.staffCmds",
+                "channels.highCmds",
+                "channels.sanzioniUtenti"
             ]
         },
         "delwarn": {
@@ -986,9 +1057,9 @@
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528",
-                "1442569245878648924"
+                "channels.staffCmds",
+                "channels.highCmds",
+                "channels.sanzioniUtenti"
             ]
         },
         "clearwarn": {
@@ -996,9 +1067,9 @@
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528",
-                "1442569245878648924"
+                "channels.staffCmds",
+                "channels.highCmds",
+                "channels.sanzioniUtenti"
             ]
         },
         "duration": {
@@ -1006,9 +1077,9 @@
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528",
-                "1442569245878648924"
+                "channels.staffCmds",
+                "channels.highCmds",
+                "channels.sanzioniUtenti"
             ]
         },
         "kick": {
@@ -1016,9 +1087,9 @@
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528",
-                "1442569245878648924"
+                "channels.staffCmds",
+                "channels.highCmds",
+                "channels.sanzioniUtenti"
             ]
         },
         "lock": {
@@ -1026,9 +1097,9 @@
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528",
-                "1442569245878648924"
+                "channels.staffCmds",
+                "channels.highCmds",
+                "channels.sanzioniUtenti"
             ]
         },
         "moderations": {
@@ -1036,9 +1107,9 @@
                 "roles.Staff"
             ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528",
-                "1442569245878648924"
+                "channels.staffCmds",
+                "channels.highCmds",
+                "channels.sanzioniUtenti"
             ]
         },
         "modlogs": {
@@ -1046,9 +1117,9 @@
                 "roles.Staff"
             ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528",
-                "1442569245878648924"
+                "channels.staffCmds",
+                "channels.highCmds",
+                "channels.sanzioniUtenti"
             ]
         },
         "modstats": {
@@ -1056,9 +1127,9 @@
                 "roles.Staff"
             ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528",
-                "1442569245878648924"
+                "channels.staffCmds",
+                "channels.highCmds",
+                "channels.sanzioniUtenti"
             ]
         },
         "mute": {
@@ -1066,9 +1137,9 @@
                 "roles.Staff"
             ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528",
-                "1442569245878648924"
+                "channels.staffCmds",
+                "channels.highCmds",
+                "channels.sanzioniUtenti"
             ]
         },
         "reason": {
@@ -1076,9 +1147,9 @@
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528",
-                "1442569245878648924"
+                "channels.staffCmds",
+                "channels.highCmds",
+                "channels.sanzioniUtenti"
             ]
         },
         "unban": {
@@ -1086,9 +1157,9 @@
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528",
-                "1442569245878648924"
+                "channels.staffCmds",
+                "channels.highCmds",
+                "channels.sanzioniUtenti"
             ]
         },
         "unlock": {
@@ -1096,9 +1167,9 @@
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528",
-                "1442569245878648924"
+                "channels.staffCmds",
+                "channels.highCmds",
+                "channels.sanzioniUtenti"
             ]
         },
         "unmute": {
@@ -1106,9 +1177,9 @@
                 "roles.HighStaff"
             ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528",
-                "1442569245878648924"
+                "channels.staffCmds",
+                "channels.highCmds",
+                "channels.sanzioniUtenti"
             ]
         },
         "warn": {
@@ -1116,9 +1187,9 @@
                 "roles.Staff"
             ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528",
-                "1442569245878648924"
+                "channels.staffCmds",
+                "channels.highCmds",
+                "channels.sanzioniUtenti"
             ]
         },
         "warnings": {
@@ -1126,9 +1197,29 @@
                 "roles.Staff"
             ],
             "channels": [
-                "1442569262689554444",
-                "1442569288161558528",
-                "1442569245878648924"
+                "channels.staffCmds",
+                "channels.highCmds",
+                "channels.sanzioniUtenti"
+            ]
+        },
+        "lyrics": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "nowplaying": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "play": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "radio": {
+            "roles": [
+                "roles.Member"
             ]
         },
         "set": {
@@ -1516,6 +1607,97 @@
         "apply_pex:*": [
             "roles.HighStaff"
         ],
+        "candidature_premi_partner": [
+            "roles.Member"
+        ],
+        "evento_classifica:*": {
+            "ownerSegment": 1
+        },
+        "info_sponsor": [
+            "roles.Member"
+        ],
+        "info_tags": [
+            "roles.Member"
+        ],
+        "me_period_back*": {
+            "ownerSegment": 1
+        },
+        "me_period_open*": {
+            "ownerSegment": 1
+        },
+        "me_period_set*": {
+            "ownerSegment": 1
+        },
+        "me_refresh*": {
+            "ownerSegment": 1
+        },
+        "nodm_panel_all*": {
+            "ownerSegment": 1
+        },
+        "nodm_panel_done*": {
+            "ownerSegment": 1
+        },
+        "nodm_panel_none*": {
+            "ownerSegment": 1
+        },
+        "nodm_panel_toggle_*": {
+            "ownerSegment": 1
+        },
+        "quote_remove:*": {
+            "ownerSegment": 1
+        },
+        "security-statics:*": {
+            "ownerSegment": 1
+        },
+        "server_refresh*": {
+            "ownerSegment": 1
+        },
+        "serverDescription": [
+            "roles.PartnerManager",
+            "roles.HighStaff"
+        ],
+        "staff_warn_depex:*": [
+            "roles.HighStaff"
+        ],
+        "top_channel_page_first*": {
+            "ownerSegment": 1
+        },
+        "top_channel_page_last*": {
+            "ownerSegment": 1
+        },
+        "top_channel_page_modal_open*": {
+            "ownerSegment": 1
+        },
+        "top_channel_page_next*": {
+            "ownerSegment": 1
+        },
+        "top_channel_page_prev*": {
+            "ownerSegment": 1
+        },
+        "top_channel_period_back*": {
+            "ownerSegment": 1
+        },
+        "top_channel_period_open*": {
+            "ownerSegment": 1
+        },
+        "top_channel_period_set*": {
+            "ownerSegment": 1
+        },
+        "top_channel_refresh*": {
+            "ownerSegment": 1
+        },
+        "user_period_back*": {
+            "ownerSegment": 1
+        },
+        "user_period_open*": {
+            "ownerSegment": 1
+        },
+        "user_period_set*": {
+            "ownerSegment": 1
+        },
+        "user_refresh*": {
+            "ownerSegment": 1
+        },
         "verify_start": null,
         "vocalimoderazione": [
             "roles.Staff"
@@ -1573,6 +1755,9 @@
         "stats_top_channel_view_select*": {
             "ownerSegment": 1
         },
+        "top_channel_view_select*": {
+            "ownerSegment": 1
+        },
         "ticket_open_menu": null
     },
     "modals": {
@@ -1615,19 +1800,20 @@
         "suggestion_staff_modal:*": {
             "ownerSegment": 1
         },
+        "apply_form:*": {
+            "ownerSegment": 2
+        },
+        "apply_pex_modal:*": {
+            "ownerSegment": 2
+        },
+        "top_page_modal:*": {
+            "ownerSegment": 1
+        },
         "resoconto_reason:*": [
             "roles.HighStaff"
         ],
         "verify_code:*": {
             "ownerSegment": 1
-        },
-        "apply_form:*": {
-            "roles": [
-                "roles.Member"
-            ]
-        },
-        "apply_pex_modal:*": [
-            "roles.HighStaff"
-        ]
+        }
     }
 }

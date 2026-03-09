@@ -65,7 +65,6 @@ async function runPartnershipChannelCleanup(client) {
           break;
         }
         if (msg.author?.id !== botId) continue;
-        if (!msg.reference?.messageId) continue;
         toDelete.push(msg);
       }
       if (pastMidnight || messages.size < BULK_DELETE_LIMIT) hasMore = false;

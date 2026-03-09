@@ -60,7 +60,7 @@ module.exports = {
     if (!language) {
       return safeMessageReply(
         message,
-        "<:vegax:1443934876440068179> Voce non valida. Usa `+langs`.",
+        "<:vegax:1443934876440068179> Voce non valida. Usa `+voices`.",
       );
     }
 
