@@ -348,6 +348,7 @@ async function sendPrivacyViewsLeaderboard(interaction, Model, title) {
 
 module.exports = {
   name: Events.InteractionCreate,
+  handleStaffButtons,
 
   async execute(interaction) {
     if (!interaction.guild) return;

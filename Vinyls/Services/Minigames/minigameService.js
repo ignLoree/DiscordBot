@@ -3558,10 +3558,12 @@ function buildTimeoutCompleteProverbEmbed(start, end) {
 
 function buildTimeoutSynonymAntonymEmbed(word, answer, kind) {
   const label = kind === "antonym" ? "Il contrario" : "Un sinonimo";
+  const safeWord = word != null && String(word).trim() !== "" ? String(word) : "—";
+  const safeAnswer = answer != null && String(answer).trim() !== "" ? String(answer) : "—";
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! ${label} di **${word}** era **${answer}**.`,
+      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! ${label} di **${safeWord}** era **${safeAnswer}**.`,
     );
 }
 
@@ -6872,7 +6874,7 @@ async function restoreActiveGames(client) {
       try {
         const parsed = JSON.parse(state.target || "{}");
         word = parsed?.word || "";
-        answer = parsed?.answers?.[0] || "";
+        answer = parsed?.answers?.[0] ?? parsed?.answer ?? "";
         kind = parsed?.kind || "synonym";
       } catch (err) {
       global.logger?.warn?.("[minigameService] ", err?.message || err);
@@ -7332,11 +7334,13 @@ async function restoreActiveGames(client) {
   }
   if (state.type === "synonymAntonym") {
     const parsed = parseStateTarget(state.target);
-    const answers = Array.isArray(parsed?.answers) ? parsed.answers : [];
+    const answerRaw = parsed?.answer;
+    const answers = Array.isArray(parsed?.answers) ? parsed.answers : (answerRaw != null ? [answerRaw] : []);
     const word = parsed?.word || "";
     const kind = parsed?.kind || "synonym";
-    const timeout = setTimeout(async () => { const game = activeGames.get(cfg.channelId); if (!game) return; recordNoParticipationIfNeeded(cfg.channelId, game); activeGames.delete(cfg.channelId); if (game.hintTimeout) clearTimeout(game.hintTimeout); await channel.send({ embeds: [buildTimeoutSynonymAntonymEmbed(game.word, game.answers?.[0] || "", game.kind)] }).catch(() => { }); await clearActiveGame(client, cfg); }, remainingMs); timeout.unref?.();
-    const hintText = (kind === "antonym" ? "Contrario: " : "Sinonimo: ") + buildRevealHint(answers[0] || "");
+    const timeout = setTimeout(async () => { const game = activeGames.get(cfg.channelId); if (!game) return; recordNoParticipationIfNeeded(cfg.channelId, game); activeGames.delete(cfg.channelId); if (game.hintTimeout) clearTimeout(game.hintTimeout); const solution = game.answers?.[0] ?? game.answer ?? ""; await channel.send({ embeds: [buildTimeoutSynonymAntonymEmbed(game.word, solution, game.kind)] }).catch(() => { }); await clearActiveGame(client, cfg); }, remainingMs); timeout.unref?.();
+    const hintReveal = buildRevealHint(answers[0] ?? answerRaw ?? "");
+    const hintText = (kind === "antonym" ? "Contrario: " : "Sinonimo: ") + (hintReveal != null ? hintReveal : "—");
     const hintTimeout = await scheduleGenericHint(client, cfg.channelId, remainingMs, hintText);
     activeGames.set(cfg.channelId, {
       type: "synonymAntonym",

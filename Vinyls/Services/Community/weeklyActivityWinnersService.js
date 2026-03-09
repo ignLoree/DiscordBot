@@ -343,8 +343,6 @@ function getEventWeeklyRewardLabel(week) {
 }
 
 async function sendEventWeekAnnouncementToNews(client, guild, eventWeek, topMessages, topVoice) {
-  const newsChannel = client.channels.cache.get(NEWS_CHANNEL_ID) || (await client.channels.fetch(NEWS_CHANNEL_ID).catch(() => null));
-  if (!newsChannel?.guild) return;
   const msgLines = topMessages.length ? topMessages.map((item, i) => {
     const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}> <a:VC_Arrow:1448672967721615452> **${item.messageCount}** _messaggi_`;
   })

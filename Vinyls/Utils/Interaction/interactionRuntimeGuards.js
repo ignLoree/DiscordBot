@@ -47,53 +47,10 @@ function pruneExpiredMap(map, nowTs) {
 }
 
 function acquireButtonSpamGuard(interaction, client) {
-  const isButton = Boolean(interaction?.isButton?.());
-  const isSelect = Boolean(interaction?.isStringSelectMenu?.());
-  if (!isButton && !isSelect) {
-    return {
-      blocked: false,
-      release: () => { },
-    };
-  }
-
-  const state = getButtonSpamState(client);
-  const nowTs = Date.now();
-  pruneExpiredMap(state.cooldownByUser, nowTs);
-  pruneExpiredMap(state.inFlightByAction, nowTs);
-
-  const guildId = String(interaction.guildId || "dm");
-  const userId = String(interaction.user?.id || "unknown");
-  const messageId = String(interaction.message?.id || "no-message");
-  const customId = String(interaction.customId || "no-custom-id");
-
-  if (TICKET_OPEN_CONTROLS.has(customId) || VERIFY_CONTROLS.has(customId)) {
-    return {
-      blocked: false,
-      release: () => { },
-    };
-  }
-
-  const userKey = `${guildId}:${userId}`;
-  const actionKey = `${guildId}:${userId}:${messageId}:${customId}`;
-
-  const userCooldownUntil = Number(state.cooldownByUser.get(userKey) || 0);
-  const inFlightUntil = Number(state.inFlightByAction.get(actionKey) || 0);
-
-  if (userCooldownUntil > nowTs || inFlightUntil > nowTs) {
-    return {
-      blocked: true,
-      release: () => { },
-    };
-  }
-
-  state.cooldownByUser.set(userKey, nowTs + BUTTON_SPAM_COOLDOWN_MS);
-  state.inFlightByAction.set(actionKey, nowTs + BUTTON_INFLIGHT_TTL_MS);
-
+  // Cooldown disabilitato: tutti i bottoni e select menu passano senza rate limit.
   return {
     blocked: false,
-    release: () => {
-      state.inFlightByAction.delete(actionKey);
-    },
+    release: () => { },
   };
 }
 
