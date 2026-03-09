@@ -51,7 +51,10 @@ async function processTickets(client) {
       const mentionText = Array.from(mentions).map((id) => `<@${id}>`)
         .join(" ");
 
-      const embed = new EmbedBuilder().setColor("#6f4e37").setTitle("<:PinkQuestionMark:1471892611026391306> Richiesta di chiusura").setDescription("<a:VC_Alert:1448670089670037675> Il ticket è aperto da più di 24 ore e non ci sono messaggi recenti.\nè stato risolto?",);
+      const embed = new EmbedBuilder()
+        .setColor("#6f4e37")
+        .setTitle("<:PinkQuestionMark:1471892611026391306> Richiesta di chiusura")
+        .setDescription("<a:VC_Alert:1448670089670037675> Il ticket è aperto da più di 24 ore e non ci sono messaggi recenti.\nÈ stato risolto?");
 
       await channel
         .send({

@@ -62,11 +62,16 @@ function findExistingVoiceChannel(guild, roleId) {
 }
 
 function buildVoicePanelEmbed(channel, customRole, doc, durationOption) {
-  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Pannello Vocale Privata").setDescription([`<:vegacheckmark:1443666279058772028> Canale: ${channel}`,
-        `<:dot:1443660294596329582>Categoria:<#${CUSTOM_VOICE_CATEGORY_ID}>`,
-        `<:dot:1443660294596329582>Accesso consentito a chi possiede ${customRole}`,
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("Pannello Vocale Privata")
+    .setDescription(
+      [
+        `<:vegacheckmark:1443666279058772028> Canale: ${channel}`,
+        `<:dot:1443660294596329582> Categoria: <#${CUSTOM_VOICE_CATEGORY_ID}>`,
+        `<:dot:1443660294596329582> Accesso consentito a chi possiede ${customRole}`,
         "",
-        `Scadenza custom:${buildExpiryText(doc)}`,
+        `Scadenza custom: ${buildExpiryText(doc)}`,
       ].join("\n"),
     );
 

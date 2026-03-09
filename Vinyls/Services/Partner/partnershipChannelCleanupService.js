@@ -15,7 +15,15 @@ function getRomeMidnightTodayUtc() {
   const y = parseInt(parts.find((p) => p.type === "year")?.value || "0", 10);
   const m = parseInt(parts.find((p) => p.type === "month")?.value || "0", 10);
   const d = parseInt(parts.find((p) => p.type === "day")?.value || "0", 10);
-  return Date.UTC(y, m - 1, d, 0, 0, 0, 0);
+  const utcMidnightSameDay = Date.UTC(y, m - 1, d, 0, 0, 0, 0);
+  const t = new Date(utcMidnightSameDay);
+  const romeFmt = new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, hour: "numeric", hour12: false, minute: "numeric", second: "numeric" });
+  const romeParts = romeFmt.formatToParts(t);
+  const hour = parseInt(romeParts.find((p) => p.type === "hour")?.value || "0", 10);
+  const min = parseInt(romeParts.find((p) => p.type === "minute")?.value || "0", 10);
+  const sec = parseInt(romeParts.find((p) => p.type === "second")?.value || "0", 10);
+  const offsetMs = (hour * 3600 + min * 60 + sec) * 1000;
+  return utcMidnightSameDay - offsetMs;
 }
 
 async function runPartnershipChannelCleanup(client) {

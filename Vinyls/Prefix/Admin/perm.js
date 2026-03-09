@@ -50,7 +50,7 @@ module.exports = {
   async execute(message, args = []) {
     await message.channel.sendTyping().catch(() => {});
 
-    const sub=String(args[0]||"").trim().toLowerCase();
+    const sub = String(args[0] || "").trim().toLowerCase();
 
     const valid = new Set(["grant", "revoke", "list", "clear"]);
 
@@ -107,9 +107,17 @@ module.exports = {
         });
       }
 
-      const result=await grantTemporaryCommandPermissions({guildId:message.guild.id,userId:target.id,grantedBy:message.author.id,commandKeys,durationMs:durationMs||0,permanent:isPermanent,});
+      const result = await grantTemporaryCommandPermissions({
+        guildId: message.guild.id,
+        userId: target.id,
+        grantedBy: message.author.id,
+        commandKeys,
+        durationMs: durationMs || 0,
+        permanent: isPermanent,
+      });
 
-      const expiresText=result.expiresAt?(isPermanent?"Permanente":`<t:${Math.floor(new Date(result.expiresAt).getTime()/1000)}:F>`)
+      const expiresText = result.expiresAt
+        ? (isPermanent ? "Permanente" : `<t:${Math.floor(new Date(result.expiresAt).getTime() / 1000)}:F>`)
         : "N/A";
 
       return safeMessageReply(message, {
@@ -146,7 +154,11 @@ module.exports = {
         });
       }
 
-      const removed=await revokeTemporaryCommandPermissions({guildId:message.guild.id,userId:target.id,commandKeys,});
+      const removed = await revokeTemporaryCommandPermissions({
+        guildId: message.guild.id,
+        userId: target.id,
+        commandKeys,
+      });
 
       return safeMessageReply(message, {
         embeds: [
@@ -160,7 +172,10 @@ module.exports = {
     }
 
     if (sub === "clear") {
-      const removed=await clearTemporaryCommandPermissionsForUser({guildId:message.guild.id,userId:target.id,});
+      const removed = await clearTemporaryCommandPermissionsForUser({
+        guildId: message.guild.id,
+        userId: target.id,
+      });
 
       return safeMessageReply(message, {
         embeds: [
@@ -173,10 +188,13 @@ module.exports = {
       });
     }
 
-    const rows=await listTemporaryCommandPermissionsForUser({guildId:message.guild.id,userId:target.id,});
+    const rows = await listTemporaryCommandPermissionsForUser({
+      guildId: message.guild.id,
+      userId: target.id,
+    });
 
-    const lines=rows.length?rows.map((row) => `. \`${row.commandKey}\` -> scade tra **${formatRemaining(row.expiresAt)}**`,
-        )
+    const lines = rows.length
+      ? rows.map((row) => `. \`${row.commandKey}\` -> scade tra **${formatRemaining(row.expiresAt)}**`)
       : ["Nessun permesso temporaneo attivo."];
 
     return safeMessageReply(message, {

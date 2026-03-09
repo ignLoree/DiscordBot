@@ -91,8 +91,10 @@ async function sendChannelUpdateLog(oldChannel, newChannel) {
   const audit=await resolveAuditWithRetry(guild,CHANNEL_UPDATE_ACTION,(entry) => String(entry?.target?.id||"")===String(newChannel?.id||""),);
   const responsible = formatAuditActor(audit?.executor || null);
 
-  const lines=[`${ARROW}**Responsible:**${responsible}`,
-    `${ARROW}**Target:**${channelDisplay(newChannel)}\`${newChannel.id}\``,`${ARROW}${toDiscordTimestamp(new Date(),"F")}`,
+  const lines = [
+    `${ARROW} **Responsible:** ${responsible}`,
+    `${ARROW} **Target:** ${channelDisplay(newChannel)} \`${newChannel.id}\``,
+    `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
     "",
     "**Changes**",
   ];
@@ -126,7 +128,10 @@ async function sendChannelUpdateLog(oldChannel, newChannel) {
     ]),
   );
 
-  const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Channel Update").setDescription(lines.join("\n"));
+  const embed = new EmbedBuilder()
+    .setColor("#F59E0B")
+    .setTitle("Channel Update")
+    .setDescription(lines.join("\n"));
 
   await logChannel.send({ embeds: [embed] }).catch(() => {});
 }
@@ -151,8 +156,11 @@ async function sendOverwriteLogs(oldChannel, newChannel) {
       const audit=await resolveAuditWithRetry(guild,actionType,(entry) => {const sameChannel=String(entry?.extra?.channel?.id||"")===String(newChannel?.id||"");const sameTarget=String(entry?.target?.id||"")===String(source?.id||"");return sameChannel||sameTarget;});const responsible = formatAuditActor(audit?.executor || null);
       const executorId = String(audit?.executor?.id || "");
 
-      const lines=[`${ARROW}**Responsible:**${responsible}`,
-        `${ARROW}**Channel:**${channelDisplay(newChannel)}\`${newChannel.id}\``,`${ARROW}**Target:**${targetName(guild,source)}\`${source?.id||"sconosciuto"}\``,`${ARROW}${toDiscordTimestamp(new Date(),"F")}`,
+      const lines = [
+        `${ARROW} **Responsible:** ${responsible}`,
+        `${ARROW} **Channel:** ${channelDisplay(newChannel)} \`${newChannel.id}\``,
+        `${ARROW} **Target:** ${targetName(guild, source)} \`${source?.id || "sconosciuto"}\``,
+        `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
         "",
       ];
 
@@ -192,7 +200,10 @@ async function sendOverwriteLogs(oldChannel, newChannel) {
       }
 
       if (canSendLogs) {
-        const embed=new EmbedBuilder().setColor(kind==="create"?"#57F287":kind==="delete"?"#ED4245":"#F59E0B",).setTitle(kind==="create"?"Channel Overwrite Create":kind==="delete"?"Channel Overwrite Delete":"Channel Overwrite Update",).setDescription(lines.join("\n"));
+        const embed = new EmbedBuilder()
+          .setColor(kind === "create" ? "#57F287" : kind === "delete" ? "#ED4245" : "#F59E0B")
+          .setTitle(kind === "create" ? "Channel Overwrite Create" : kind === "delete" ? "Channel Overwrite Delete" : "Channel Overwrite Update")
+          .setDescription(lines.join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => {});
       }

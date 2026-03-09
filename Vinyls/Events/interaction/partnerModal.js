@@ -150,7 +150,7 @@ async function handlePartnerModal(interaction) {
         new EmbedBuilder()
           .setColor("#6f4e37")
           .setDescription(
-            "<a:VC_Alert:1448670089670037675> Non puoi fare partner con questo manager poichè blacklistato!",
+            "<a:VC_Alert:1448670089670037675> Non puoi fare partner con questo manager poiché blacklistato!",
           ),
       ],
     });
@@ -192,15 +192,14 @@ async function handlePartnerModal(interaction) {
     serverName = "Server Sconosciuto";
   }
   if (inviteCode.toLowerCase().includes("viniliecaffe")) {
-    const embed = new EmbedBuilder().setAuthor({ name: interaction.user.username, iconURL: interaction.user.displayAvatarURL(), }).setTitle(`**<:partneredserverowner:1443651871125409812> Partnership con ${serverName} da ${interaction.user.username}**`,
-    )
-      .setDescription(
-        `<a:VC_Alert:1448670089670037675> Non puoi fare partner con il tuo server`,
-      )
-      .setFooter({ text: serverName, iconURL: serverIcon })
-      .setColor("Red")
-      .setTimestamp()
-      .setThumbnail(interaction.guild.iconURL());
+    const embed = new EmbedBuilder()
+    .setAuthor({ name: interaction.user.username, iconURL: interaction.user.displayAvatarURL() })
+    .setTitle(`**<:partneredserverowner:1443651871125409812> Partnership con ${serverName} da ${interaction.user.username}**`)
+    .setDescription(`<a:VC_Alert:1448670089670037675> Non puoi fare partner con il tuo server`)
+    .setFooter({ text: serverName, iconURL: serverIcon })
+    .setColor("Red")
+    .setTimestamp()
+    .setThumbnail(interaction.guild.iconURL());
     await interaction.editReply({ embeds: [embed] });
     return true;
   }
@@ -246,12 +245,16 @@ async function handlePartnerModal(interaction) {
     await staffDoc.save();
     const totalPartners = staffDoc.partnerCount;
 
-    const embed = new EmbedBuilder().setAuthor({ name: interaction.user.username, iconURL: interaction.user.displayAvatarURL(), })
-      .setTitle(`**<:partneredserverowner:1443651871125409812> __PARTNER EFFETTUATA__**`,)
-      .setDescription(`<a:ThankYou:1329504268369002507> Grazie per aver _effettuato_ una **partner** con \`${interaction.guild.name}\`
+    const embed = new EmbedBuilder()
+    .setAuthor({ name: interaction.user.username, iconURL: interaction.user.displayAvatarURL() })
+    .setTitle(`**<:partneredserverowner:1443651871125409812> __PARTNER EFFETTUATA__**`,)
+    .setDescription(`<a:ThankYou:1329504268369002507> Grazie per aver _effettuato_ una **partner** con \`${interaction.guild.name}\`
     <:mariolevelup:1443679595084910634> Ora sei a **\`${totalPartners}\`** partner!
     <:Money:1330544713463500970> Continua ad __effettuare__ partner per riscattare i **premi** in <#1442569232507473951>`,)
-      .setFooter({ text: serverName, iconURL: serverIcon }).setColor("#6f4e37").setTimestamp().setThumbnail(interaction.guild.iconURL());
+    .setFooter({ text: serverName, iconURL: serverIcon })
+    .setColor("#6f4e37")
+    .setTimestamp()
+    .setThumbnail(interaction.guild.iconURL());
 
     const sentMessageIds = [];
     const contentWithManager = normalizeManagerLine(sanitizedDescription, managerId,);
@@ -291,7 +294,9 @@ async function handlePartnerModal(interaction) {
       await staffDoc.save().catch(() => { });
     }
 
-    const doneEmbed = new EmbedBuilder().setDescription(`<:success:1461731530333229226> Partner inviata in ${partnershipChannel}`,).setColor("#6f4e37");
+    const doneEmbed = new EmbedBuilder()
+    .setDescription(`<:success:1461731530333229226> Partner inviata in ${partnershipChannel}`,)
+    .setColor("#6f4e37");
 
     await interaction.editReply({ embeds: [doneEmbed] });
   } catch (err) {

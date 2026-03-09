@@ -149,12 +149,15 @@ module.exports = {
       await sleep(400);
     }
 
-    const summary=new EmbedBuilder().setColor(client.config?.embedModLight||"#6f4e37").setDescription(`#️⃣ **Channel:** <#${message.channel.id}>\n` +
-          `👤**Moderator:**<@${message.author.id}>\n` +
-          `🗂️**Messages Fetched:**${scanned}\n` +
-          `💬**Purge Request:**${Number.isFinite(targetCount)?targetCount:"ALL"}\n` +
-          `🧭**Messages Identified:**${candidates.length}\n` +
-          `🗑️**Messages Purged:**${deletedCount}`,
+    const summary = new EmbedBuilder()
+      .setColor(client.config?.embedModLight || "#6f4e37")
+      .setDescription(
+        `#️⃣ **Channel:** <#${message.channel.id}>\n` +
+          `👤 **Moderator:** <@${message.author.id}>\n` +
+          `🗂️ **Messages Fetched:** ${scanned}\n` +
+          `💬 **Purge Request:** ${Number.isFinite(targetCount) ? targetCount : "ALL"}\n` +
+          `🧭 **Messages Identified:** ${candidates.length}\n` +
+          `🗑️ **Messages Purged:** ${deletedCount}`,
       );
 
     await replyTemp({ embeds: [summary] });

@@ -156,19 +156,15 @@ module.exports = {
           !MEDIA_BLOCK_EXEMPT_CHANNEL_IDS.has(message.channel?.id)
         ) {
           await message.delete().catch(() => {});
-          const embed=new EmbedBuilder().setColor("#6f4e37").setDescription([`<:attentionfromvega:1443651874032062505> Ciao ${message.author},__non hai i permessi__ per inviare\`FOTO, GIF, LINK, VIDEO O AUDIO\` in chat.`,"","<a:VC_StarPink:1330194976440848500> ➥ **__Sblocca il permesso:__**",`<a:VC_Arrow:1448672967721615452> Ottieni il ruolo: <@&${IDs.roles.PicPerms}>.`,
-              ].join("\n"),
-            );
+          const embed = new EmbedBuilder()
+            .setColor("#6f4e37")
+            .setDescription([`<:attentionfromvega:1443651874032062505> Ciao ${message.author}, __non hai i permessi__ per inviare \`FOTO, GIF, LINK, VIDEO O AUDIO\` in chat.`, "", "<a:VC_StarPink:1330194976440848500> ➥ **__Sblocca il permesso:__**", `<a:VC_Arrow:1448672967721615452> Ottieni il ruolo: <@&${IDs.roles.PicPerms}>.`,
+              ].join("\n"));
           await message.channel
             .send({ content: `${message.author}`, embeds: [embed] })
             .catch(() => null);
           return;
         }
-        if (message.author?.id !== resolvedClient?.user?.id) {
-          if (await handleVoteManagerMessage(message, resolvedClient)) return;
-        }
-        if (await handleDisboardBump(message, resolvedClient)) return;
-        if (await handleDiscadiaBump(message, resolvedClient)) return;
         if (await handleSuggestionChannelMessage(message)) return;
         if (await handlePauseChannelMessage(message)) return;
       }

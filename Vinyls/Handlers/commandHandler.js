@@ -76,6 +76,11 @@ module.exports = (client) => {
 
     const token=process.env.DISCORD_TOKEN||process.env.DISCORD_TOKEN_OFFICIAL||client?.config?.token;
     const clientId=process.env.DISCORD_CLIENT_ID||process.env.DISCORD_CLIENT_ID_OFFICIAL||IDs.bots.ViniliCaffeBot;
+    const isPrimary = !client.shard || client.shard.ids?.[0] === 0;
+    if (!isPrimary) {
+      global.logger.info(`[COMMANDS] Deploy slash eseguito solo sul primary shard, skip su questo processo.`);
+      return;
+    }
     const deployCheck=isCommandDeployRequired(BOT_DEPLOY_CACHE_KEY,{clientId},client.commandArray,);
     const forceDeploy = shouldForceSlashDeploy();
     if (!deployCheck.required && !forceDeploy) {

@@ -216,11 +216,17 @@ module.exports = {
 
       const responsible=await resolvePurgeResponsible(guild,channelId,count,null,);
 
-      const embed=new EmbedBuilder().setColor("#ED4245").setTitle("Messaggi eliminati").setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${formatAuditActor(responsible)}`,
-            `<:VC_right_arrow:1473441155055096081>**Target:**${channelText}\`${channelId}\``,`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
+      const embed = new EmbedBuilder()
+        .setColor("#ED4245")
+        .setTitle("Messaggi eliminati")
+        .setDescription(
+          [
+            `<:VC_right_arrow:1473441155055096081> **Responsible:** ${formatAuditActor(responsible)}`,
+            `<:VC_right_arrow:1473441155055096081> **Target:** ${channelText} \`${channelId}\``,
+            `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
             "",
             "**Additional Information**",
-            `<:VC_right_arrow:1473441155055096081>**Count:**${count}`,
+            `<:VC_right_arrow:1473441155055096081> **Count:** ${count}`,
           ].join("\n"),
         );
 

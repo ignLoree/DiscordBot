@@ -72,8 +72,9 @@ module.exports = {
       const executorId = String(auditEntry?.executor?.id || "");
 
       const responsible = formatResponsible(executor);
-      const lines=[`${ARROW}**Responsible:**${responsible}`,
-        `${ARROW}${nowDiscordTs()}`,
+      const lines = [
+        `${ARROW} **Responsible:** ${responsible}`,
+        `${ARROW} ${nowDiscordTs()}`,
         "",
         "**Changes**",
       ];
@@ -94,7 +95,10 @@ module.exports = {
       );
 
       if (canLog) {
-        const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Guild Update").setDescription(lines.join("\n"));
+        const embed = new EmbedBuilder()
+          .setColor("#F59E0B")
+          .setTitle("Guild Update")
+          .setDescription(lines.join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => null);
       }

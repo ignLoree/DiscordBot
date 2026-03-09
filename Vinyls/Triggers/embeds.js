@@ -15,18 +15,39 @@ async function runEmbedCandidaturePanelAuto(client) {
     return;
   }
 
-  const candidatureEmbed = new EmbedBuilder().setColor("#6f4e37").setDescription(`<:7871discordstaff:1443651872258003005> Su **__Vinili & Caffè__** ci si può candidare a **__\`2\`__** _ruoli_: **__\`Helper\`__** e **__\`Partner Manager\`__**.
+  const candidatureEmbed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setDescription(
+      `<:7871discordstaff:1443651872258003005> Su **__Vinili & Caffè__** ci si può candidare a **__\`2\`__** _ruoli_: **__\`Helper\`__** e **__\`Partner Manager\`__**.
 > <:5751attentionfromvega:1443651874032062505> Per **candidarti** dovrai __cliccare__ il bottone in base al **ruolo** che vuoi __ricoprire__
 
 Per candidarsi, è necessario **soddisfare** i seguenti __requisiti__:
 <:1_:1444099163116535930> Avere almeno **__14 anni (compiuti)__**
 <:2_:1444099161673826368> Rispettare i **[ToS](https://discord.com/terms)** e le **[Linee Guida](https://discord.com/guidelines)** di **Discord**
 <:3_:1444099160294031471> Essere **maturi** e **attivi**
-<:4_:1444099158859321435> Non essere mai stato **sanzionato** nel server.`).setImage(DIVIDER_URL)
+<:4_:1444099158859321435> Non essere mai stato **sanzionato** nel server.`,
+    )
+    .setImage(DIVIDER_URL);
 
   const candidatureAttachment = new AttachmentBuilder(CANDIDATURE_MEDIA_PATH, { name: CANDIDATURE_MEDIA_NAME, });
 
-  const rowCandidature = new ActionRowBuilder().addComponents(new ButtonBuilder().setLabel("︲HELPER").setEmoji("<:helper:1443651909448630312>").setStyle(ButtonStyle.Secondary).setCustomId("apply_helper"), new ButtonBuilder().setLabel("︲PARTNER MANAGER").setEmoji("<:partnermanager:1443651916838998099>").setStyle(ButtonStyle.Secondary).setCustomId("apply_partnermanager"), new ButtonBuilder().setLabel("︲STAFF PAGATO").setEmoji("<:partneredserverowner:1443651871125409812>").setStyle(ButtonStyle.Secondary).setCustomId("candidature_premi_partner"),);
+  const rowCandidature = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setLabel("︲HELPER")
+      .setEmoji("<:helper:1443651909448630312>")
+      .setStyle(ButtonStyle.Secondary)
+      .setCustomId("apply_helper"),
+    new ButtonBuilder()
+      .setLabel("︲PARTNER MANAGER")
+      .setEmoji("<:partnermanager:1443651916838998099>")
+      .setStyle(ButtonStyle.Secondary)
+      .setCustomId("apply_partnermanager"),
+    new ButtonBuilder()
+      .setLabel("︲STAFF PAGATO")
+      .setEmoji("<:partneredserverowner:1443651871125409812>")
+      .setStyle(ButtonStyle.Secondary)
+      .setCustomId("candidature_premi_partner"),
+  );
 
   await upsertPanelMessage(candidatureChannel, client, {
     embeds: [candidatureEmbed],
@@ -49,14 +70,70 @@ async function runInfoPanelAuto(client) {
   const channel = client.channels.cache.get(INFO_CHANNEL_ID) || (await client.channels.fetch(INFO_CHANNEL_ID).catch(() => null));
   if (!channel?.isTextBased?.()) return;
   const attachment = new AttachmentBuilder(INFO_MEDIA_PATH, { name: INFO_MEDIA_NAME, });
-  const embed1 = new EmbedBuilder().setColor("#6f4e37").setTitle("Ti diamo il benvenuto nella nostra community!").setFooter({ text: "Usa i bottoni sottostanti per accedere ad altre categorie del server:", }).setDescription(["<a:VC_HeartsBlue:1468686100045369404> Benvenuto/a su **Vinili & Caffè**, l'unico server in Italia non tossico e __incentrato sulla socializzazione__.", "", "<a:VC_HeartBlue:1448673354751021190> **Personalizza il tuo profilo:**", "<:VC_Reply:1468262952934314131> Nel canale <#1469429150669602961> potrai selezionare i colori e i ruoli da aggiungere al tuo profilo per completarlo: come età, menzioni, passioni e molto altro!", "", `Dubbi o problemi? <#${IDs.channels.ticket}> sarà la vostra bussola, lo staff vi risponderà il prima possibile!`,].join("\n"),).addFields({ name: "<:dot:1443660294596329582> Links", value: ["<:VC_bump:1330185435401424896> [Lascia una recensione su DISBOARD](<https://disboard.org/it/server/1329080093599076474>)", "<:link:1470064815899803668> [Votaci su Discadia](<https://discadia.com/vote/viniliecaffe/>)",].join("\n"), inline: true, }, { name: "<:dot:1443660294596329582> Informazioni", value: ["<:exp:1470067108543987846> Owner: <@295500038401163264>", "<:moon:1470064812615667827> Fondazione: ||<t:1765382400:F>||", "<:nitroboost:1470064881674883326> Invite: <https://discord.gg/viniliecaffe>",].join("\n"), inline: true, },).setImage(DIVIDER_URL);
+  const embed1 = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("Ti diamo il benvenuto nella nostra community!")
+    .setFooter({ text: "Usa i bottoni sottostanti per accedere ad altre categorie del server:" })
+    .setDescription(
+      [
+        "<a:VC_HeartsBlue:1468686100045369404> Benvenuto/a su **Vinili & Caffè**, l'unico server in Italia non tossico e __incentrato sulla socializzazione__.",
+        "",
+        "<a:VC_HeartBlue:1448673354751021190> **Personalizza il tuo profilo:**",
+        "<:VC_Reply:1468262952934314131> Nel canale <#1469429150669602961> potrai selezionare i colori e i ruoli da aggiungere al tuo profilo per completarlo: come età, menzioni, passioni e molto altro!",
+        "",
+        `Dubbi o problemi? <#${IDs.channels.ticket}> sarà la vostra bussola, lo staff vi risponderà il prima possibile!`,
+      ].join("\n"),
+    )
+    .addFields(
+      {
+        name: "<:dot:1443660294596329582> Links",
+        value: [
+          "<:VC_bump:1330185435401424896> [Lascia una recensione su DISBOARD](<https://disboard.org/it/server/1329080093599076474>)",
+          "<:link:1470064815899803668> [Votaci su Discadia](<https://discadia.com/vote/viniliecaffe/>)",
+        ].join("\n"),
+        inline: true,
+      },
+      {
+        name: "<:dot:1443660294596329582> Informazioni",
+        value: [
+          "<:exp:1470067108543987846> Owner: <@295500038401163264>",
+          "<:moon:1470064812615667827> Fondazione: ||<t:1765382400:F>||",
+          "<:nitroboost:1470064881674883326> Invite: <https://discord.gg/viniliecaffe>",
+        ].join("\n"),
+        inline: true,
+      },
+    )
+    .setImage(DIVIDER_URL);
   const row1 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId("info_rules").setLabel("︲REGOLAMENTO").setEmoji("<a:VC_Rule:1469462649950703709>").setStyle(ButtonStyle.Danger),
-    new ButtonBuilder().setCustomId("info_donations").setLabel("︲DONAZIONI").setEmoji("<a:VC_Sparkles:1468546911936974889>").setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId("info_sponsor").setLabel("︲SPONSOR").setEmoji("<:pinnednew:1443670849990430750>").setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId("info_tags").setLabel("︲TAGS").setEmoji("<:VC_Firework:1470796227913322658>").setStyle(ButtonStyle.Success),
+    new ButtonBuilder()
+      .setCustomId("info_rules")
+      .setLabel("︲REGOLAMENTO")
+      .setEmoji("<a:VC_Rule:1469462649950703709>")
+      .setStyle(ButtonStyle.Danger),
+    new ButtonBuilder()
+      .setCustomId("info_donations")
+      .setLabel("︲DONAZIONI")
+      .setEmoji("<a:VC_Sparkles:1468546911936974889>")
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId("info_sponsor")
+      .setLabel("︲SPONSOR")
+      .setEmoji("<:pinnednew:1443670849990430750>")
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId("info_tags")
+      .setLabel("︲TAGS")
+      .setEmoji("<:VC_Firework:1470796227913322658>")
+      .setStyle(ButtonStyle.Success),
   );
-  const embed2 = new EmbedBuilder().setColor("#6f4e37").setFooter({ text: "Usa i bottoni sottostanti per accedere ad altre categorie del server:", }).setTitle("<:VC_PurpleFlower:1469463879149944943> Sblocca dei vantaggi, permessi e ruoli:",).setDescription("Scopri tramite i bottoni sottostanti come sbloccare permessi, ad esempio: mandare link e immagini in chat, poter cambiare il nickname e molti altri.",).setImage(DIVIDER_URL);
+  const embed2 = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setFooter({ text: "Usa i bottoni sottostanti per accedere ad altre categorie del server:" })
+    .setTitle("<:VC_PurpleFlower:1469463879149944943> Sblocca dei vantaggi, permessi e ruoli:")
+    .setDescription(
+      "Scopri tramite i bottoni sottostanti come sbloccare permessi, ad esempio: mandare link e immagini in chat, poter cambiare il nickname e molti altri.",
+    )
+    .setImage(DIVIDER_URL);
   const row2 = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId("info_boost_levels").setLabel("︲VANTAGGI BOOST & LIVELLI").setEmoji("<a:VC_Rocket:1468544312475123753>").setStyle(ButtonStyle.Danger),
     new ButtonBuilder().setCustomId("info_badges_roles").setLabel("︲BADGE & ALTRI RUOLI").setEmoji("<a:VC_Diamon:1469463765610135635>").setStyle(ButtonStyle.Success),
@@ -100,7 +177,11 @@ async function runStaffEmbedAuto(client) {
 
   const DIVIDER_URL = "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
 
-  const embeds = [new EmbedBuilder().setColor("#6f4e37").setDescription(`<a:questionexclaimanimated:1443660299994533960>  **__COME FUNZIONA?__**
+  const embeds = [
+    new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setDescription(
+        `<a:questionexclaimanimated:1443660299994533960>  **__COME FUNZIONA?__**
 
 > Il premio _Staffer del Mese_ serve per premiare lo staffer **migliore** del \`mese\`. I premi li riceveranno sia un __**High Staff**__ che un __**Low Staff**__.
 
@@ -110,26 +191,53 @@ async function runStaffEmbedAuto(client) {
 > Lo __Staffer del Mese__ ha anche dei **vantaggi** che sono _uguali_ per entrambi gli staffer:
 <:dot:1443660294596329582> Ruolo __<@&1442568895251611924>__
 <:dot:1443660294596329582> Ruolo __<@&1442568950805430312>__  per quel mese
-<:dot:1443660294596329582> **__5__ giorni** di __pausa__ aggiuntivi`).setImage(DIVIDER_URL), new EmbedBuilder().setColor("#6f4e37").setDescription(`<:discordstaff:1443651872258003005> La **__guida staff__** di __Vinili & Caffè__ serve per portar **ordine** tra lo __staff__, infatti son presenti delle **__regole__** che __tutti__ dovranno **rispettare**, in __caso__ vengano \`trasgredite\`, potreste andare in contro a **__sanzioni__**, come **__\`valutazioni negative\`__** o in casi estremi il **__\`depex\`__**.
+<:dot:1443660294596329582> **__5__ giorni** di __pausa__ aggiuntivi`,
+      )
+      .setImage(DIVIDER_URL),
+    new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setDescription(
+        `<:discordstaff:1443651872258003005> La **__guida staff__** di __Vinili & Caffè__ serve per portare **ordine** tra lo __staff__, infatti sono presenti delle **__regole__** che __tutti__ dovranno **rispettare**; in __caso__ vengano \`trasgredite\`, potreste andare **incontro** a **__sanzioni__**, come **__\`valutazioni negative\`__** o in casi estremi il **__\`depex\`__**.
 
-            > La __guida staff__ si divide in **__\`6\` sezioni__** che sono __accessibili__ **schiacciando** i \`bottoni\` sottostanti:
-            <:dot:1443660294596329582> **Regolamento**
-            <:dot:1443660294596329582> **Limiti Settimanali**
-            <:dot:1443660294596329582> **Pause**
-            <:dot:1443660294596329582> **Valutazioni**
-            <:dot:1443660294596329582> **Sanzioni**
-            <:dot:1443660294596329582> **Warn Staff**`).setImage(DIVIDER_URL), new EmbedBuilder().setColor("#6f4e37").setDescription(`<a:questionexclaimanimated:1443660299994533960> Per **applicare** le __sanzioni__, è necessario __attenersi__ alle **indicazioni** riportate di seguito e **consultare** le procedure disponibili __cliccando__ sui **bottoni** alla fine del messaggio.
+> La __guida staff__ si divide in **__\`6\` sezioni__** che sono __accessibili__ **schiacciando** i \`bottoni\` sottostanti:
+<:dot:1443660294596329582> **Regolamento**
+<:dot:1443660294596329582> **Limiti Settimanali**
+<:dot:1443660294596329582> **Pause**
+<:dot:1443660294596329582> **Valutazioni**
+<:dot:1443660294596329582> **Sanzioni**
+<:dot:1443660294596329582> **Warn Staff**`,
+      )
+      .setImage(DIVIDER_URL),
+    new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setDescription(
+        `<a:questionexclaimanimated:1443660299994533960> Per **applicare** le __sanzioni__, è necessario __attenersi__ alle **indicazioni** riportate di seguito e **consultare** le procedure disponibili __cliccando__ sui **bottoni** alla fine del messaggio.
 
-        <:dot:1443660294596329582> **__\`1\`__** <a:vegarightarrow:1443673039156936837> Bisogna **__sempre__** allegare le **prove** (screen, video, link di messaggi).
-        <:dot:1443660294596329582> **__\`2\`__** <a:vegarightarrow:1443673039156936837> Il __numero__ della **sanzione** si basa su quante volte l'**utente** è stato **sanzionato __specificatamente__ per quella regola**.
-        <:dot:1443660294596329582> **__\`3\`__** <a:vegarightarrow:1443673039156936837> Quando **sanzionate**, usate sempre l'**__articolo__** del **regolamento** infranto.
-        <:dot:1443660294596329582> **__\`4\`__** <a:vegarightarrow:1443673039156936837> Per visualizzare **quante** volte un __utente__ è stato **sanzionato** usate il comando +modlogs **__\`ID\`__**
-        <:dot:1443660294596329582> **__\`5\`__** <a:vegarightarrow:1443673039156936837> Bisogna **__sempre__** sanzionare nel canale <#1442569245878648924> usando i comandi di <@1329118940110127204>
-        <:dot:1443660294596329582> **__\`6\`__** <a:vegarightarrow:1443673039156936837> Ogni volta che si __oltrepassa__ il numero di **sanzioni ottenibili** si **ricomincia** il __ciclo__ di sanzioni per quella **specifica __regola__**.`).setImage(DIVIDER_URL),];
+<:dot:1443660294596329582> **__\`1\`__** <a:vegarightarrow:1443673039156936837> Bisogna **__sempre__** allegare le **prove** (screen, video, link di messaggi).
+<:dot:1443660294596329582> **__\`2\`__** <a:vegarightarrow:1443673039156936837> Il __numero__ della **sanzione** si basa su quante volte l'**utente** è stato **sanzionato __specificatamente__ per quella regola**.
+<:dot:1443660294596329582> **__\`3\`__** <a:vegarightarrow:1443673039156936837> Quando **sanzionate**, usate sempre l'**__articolo__** del **regolamento** infranto.
+<:dot:1443660294596329582> **__\`4\`__** <a:vegarightarrow:1443673039156936837> Per visualizzare **quante** volte un __utente__ è stato **sanzionato** usate il comando +modlogs **__\`ID\`__**
+<:dot:1443660294596329582> **__\`5\`__** <a:vegarightarrow:1443673039156936837> Bisogna **__sempre__** sanzionare nel canale <#1442569245878648924> usando i comandi di <@1329118940110127204>
+<:dot:1443660294596329582> **__\`6\`__** <a:vegarightarrow:1443673039156936837> Ogni volta che si __oltrepassa__ il numero di **sanzioni ottenibili** si **ricomincia** il __ciclo__ di sanzioni per quella **specifica __regola__**.`,
+      )
+      .setImage(DIVIDER_URL),
+  ];
 
-  const rowGuideMain = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("regolamento").setLabel("︲REGOLE").setEmoji("<:rules:1443307208543703131>").setStyle(ButtonStyle.Secondary), new ButtonBuilder().setCustomId("limiti").setLabel("︲LIMITI SETTIMANALI").setEmoji("<:reportmessage:1443670575376765130>").setStyle(ButtonStyle.Secondary), new ButtonBuilder().setCustomId("pause").setLabel("︲PAUSE").setEmoji("<:Clock:1330530065133338685>").setStyle(ButtonStyle.Secondary), new ButtonBuilder().setCustomId("valutazioni").setLabel("︲VALUTAZIONI").setEmoji("<a:loading:1443934440614264924>").setStyle(ButtonStyle.Secondary), new ButtonBuilder().setCustomId("sanzioni").setLabel("︲SANZIONI").setEmoji("<:discordstaff:1443651872258003005>").setStyle(ButtonStyle.Secondary),);
-  const rowGuideWarn = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("warnstaff").setLabel("︲WARN STAFF").setEmoji("<:banhammer:1443651875441217639>").setStyle(ButtonStyle.Secondary),);
-  const rowModeration = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("generalimoderazione").setLabel("︲GENERALI").setEmoji("<:appdirectoryallwhite:1443308556995788840>").setStyle(ButtonStyle.Secondary), new ButtonBuilder().setCustomId("testualimoderazione").setLabel("︲TESTUALI").setEmoji("<:discordchannelwhite:1443308552536985810>").setStyle(ButtonStyle.Secondary), new ButtonBuilder().setCustomId("vocalimoderazione").setLabel("︲VOCALI").setEmoji("<:microphone:1443307206824169573>").setStyle(ButtonStyle.Secondary),);
+  const rowGuideMain = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId("regolamento").setLabel("︲REGOLE").setEmoji("<:rules:1443307208543703131>").setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId("limiti").setLabel("︲LIMITI SETTIMANALI").setEmoji("<:reportmessage:1443670575376765130>").setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId("pause").setLabel("︲PAUSE").setEmoji("<:Clock:1330530065133338685>").setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId("valutazioni").setLabel("︲VALUTAZIONI").setEmoji("<a:loading:1443934440614264924>").setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId("sanzioni").setLabel("︲SANZIONI").setEmoji("<:discordstaff:1443651872258003005>").setStyle(ButtonStyle.Secondary),
+  );
+  const rowGuideWarn = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId("warnstaff").setLabel("︲WARN STAFF").setEmoji("<:banhammer:1443651875441217639>").setStyle(ButtonStyle.Secondary),
+  );
+  const rowModeration = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId("generalimoderazione").setLabel("︲GENERALI").setEmoji("<:appdirectoryallwhite:1443308556995788840>").setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId("testualimoderazione").setLabel("︲TESTUALI").setEmoji("<:discordchannelwhite:1443308552536985810>").setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId("vocalimoderazione").setLabel("︲VOCALI").setEmoji("<:microphone:1443307206824169573>").setStyle(ButtonStyle.Secondary),
+  );
 
   if (bestStaffChannel?.isTextBased?.()) {
     await upsertPanelMessage(bestStaffChannel, client, {
@@ -172,11 +280,27 @@ async function runVerifyPanelAuto(client) {
   const attachment = new AttachmentBuilder(VERIFY_MEDIA_PATH, { name: VERIFY_MEDIA_NAME, });
   const serverName = channel.guild?.name || "this server";
 
-  const verifyInfoEmbed = new EmbedBuilder().setColor("#6f4e37").setTitle("<a:VC_HeartsPink:1468685897389052008> **__Benvenutx su Vinili & Caffè__**",).setDescription("<:vegacheckmark:1443666279058772028> Per **verificarti** premi il pulsante **__`Verify`__**, poi inserisci il **codice** che riceverai in **risposta effimera**.\n" + "<:VC_Ticket:1448694637106692156> Per **qualsiasi** problema, non **esitate** ad aprire un **__<#1442569095068254219> `Prima Categoria`__**",).setImage(DIVIDER_URL);
+  const verifyInfoEmbed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("<a:VC_HeartsPink:1468685897389052008> **__Benvenutx su Vinili & Caffè__**")
+    .setDescription(
+      "<:vegacheckmark:1443666279058772028> Per **verificarti** premi il pulsante **__`Verify`__**, poi inserisci il **codice** che riceverai in **risposta effimera**.\n" +
+        "<:VC_Ticket:1448694637106692156> Per **qualsiasi** problema, non **esitate** ad aprire un **__<#1442569095068254219> `Prima Categoria`__**",
+    )
+    .setImage(DIVIDER_URL);
 
   const color = client?.config?.embedVerify || "#6f4e37";
 
-  const verifyPanelEmbed = new EmbedBuilder().setColor(color).setTitle("<:verification:1461725843125571758> **`Verification Required!`**",).setDescription("<:space:1461733157840621608> <:alarm:1461725841451909183> **Per accedere a `" + serverName + "` devi prima verificarti.**\n" + "<:space:1461733157840621608><:space:1461733157840621608> <:rightSort:1461726104422453298> Clicca il pulsante **Verify** qui sotto per iniziare.",).setImage(DIVIDER_URL);
+  const verifyPanelEmbed = new EmbedBuilder()
+    .setColor(color)
+    .setTitle("<:verification:1461725843125571758> **`Verification Required!`**")
+    .setDescription(
+      "<:space:1461733157840621608> <:alarm:1461725841451909183> **Per accedere a `" +
+        serverName +
+        "` devi prima verificarti.**\n" +
+        "<:space:1461733157840621608><:space:1461733157840621608> <:rightSort:1461726104422453298> Clicca il pulsante **Verify** qui sotto per iniziare.",
+    )
+    .setImage(DIVIDER_URL);
 
   const verifyRow = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("verify_start").setEmoji(`<a:VC_Verified:1448687631109197978>`).setLabel("︲VERIFY").setStyle(ButtonStyle.Success),);
 
@@ -230,13 +354,58 @@ async function runRuoliPanelAuto(client) {
   if (!channel) return;
   const personalityPhotoPath = fs.existsSync(IMAGE_PATH) ? IMAGE_PATH : (fs.existsSync(IMAGE_PATH_ASCII) ? IMAGE_PATH_ASCII : null);
   const attachment = personalityPhotoPath ? new AttachmentBuilder(personalityPhotoPath, { name: IMAGE_NAME }) : null;
-  const embed = new EmbedBuilder().setColor("#6f4e37").setTitle("<:sparkledred:1470064814502973591> Personalità").setDescription(["Scegli in cosa ti identifichi, quanti anni hai e di dove sei. Utilizza i menù a tendina sottostanti.", "", "<a:VC_Exclamation:1448687427836444854> Massimo **1** ruolo per categoria.",].join("\n"),).setImage(DIVIDER_URL);
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("<:sparkledred:1470064814502973591> Personalità")
+    .setDescription([
+      "Scegli in cosa ti identifichi, quanti anni hai e di dove sei. Utilizza i menù a tendina sottostanti.",
+      "",
+      "<a:VC_Exclamation:1448687427836444854> Massimo **1** ruolo per categoria.",
+    ].join("\n"))
+    .setImage(DIVIDER_URL);
   const mentionsAttachment = fs.existsSync(MENTIONS_IMAGE_PATH) ? new AttachmentBuilder(MENTIONS_IMAGE_PATH, { name: MENTIONS_IMAGE_NAME, }) : null;
-  const mentionsEmbed = new EmbedBuilder().setColor("#6f4e37").setTitle("<:sparkledred:1470064814502973591> Personalità").setDescription(["Scegli quali notifiche ricevere dal server in base a cosa ti interessa maggiormente.", "", "<a:VC_Exclamation:1448687427836444854> Le notifiche di **@everyone** le riceveranno tutti.",].join("\n"),).setImage(DIVIDER_URL);
+  const mentionsEmbed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("<:sparkledred:1470064814502973591> Personalità")
+    .setDescription([
+      "Scegli quali notifiche ricevere dal server in base a cosa ti interessa maggiormente.",
+      "",
+      "<a:VC_Exclamation:1448687427836444854> Le notifiche di **@everyone** le riceveranno tutti.",
+    ].join("\n"))
+    .setImage(DIVIDER_URL);
   const colorsAttachment = fs.existsSync(COLORS_IMAGE_PATH) ? new AttachmentBuilder(COLORS_IMAGE_PATH, { name: COLORS_IMAGE_NAME, }) : null;
-  const colorsEmbed = new EmbedBuilder().setColor("#6f4e37").setTitle("<:sparkledred:1470064814502973591> Personalità").setDescription(["Scegli il colore per personalizzare il nome del tuo profilo quando scrivi in chat.", "", "<a:VC_Exclamation:1448687427836444854> Verrà mostrato il **colore più in alto** nella lista dei ruoli nel tuo profilo.",].join("\n"),).setImage(DIVIDER_URL);
+  const colorsEmbed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("<:sparkledred:1470064814502973591> Personalità")
+    .setDescription([
+      "Scegli il colore per personalizzare il nome del tuo profilo quando scrivi in chat.",
+      "",
+      "<a:VC_Exclamation:1448687427836444854> Verrà mostrato il **colore più in alto** nella lista dei ruoli nel tuo profilo.",
+    ].join("\n"))
+    .setImage(DIVIDER_URL);
   const plusColorsAttachment = fs.existsSync(PLUS_COLORS_IMAGE_PATH) ? new AttachmentBuilder(PLUS_COLORS_IMAGE_PATH, { name: PLUS_COLORS_IMAGE_NAME, }) : null;
-  const plusColorsEmbed = new EmbedBuilder().setColor("#6f4e37").setTitle("<:sparkledred:1470064814502973591> Personalità").setDescription(['Scegli il colore che più ti piace per il tuo profilo! Utilizza il menù a tendina sottostante. __Rimuovi i colori__ con la "<:vegax:1443934876440068179>" in alto.', "", `⚠️ Questi ruoli sono riservati a coloro con questi ruoli: <@&${IDs.roles.ServerBooster}> e/o <@&${IDs.roles.Level50}>`, "", "<:sparkle:1470064801811140866> **LISTA COLORI:**", `<:VC_1:1444099819680563200> <@&${IDs.roles.redPlus}>`, `<:VC_2:1444099781864722535> <@&${IDs.roles.orangePlus}>`, `<:VC_3:1444099746116534282> <@&${IDs.roles.yellowPlus}>`, `<:VC_4:1444099708292169740> <@&${IDs.roles.greenPlus}>`, `<:VC_5:1444099671894134947> <@&${IDs.roles.bluePlus}>`, `<:VC_6:1444099623714033838> <@&${IDs.roles.purplePlus}>`, `<:VC_7:1444099572916945120> <@&${IDs.roles.pinkPlus}>`, `<:VC_8:1444099520500600998> <@&${IDs.roles.blackPlus}>`, `<:VC_9:1444099441790554182> <@&${IDs.roles.grayPlus}>`, `<:VC_10:1469357839066730627> <@&${IDs.roles.whitePlus}>`, `<:VC_11:1469772033410859173> <@&${IDs.roles.YinYangPlus}>`,].join("\n"),).setImage(DIVIDER_URL);
+  const plusColorsEmbed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("<:sparkledred:1470064814502973591> Personalità")
+    .setDescription([
+      'Scegli il colore che più ti piace per il tuo profilo! Utilizza il menù a tendina sottostante. __Rimuovi i colori__ con la "<:vegax:1443934876440068179>" in alto.',
+      "",
+      `⚠️ Questi ruoli sono riservati a coloro con questi ruoli: <@&${IDs.roles.ServerBooster}> e/o <@&${IDs.roles.Level50}>`,
+      "",
+      "<:sparkle:1470064801811140866> **LISTA COLORI:**",
+      `<:VC_1:1444099819680563200> <@&${IDs.roles.redPlus}>`,
+      `<:VC_2:1444099781864722535> <@&${IDs.roles.orangePlus}>`,
+      `<:VC_3:1444099746116534282> <@&${IDs.roles.yellowPlus}>`,
+      `<:VC_4:1444099708292169740> <@&${IDs.roles.greenPlus}>`,
+      `<:VC_5:1444099671894134947> <@&${IDs.roles.bluePlus}>`,
+      `<:VC_6:1444099623714033838> <@&${IDs.roles.purplePlus}>`,
+      `<:VC_7:1444099572916945120> <@&${IDs.roles.pinkPlus}>`,
+      `<:VC_8:1444099520500600998> <@&${IDs.roles.blackPlus}>`,
+      `<:VC_9:1444099441790554182> <@&${IDs.roles.grayPlus}>`,
+      `<:VC_10:1469357839066730627> <@&${IDs.roles.whitePlus}>`,
+      `<:VC_11:1469772033410859173> <@&${IDs.roles.YinYangPlus}>`,
+    ].join("\n"))
+    .setImage(DIVIDER_URL);
   const pronouns = new ActionRowBuilder().addComponents(new StringSelectMenuBuilder().setCustomId("personality_pronouns").setPlaceholder("⭐ Seleziona i tuoi pronomi").setMinValues(1).setMaxValues(1).addOptions({ label: "Rimuovi i ruoli di sesso", description: "Rimuovi ruoli dal tuo profilo", value: "remove", emoji: "<:vegax:1443934876440068179>", }, { label: "he/him", value: "1442568997848743997", emoji: "<:hehim:1470534612198494258>", description: "Clicca qui per ottenere il ruolo", }, { label: "she/her", value: "1442568999043989565", emoji: "<:sheher:1470534614023143485>", description: "Clicca qui per ottenere il ruolo", }, { label: "they/them", value: "1442569000063074498", emoji: "<:theythem:1470534615818178782>", description: "Clicca qui per ottenere il ruolo", }, { label: "ask me", value: "1442569001367769210", emoji: "<:askme:1470534617458151424>", description: "Clicca qui per ottenere il ruolo", },),);
   const age = new ActionRowBuilder().addComponents(new StringSelectMenuBuilder().setCustomId("personality_age").setPlaceholder("🎂 Seleziona la tua età").setMinValues(1).setMaxValues(1).addOptions({ label: "Rimuovi i ruoli di età", value: "remove", description: "Rimuovi ruoli dal tuo profilo", emoji: "<:vegax:1443934876440068179>", }, { label: "13-14", value: "1442568993197265021", emoji: "<:ageadultids:1470541163219128444>", description: "Clicca qui per ottenere il ruolo", }, { label: "15-16", value: "1442568994581381170", emoji: "<:ageadultids:1470541163219128444>", description: "Clicca qui per ottenere il ruolo", }, { label: "17-18", value: "1442568995348807691", emoji: "<:ageids:1470541159351976066>", description: "Clicca qui per ottenere il ruolo", }, { label: "19+", value: "1442568996774871194", emoji: "<:ageids:1470541159351976066>", description: "Clicca qui per ottenere il ruolo", },),);
   const region = new ActionRowBuilder().addComponents(new StringSelectMenuBuilder().setCustomId("personality_region").setPlaceholder("🌍 Seleziona la tua località").setMinValues(1).setMaxValues(1).addOptions({ label: "Rimuovi i ruoli di provenienza", value: "remove", description: "Rimuovi ruoli dal tuo profilo", emoji: "<:vegax:1443934876440068179>", }, { label: "Nord", value: "1442569021861007443", emoji: "<a:peepoitaly:1470537719225520341>", description: "Clicca qui per ottenere il ruolo", }, { label: "Centro", value: "1442569023303974922", emoji: "<a:peepoitaly:1470537719225520341>", description: "Clicca qui per ottenere il ruolo", }, { label: "Sud", value: "1442569024486506498", emoji: "<a:peepoitaly:1470537719225520341>", description: "Clicca qui per ottenere il ruolo", }, { label: "Estero", value: "1442569025790939167", emoji: "<:wplace:1470537717426294886>", description: "Clicca qui per ottenere il ruolo", },),);
@@ -294,14 +463,26 @@ async function runTicketPanelAuto(client) {
   const guildId = channel.guild?.id;
   if (!guildId) return;
   const attachment = new AttachmentBuilder(TICKET_MEDIA_PATH, { name: TICKET_MEDIA_NAME, });
-  const ticketInfoEmbed = new EmbedBuilder().setColor("#6f4e37").setDescription(`<:reportmessage:1443670575376765130> Benvenuto nella **sezione** dedicata all'__assistenza__! Apri un **ticket** in base alle tue _esigenze_ e ricorda di **rispettare** il regolamento.
+  const ticketInfoEmbed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setDescription(
+      `<:reportmessage:1443670575376765130> Benvenuto nella **sezione** dedicata all'__assistenza__! Apri un **ticket** in base alle tue _esigenze_ e ricorda di **rispettare** il regolamento.
 
 <:dot:1443660294596329582> Massimo **__\`1\`__** ticket alla volta;
 <:dot:1443660294596329582> Scegli **sempre** la giusta sezione;
 <:dot:1443660294596329582> Non **abusare** dei __ticket__;
-<:dot:1443660294596329582> Non aprire ticket __inutili__;`,).setImage(DIVIDER_URL);
+<:dot:1443660294596329582> Non aprire ticket __inutili__;`,
+    )
+    .setImage(DIVIDER_URL);
 
-  const ticketPanelEmbed = new EmbedBuilder().setColor("#6f4e37").setAuthor({ name: "Contatta lo Staff & chiedi supporto:", iconURL: channel.guild?.iconURL() || undefined, }).setDescription(`I ticket equivalgono a un sistema di supporto che permette di parlare direttamente con lo staff con il fine di chiedere chiarimenti, fare domande agli staffers riguardo al server, segnalare un accaduto all'interno di quest'ultimo o per altre richieste.
+  const ticketPanelEmbed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setAuthor({
+      name: "Contatta lo Staff & chiedi supporto:",
+      iconURL: channel.guild?.iconURL() || undefined,
+    })
+    .setDescription(
+      `I ticket equivalgono a un sistema di supporto che permette di parlare direttamente con lo staff con il fine di chiedere chiarimenti, fare domande agli staffers riguardo al server, segnalare un accaduto all'interno di quest'ultimo o per altre richieste.
 
 <:VC_1:1444099819680563200> **Prima categoria**
 <a:VC_Arrow:1448672967721615452> Usalo per fare segnalazioni, riportare dei problemi o bug, per avere delle informazioni o per qualunque altra cosa che non rientra nelle categorie sottostanti.
@@ -310,7 +491,10 @@ async function runTicketPanelAuto(client) {
 <:VC_3:1444099746116534282> **Terza categoria**
 <a:VC_Arrow:1448672967721615452> Usalo per fare una donazione, per fare la "selfie verify", per richiedere una sponsor a pagamento o per parlare con un amministratore del server.
 
-<:attentionfromvega:1443651874032062505> Aprire un ticket **__inutile__** oppure **__non rispondere__** nell'arco di **\`24\` ore** comporterà un **warn**.`,).setFooter({ text: `Non garantiamo risposta negli orari notturni, dalle 00:00 alle 10:00`, }).setImage(DIVIDER_URL);
+<:attentionfromvega:1443651874032062505> Aprire un ticket **__inutile__** oppure **__non rispondere__** nell'arco di **\`24\` ore** comporterà un **warn**.`,
+    )
+    .setFooter({ text: `Non garantiamo risposta negli orari notturni, dalle 00:00 alle 10:00` })
+    .setImage(DIVIDER_URL);
 
   const ticketMenu = new StringSelectMenuBuilder().setCustomId("ticket_open_menu").setPlaceholder("🎫 Seleziona una categoria...").addOptions({ label: "Prima categoria", description: "Supporto generale • Segnalazioni • Problemi", value: "ticket_supporto", emoji: { id: "1443651872258003005", name: "discordstaff" }, }, { label: "Seconda categoria", description: "Partnership", value: "ticket_partnership", emoji: { id: "1443651871125409812", name: "partneredserverowner" }, }, { label: "Terza categoria", description: "Verifica Selfie • Donazioni • Sponsor • High Staff", value: "ticket_highstaff", emoji: { id: "1443670575376765130", name: "reportmessage" }, },);
   const ticketSelectRow = new ActionRowBuilder().addComponents(ticketMenu);
@@ -531,7 +715,13 @@ async function processOneVerifyPanel(client, guildId, verifyChannelIds) {
   }
 
   const color = client.config?.embedVerify || SPONSOR_PANEL_COLOR;
-  const verifyEmbed = new EmbedBuilder().setColor(color).setTitle("<:verification:1461725843125571758> **`Verification Required!`**").setDescription("<:space:1461733157840621608> <:alarm:1461725841451909183> **Per accedere a `" + (guild.name || "this server") + "` devi prima verificarti.**\n" + "<:space:1461733157840621608><:space:1461733157840621608> <:rightSort:1461726104422453298> Clicca il pulsante **Verify** qui sotto per iniziare.",);
+  const verifyEmbed = new EmbedBuilder()
+    .setColor(color)
+    .setTitle("<:verification:1461725843125571758> **`Verification Required!`**")
+    .setDescription(
+      "<:space:1461733157840621608> <:alarm:1461725841451909183> **Per accedere a `" + (guild.name || "this server") + "` devi prima verificarti.**\n" +
+      "<:space:1461733157840621608><:space:1461733157840621608> <:rightSort:1461726104422453298> Clicca il pulsante **Verify** qui sotto per iniziare.",
+    );
   const verifyRow = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("verify_start").setEmoji(`<a:VC_Verified:1448687631109197978>`).setLabel("︲VERIFY").setStyle(ButtonStyle.Success),);
 
   const panelDoc = await sponsorGetOrCreatePanelDoc(guildId, channel.id).catch(() => null);

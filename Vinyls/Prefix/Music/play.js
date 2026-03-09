@@ -185,10 +185,15 @@ module.exports = {
       finalSearchResult = { tracks: [strongDirectMatch], playlist: null };
       finalResolved = search.resolved;
     } else if (!search.searchResult?.playlist && searchTracks.length > 1) {
-      const picked=await pickFromPagedMenu({message,items:searchTracks.slice(0,100),pageSize:10,deleteOnSelect:true,lineBuilder:(item,index) => `${index+1}.**${item?.title||"Sconosciuto"}**by ${item?.author||"Unknown"}`,
+      const picked = await pickFromPagedMenu({
+        message,
+        items: searchTracks.slice(0, 100),
+        pageSize: 10,
+        deleteOnSelect: true,
+        lineBuilder: (item, index) => `${index + 1}. **${item?.title || "Sconosciuto"}** by ${item?.author || "Unknown"}`,
         optionBuilder: (item, index) => ({
-          label: `${index+1}.${String(item?.title||"Sconosciuto")}`.slice(0, 100),
-          description: String(`by ${item?.author||"Unknown"}`).slice(0, 100),
+          label: `${index + 1}. ${String(item?.title || "Sconosciuto")}`.slice(0, 100),
+          description: String(`by ${item?.author || "Unknown"}`).slice(0, 100),
         }),
       });
       if (!picked) return;
@@ -246,8 +251,11 @@ module.exports = {
       const lengthText=Number(track?.durationMS||0)>0?formatDurationMs(track.durationMS):String(track?.duration||"00:00");
       const requestedBy=message.member?.displayName||message.author?.globalName||message.author?.username||"unknown";
 
-      const queuedEmbed=new EmbedBuilder().setColor("#1f2328").setTitle("\uD83C\uDF08 Added Track").setDescription(["**Track**",`${songLine}by**${artist}**`,
-          ].join("\n"),
+      const queuedEmbed = new EmbedBuilder()
+        .setColor("#1f2328")
+        .setTitle("\uD83C\uDF08 Added Track")
+        .setDescription(
+          ["**Track**", `${songLine} by **${artist}**`].join("\n"),
         )
         .setThumbnail(track?.thumbnail || null)
         .addFields(
@@ -281,11 +289,16 @@ module.exports = {
       return safeMessageReply(message, { embeds: [queuedEmbed] });
     }
 
-    const suffix=result.playlist?`\nPlaylist: **${result.playlist.title}**(${result.playlist.tracks.length}tracce)`
+    const suffix = result.playlist
+      ? `\nPlaylist: **${result.playlist.title}** (${result.playlist.tracks.length} tracce)`
       : "";
     const via = result.translated ? "\nFonte link convertita in ricerca compatibile." : "";
     const sourceEmoji = getTrackSourceEmoji(track);
-    const embed=new EmbedBuilder().setColor("#1f2328").setDescription(`${sourceEmoji?`${sourceEmoji}` : ""}Started playing ${songLine}by**${artist}**${suffix}${via}`);
+    const embed = new EmbedBuilder()
+      .setColor("#1f2328")
+      .setDescription(
+        `${sourceEmoji ? `${sourceEmoji} ` : ""}Started playing ${songLine} by **${artist}**${suffix}${via}`,
+      );
 
     return safeMessageReply(message, { embeds: [embed] });
   },

@@ -105,7 +105,13 @@ async function logPrefixErrorToChannel(message, client, commandName, error) {
     const errorChannel = client.channels ?. cache ?. get(channelId)||(await client.channels ?. fetch ?.(channelId).catch(()=>null));
     if (!errorChannel?.isTextBased?.()) return;
 
-    const embed = buildErrorLogEmbed({contextLabel:"Comando",contextValue:String(commandName || "unknown"),userTag:message ?. author ?. tag || "unknown",error,serverName:message ?. guild ?`${message.guild.name} [${message.guild.id}]`:null,});
+    const embed = buildErrorLogEmbed({
+      contextLabel: "Comando",
+      contextValue: String(commandName || "unknown"),
+      userTag: message?.author?.tag || "unknown",
+      error,
+      serverName: message?.guild ? `${message.guild.name} [${message.guild.id}]` : null,
+    });
     await errorChannel.send({ embeds: [embed] }).catch(() => null);
   } catch (nestedError) {
     global.logger?.error?.(" Prefix error log failed:", nestedError);
@@ -181,7 +187,12 @@ async function dispatchPrefixMessage(message, client) {
 
   const availableCommands = Array.from(client.pcommands.keys()).sort((a,b)=>a.localeCompare(b)).map((name)=>`\`${safePrefix}${name}\``).join(", ");
 
-  const embed = new EmbedBuilder().setColor("#6f4e37").setDescription("**Bot Test** \u2013 i comandi principali sono sul **bot ufficiale**.\n" +(availableCommands ?`Comandi disponibili qui: ${availableCommands}`:""),);
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setDescription(
+      "**Bot Test** – i comandi principali sono sul **bot ufficiale**.\n" +
+        (availableCommands ? `Comandi disponibili qui: ${availableCommands}` : ""),
+    );
   await sendTemporaryReply(message, { embeds: [embed] });
   return true;
 }

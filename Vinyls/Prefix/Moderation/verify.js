@@ -255,9 +255,17 @@ module.exports = {
               const createdAtUnix = Math.floor((user.createdTimestamp || 0) / 1000);
               const createdAtText = createdAtUnix ? `<t:${createdAtUnix}:F>` : "-";
               const safeUsername = sanitizeEmbed(user.username);
-              const resultEmbed=new EmbedBuilder().setColor("#6f4e37").setTitle(`**${safeUsername}'s Verification Result:**`).setDescription(`<:profile:1461732907508039834> **Member**: ${safeUsername}**[${user.id}]**\n` +`<:creation:1461732905016492220>Creation:${createdAtText}\n\n` +
+              const resultEmbed = new EmbedBuilder()
+                .setColor("#6f4e37")
+                .setTitle(`**${safeUsername}'s Verification Result:**`)
+                .setDescription(
+                  `<:profile:1461732907508039834> **Member**: ${safeUsername} **[${user.id}]**\n` +
+                    `<:creation:1461732905016492220> Creation: ${createdAtText}\n\n` +
                     "Status:\n" +
-                    `<:space:1461733157840621608><:success:1461731530333229226>\`${safeUsername}\` has passed verification successfully.\n`+"<:space:1461733157840621608><:space:1461733157840621608><:rightSort:1461726104422453298> Auto roles have been assigned as well.",).setThumbnail(user.displayAvatarURL({dynamic:true}));
+                    `<:space:1461733157840621608><:success:1461731530333229226> \`${safeUsername}\` has passed verification successfully.\n` +
+                    "<:space:1461733157840621608><:space:1461733157840621608><:rightSort:1461726104422453298> Auto roles have been assigned as well.",
+                )
+                .setThumbnail(user.displayAvatarURL({ dynamic: true }));
               await logChannel.send({ embeds: [resultEmbed] }).catch(() => {});
             }
           } else {

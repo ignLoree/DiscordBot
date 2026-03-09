@@ -71,14 +71,16 @@ module.exports = {
       const logChannel = await resolveChannelRolesLogChannel(channel.guild);
       if (logChannel?.isTextBased?.()) {
         const responsible = formatAuditActor(audit?.executor || null);
-        const lines=[`${ARROW}**Responsible:**${responsible}`,
-          `${ARROW}**Target:**${channelDisplay(channel)}\`${channel.id}\``,`${ARROW}${toDiscordTimestamp(new Date(),"F")}`,
+        const lines = [
+          `${ARROW} **Responsible:** ${responsible}`,
+          `${ARROW} **Target:** ${channelDisplay(channel)} \`${channel.id}\``,
+          `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
           "",
           "**Settings**",
-          `${ARROW}**Name:**${channel.name||"sconosciuto"}`,
-          `${ARROW}**Type:**${channelTypeLabel(channel)}`,
-          `${ARROW}**Nsfw:**${yesNo(Boolean(channel.nsfw))}`,
-          `${ARROW}**Rate Limit Per User:**${Number(channel.rateLimitPerUser||0)||"Nessuno"}`,
+          `${ARROW} **Name:** ${channel.name || "sconosciuto"}`,
+          `${ARROW} **Type:** ${channelTypeLabel(channel)}`,
+          `${ARROW} **Nsfw:** ${yesNo(Boolean(channel.nsfw))}`,
+          `${ARROW} **Rate Limit Per User:** ${Number(channel.rateLimitPerUser || 0) || "Nessuno"}`,
         ];
         lines.push(
           ...buildAuditExtraLines(audit?.entry, [
@@ -89,7 +91,10 @@ module.exports = {
           ]),
         );
 
-        const embed=new EmbedBuilder().setColor("#57F287").setTitle("Channel Create").setDescription(lines.join("\n"));
+        const embed = new EmbedBuilder()
+          .setColor("#57F287")
+          .setTitle("Channel Create")
+          .setDescription(lines.join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => {});
       }

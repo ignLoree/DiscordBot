@@ -135,13 +135,17 @@ async function sendMemberDisconnectLog(oldState, newState) {
   const oldChannelId = String(oldState?.channelId || "");
   const fromChannel = oldState?.channel || (oldChannelId ? `<#${oldChannelId}>` : "#sconosciuto");
 
-  const embed=new EmbedBuilder().setColor("#ED4245").setTitle("Member Disconnect").setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${formatActor(audit.executor)}`,
-        `<:VC_right_arrow:1473441155055096081>**Target:**${user}\`${user.id}\``,`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
+  const embed = new EmbedBuilder()
+    .setColor("#ED4245")
+    .setTitle("Member Disconnect")
+    .setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${formatActor(audit.executor)}`,
+        `<:VC_right_arrow:1473441155055096081> **Target:** ${user}\`${user.id}\``,
+        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         "**Additional Information**",
-        `<:VC_right_arrow:1473441155055096081>**Channel:**${fromChannel}\`${oldChannelId||"sconosciuto"}\``,`<:VC_right_arrow:1473441155055096081> **Count:** ${Math.max(1,Number(audit?.count||1))}`,
-      ].join("\n"),
-    );
+        `<:VC_right_arrow:1473441155055096081> **Channel:** ${fromChannel}\`${oldChannelId || "sconosciuto"}\``,
+        `<:VC_right_arrow:1473441155055096081> **Count:** ${Math.max(1, Number(audit?.count || 1))}`,
+      ].join("\n"));
 
   await logChannel.send({ embeds: [embed] }).catch((err) => {
     global.logger?.warn?.("[voiceStateUpdate] sendMemberDisconnectLog failed:", err?.message || err);
@@ -165,13 +169,16 @@ async function sendMemberMoveLog(oldState, newState) {
   const responsibleText = formatActor(audit.executor);
   const destination = newState?.channel || `<#${newChannelId}>`;
 
-  const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Member Move").setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-        `<:VC_right_arrow:1473441155055096081>${toDiscordTimestamp(new Date(),"F")}`,
+  const embed = new EmbedBuilder()
+    .setColor("#F59E0B")
+    .setTitle("Member Move")
+    .setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         "**Additional Information**",
-        `<:VC_right_arrow:1473441155055096081>**Channel:**${destination}\`${newChannelId}\``,`<:VC_right_arrow:1473441155055096081> **Count:** ${Math.max(1,Number(audit.count||1))}`,
-      ].join("\n"),
-    );
+        `<:VC_right_arrow:1473441155055096081> **Channel:** ${destination}\`${newChannelId}\``,
+        `<:VC_right_arrow:1473441155055096081> **Count:** ${Math.max(1, Number(audit.count || 1))}`,
+      ].join("\n"));
 
   await logChannel.send({ embeds: [embed] }).catch((err) => {
     global.logger?.warn?.("[voiceStateUpdate] sendMemberMoveLog failed:", err?.message || err);
@@ -198,8 +205,9 @@ async function sendMemberVoiceFlagsUpdateLog(oldState, newState) {
   const audit = await resolveMemberUpdateAuditInfo(guild, user.id);
   const responsibleText = formatActor(audit.executor);
 
-  const lines=[`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-    `<:VC_right_arrow:1473441155055096081>**Target:**${user}\`${user.id}\``,`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
+  const lines = [`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+    `<:VC_right_arrow:1473441155055096081> **Target:** ${user}\`${user.id}\``,
+    `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
   ];
   if (audit.reason) {
     lines.push(`<:VC_right_arrow:1473441155055096081> **Reason:** ${audit.reason}`);
@@ -215,7 +223,10 @@ async function sendMemberVoiceFlagsUpdateLog(oldState, newState) {
     lines.push(`  ${yesNo(Boolean(oldState?.serverDeaf))} <:VC_right_arrow:1473441155055096081> ${yesNo(Boolean(newState?.serverDeaf))}`);
   }
 
-  const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Member Update").setDescription(lines.join("\n"));
+  const embed = new EmbedBuilder()
+    .setColor("#F59E0B")
+    .setTitle("Member Update")
+    .setDescription(lines.join("\n"));
 
   await logChannel.send({ embeds: [embed] }).catch((err) => {
     global.logger?.warn?.("[voiceStateUpdate] sendMemberVoiceFlagsUpdateLog failed:", err?.message || err);

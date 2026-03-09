@@ -324,12 +324,19 @@ async function sendBotAddLog(member) {
   const createdTs = Math.floor(new Date(member.user.createdAt).getTime() / 1000);
   const nowTs = Math.floor(Date.now() / 1000);
 
-  const embed=new EmbedBuilder().setColor("#57F287").setTitle("Bot Add").setDescription([`${ARROW}**Responsible:**${responsible}`,
-        `${ARROW}**Target:**${member.user}\`${member.user.id}\``,`${ARROW}<t:${nowTs}:F>`,
+  const embed = new EmbedBuilder()
+    .setColor("#57F287")
+    .setTitle("Bot Add")
+    .setDescription(
+      [
+        `${ARROW} **Responsible:** ${responsible}`,
+        `${ARROW} **Target:** ${member.user} \`${member.user.id}\``,
+        `${ARROW} <t:${nowTs}:F>`,
         "",
         "**Additional Information**",
-        `${ARROW}**Id:**\`${member.user.id}\``,`${ARROW}**Username:**${member.user.username}`,
-        `${ARROW}**Creation:**<t:${createdTs}:R>`,
+        `${ARROW} **Id:** \`${member.user.id}\``,
+        `${ARROW} **Username:** ${member.user.username}`,
+        `${ARROW} **Creation:** <t:${createdTs}:R>`,
       ].join("\n"),
     );
 
@@ -350,8 +357,9 @@ async function handleBotJoin(member, joinGateConfig) {
     joinGateConfig?.unverifiedBotAdditions?.enabled &&
     !verifiedBot
   ) {
-    const result=await kickForJoinGate(member,"Unverified bot addition.",[`${ARROW}**Rule:**Unverified Bot Additions`,
-      `${ARROW}**Responsible:**${executorText}`,
+    const result = await kickForJoinGate(member, "Unverified bot addition.", [
+      `${ARROW} **Rule:** Unverified Bot Additions`,
+      `${ARROW} **Responsible:** ${executorText}`,
     ], joinGateConfig?.unverifiedBotAdditions?.action || "kick");
     if (result?.blocked) return;
   }
@@ -364,11 +372,10 @@ async function handleBotJoin(member, joinGateConfig) {
     } else {
       const authorized = await isAuthorizedBotAdder(member.guild, executorId);
       if (!authorized) {
-        const result=await kickForJoinGate(member,"Bot added by unauthorized member.",[`${ARROW}**Rule:**Bot Additions`,
-            `${ARROW}**Responsible:**${executorText}`,
-          ],
-          joinGateConfig?.botAdditions?.action || "kick",
-        );
+        const result = await kickForJoinGate(member, "Bot added by unauthorized member.", [
+          `${ARROW} **Rule:** Bot Additions`,
+          `${ARROW} **Responsible:** ${executorText}`,
+        ], joinGateConfig?.botAdditions?.action || "kick");
         if (result?.blocked) return;
       }
     }
@@ -721,10 +728,13 @@ async function isAuthorizedBotAdder(guild, executorId) {
 }
 
 async function sendJoinGatePunishDm(member, reason, extraLines = []) {
-  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle(`JoinGate action in ${member.guild.name}`)
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle(`JoinGate action in ${member.guild.name}`)
     .setDescription(
       [
-        `${ARROW}**Member:**${member.user}[\`${member.user.id}\`]`,`${ARROW}**Reason:**${reason}`,
+        `${ARROW} **Member:** ${member.user} [\`${member.user.id}\`]`,
+        `${ARROW} **Reason:** ${reason}`,
         ...extraLines.filter(Boolean),
       ].join("\n"),
     );
@@ -850,16 +860,20 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
   const modLogId = IDs.channels?.modLogs;
   const logChannel=modLogId?(member.guild.channels.cache.get(modLogId)||(await member.guild.channels.fetch(modLogId).catch(() => null))):null;
   if (logChannel?.isTextBased?.()) {
-    const actionLabel=appliedAction==="ban"?"banned":appliedAction==="timeout"?"timed out":appliedAction==="kick"?"kicked":"flagged";
-    const embed=punished?new EmbedBuilder().setColor("#A97142").setTitle(`${member.user.username}has been ${actionLabel}!!`)
+    const actionLabel = appliedAction === "ban" ? "banned" : appliedAction === "timeout" ? "timed out" : appliedAction === "kick" ? "kicked" : "flagged";
+    const embed = punished
+      ? new EmbedBuilder()
+          .setColor("#A97142")
+          .setTitle(`${member.user.username} has been ${actionLabel}!!`)
           .setDescription(
             [
-              `${ARROW}**Member:**${member.user.username}[\`${member.user.id}\`]`,`${ARROW}**Reason:**${reason}`,
+              `${ARROW} **Member:** ${member.user.username} [\`${member.user.id}\`]`,
+              `${ARROW} **Reason:** ${reason}`,
               ...extraLines.filter(Boolean),
               "",
               "**More Details:**",
-              `${ARROW}**Member Direct Messaged?**${dmSent?"✅":"❌"}`,
-              `${ARROW}**Member Punished?**${punished?"✅":"❌"}`,
+              `${ARROW} **Member Direct Messaged?** ${dmSent ? "✅" : "❌"}`,
+              `${ARROW} **Member Punished?** ${punished ? "✅" : "❌"}`,
             ].join("\n"),
           )
           .setFooter({ text: "© 2025 Vinili & Caffè. Tutti i diritti riservati." })
@@ -926,13 +940,18 @@ async function sendJoinLog(member) {
   if (!joinLeaveLogChannel) return;
 
   const accountAge = formatAccountAge(member.user.createdAt);
-  const joinLogEmbed=new EmbedBuilder().setColor("#57F287").setTitle("Member Joined").setDescription([`${member.user}${member.user.tag}.`,
+  const joinLogEmbed = new EmbedBuilder()
+    .setColor("#57F287")
+    .setTitle("Member Joined")
+    .setDescription(
+      [
+        `${member.user} ${member.user.tag}.`,
         "",
         "**Account Age**",
-        accountAge
+        accountAge,
       ].join("\n"),
     )
-    .setFooter({ text:`ID:${member.user.id}`})
+    .setFooter({ text: `ID: ${member.user.id}` })
     .setTimestamp()
     .setThumbnail(member.user.displayAvatarURL({ extension: "png", size: 256 }));
 
@@ -966,7 +985,7 @@ async function announceInviteInfo(member, channel, info) {
 
   await channel
     .send({
-      content: `<:VC_Reply:1468262952934314131> è entratx con il link <${info.link}>,\n-# -> invitato da ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`,
+      content: `<:VC_Reply:1468262952934314131> È entratx con il link <${info.link}>,\n-# -> invitato da ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`,
     })
     .catch(() => {});
 }
@@ -993,8 +1012,12 @@ async function maybeSendInviteReward(member, info) {
   const rewardedRolesText=(rewardResult.roleIds||[]).map((id) => `<@&${id}>`)
     .join(", ");
 
-  const rewardEmbed=new EmbedBuilder().setColor("#6f4e37").setTitle("<a:ThankYou:1329504268369002507> Grazie per gli inviti!").setDescription(`<@${info.inviterId}>hai raggiunto**${Math.max(...(rewardResult.targets||[0]))}inviti**e hai ottenuto ${rewardedRolesText||"nuovi ruoli"}` +
-        `<a:Boost_Cycle:1329504283007385642>Controlla<#${INFO_PERKS_CHANNEL_ID}>per i nuovi vantaggi.`,
+  const rewardEmbed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("<a:ThankYou:1329504268369002507> Grazie per gli inviti!")
+    .setDescription(
+      `<@${info.inviterId}> hai raggiunto **${Math.max(...(rewardResult.targets || [0]))} inviti** e hai ottenuto ${rewardedRolesText || "nuovi ruoli"}.\n` +
+        `<a:Boost_Cycle:1329504283007385642> Controlla <#${INFO_PERKS_CHANNEL_ID}> per i nuovi vantaggi.`,
     );
   await inviteChannel.send({ embeds: [rewardEmbed] }).catch(() => {});
 }
@@ -1019,10 +1042,17 @@ async function maybeSendInviteNearRewardReminder(member, info) {
 
   const rewardRoleText=(Array.isArray(nextTier.roleIds)?nextTier.roleIds:[]).filter(Boolean).map((id) => `<@&${id}>`)
     .join(", ") || "ruolo reward inviti";
-  const payload={embeds:[new EmbedBuilder().setColor("#6f4e37").setTitle("Ci sei quasi con gli inviti!").setDescription([`<a:VC_PandaClap:1331620157398712330> Ti manca solo **1 invito** per arrivare a **${nextTier.target}**.`,
-            `Quando raggiungi la soglia,ricevi ${rewardRoleText}.`,
+  const payload = {
+    embeds: [
+      new EmbedBuilder()
+        .setColor("#6f4e37")
+        .setTitle("Ci sei quasi con gli inviti!")
+        .setDescription(
+          [
+            `<a:VC_PandaClap:1331620157398712330> Ti manca solo **1 invito** per arrivare a **${nextTier.target}**.`,
+            `Quando raggiungi la soglia, ricevi ${rewardRoleText}.`,
             INFO_PERKS_CHANNEL_ID
-              ? `Controlla i perks in<#${INFO_PERKS_CHANNEL_ID}>.`
+              ? `Controlla i perks in <#${INFO_PERKS_CHANNEL_ID}>.`
               : "Controlla il canale info del server.",
           ].join("\n"),
         ),

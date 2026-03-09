@@ -374,10 +374,11 @@ module.exports = {
     }
 
     const label = isWeekly ? "Vai alla classifica settimanale" : "Vai alla classifica generale";
-    const redirectEmbed = new EmbedBuilder().setColor("#6f4e37").setDescription(`Per evitare di intasare la chat, la classifica ${isWeekly ? "settimanale" : "generale"}` +
-      `è stata generata nel canale<#${LEADERBOARD_CHANNEL_ID}>.` +
-      `[Clicca qui per vederla](${sent.url})o utilizza il bottone sottostante.`,
-    );
+    const redirectEmbed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setDescription(`Per evitare di intasare la chat, la classifica ${isWeekly ? "settimanale" : "generale"}` +
+      ` è stata generata nel canale <#${LEADERBOARD_CHANNEL_ID}>.\n` +
+      `[Clicca qui per vederla](${sent.url}) o utilizza il bottone sottostante.`);
 
     const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel(label).setURL(sent.url),);
 

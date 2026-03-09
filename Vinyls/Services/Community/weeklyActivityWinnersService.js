@@ -353,7 +353,9 @@ async function sendEventWeekAnnouncementToNews(client, guild, eventWeek, topMess
     const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}> <a:VC_Arrow:1448672967721615452> **${formatVoiceDuration(item.voiceSeconds)}** _in vocale_`;
   })
     : ["<:VC_Info:1448670089670037675> - Nessun dato per la classifica vocale."];
-  const embed = new EmbedBuilder().setColor("#6f4e37").setTitle(`<:VC_Leaderboard:1469659357678669958> Evento Activity EXP — Settimana ${eventWeek}`)
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle(`<:VC_Leaderboard:1469659357678669958> Evento Activity EXP — Settimana ${eventWeek}`)
     .setDescription(
       [
         "<a:VC_HeartsPink:1468685897389052008> **Top 3 testuale**:",
@@ -395,7 +397,13 @@ async function trySendEventEndAnnouncementToNews(client) {
     const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}>—**${item.expDuringEvent.toLocaleString("it-IT")}** <:VC_EXP:1468714279673925883>`;
   })
     : ["<:VC_Info:1448670089670037675> - Nessun dato."];
-  const embed = new EmbedBuilder().setColor("#6f4e37").setTitle("<:VC_Leaderboard:1469659357678669958> Top 3 EXP totale — Evento Activity EXP").setDescription(["**Classifica per EXP guadagnata durante l'evento:**", "", ...lines].join("\n")).setThumbnail(guild.iconURL({ size: 256 }) || null).setFooter({ text: "Evento terminato • Grazie per la partecipazione!" }).setTimestamp();
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("<:VC_Leaderboard:1469659357678669958> Top 3 EXP totale — Evento Activity EXP")
+    .setDescription(["**Classifica per EXP guadagnata durante l'evento:**", "", ...lines].join("\n"))
+    .setThumbnail(guild.iconURL({ size: 256 }) || null)
+    .setFooter({ text: "Evento terminato • Grazie per la partecipazione!" })
+    .setTimestamp();
   const newsChannel = client.channels.cache.get(NEWS_CHANNEL_ID) || (await client.channels.fetch(NEWS_CHANNEL_ID).catch(() => null));
   if (!newsChannel?.guild) return;
   await newsChannel.send({
@@ -628,7 +636,10 @@ async function resetWeeklyActivityCounters(client, options = {}) {
   ]);
 }
 
+let weeklyActivityWinnersLoopStarted = false;
 function startWeeklyActivityWinnersLoop(client) {
+  if (weeklyActivityWinnersLoopStarted) return;
+  weeklyActivityWinnersLoopStarted = true;
   cron.schedule(
     "0 21 * * 0",
     async () => {

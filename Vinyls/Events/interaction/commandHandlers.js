@@ -98,7 +98,14 @@ async function handleSlashCommand(interaction, client) {
       });
     }
     const requiredRoles = getSlashRequiredRoles(interaction);
-    const embed=interaction.commandName==="dmbroadcast"?buildGlobalPermissionDeniedEmbed([],"comando","<:attentionfromvega:1443651874032062505> Solo i developer del bot possono usare questo comando.",):buildGlobalPermissionDeniedEmbed(requiredRoles);
+    const embed =
+      interaction.commandName === "dmbroadcast"
+        ? buildGlobalPermissionDeniedEmbed(
+            [],
+            "comando",
+            "<:attentionfromvega:1443651874032062505> Solo i developer del bot possono usare questo comando.",
+          )
+        : buildGlobalPermissionDeniedEmbed(requiredRoles);
     return interaction.reply({
       embeds: [embed],
       flags: 1 << 6,

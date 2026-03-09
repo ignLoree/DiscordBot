@@ -269,7 +269,7 @@ function collectMemberRoleIds(member) {
 
 function hasAnyRole(member, roleIds) {
   const normalized = normalizeRoleList(roleIds);
-  if (!Array.isArray(normalized)) return true;
+  if (!Array.isArray(normalized)) return false;
   if (normalized.length === 0) return false;
   const memberRoleIds = collectMemberRoleIds(member);
   if (!memberRoleIds.size) return false;
@@ -278,7 +278,7 @@ function hasAnyRole(member, roleIds) {
 
 function hasAllPermissions(member, permissionFlags) {
   const normalized = normalizePermissionList(permissionFlags);
-  if (!Array.isArray(normalized)) return true;
+  if (!Array.isArray(normalized)) return false;
   if (normalized.length === 0) return false;
   const memberPermissions = member?.permissions;
   if (!memberPermissions || typeof memberPermissions.has !== "function")
@@ -802,10 +802,11 @@ async function checkButtonPermission(interaction) {
 
   if (isSponsorGuild(guildId) && SPONSOR_STAFF_TICKET_BUTTON_IDS.has(customId)) {
     if (!hasSponsorStaffRole(interaction?.member, guildId)) {
+      const sponsorStaffRoleId = IDs.roles?.sponsorStaffRoleIds?.[guildId] || IDs.roles?.Staff;
       return {
         allowed: false,
         reason: "missing_role",
-        requiredRoles: ["Staff"],
+        requiredRoles: sponsorStaffRoleId ? [sponsorStaffRoleId] : null,
         ownerId: null,
       };
     }
@@ -1256,7 +1257,10 @@ function buildGlobalPermissionDeniedEmbed(requiredRoleIds = [], entityLabel = "c
     : "<:attentionfromvega:1443651874032062505> Nessun ruolo configurato.";
   const description = customDescription != null ? customDescription : `<:VC_Lock:1468544444113617063> Questo ${entityLabel} è riservato ad una categoria di utenti specifici.`;
 
-  const embed = new EmbedBuilder().setColor("#6f4e37").setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**").setDescription(description);
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
+    .setDescription(description);
   if (roles.length > 0) {
     embed.addFields({
       name: "<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**",
@@ -1271,8 +1275,10 @@ function buildGlobalChannelDeniedEmbed(allowedChannelIds = [], entityLabel = "co
   const channelsText = channels.length ? channels.map((id) => `<#${id}>`).join(", ")
     : "<:attentionfromvega:1443651874032062505> Nessun canale configurato.";
 
-  const embed = new EmbedBuilder().setColor("#6f4e37").setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**").setDescription(`<:VC_Lock:1468544444113617063> Questo ${entityLabel} è disponibile solo in canali specifici.`,
-  );
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
+    .setDescription(`<:VC_Lock:1468544444113617063> Questo ${entityLabel} è disponibile solo in canali specifici.`);
   if (channels.length > 0) {
     embed.addFields({
       name: "<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**",

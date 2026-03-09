@@ -1,7 +1,7 @@
 const { EmbedBuilder, AttachmentBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const { safeReply, safeEditReply, safeDeferReply } = require("../../../shared/discord/replyRuntime");
 const { getGuildChannelCached, getGuildMemberCached } = require("../../Utils/Interaction/interactionEntityCache");
-const { verifyState, VERIFY_CODE_TTL_MS, VERIFY_MAX_ATTEMPTS, CENTRAL_VERIFY_LOG_CHANNEL_ID, VERIFY_PING_CHANNEL_ID, VERIFY_CAPTCHA, getVerifyStateKey, clearVerifyState, isSponsorGuildVerify, getMainGuild, isUserVerifiedInMainGuild, makeExpiredEmbed, makeWrongAnswerEmbed, makeTooManyAttemptsEmbed, makeVerifyStartRow, makeVerifiedEmbed, makeAlreadyVerifiedEmbed, makeOwnerEmbed, isUnknownInteraction, sanitizeEmbedText, makeCode, makeCaptchaPng, resolveValidVerifyRoleIds, isAlreadyVerifiedInThisGuild } = require("../../Utils/Interaction/verifyUtils");
+const { verifyState, VERIFY_CODE_TTL_MS, VERIFY_MAX_ATTEMPTS, CENTRAL_VERIFY_LOG_CHANNEL_ID, VERIFY_PING_CHANNEL_IDS, VERIFY_CAPTCHA, getVerifyStateKey, clearVerifyState, isSponsorGuildVerify, getMainGuild, isUserVerifiedInMainGuild, makeExpiredEmbed, makeWrongAnswerEmbed, makeTooManyAttemptsEmbed, makeVerifyStartRow, makeVerifiedEmbed, makeAlreadyVerifiedEmbed, makeOwnerEmbed, isUnknownInteraction, sanitizeEmbedText, makeCode, makeCaptchaPng, resolveValidVerifyRoleIds, isAlreadyVerifiedInThisGuild } = require("../../Utils/Interaction/verifyUtils");
 const { upsertVerifiedMember, applyTenureForMember } = require("../../Services/Community/communityOpsService");
 
 async function finalizeVerification(interaction, member) {
@@ -94,10 +94,14 @@ async function finalizeVerification(interaction, member) {
     const safeUsername = sanitizeEmbedText(interaction.user.username);
     const serverName = guild?.name || "Unknown";
 
-    const logEmbed = new EmbedBuilder().setColor("#6f4e37").setTitle(`**${safeUsername}'s Verification Result**`).setDescription(`<:profile:1461732907508039834> **Member**: ${safeUsername}**[${interaction.user.id}]**\n` + `<:creation:1461732905016492220>Creation:${createdAtText}\n` +
-      `<:info:1466070288554004604> **Server**:${sanitizeEmbedText(serverName)}\n\n` +
+    const logEmbed = new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle(`**${safeUsername}'s Verification Result**`)
+      .setDescription(`<:profile:1461732907508039834> **Member**: ${safeUsername}**[${interaction.user.id}]**\n` + `<:creation:1461732905016492220> Creation: ${createdAtText}\n` +
+      `<:info:1466070288554004604> **Server**: ${sanitizeEmbedText(serverName)}\n\n` +
       `<:info:1466070288554004604> Status:\n` +
-      `<:space:1461733157840621608><:success:1461731530333229226>\`${safeUsername}\` has passed verification successfully.\n` + "<:space:1461733157840621608><:space:1461733157840621608><:rightSort:1461726104422453298> Auto roles have been assigned as well.",).setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }));
+      `<:space:1461733157840621608><:success:1461731530333229226>\`${safeUsername}\` has passed verification successfully.\n` + "<:space:1461733157840621608><:space:1461733157840621608><:rightSort:1461726104422453298> Auto roles have been assigned as well.",)
+      .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }));
 
     await logChannel.send({ embeds: [logEmbed] }).catch((err) => {
       global.logger?.warn?.("[VERIFY] Failed to send verification log:", err);
@@ -106,13 +110,15 @@ async function finalizeVerification(interaction, member) {
     global.logger?.warn?.("[VERIFY] Central verify log channel not found:", CENTRAL_VERIFY_LOG_CHANNEL_ID);
   }
 
-  const pingChannel = VERIFY_PING_CHANNEL_ID ? await getGuildChannelCached(guild, VERIFY_PING_CHANNEL_ID) : null;
-  if (pingChannel) {
-    const pingMsg = await pingChannel.send({ content: `<@${interaction.user.id}>` })
-      .catch(() => null);
-    if (pingMsg) {
-      const pingCleanupTimer = setTimeout(() => pingMsg.delete().catch(() => { }), 1);
-      pingCleanupTimer.unref?.();
+  const pingContent = `<@${interaction.user.id}>`;
+  for (const channelId of VERIFY_PING_CHANNEL_IDS || []) {
+    const pingChannel = channelId ? await getGuildChannelCached(guild, channelId) : null;
+    if (pingChannel?.isTextBased?.()) {
+      const pingMsg = await pingChannel.send({ content: pingContent }).catch(() => null);
+      if (pingMsg) {
+        const pingCleanupTimer = setTimeout(() => pingMsg.delete().catch(() => { }), 1);
+        pingCleanupTimer.unref?.();
+      }
     }
   }
 
@@ -188,7 +194,18 @@ async function handleVerifyInteraction(interaction) {
         timeoutId,
       });
 
-      const embed = new EmbedBuilder().setColor("#6f4e37").setDescription(`<:verification:1461725843125571758> Hello! Are you human? Let's find out!\n` + "`Please type the captcha below to be able to access this server!`\n\n" + "**Additional Notes:**\n" + "<:tracedColored:1461728858955976805> Type out the traced colored characters from left to right.\n" + "<:decoy:1461728857114546421> Ignore the decoy characters spread-around.\n" + "<:nocases:1461728855642341509> You do not have to respect characters cases (upper/lower case)!\n\n",).setFooter({ text: "Verification Period: 5 minutes" }).setImage("attachment://captcha.png");
+      const embed = new EmbedBuilder()
+        .setColor("#6f4e37")
+        .setDescription(
+          `<:verification:1461725843125571758> Hello! Are you human? Let's find out!\n` +
+          "`Please type the captcha below to be able to access this server!`\n\n" +
+          "**Additional Notes:**\n" +
+          "<:tracedColored:1461728858955976805> Type out the traced colored characters from left to right.\n" +
+          "<:decoy:1461728857114546421> Ignore the decoy characters spread-around.\n" +
+          "<:nocases:1461728855642341509> You do not have to respect characters cases (upper/lower case)!\n\n",
+        )
+        .setFooter({ text: "Verification Period: 5 minutes" })
+        .setImage("attachment://captcha.png");
 
       const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("verify_enter").setLabel("Answer").setStyle(ButtonStyle.Primary),);
 

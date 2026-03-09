@@ -113,8 +113,14 @@ module.exports = {
         }
       }
 
-      const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Emoji Update").setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-            `<:VC_right_arrow:1473441155055096081>**Target:**${newEmoji?.name||oldEmoji?.name||"emoji"}\`${emojiId}\``,`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
+      const embed = new EmbedBuilder()
+        .setColor("#F59E0B")
+        .setTitle("Emoji Update")
+        .setDescription(
+          [
+            `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+            `<:VC_right_arrow:1473441155055096081> **Target:** ${newEmoji?.name || oldEmoji?.name || "emoji"} \`${emojiId}\``,
+            `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
             "",
             "**Changes**",
             ...changeLines,

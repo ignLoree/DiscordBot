@@ -23,18 +23,20 @@ module.exports = {
       const cleanedExtraLines=extraLines.filter((line,index) => !(index===0&&line==="")&&line!=="**Additional Information**",);
 
       if (logChannel?.isTextBased?.()) {
-        const embed=new EmbedBuilder().setColor("#ED4245").setTitle("Member Prune").setDescription([`${ARROW}**Responsible:**${responsible}`,
-              `${ARROW}${nowDiscordTs()}`,
-              entry.reason ? `${ARROW}**Reason:**${entry.reason}` : null,
+        const embed = new EmbedBuilder()
+            .setColor("#ED4245")
+            .setTitle("Member Prune")
+            .setDescription([`${ARROW} **Responsible:** ${responsible}`,
+              `${ARROW} ${nowDiscordTs()}`,
+              entry.reason ? `${ARROW} **Reason:** ${entry.reason}` : null,
               "",
               "**Additional Information**",
-              `${ARROW}**Count:**${membersRemoved}`,
-              `${ARROW}**Days:**${deleteDays}`,
+              `${ARROW} **Count:** ${membersRemoved}`,
+              `${ARROW} **Days:** ${deleteDays}`,
               ...(cleanedExtraLines.length ? ["", "**Audit Details**", ...cleanedExtraLines] : []),
             ]
               .filter(Boolean)
-              .join("\n"),
-          );
+              .join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => null);
       }

@@ -134,8 +134,7 @@ async function handleTicketInteraction(interaction) {
             new EmbedBuilder()
               .setColor("#6f4e37")
               .setDescription(
-                `<a:VC_Alert:1448670089670037675> Non puoi usare questo bottone poiché sei blacklistato dalle partner.`
-                  `<:VC_Ticket:1448694637106692156> Se pensi sia un errore apri un <#1442569095068254219> \`Terza Categoria\``,
+                `<a:VC_Alert:1448670089670037675> Non puoi usare questo bottone poiché sei blacklistato dalle partner.\n<:VC_Ticket:1448694637106692156> Se pensi sia un errore apri un <#1442569095068254219> \`Terza Categoria\``,
               ),
           ],
           flags: 1 << 6,
@@ -152,8 +151,7 @@ async function handleTicketInteraction(interaction) {
             new EmbedBuilder()
               .setColor("#6f4e37")
               .setDescription(
-                `<:vegax:1443934876440068179> Non puoi usare questo bottone poiché sei blacklistato dai ticket.`,
-                `<:VC_Ticket:1448694637106692156> Se pensi sia un errore apri un <#1442569095068254219> \`Terza Categoria\``,
+                `<:vegax:1443934876440068179> Non puoi usare questo bottone poiché sei blacklistato dai ticket.\n<:VC_Ticket:1448694637106692156> Se pensi sia un errore apri un <#1442569095068254219> \`Terza Categoria\``,
               ),
           ],
           flags: 1 << 6,
@@ -187,7 +185,47 @@ async function handleTicketInteraction(interaction) {
           return true;
         }
       }
-      const ticketConfig = { ticket_supporto: { type: "supporto", emoji: "⭐", name: "supporto", role: ROLE_STAFF, requiredRoles: ROLE_USER ? [ROLE_USER] : [], embed: new EmbedBuilder().setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET SUPPORTO__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`,).setColor("#6f4e37"), }, ticket_partnership: { type: "partnership", emoji: "🤝", name: "partnership", role: ROLE_PARTNERMANAGER, requiredRoles: [ROLE_USER], embed: new EmbedBuilder().setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET PARTNERSHIP__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Invia direttamente qui la tua descrizione.`,).setColor("#6f4e37"), }, ticket_highstaff: { type: "high", emoji: "✨", name: "highstaff", role: ROLE_HIGHSTAFF, requiredRoles: [ROLE_USER], embed: new EmbedBuilder().setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET HIGH STAFF__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o High Staff.`,).setColor("#6f4e37"), }, };
+      const ticketConfig = {
+        ticket_supporto: {
+          type: "supporto",
+          emoji: "⭐",
+          name: "supporto",
+          role: ROLE_STAFF,
+          requiredRoles: ROLE_USER ? [ROLE_USER] : [],
+          embed: new EmbedBuilder()
+            .setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET SUPPORTO__**",)
+            .setDescription(
+              `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`,
+            )
+            .setColor("#6f4e37"),
+        },
+        ticket_partnership: {
+          type: "partnership",
+          emoji: "🤝",
+          name: "partnership",
+          role: ROLE_PARTNERMANAGER,
+          requiredRoles: [ROLE_USER],
+          embed: new EmbedBuilder()
+            .setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET PARTNERSHIP__**",)
+            .setDescription(
+              `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Invia direttamente qui la tua descrizione.`,
+            )
+            .setColor("#6f4e37"),
+        },
+        ticket_highstaff: {
+          type: "high",
+          emoji: "✨",
+          name: "highstaff",
+          role: ROLE_HIGHSTAFF,
+          requiredRoles: [ROLE_USER],
+          embed: new EmbedBuilder()
+            .setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET HIGH STAFF__**",)
+            .setDescription(
+              `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o High Staff.`,
+            )
+            .setColor("#6f4e37"),
+        },
+      };
       const config = ticketConfig[ticketActionId];
       if (
         !config &&
@@ -524,7 +562,9 @@ async function handleTicketInteraction(interaction) {
 
         const transcriptEmbed = new EmbedBuilder()
           .setTitle("<:VC_file:1478515880722698300> • **__TRANSCRIPT DEL TICKET__**")
-          .setDescription(`<:VC_Ticket:1448694637106692156> In allegato il file HTML del transcript del ticket **#${ticketDoc.ticketNumber || ticketDoc._id}**.\n\n<:VC_open:1478517277279129712> Apri il file nel browser per visualizzare la conversazione.`)
+          .setDescription(
+            `<:VC_Ticket:1448694637106692156> In allegato il file HTML del transcript del ticket **#${ticketDoc.ticketNumber || ticketDoc._id}**.\n\n<:VC_open:1478517277279129712> Apri il file nel browser per visualizzare la conversazione.`,
+          )
           .setColor("#6f4e37");
         await safeReply(interaction, {
           embeds: [transcriptEmbed],
@@ -740,20 +780,28 @@ async function handleTicketInteraction(interaction) {
               global.logger.error(err);
             }
           }
-          const claimedButtons = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setEmoji(`<:VC_Lock:1468544444113617063>`).setLabel("Chiudi").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("close_ticket_motivo").setEmoji(`<:VC_reason:1478517122929004544>`).setLabel("Chiudi Con Motivo").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("unclaim").setEmoji(`<a:VC_Unlock:1470011538432852108> `).setLabel("Unclaim").setStyle(ButtonStyle.Secondary),);
+          const claimedButtons = new ActionRowBuilder()
+          .addComponents(
+            new ButtonBuilder().setCustomId("close_ticket").setEmoji(`<:VC_Lock:1468544444113617063>`).setLabel("Chiudi").setStyle(ButtonStyle.Danger),
+            new ButtonBuilder().setCustomId("close_ticket_motivo").setEmoji(`<:VC_reason:1478517122929004544>`).setLabel("Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
+            new ButtonBuilder().setCustomId("unclaim").setEmoji(`<a:VC_Unlock:1470011538432852108> `).setLabel("Unclaim").setStyle(ButtonStyle.Secondary),
+          );
           try {
             if (interaction.channel && claimedTicket.messageId) {
               const msg = await interaction.channel.messages.fetch(claimedTicket.messageId).catch(() => null);
               if (!msg) {
-                const fallback = new EmbedBuilder().setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET APERTO__**").setDescription(`<:VC_claim:1478517202016669887> Ticket claimato da <@${interaction.user.id}>`)
+                const fallback = new EmbedBuilder()
+                  .setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET APERTO__**")
+                  .setDescription(`<:VC_claim:1478517202016669887> Ticket claimato da <@${interaction.user.id}>`)
                   .setColor("#6f4e37");
                 await interaction.channel
                   .send({ embeds: [fallback], components: [claimedButtons] })
                   .catch(() => { });
               } else {
-                const embedDaUsare = msg.embeds && msg.embeds[0] ? EmbedBuilder.from(msg.embeds[0]) : new EmbedBuilder().setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET APERTO__**").setDescription(`<:VC_claim:1478517202016669887> Ticket claimato da <@${interaction.user.id}>`,
-                )
-                  .setColor("#6f4e37");
+                const embedDaUsare = msg.embeds && msg.embeds[0] ? EmbedBuilder.from(msg.embeds[0]) : new EmbedBuilder()
+                .setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET APERTO__**")
+                .setDescription(`<:VC_claim:1478517202016669887> Ticket claimato da <@${interaction.user.id}>`,)
+                .setColor("#6f4e37");
                 await msg
                   .edit({ embeds: [embedDaUsare], components: [claimedButtons] })
                   .catch((err) => global.logger.error(err));
@@ -793,7 +841,12 @@ async function handleTicketInteraction(interaction) {
         const unclaimLockKey = await acquireTicketActionLock("claim_state");
         if (!unclaimLockKey) return true;
         try {
-          const ticketButtonsOriginal = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setEmoji(`<:VC_Lock:1468544444113617063>`).setLabel("Chiudi").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("close_ticket_motivo").setEmoji(`<:VC_reason:1478517122929004544>`).setLabel("Chiudi Con Motivo").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("claim_ticket").setEmoji(`<:VC_claim:1478517202016669887>`).setLabel("Claim").setStyle(ButtonStyle.Success),);
+          const ticketButtonsOriginal = new ActionRowBuilder()
+          .addComponents(
+            new ButtonBuilder().setCustomId("close_ticket").setEmoji(`<:VC_Lock:1468544444113617063>`).setLabel("Chiudi").setStyle(ButtonStyle.Danger),
+            new ButtonBuilder().setCustomId("close_ticket_motivo").setEmoji(`<:VC_reason:1478517122929004544>`).setLabel("Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
+            new ButtonBuilder().setCustomId("claim_ticket").setEmoji(`<:VC_claim:1478517202016669887>`).setLabel("Claim").setStyle(ButtonStyle.Success),
+          );
           const ticketDoc = await runtimeFindTicketByChannel(interaction.channel.id);
           if (!ticketDoc) {
             await safeReply(interaction, {
@@ -861,7 +914,10 @@ async function handleTicketInteraction(interaction) {
             if (interaction.channel && unclaimedTicket.messageId) {
               const msg = await interaction.channel.messages.fetch(unclaimedTicket.messageId).catch(() => null);
               if (!msg) {
-                const fallback = new EmbedBuilder().setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET APERTO__**").setDescription("<:VC_claim:1478517202016669887> Ticket non claimato").setColor("#6f4e37");
+                const fallback = new EmbedBuilder()
+                .setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET APERTO__**")
+                .setDescription("<:VC_claim:1478517202016669887> Ticket non claimato")
+                .setColor("#6f4e37");
                 await interaction.channel
                   .send({
                     embeds: [fallback],
@@ -869,7 +925,10 @@ async function handleTicketInteraction(interaction) {
                   })
                   .catch(() => { });
               } else {
-                const embedUsato = msg.embeds && msg.embeds[0] ? EmbedBuilder.from(msg.embeds[0]) : new EmbedBuilder().setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET APERTO__**").setDescription("<:VC_claim:1478517202016669887> Ticket non claimato").setColor("#6f4e37");
+                const embedUsato = msg.embeds && msg.embeds[0] ? EmbedBuilder.from(msg.embeds[0]) : new EmbedBuilder()
+                .setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET APERTO__**")
+                .setDescription("<:VC_claim:1478517202016669887> Ticket non claimato")
+                .setColor("#6f4e37");
                 await msg
                   .edit({
                     embeds: [embedUsato],

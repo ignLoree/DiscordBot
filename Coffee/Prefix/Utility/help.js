@@ -8,14 +8,28 @@ const HELP_EMBED_COLOR = "#6f4e37";
 const ERROR_EMBED_COLOR = "Red";
 const PRIVATE_FLAG = 1 << 6;
 const NO_REPLY_MENTIONS = { repliedUser: false };
-const PAGE_ROLE_IDS=[IDs.roles.Member,IDs.roles.Staff,IDs.roles.HighStaff,IDs.roles.Founder,].filter(Boolean);
-const PAGE_TITLES={[IDs.roles.Member]:"Comandi Utente",[IDs.roles.Founder]:"Comandi Dev",all:"Comandi Disponibili",};
-const CATEGORY_LABELS={utility:"Utility",tts:"TTS",dev:"Dev",};
-const CATEGORY_ORDER=["utility","tts","dev",];
+const PAGE_ROLE_IDS = [IDs.roles.Member, IDs.roles.Staff, IDs.roles.HighStaff, IDs.roles.Founder].filter(Boolean);
+const PAGE_TITLES = {
+  [IDs.roles.Member]: "Comandi Utente",
+  [IDs.roles.Founder]: "Comandi Dev",
+  all: "Comandi Disponibili",
+};
+const CATEGORY_LABELS = { utility: "Utility", tts: "TTS", dev: "Dev" };
+const CATEGORY_ORDER = ["utility", "tts", "dev"];
 const HELP_PAGE_SIZE = 18;
 const MAX_HELP_TEXT_LENGTH = 3900;
-const PREFIX_HELP_DESCRIPTIONS={help:"Mostra tutti i comandi disponibili con il bot.",join:"Fa entrare il bot nel tuo canale vocale.",leave:"Fa uscire il bot dal canale vocale.",voices:"Mostra le voci TTS disponibili.",set:"Impostazioni TTS: autojoin e voce personale.",restart:"Riavvia il bot o ricarica moduli specifici.",};
-const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS={"set.autojoin":"Attiva o disattiva autojoin TTS.","set.voice":"Imposta la lingua TTS personale.",};
+const PREFIX_HELP_DESCRIPTIONS = {
+  help: "Mostra tutti i comandi disponibili con il bot.",
+  join: "Fa entrare il bot nel tuo canale vocale.",
+  leave: "Fa uscire il bot dal canale vocale.",
+  voices: "Mostra le voci TTS disponibili.",
+  set: "Impostazioni TTS: autojoin e voce personale.",
+  restart: "Riavvia il bot o ricarica moduli specifici.",
+};
+const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
+  "set.autojoin": "Attiva o disattiva autojoin TTS.",
+  "set.voice": "Imposta la lingua TTS personale.",
+};
 
 function buildMiniHelpNotFoundEmbed(query) {
   return new EmbedBuilder()
@@ -657,9 +671,17 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
     }
   }
 
-  const snippetLines=collectPrefixExampleLines(command,commandName,prefixBase,subEntries.map((entry) => ({invoke:entry.invoke})),requestedSub,);
+  const snippetLines = collectPrefixExampleLines(
+    command,
+    commandName,
+    prefixBase,
+    subEntries.map((entry) => ({ invoke: entry.invoke })),
+    requestedSub,
+  );
 
-  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle(`Guida comando: ${prefixBase}${commandName}`)
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle(`Guida comando: ${prefixBase}${commandName}`)
     .setDescription(getPrefixDescription(command));
 
   const fields = [];
@@ -677,7 +699,19 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
 }
 
 function getOptionTypeLabel(type) {
-  const labels={1:"Subcommand",2:"Gruppo",3:"String",4:"Integer",5:"Boolean",6:"User",7:"Channel",8:"Role",9:"Mentionable",10:"Number",11:"Attachment",};
+  const labels = {
+    1: "Subcommand",
+    2: "Gruppo",
+    3: "String",
+    4: "Integer",
+    5: "Boolean",
+    6: "User",
+    7: "Channel",
+    8: "Role",
+    9: "Mentionable",
+    10: "Number",
+    11: "Attachment",
+  };
   return labels[type] || "Option";
 }
 

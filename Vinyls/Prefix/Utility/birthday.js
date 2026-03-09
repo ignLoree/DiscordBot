@@ -109,15 +109,18 @@ function buildSavedEmbed(state) {
 }
 
 function buildRegistrationEmbed(user, state, isEdit = false) {
-  const ageLine=state.showAge&&Number.isInteger(state.age)?`Età impostata: **${state.age}anni**`
-      : "Età impostata con privacy nascosta";
+  const ageLine = state.showAge && Number.isInteger(state.age)
+    ? `Età impostata: **${state.age} anni**`
+    : "Età impostata con privacy nascosta";
 
   const title = isEdit ? "Compleanno aggiornato" : "Compleanno registrato";
-  const description=isEdit?[`${user}hai aggiornato la tua data di nascita.`,
+  const description = isEdit
+    ? [
+        `${user} hai aggiornato la tua data di nascita.`,
         "Ricorderò a tutti il giorno del tuo compleanno.",
       ].join("\n")
     : [
-        `${user}hai impostato la tua data di nascita.`,
+        `${user} hai impostato la tua data di nascita.`,
         "Ricorderò a tutti il giorno del tuo compleanno.",
       ].join("\n");
 
@@ -421,7 +424,17 @@ async function handleRemoveBirthday(message) {
 
   const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(yesId).setLabel("Conferma rimozione").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId(noId).setLabel("Annulla").setStyle(ButtonStyle.Secondary),);
 
-  const prompt=await safeMessageReply(message,{embeds:[new EmbedBuilder().setColor(BRAND_COLOR).setTitle("Rimuovi profilo compleanno").setDescription("Confermando, il tuo compleanno verrà rimosso dal database e non sarà più annunciato in chat.",).setFooter({text:"Questa azione è reversibile solo impostando di nuovo il profilo con +bh set."}),],components:[row],allowedMentions:{repliedUser:false},});
+  const prompt = await safeMessageReply(message, {
+    embeds: [
+      new EmbedBuilder()
+        .setColor(BRAND_COLOR)
+        .setTitle("Rimuovi profilo compleanno")
+        .setDescription("Confermando, il tuo compleanno verrà rimosso dal database e non sarà più annunciato in chat.")
+        .setFooter({ text: "Questa azione è reversibile solo impostando di nuovo il profilo con +bh set." }),
+    ],
+    components: [row],
+    allowedMentions: { repliedUser: false },
+  });
   if (!prompt) return;
 
   let decided = false;

@@ -54,7 +54,9 @@ module.exports = {
       .setDescription(
         `Elenco utenti che hanno disattivato una o più categorie di DM.\n\n${chunks[0]}`,
       )
-      .setFooter({ text: "Legenda: «Tutto disattivato» = nessun DM; altrimenti solo le categorie elencate sono bloccate." });
+      .setFooter({
+        text: "Legenda: «Tutto disattivato» = nessun DM; altrimenti solo le categorie elencate sono bloccate.",
+      });
 
     await safeMessageReply(message, {
       embeds: [embed],

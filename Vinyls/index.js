@@ -145,6 +145,7 @@ initializeCommandCollections(client, { includeSnipes: true });
         "[LOGIN] Error while logging in. Check if your token is correct or double check your also using the correct intents.",
         error,
       );
+      process.exit(1);
     });
   } catch (err) {
     if (global.logger && typeof global.logger.error === "function") {

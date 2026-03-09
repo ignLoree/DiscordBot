@@ -541,10 +541,13 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
 
   const user = interaction.user;
   const applicationNumber = nextApplicationNumber(type);
-  const embed = new EmbedBuilder().setColor("#3498DB").setAuthor({ name: user.username, iconURL: user.displayAvatarURL({ size: 128 }), }).setTitle(`<:VC_Poll:1448695754972729436> CANDIDATURA ${cfg.label.toUpperCase()}(#${applicationNumber})`)
+  const embed = new EmbedBuilder()
+    .setColor("#3498DB")
+    .setAuthor({ name: user.username, iconURL: user.displayAvatarURL({ size: 128 }) })
+    .setTitle(`<:VC_Poll:1448695754972729436> CANDIDATURA ${cfg.label.toUpperCase()} (#${applicationNumber})`)
     .setDescription(formatApplicationDescription(type, state.answers))
     .setFooter({
-      text: `User ID:${user.id}\u2022${new Date().toLocaleString("it-IT")}`,
+      text: `User ID: ${user.id}\u2022${new Date().toLocaleString("it-IT")}`,
     })
     .setTimestamp();
 

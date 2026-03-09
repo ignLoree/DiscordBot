@@ -27,7 +27,7 @@ const defaultPool = [
   },
   {
     title: "Forum e discussioni",
-    description: `Se hai un tema interessante,aprilo nel forum del server(${channelMention(IDs.channels.forum, "canale forum")}):aiuta a tenere la community attiva e ordinata.`,
+    description: `Se hai un tema interessante, aprilo nel forum del server (${channelMention(IDs.channels.forum, "canale forum")}): aiuta a tenere la community attiva e ordinata.`,
   },
   {
     title: "Livelli e progressione",
@@ -36,7 +36,7 @@ const defaultPool = [
   },
   {
     title: "Ticket e supporto",
-    description: `Se ti serve supporto,usa i ticket in ${channelMention(IDs.channels.ticket, "canale ticket")}:è il modo più veloce per ricevere assistenza dallo staff.`,
+    description: `Se ti serve supporto, usa i ticket in ${channelMention(IDs.channels.ticket, "canale ticket")}: è il modo più veloce per ricevere assistenza dallo staff.`,
   },
   {
     title: "Gestione DM",
@@ -55,51 +55,95 @@ const defaultPool = [
   },
   {
     title: "Canale suggerimenti",
-    description: `Hai un 'idea per migliorare il server? Scrivila in ${channelMention(IDs.channels.suggestions, "canale suggerimenti")}.`,
-  }, { title: "News e aggiornamenti", description: `Controlla ${channelMention(IDs.channels.news, "canale news")}per novità,cambi e annunci importanti del server.`, }, { title: "Ruoli colori e badge", description: `Dai un 'occhiata a ${channelMention(IDs.channels.ruoliColori, "canale ruoli")}per colori e vantaggi sbloccabili.`, }, {
-    title: "Quote della community", description: `Se trovi un messaggio memorabile,usa i comandi quote:poi lo trovi in ${channelMention(IDs.channels.quotes, "canale quotes")}.`,
+    description: `Hai un'idea per migliorare il server? Scrivila in ${channelMention(IDs.channels.suggestions, "canale suggerimenti")}.`,
+  },
+  {
+    title: "News e aggiornamenti",
+    description: `Controlla ${channelMention(IDs.channels.news, "canale news")} per novità, cambi e annunci importanti del server.`,
+  },
+  {
+    title: "Ruoli colori e badge",
+    description: `Dai un'occhiata a ${channelMention(IDs.channels.ruoliColori, "canale ruoli")} per colori e vantaggi sbloccabili.`,
+  },
+  {
+    title: "Quote della community",
+    description: `Se trovi un messaggio memorabile, usa i comandi quote: poi lo trovi in ${channelMention(IDs.channels.quotes, "canale quotes")}.`,
   },
   {
     title: "Verifica e onboarding",
-    description: `Se inviti amici,ricordagli di completare la verifica in ${channelMention(IDs.channels.verify, "canale verify")}.`,
+    description: `Se inviti amici, ricordagli di completare la verifica in ${channelMention(IDs.channels.verify, "canale verify")}.`,
   },
   {
     title: "Eventi e sondaggi",
-    description: `Partecipa a eventi e poll in ${channelMention(IDs.channels.polls, "canale polls")}:aiuti la comunità e resti aggiornato.`,
+    description: `Partecipa a eventi e poll in ${channelMention(IDs.channels.polls, "canale polls")}: aiuti la comunità e resti aggiornato.`,
   },
   {
     title: "Contatore e mini-attività",
-    description: `Per attività leggere passa da ${channelMention(IDs.channels.counting, "canale counting")}e dai un 'occhiata ai canali community.`,
-  }, { title: "Media e contenuti", description: `Passa da ${channelMention(IDs.channels.media, "canale media")}per condividere contenuti interessanti in linea con il regolamento.`, }, {
-    title: "Canale comandi", description: `Per usare i comandi del bot in modo ordinato usa ${channelMention(IDs.channels.commands, "canale comandi")}.`,
+    description: `Per attività leggere passa da ${channelMention(IDs.channels.counting, "canale counting")} e dai un'occhiata ai canali community.`,
+  },
+  {
+    title: "Media e contenuti",
+    description: `Passa da ${channelMention(IDs.channels.media, "canale media")} per condividere contenuti interessanti in linea con il regolamento.`,
+  },
+  {
+    title: "Canale comandi",
+    description: `Per usare i comandi del bot in modo ordinato usa ${channelMention(IDs.channels.commands, "canale comandi")}.`,
   },
   {
     title: "Top settimanale",
-    description: `Controlla ${channelMention(IDs.channels.topWeeklyUser, "top weekly")}per vedere chi sta spingendo di più questa settimana.`,
+    description: `Controlla ${channelMention(IDs.channels.topWeeklyUser, "top weekly")} per vedere chi sta spingendo di più questa settimana.`,
   },
   {
     title: "Canale role info",
-    description: `In ${channelMention(IDs.channels.info, "canale info")}trovi molte informazioni utili su ruoli,vantaggi e funzioni del server.`,
+    description: `In ${channelMention(IDs.channels.info, "canale info")} trovi molte informazioni utili su ruoli, vantaggi e funzioni del server.`,
   },
   {
     title: "Canale partnership",
-    description: `Se ti interessano le collaborazioni,tieni d 'occhio ${channelMention(IDs.channels.partnerships, "canale partnerships")} e le regole dedicate.`,
-  }, { title: "Supporter e badge", description: `Molti badge e ruoli speciali hanno vantaggi concreti: scopri i requisiti e punta a sbloccarne almeno uno.`, }, { title: "Classifica personale", description: "Usa +rank per controllare rapidamente il tuo stato e pianificare il prossimo obiettivo.", }, { title: "Classifica globale", description: "Con +classifica alltime puoi vedere chi è più costante nel lungo periodo.", }, { title: "Obiettivo settimanale", description: "Impostati un mini-obiettivo: più costanza in chat, più presenza in vocale o più partecipazione ai poll.", }, { title: "Sfrutta il forum", description: `Nel ${channelMention(IDs.channels.forum, "forum")}puoi creare discussioni ordinate invece di disperdere messaggi in chat.`, }, {
-    title: "Canale quote", description: `Le quote migliori finiscono in ${channelMention(IDs.channels.quotes, "canale quotes")}:ottimo per salvare momenti top della community.`,
+    description: `Se ti interessano le collaborazioni, tieni d'occhio ${channelMention(IDs.channels.partnerships, "canale partnerships")} e le regole dedicate.`,
+  },
+  {
+    title: "Supporter e badge",
+    description: `Molti badge e ruoli speciali hanno vantaggi concreti: scopri i requisiti e punta a sbloccarne almeno uno.`,
+  },
+  {
+    title: "Classifica personale",
+    description: "Usa +rank per controllare rapidamente il tuo stato e pianificare il prossimo obiettivo.",
+  },
+  {
+    title: "Classifica globale",
+    description: "Con +classifica alltime puoi vedere chi è più costante nel lungo periodo.",
+  },
+  {
+    title: "Obiettivo settimanale",
+    description: "Impostati un mini-obiettivo: più costanza in chat, più presenza in vocale o più partecipazione ai poll.",
+  },
+  {
+    title: "Sfrutta il forum",
+    description: `Nel ${channelMention(IDs.channels.forum, "forum")} puoi creare discussioni ordinate invece di disperdere messaggi in chat.`,
+  },
+  {
+    title: "Canale quote",
+    description: `Le quote migliori finiscono in ${channelMention(IDs.channels.quotes, "canale quotes")}: ottimo per salvare momenti top della community.`,
   },
   {
     title: "Canale suggestions",
-    description: `Quando proponi un 'idea in ${channelMention(IDs.channels.suggestions, "suggestions")}, spiega sempre anche il motivo e il vantaggio.`,
-  }, { title: "Canale polls", description: `Votare nei poll in ${channelMention(IDs.channels.polls, "polls")}aiuta a prendere decisioni più utili per tutti.`, }, {
-    title: "Canale news", description: `Controlla periodicamente ${channelMention(IDs.channels.news, "news")}per non perderti novità su eventi,regole e aggiornamenti.`,
+    description: `Quando proponi un'idea in ${channelMention(IDs.channels.suggestions, "suggestions")}, spiega sempre anche il motivo e il vantaggio.`,
+  },
+  {
+    title: "Canale polls",
+    description: `Votare nei poll in ${channelMention(IDs.channels.polls, "polls")} aiuta a prendere decisioni più utili per tutti.`,
+  },
+  {
+    title: "Canale news",
+    description: `Controlla periodicamente ${channelMention(IDs.channels.news, "news")} per non perderti novità su eventi, regole e aggiornamenti.`,
   },
   {
     title: "Canale ruoli",
-    description: `In ${channelMention(IDs.channels.ruoliColori, "canale ruoli")}puoi personalizzare il profilo e sbloccare opzioni interessanti.`,
+    description: `In ${channelMention(IDs.channels.ruoliColori, "canale ruoli")} puoi personalizzare il profilo e sbloccare opzioni interessanti.`,
   },
   {
     title: "Canale counting",
-    description: `In ${channelMention(IDs.channels.counting, "counting")}conta con attenzione:è una piccola attività ma tiene viva la community.`,
+    description: `In ${channelMention(IDs.channels.counting, "counting")} conta con attenzione: è una piccola attività ma tiene viva la community.`,
   },
   {
     title: "Comando help",
@@ -175,7 +219,7 @@ const defaultPool = [
   },
   {
     title: "Candidati con criterio",
-    description: `Prima di candidarti,leggi con attenzione le info in ${channelMention(IDs.channels.candidatureStaff, "canale candidature")}e prepara una richiesta chiara.`,
+    description: `Prima di candidarti, leggi con attenzione le info in ${channelMention(IDs.channels.candidatureStaff, "canale candidature")} e prepara una richiesta chiara.`,
   },
   {
     title: "Percorso staff",
@@ -183,7 +227,7 @@ const defaultPool = [
   },
   {
     title: "Partner Manager",
-    description: `Se ti interessa il percorso Partner Manager,consulta indicazioni e canali dedicati prima di candidarti.`,
+    description: `Se ti interessa il percorso Partner Manager, consulta indicazioni e canali dedicati prima di candidarti.`,
   },
   {
     title: "Candidatura efficace",
@@ -195,7 +239,7 @@ const defaultPool = [
   },
   {
     title: "Staff pagato: informazioni",
-    description: `Se ti interessa il percorso staff pagato,consulta ${channelMention(IDs.channels.staffPagato, "canale staff pagato")}per dettagli e requisiti.`,
+    description: `Se ti interessa il percorso staff pagato, consulta ${channelMention(IDs.channels.staffPagato, "canale staff pagato")} per dettagli e requisiti.`,
   },
   {
     title: "Staff pagato: requisiti",
@@ -210,65 +254,67 @@ const defaultPool = [
     description: "Se vuoi proporti per percorsi pagati, prepara una candidatura ordinata e basata su contributi reali.",
   },
 ];
-const MASSIVE_REMINDER_TOPICS = [{
-  title: "Panoramica server", line: `Resta aggiornato passando da ${channelMention(IDs.channels.info, "canale info")}e ${channelMention(IDs.channels.news, "canale news")}.`,
-},
-{
-  title: "Comandi bot",
-  line: `Per usare bene il bot parti da+help e prova i comandi in ${channelMention(IDs.channels.commands, "canale comandi")}.`,
-},
-{
-  title: "Crescita livelli",
-  line: "Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.",
-},
-{
-  title: "Forum community",
-  line: `Nel forum ${channelMention(IDs.channels.forum, "forum")}puoi aprire discussioni ordinate e utili.`,
-},
-{
-  title: "Suggerimenti utili",
-  line: `Le idee più chiare in ${channelMention(IDs.channels.suggestions, "canale suggerimenti")}vengono valutate meglio.`,
-},
-{
-  title: "Ticket supporto",
-  line: `Per problemi o dubbi usa i ticket in ${channelMention(IDs.channels.ticket, "canale ticket")}.`,
-},
-{
-  title: "News e avvisi",
-  line: `Controlla ${channelMention(IDs.channels.news, "canale news")}per non perdere novità importanti.`,
-},
-{
-  title: "Quote e contenuti",
-  line: `Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in ${channelMention(IDs.channels.quotes, "canale quotes")}.`,
-},
-{
-  title: "Poll ed eventi",
-  line: `Partecipare in ${channelMention(IDs.channels.polls, "canale polls")}aiuta il server a scegliere meglio.`,
-},
-{
-  title: "Counting e attività leggere",
-  line: `Un passaggio in ${channelMention(IDs.channels.counting, "canale counting")}mantiene il server vivo anche nei momenti lenti.`,
-},
-{
-  title: "Ruoli e colori",
-  line: `In ${channelMention(IDs.channels.ruoliColori, "canale ruoli")}trovi personalizzazione e vantaggi.`,
-},
-{
-  title: "Media e condivisioni",
-  line: `In ${channelMention(IDs.channels.media, "canale media")}punta sempre su contenuti puliti e utili.`,
-},
-{
-  title: "Classifiche bot",
-  line: "Usa +rank, +classifica weekly e +classifica alltime per tracciare la tua crescita.",
-},
-{
-  title: "Candidature",
-  line: `Se vuoi candidarti, prepara bene i dettagli in ${channelMention(IDs.channels.candidatureStaff, "canale candidature")}.`,
-},
-{
-  title: "Staff pagato",
-  line: `Per il percorso staff pagato leggi i requisiti in ${channelMention(IDs.channels.staffPagato, "canale staff pagato")}.`,
-},
+const MASSIVE_REMINDER_TOPICS = [
+  {
+    title: "Panoramica server",
+    line: `Resta aggiornato passando da ${channelMention(IDs.channels.info, "canale info")} e ${channelMention(IDs.channels.news, "canale news")}.`,
+  },
+  {
+    title: "Comandi bot",
+    line: `Per usare bene il bot parti da +help e prova i comandi in ${channelMention(IDs.channels.commands, "canale comandi")}.`,
+  },
+  {
+    title: "Crescita livelli",
+    line: "Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.",
+  },
+  {
+    title: "Forum community",
+    line: `Nel forum ${channelMention(IDs.channels.forum, "forum")} puoi aprire discussioni ordinate e utili.`,
+  },
+  {
+    title: "Suggerimenti utili",
+    line: `Le idee più chiare in ${channelMention(IDs.channels.suggestions, "canale suggerimenti")} vengono valutate meglio.`,
+  },
+  {
+    title: "Ticket supporto",
+    line: `Per problemi o dubbi usa i ticket in ${channelMention(IDs.channels.ticket, "canale ticket")}.`,
+  },
+  {
+    title: "News e avvisi",
+    line: `Controlla ${channelMention(IDs.channels.news, "canale news")} per non perdere novità importanti.`,
+  },
+  {
+    title: "Quote e contenuti",
+    line: `Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in ${channelMention(IDs.channels.quotes, "canale quotes")}.`,
+  },
+  {
+    title: "Poll ed eventi",
+    line: `Partecipare in ${channelMention(IDs.channels.polls, "canale polls")} aiuta il server a scegliere meglio.`,
+  },
+  {
+    title: "Counting e attività leggere",
+    line: `Un passaggio in ${channelMention(IDs.channels.counting, "canale counting")} mantiene il server vivo anche nei momenti lenti.`,
+  },
+  {
+    title: "Ruoli e colori",
+    line: `In ${channelMention(IDs.channels.ruoliColori, "canale ruoli")} trovi personalizzazione e vantaggi.`,
+  },
+  {
+    title: "Media e condivisioni",
+    line: `In ${channelMention(IDs.channels.media, "canale media")} punta sempre su contenuti puliti e utili.`,
+  },
+  {
+    title: "Classifiche bot",
+    line: "Usa +rank, +classifica weekly e +classifica alltime per tracciare la tua crescita.",
+  },
+  {
+    title: "Candidature",
+    line: `Se vuoi candidarti, prepara bene i dettagli in ${channelMention(IDs.channels.candidatureStaff, "canale candidature")}.`,
+  },
+  {
+    title: "Staff pagato",
+    line: `Per il percorso staff pagato leggi i requisiti in ${channelMention(IDs.channels.staffPagato, "canale staff pagato")}.`,
+  },
 ];
 const MASSIVE_REMINDER_ANGLES = ["Obiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.", "Suggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.", "Focus utile: qualità prima della quantità nelle interazioni.", "Promemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.", "Consiglio: una presenza costante vale più di attività casuale concentrata in un giorno.", "Tip operativo: controlla periodicamente aggiornamenti e funzioni nuove.", "Azione consigliata: contribuisci con un messaggio utile o un feedback concreto.",];
 const MASSIVE_REMINDER_CLOSINGS = ["Se vuoi, questa settimana prova a seguire questo punto per primo.", "Piccoli miglioramenti continui portano risultati reali.", "Contribuire in modo ordinato aiuta davvero tutta la community.", "Un uso corretto di canali e comandi rende tutto più semplice.", "Anche un solo contributo utile al giorno fa differenza.",];

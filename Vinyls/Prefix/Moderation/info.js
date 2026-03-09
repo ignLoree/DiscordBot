@@ -146,35 +146,43 @@ module.exports = {
     const createdTs = Math.floor(user.createdTimestamp / 1000);
     const joinedTs = Math.floor((member.joinedTimestamp || Date.now()) / 1000);
 
-    const embed=new EmbedBuilder().setColor(member.displayHexColor&&member.displayHexColor!=="#000000"?member.displayHexColor:"#6f4e37").setTitle(`Who is ${member.displayName}?`)
+    const embed = new EmbedBuilder()
+      .setColor(member.displayHexColor && member.displayHexColor !== "#000000" ? member.displayHexColor : "#6f4e37")
+      .setTitle(`Who is ${member.displayName}?`)
       .setThumbnail(user.displayAvatarURL({ size: 256 }))
       .setDescription(
         [
           "**General Informations:**",
-          `<:profile:1461732907508039834>**Name:**${member.displayName}`,
-          `<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937>ID:\`${member.id}\``,`<:creation:1461732905016492220> **Creation:** <t:${createdTs}:R>`,
-          `📅**Join:**<t:${joinedTs}:R>`,
-          `🎨**Color:**\`${member.displayHexColor}\``,`🎮 **Discord Badges:** ${badges.length?badges.join(", "):"none"}`,
+          `<:profile:1461732907508039834> **Name:** ${member.displayName}`,
+          `<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937> ID: \`${member.id}\``,
+          `<:creation:1461732905016492220> **Creation:** <t:${createdTs}:R>`,
+          `📅 **Join:** <t:${joinedTs}:R>`,
+          `🎨 **Color:** \`${member.displayHexColor}\``,
+          `🎮 **Discord Badges:** ${badges.length ? badges.join(", ") : "none"}`,
           "",
           "**Bot Informations:**",
-          `🚨**Suspicious?**${boolIcon(auto.suspicious)}`,
-          `<:noDM:1463645183840354517>**Warn Points:**\`${auto.warnPoints}\``,`<:alarm:1461725841451909183> **Active Strikes:** \`${auto.activeStrikes}\``,`🌡️ **Current Heat:** \`${Number(auto.heat||0).toFixed(1)}%\``,`📌 **Whitelisted?**`,`<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937> Spam: ${boolIcon(auto.whitelist.spam)}`,
-          `<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937>Ping:${boolIcon(auto.whitelist.ping)}`,
-          `<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937>Advertising:${boolIcon(auto.whitelist.advertising)}`,
-          `<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937>Quarantine:${boolIcon(antiNukeExempt)}`,
-          `<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937>Public Roles:${boolIcon(antiNukeExempt)}`,
+          `🚨 **Suspicious?** ${boolIcon(auto.suspicious)}`,
+          `<:noDM:1463645183840354517> **Warn Points:** \`${auto.warnPoints}\``,
+          `<:alarm:1461725841451909183> **Active Strikes:** \`${auto.activeStrikes}\``,
+          `🌡️ **Current Heat:** \`${Number(auto.heat || 0).toFixed(1)}%\``,
+          `📌 **Whitelisted?**`,
+          `<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937> Spam: ${boolIcon(auto.whitelist.spam)}`,
+          `<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937> Ping: ${boolIcon(auto.whitelist.ping)}`,
+          `<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937> Advertising: ${boolIcon(auto.whitelist.advertising)}`,
+          `<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937> Quarantine: ${boolIcon(antiNukeExempt)}`,
+          `<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937> Public Roles: ${boolIcon(antiNukeExempt)}`,
           "",
           "**Dangerous User:**",
-          `💥This user has dangerous permissions!${boolIcon(dgPerms.length>0)}`,
+          `💥 This user has dangerous permissions! ${boolIcon(dgPerms.length > 0)}`,
           dgPerms.length ? `<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937>${dgPerms.join("  <:VC_right_arrow:1473441155055096081>  ")}` : "<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937> none",
           "",
           "**Bot Permissions:**",
-          `🤖This user has Bot permissions ${boolIcon(wkPerms.length>0)}`,
+          `🤖 This user has Bot permissions ${boolIcon(wkPerms.length > 0)}`,
           wkPerms.length ? `<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937>${wkPerms.join("  <:VC_right_arrow:1473441155055096081>  ")}` : "<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937> none",
           "",
           "**Account Accessories:**",
-          `☷**Roles:**${rolesPreview(member)}`,
-          `🪝**Webhooks:**${boolIcon([IDs.bots.Wick,IDs.bots.Dyno,IDs.bots.Xenon].includes(member.id),)}`,
+          `☷ **Roles:** ${rolesPreview(member)}`,
+          `🪝 **Webhooks:** ${boolIcon([IDs.bots.Wick, IDs.bots.Dyno, IDs.bots.Xenon].includes(member.id))}`,
         ].join("\n"),
       );
 
@@ -184,7 +192,7 @@ module.exports = {
 
     const buildPageEmbed=(pageIndex) => {if(pageIndex<=0)return embed;const strikePageIndex=pageIndex-1;const strikeRows=(strikePages[strikePageIndex]||[]).map((item,i) => `\`${strikePageIndex*5+i+1}\` ${item}`,
       );
-      const strikeEmbed=new EmbedBuilder(embed.data).setDescription(["**Active Strikes:**",...(strikeRows.length?strikeRows:["Nessuno strike disponibile."]),"",`Page:${pageIndex+1}/${totalPages}`,
+      const strikeEmbed=new EmbedBuilder(embed.data).setDescription(["**Active Strikes:**",...(strikeRows.length?strikeRows:["Nessuno strike disponibile."]),"",`Page: ${pageIndex + 1}/${totalPages}`,
           ].join("\n"),
         );
       return strikeEmbed;

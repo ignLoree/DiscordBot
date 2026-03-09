@@ -125,7 +125,11 @@ async function createCustomRoleGrantRequest({
   if (!guild || !channel || !targetMember || !requesterMember || !role)
     return { ok: false };
 
-  const waitingEmbed = new EmbedBuilder().setColor("#f1c40f").setTitle("<a:VC_pixeltime:1470796283320209600> In attesa di conferma").setDescription(`<a:VC_Timer:1462779065625739344> Sto aspettando che ${targetMember} accetti di ricevere il ruolo**${role.name}**.`,
+  const waitingEmbed = new EmbedBuilder()
+    .setColor("#f1c40f")
+    .setTitle("<a:VC_pixeltime:1470796283320209600> In attesa di conferma")
+    .setDescription(
+      `<a:VC_Timer:1462779065625739344> Sto aspettando che ${targetMember} accetti di ricevere il ruolo **${role.name}**.`,
   );
   const promptMsg = await channel.send({ embeds: [waitingEmbed] }).catch(() => null);
   if (!promptMsg) return { ok: false };
@@ -139,7 +143,12 @@ async function createCustomRoleGrantRequest({
       .setEmoji("<:vegax:1443934876440068179>")
       .setStyle(ButtonStyle.Danger),
   );
-  const dmEmbed = new EmbedBuilder().setColor("#6f4e37").setTitle("<:PinkQuestionMark:1471892611026391306> Richiesta ruolo personalizzato").setDescription([`${requesterMember} vuole aggiungerti il ruolo**${role.name}** nel server. Accetti?`,]);
+  const dmEmbed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("<:PinkQuestionMark:1471892611026391306> Richiesta ruolo personalizzato")
+    .setDescription(
+      `${requesterMember} vuole aggiungerti il ruolo **${role.name}** nel server. Accetti?`,
+    );
 
   const dmSent = await targetMember.send({ embeds: [dmEmbed], components: [dmRow] }).catch(() => null);
   if (!dmSent) {
@@ -287,7 +296,11 @@ async function handleRoleActionButton(interaction) {
       userId: ownerId,
     }).catch(() => { });
 
-    const deletedEmbed = new EmbedBuilder().setColor("#e74c3c").setTitle("<:attentionfromvega:1443651874032062505> Ruolo eliminato").setDescription(`<:success:1461731530333229226> Il ruolo **${roleName}**è stato cancellato con successo.`,
+    const deletedEmbed = new EmbedBuilder()
+      .setColor("#e74c3c")
+      .setTitle("<:attentionfromvega:1443651874032062505> Ruolo eliminato")
+      .setDescription(
+        `<:success:1461731530333229226> Il ruolo **${roleName}** è stato cancellato con successo.`,
     );
 
     const updated = await interaction.update({ embeds: [deletedEmbed], components: [] }).then(() => true).catch(() => false);

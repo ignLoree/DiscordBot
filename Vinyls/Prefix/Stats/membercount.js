@@ -9,7 +9,11 @@ module.exports = {
     const guild = message.guild;
     const totalMembers = guild.memberCount;
 
-    const embed=new EmbedBuilder().setColor("#6f4e37").addFields({name:`**<:member_role_icon:1330530086792728618> Members**`,value:`${totalMembers}`,
+    const embed = new EmbedBuilder()
+      .setColor("#6f4e37")
+      .addFields({
+        name: `**<:member_role_icon:1330530086792728618> Members**`,
+        value: `${totalMembers}`,
       })
       .setTimestamp();
 

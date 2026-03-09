@@ -59,7 +59,7 @@ const reminderPool = [
       .setColor("#6f4e37")
       .setTitle("<:VC_bump:1330185435401424896> Recensiscici su DISBOARD!")
       .setDescription([
-        `<:VC_LevelUp2:1443701876892762243> Scrivi la tua recensione e fai brillare Vinili & Caffè! Dopo aver recensito apri un <#1442569095068254219> \`Terza Categoria\` e ricevi **5 livelli** come premio!`,
+        `<:VC_LevelUp2:1443701876892762243> Scrivi la tua recensione e fai brillare Vinili & Caffè! Dopo aver recensito, apri un <#1442569095068254219> \`Terza Categoria\` e ricevi **5 livelli** come premio!`,
         "<:VC_Link:1448688587133685895> Lascia la tua recensione qui: https://disboard.org/it/server/1329080093599076474",
       ].join("\n")),
   () =>

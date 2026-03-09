@@ -141,7 +141,18 @@ module.exports = {
       const requestedAt = new Date().toISOString();
 
       if (scope === "full") {
-        const notifyMessage=await safeMessageReply(message,{embeds:[new EmbedBuilder().setColor("#6f4e37").setDescription(isFullBoth?"<:attentionfromvega:1443651874032062505> Riavvio **entrambi i bot** richiesto. Ti avviso qui quando è completato.":"<:attentionfromvega:1443651874032062505> Riavvio richiesto. Ti avviso qui quando è completato.",),],allowedMentions:{repliedUser:false},});
+        const notifyMessage = await safeMessageReply(message, {
+          embeds: [
+            new EmbedBuilder()
+              .setColor("#6f4e37")
+              .setDescription(
+                isFullBoth
+                  ? "<:attentionfromvega:1443651874032062505> Riavvio **entrambi i bot** richiesto. Ti avviso qui quando è completato."
+                  : "<:attentionfromvega:1443651874032062505> Riavvio richiesto. Ti avviso qui quando è completato.",
+              ),
+          ],
+          allowedMentions: { repliedUser: false },
+        });
 
         pullLatest();
 
@@ -204,7 +215,12 @@ module.exports = {
       await client.reloadScope(scope);
       const elapsed = Math.max(1, Math.round((Date.now() - start) / 1000));
 
-      const doneMsg=await safeMessageReply(message,{embeds:[new EmbedBuilder().setColor("#6f4e37").setDescription(`<:vegacheckmark:1443666279058772028> Reload \`${scope}\` completato in **${elapsed}s**.`,
+      const doneMsg = await safeMessageReply(message, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor("#6f4e37")
+            .setDescription(
+              `<:vegacheckmark:1443666279058772028> Reload \`${scope}\` completato in **${elapsed}s**.`,
             ),
         ],
         allowedMentions: { repliedUser: false },
@@ -217,7 +233,14 @@ module.exports = {
       doneCleanupTimer.unref?.();
     } catch (error) {
       global.logger.error(error);
-      const failMsg=await safeMessageReply(message,{embeds:[new EmbedBuilder().setColor("Red").setDescription("<:vegax:1443934876440068179> Errore durante restart/reload.",),],allowedMentions:{repliedUser:false},});
+      const failMsg = await safeMessageReply(message, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor("Red")
+            .setDescription("<:vegax:1443934876440068179> Errore durante restart/reload."),
+        ],
+        allowedMentions: { repliedUser: false },
+      });
 
       const failCleanupTimer=setTimeout(() => {
         message.delete().catch(() => {});

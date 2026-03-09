@@ -489,7 +489,11 @@ async function resolveModLogChannel(guild) {
 async function sendJoinRaidLog(guild, title, lines, color = "#ED4245") {
   const channel = await resolveModLogChannel(guild);
   if (!channel?.isTextBased?.()) return;
-  const embed = new EmbedBuilder().setColor(color).setTitle(title).setDescription(lines.filter(Boolean).join("\n")).setTimestamp();
+  const embed = new EmbedBuilder()
+    .setColor(color)
+    .setTitle(title)
+    .setDescription(lines.filter(Boolean).join("\n"))
+    .setTimestamp();
   await channel
     .send({
       content: HIGH_STAFF_MENTION || undefined,
@@ -517,12 +521,14 @@ async function warnRaidRoles(guild, contentLines) {
 
 async function sendPunishDm(member, action, reasons) {
   const readableAction = action === "ban" ? "banned" : action === "kick" ? "kicked" : action === "timeout" ? "timed out" : "flagged";
-  const embed = new EmbedBuilder().setColor("#6f4e37").setTitle(`<a:VC_Alert:1448670089670037675> **You have been ${readableAction}in ${member.guild.name}!**`)
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle(`<a:VC_Alert:1448670089670037675> **You have been ${readableAction} in ${member.guild.name}!**`)
     .setDescription(
       [
-        `<:VC_reason:1478517122929004544> **Member:**${member.user}[\`${member.user.id}\`]`,
-        `<:VC_reason:1478517122929004544> **Motivo:**Protezione raid attivata.`,
-        `<a:VC_Alert:1448670089670037675> **Flag:**${reasons.map((x) => x.label).join(", ") || "N/A"}`,
+        `<:VC_reason:1478517122929004544> **Member:** ${member.user}[\`${member.user.id}\`]`,
+        `<:VC_reason:1478517122929004544> **Motivo:** Protezione raid attivata.`,
+        `<a:VC_Alert:1448670089670037675> **Flag:** ${reasons.map((x) => x.label).join(", ") || "N/A"}`,
       ].join("\n"),
     );
   try {

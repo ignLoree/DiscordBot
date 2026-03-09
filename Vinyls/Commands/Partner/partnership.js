@@ -24,10 +24,16 @@ module.exports = {
       return;
     }
 
-    const modal = new ModalBuilder().setCustomId(`partnershipModal_cmd_${interaction.user.id}_${manager.id}`)
+    const modal = new ModalBuilder()
+      .setCustomId(`partnershipModal_cmd_${interaction.user.id}_${manager.id}`)
       .setTitle("Invia Partnership");
 
-    const descriptionInput = new TextInputBuilder().setCustomId("serverDescription").setLabel("Descrizione del server").setStyle(TextInputStyle.Paragraph).setPlaceholder("Inserisci qui la descrizione del server...").setRequired(true);
+    const descriptionInput = new TextInputBuilder()
+      .setCustomId("serverDescription")
+      .setLabel("Descrizione del server")
+      .setStyle(TextInputStyle.Paragraph)
+      .setPlaceholder("Inserisci qui la descrizione del server...")
+      .setRequired(true);
 
     modal.addComponents(new ActionRowBuilder().addComponents(descriptionInput));
 

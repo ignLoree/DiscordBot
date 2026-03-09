@@ -172,7 +172,10 @@ async function sendDeleteLog(message) {
     );
   }
 
-  const embed=new EmbedBuilder().setColor("#ED4245").setTitle("Message Deleted").setDescription(lines.join("\n"));
+  const embed = new EmbedBuilder()
+    .setColor("#ED4245")
+    .setTitle("Message Deleted")
+    .setDescription(lines.join("\n"));
 
   const preview = firstImageAttachment(message);
   if (preview?.url) {

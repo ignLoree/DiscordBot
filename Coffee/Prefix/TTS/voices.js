@@ -17,7 +17,16 @@ module.exports = {
       chunks.push(codes.slice(i, i + 24).map((code) => `\`${code}\``).join(", "));
     }
 
-    const embed=new EmbedBuilder().setColor("#6f4e37").setAuthor({name:message.author?.username||"Utente",iconURL:message.author?.displayAvatarURL?.()||null,}).setTitle("TTS Bot Voices | Mode: `gTTS`").setDescription(["**Currently supported voices**",chunks.join("\n"),"","**Current voice used**",`\`${current}\``,].join("\n"),);
+    const embed = new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setAuthor({
+        name: message.author?.username || "Utente",
+        iconURL: message.author?.displayAvatarURL?.() || null,
+      })
+      .setTitle("TTS Bot Voices | Mode: `gTTS`")
+      .setDescription(
+        ["**Currently supported voices**", chunks.join("\n"), "", "**Current voice used**", `\`${current}\``].join("\n"),
+      );
 
     await safeMessageReply(message, { embeds: [embed] });
   },

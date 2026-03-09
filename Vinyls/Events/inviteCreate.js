@@ -123,20 +123,22 @@ module.exports = {
         const channelText = invite.channel ? `${invite.channel}` : "#sconosciuto";
         const inviteUrl = invite?.url || (code ? `https://discord.gg/${code}` : null);
 
-        const embed=new EmbedBuilder().setColor("#57F287").setTitle("Invite Create").setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-              `<:VC_right_arrow:1473441155055096081>${toDiscordTimestamp(new Date(),"F")}`,
+        const embed = new EmbedBuilder()
+            .setColor("#57F287")
+            .setTitle("Invite Create")
+            .setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+              `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
               "",
               "**Settings**",
-              `<:VC_right_arrow:1473441155055096081>**Code:**${code}`,
-              inviteUrl ? `<:VC_right_arrow:1473441155055096081>**URL:**${inviteUrl}` : null,
-              `<:VC_right_arrow:1473441155055096081>**Channel:**${channelText}`,
-              `<:VC_right_arrow:1473441155055096081>**Max Uses:**${normalizeCount(invite.maxUses,0)}`,
-              `<:VC_right_arrow:1473441155055096081>**Max Age:**${formatMaxAge(invite.maxAge)}`,
-              `<:VC_right_arrow:1473441155055096081>**Temporary:**${yesNo(Boolean(invite.temporary))}`,
+              `<:VC_right_arrow:1473441155055096081> **Code:** ${code}`,
+              inviteUrl ? `<:VC_right_arrow:1473441155055096081> **URL:** ${inviteUrl}` : null,
+              `<:VC_right_arrow:1473441155055096081> **Channel:** ${channelText}`,
+              `<:VC_right_arrow:1473441155055096081> **Max Uses:** ${normalizeCount(invite.maxUses, 0)}`,
+              `<:VC_right_arrow:1473441155055096081> **Max Age:** ${formatMaxAge(invite.maxAge)}`,
+              `<:VC_right_arrow:1473441155055096081> **Temporary:** ${yesNo(Boolean(invite.temporary))}`,
             ]
               .filter(Boolean)
-              .join("\n"),
-          );
+              .join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => null);
       }

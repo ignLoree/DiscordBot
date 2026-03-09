@@ -544,7 +544,10 @@ function buildGlobalPermissionDeniedEmbed(
   const rolesText = roles.length ? roles.map((id)=>`<@&${id}>`).join(", "):"Nessun ruolo configurato.";
   const description = customDescription != null ? customDescription:`Questo ${entityLabel} è riservato ad una categoria di utenti specifici.`;
 
-  const embed = new EmbedBuilder().setColor("Red").setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**").setDescription(description);
+  const embed = new EmbedBuilder()
+    .setColor("Red")
+    .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
+    .setDescription(description);
 
   if (roles.length > 0) {
     embed.addFields({

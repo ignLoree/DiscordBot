@@ -2111,10 +2111,11 @@ async function sendAutomodActionInChannel(message, action, violations, context =
     : action === "delete" || action === "delete_webhook"
       ? `${message.author.username}'s message has been removed` : `${message.author.username}has been warned`;
 
-  const embed = new EmbedBuilder().setColor(action === "timeout" ? "#f4d35e" : action === "delete" || action === "delete_webhook" ? "#f59e0b" : "#5865f2",).setTitle(title).setDescription([`${ARROW}**Reason:**${reason}`,
-  ].join("\n"),
-  )
-    .setFooter({ text: `${message.author.username}|${message.author.id}` })
+  const embed = new EmbedBuilder()
+    .setColor(action === "timeout" ? "#f4d35e" : action === "delete" || action === "delete_webhook" ? "#f59e0b" : "#5865f2",)
+    .setTitle(title)
+    .setDescription([`${ARROW} **Reason:** ${reason}`].join("\n"))
+    .setFooter({ text: `${message.author.username} | ${message.author.id}` });
 
   const sent = await message.channel.send({ embeds: [embed] }).catch(() => null);
   if (sent) {

@@ -236,8 +236,7 @@ async function fetchDiscordUser(accessToken) {
 function isAuthorizedByToken(req, parsedUrl, expectedToken) {
   if (!expectedToken) return false;
   const headerToken = String(req.headers["x-dashboard-token"] || "").trim();
-  const qsToken = String(parsedUrl.query?.token || "").trim();
-  return headerToken === expectedToken || qsToken === expectedToken;
+  return headerToken === expectedToken;
 }
 
 function sanitizeGuildId(value) {
@@ -559,6 +558,11 @@ function createDashboardServer(client) {
     if (pathname === "/api/auth/logout" && req.method === "POST") {
       destroySession(req, res);
       return json(res, 200, { ok: true });
+    }
+
+    if (pathname.startsWith("/api/dashboard/")) {
+      const auth = ensureApiAuth(client, req, parsedUrl);
+      if (!auth.ok) return json(res, 401, { ok: false, reason: auth.reason });
     }
 
     if (pathname === "/api/dashboard/overview" && req.method === "GET") {

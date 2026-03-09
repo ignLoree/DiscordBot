@@ -155,15 +155,20 @@ async function sendTimeoutRemovedModLog(oldMember, newMember) {
   const audit = await resolveMemberUpdateAuditInfo(guild, newMember.user.id);
   const responsible = formatResponsible(audit.executor);
 
-  const embed=new EmbedBuilder().setColor("#57F287").setTitle("Timeout Removed").setDescription([`${ARROW}**Timeout for**${newMember.user}**has been removed**`,
-        `${ARROW}**Responsible:**${responsible}`,
-        `${ARROW}${nowDiscordTs()}`,
-        audit.reason ? `${ARROW}**Reason:**${audit.reason}` : null,
+  const embed = new EmbedBuilder()
+    .setColor("#57F287")
+    .setTitle("Timeout Removed")
+    .setDescription(
+      [
+        `${ARROW} **Timeout for** ${newMember.user} **has been removed**`,
+        `${ARROW} **Responsible:** ${responsible}`,
+        `${ARROW} ${nowDiscordTs()}`,
+        audit.reason ? `${ARROW} **Reason:** ${audit.reason}` : null,
       ]
         .filter(Boolean)
         .join("\n"),
     )
-    .setFooter({ text: `ID:${newMember.user.id}` })
+    .setFooter({ text: `ID: ${newMember.user.id}` })
     .setTimestamp();
 
   await modLogChannel.send({ embeds: [embed] }).catch(() => null);
@@ -189,8 +194,10 @@ async function sendMemberUpdateLog(oldMember, newMember) {
   const audit = await resolveMemberUpdateAuditInfo(guild, newMember.user.id);
   const responsibleText = formatAuditActor(audit.executor);
 
-  const lines=[`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-    `<:VC_right_arrow:1473441155055096081>**Target:**${newMember.user}\`${newMember.user.id}\``,`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
+  const lines = [
+    `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+    `<:VC_right_arrow:1473441155055096081> **Target:** ${newMember.user} \`${newMember.user.id}\``,
+    `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
   ];
 
   if (audit.reason) {
@@ -209,7 +216,10 @@ async function sendMemberUpdateLog(oldMember, newMember) {
     lines.push(`  ${buildNickChangeLine(oldMember, newMember)}`);
   }
 
-  const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Member Update").setDescription(lines.join("\n"));
+  const embed = new EmbedBuilder()
+    .setColor("#F59E0B")
+    .setTitle("Member Update")
+    .setDescription(lines.join("\n"));
 
   await logChannel.send({ embeds: [embed] }).catch(() => null);
 }
@@ -269,8 +279,10 @@ async function sendMemberRoleUpdateLog(oldMember, newMember) {
 
   const logChannel = await resolveChannelRolesLogChannel(guild);
   if (logChannel?.isTextBased?.()) {
-    const lines=[`${ARROW}**Responsible:**${responsible}`,
-      `${ARROW}**Target:**${newMember.user}\`${newMember.user.id}\``,`${ARROW}${toDiscordTimestamp(new Date(),"F")}`,
+    const lines = [
+      `${ARROW} **Responsible:** ${responsible}`,
+      `${ARROW} **Target:** ${newMember.user} \`${newMember.user.id}\``,
+      `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
       "",
       "**Changes**",
     ];
@@ -289,7 +301,10 @@ async function sendMemberRoleUpdateLog(oldMember, newMember) {
       }
     }
 
-    const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Member Role Update").setDescription(lines.join("\n"));
+    const embed = new EmbedBuilder()
+      .setColor("#F59E0B")
+      .setTitle("Member Role Update")
+      .setDescription(lines.join("\n"));
 
     await logChannel.send({ embeds: [embed] }).catch(() => null);
   }

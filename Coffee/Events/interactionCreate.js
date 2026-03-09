@@ -136,7 +136,13 @@ async function logInteractionError(interaction, client, err) {
 
     if (errorChannel?.isTextBased?.()) {
       const contextValue = interaction?.commandName || interaction?.customId || "unknown";
-      const embed = buildErrorLogEmbed({ contextLabel: "Contesto", contextValue, userTag: interaction?.user?.tag || "unknown", error: err, serverName: interaction?.guild ? `${interaction.guild.name} [${interaction.guild.id}]` : null, });
+      const embed = buildErrorLogEmbed({
+        contextLabel: "Contesto",
+        contextValue,
+        userTag: interaction?.user?.tag || "unknown",
+        error: err,
+        serverName: interaction?.guild ? `${interaction.guild.name} [${interaction.guild.id}]` : null,
+      });
       await errorChannel.send({ embeds: [embed] }).catch(() => { });
     }
 

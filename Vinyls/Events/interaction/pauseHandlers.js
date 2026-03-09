@@ -107,9 +107,21 @@ async function handlePauseButton(interaction) {
     const { yearStart, yearEnd } = getCurrentYearBoundsUtc();
     const year = yearStart.getUTCFullYear();
 
-    const rows=pauses.map((pause) => {const start=parseItalianDate(pause?.dataRichiesta);const end=parseItalianDate(pause?.dataRitorno);if(!start||!end)return null;if(countOverlapDays(start,end,yearStart,yearEnd)<=0)return null;const scaledDays=computePauseScaledDaysThisYear(pause,todayUtc,yearStart,yearEnd,);const statusLabel=getPauseStatusLabel(pause,todayUtc);return`- \`${pause.dataRichiesta}\` -> \`${pause.dataRitorno}\` | **${statusLabel}**| Giorni scalati: \`${scaledDays}\``;}).filter(Boolean);const memberLabel=interaction.guild?.members?.cache?.get(userId)?.displayName||interaction.client?.users?.cache?.get(userId)?.username||` User ID:${userId}`;
+    const rows=pauses.map((pause) => {const start=parseItalianDate(pause?.dataRichiesta);const end=parseItalianDate(pause?.dataRitorno);if(!start||!end)return null;if(countOverlapDays(start,end,yearStart,yearEnd)<=0)return null;const scaledDays=computePauseScaledDaysThisYear(pause,todayUtc,yearStart,yearEnd,);const statusLabel=getPauseStatusLabel(pause,todayUtc);return`- \`${pause.dataRichiesta}\` -> \`${pause.dataRitorno}\` | **${statusLabel}**| Giorni scalati: \`${scaledDays}\``;}).filter(Boolean);const memberLabel = interaction.guild?.members?.cache?.get(userId)?.displayName || interaction.client?.users?.cache?.get(userId)?.username || ` User ID: ${userId}`;
 
-    const payload=rows.length===0?{content:`<:staff:1443651912179388548> Staffer: <@${userId}>\n<:attentionfromvega:1443651874032062505> Nessuna pausa trovata nell'anno **${year}**.`, flags:1<<6,}:{embeds:[new EmbedBuilder().setColor("#6f4e37").setTitle(`Pause ${year}-${memberLabel}`).setDescription(`<:staff:1443651912179388548> Staffer: <@${userId}>\n\n${rows.join("\n")}\n\n<a:VC_Calendar:1448670320180592724> Totale giorni scalati nell'anno corrente: \`${computeConsumedPauseDays(pauses)}\``,),],flags:1<<6,};
+    const payload = rows.length === 0
+      ? { content: `<:staff:1443651912179388548> Staffer: <@${userId}>\n<:attentionfromvega:1443651874032062505> Nessuna pausa trovata nell'anno **${year}**.`, flags: 1 << 6 }
+      : {
+          embeds: [
+            new EmbedBuilder()
+              .setColor("#6f4e37")
+              .setTitle(`Pause ${year}-${memberLabel}`)
+              .setDescription(
+                `<:staff:1443651912179388548> Staffer: <@${userId}>\n\n${rows.join("\n")}\n\n<a:VC_Calendar:1448670320180592724> Totale giorni scalati nell'anno corrente: \`${computeConsumedPauseDays(pauses)}\``,
+              ),
+          ],
+          flags: 1 << 6,
+        };
 
     if (acknowledgedByUpdate) {
       await interaction.followUp(payload).catch(() => {});

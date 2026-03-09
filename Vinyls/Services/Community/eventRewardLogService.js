@@ -25,7 +25,10 @@ async function sendEventRewardLog(client, data) {
   const roleId = data?.roleId ? String(data.roleId) : null;
   const week = data?.week != null && Number.isFinite(Number(data.week)) ? Number(data.week) : null;
 
-  const embed = new EmbedBuilder().setColor("#6f4e37").setTitle("<:VC_EXP:1468714279673925883> Premio evento assegnato").setDescription(`**Utente:** <@${userId}>`)
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("<:VC_EXP:1468714279673925883> Premio evento assegnato")
+    .setDescription(`**Utente:** <@${userId}>`)
     .addFields({ name: "<:VC_Info:1460670816214585481> Tipo", value: label, inline: true });
 
   if (levels != null && levels > 0) {
@@ -53,10 +56,14 @@ async function sendEventRewardSkippedLog(client, data) {
   const userId = String(data?.userId || "");
   const label = String(data?.label || "<a:VC_Events:1448688007438667796> Premio evento");
 
-  const embed = new EmbedBuilder().setColor("#99aab5").setTitle("<:VC_page3:1463196404120813766> Premio già assegnato")
+  const embed = new EmbedBuilder()
+    .setColor("#99aab5")
+    .setTitle("<:VC_page3:1463196404120813766> Premio già assegnato")
     .setDescription(`<:VC_Info:1460670816214585481> **Utente:** <@${userId}>`)
-    .addFields({ name: "<:VC_Info:1460670816214585481> Tipo", value: label, inline: true })
-    .addFields({ name: "<:VC_Info:1460670816214585481> Motivo", value: "Già ricevuto per questo evento", inline: true })
+    .addFields(
+      { name: "<:VC_Info:1460670816214585481> Tipo", value: label, inline: true },
+      { name: "<:VC_Info:1460670816214585481> Motivo", value: "Già ricevuto per questo evento", inline: true },
+    )
     .setTimestamp();
 
   await channel.send({ embeds: [embed] }).catch(() => { });
@@ -93,7 +100,11 @@ async function sendEventRewardDm(client, userId, guildId, data) {
   }
   lines.push("<a:VC_ThankYou:1330186319673950401> Grazie per aver partecipato!");
 
-  const embed = new EmbedBuilder().setColor("#6f4e37").setTitle("<a:VC_Events:1448688007438667796> Premio Activity EXP Event").setDescription(lines.join("\n")).setTimestamp();
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("<a:VC_Events:1448688007438667796> Premio Activity EXP Event")
+    .setDescription(lines.join("\n"))
+    .setTimestamp();
 
   await sendDm(user, { embeds: [embed] }, { guildId, bypassNoDm: true });
 }

@@ -132,7 +132,9 @@ async function handleDmBroadcastModal(interaction, client) {
   let processed = 0;
   const total = targets.length;
 
-  const progressEmbed = (text) => new EmbedBuilder().setColor("#6f4e37").setDescription(text);
+  const progressEmbed = (text) => new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setDescription(text);
 
   await interaction.editReply({
     embeds: [
@@ -144,7 +146,11 @@ async function handleDmBroadcastModal(interaction, client) {
     processed += 1;
     try {
       for (const part of parts) {
-        const embed = new EmbedBuilder().setColor("#6f4e37").setDescription(part).setFooter({ text: footerText }).setTimestamp();
+        const embed = new EmbedBuilder()
+        .setColor("#6f4e37")
+        .setDescription(part)
+        .setFooter({ text: footerText })
+        .setTimestamp();
         if (title) embed.setTitle(title);
         await target.user.send({
           embeds: [embed],

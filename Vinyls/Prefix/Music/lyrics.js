@@ -86,7 +86,10 @@ module.exports = {
     const title = `${first.trackName || "Unknown"} by ${first.artistName || "Unknown"}`;
     const pages = chunkLyrics(plainLyrics, MAX_LYRICS_PAGE);
 
-    const buildEmbed=(index) => new EmbedBuilder().setColor("#1f2328").setTitle(title).setDescription(`Page ${index+1}/${pages.length}\n\n${pages[index]}`);
+    const buildEmbed = (index) => new EmbedBuilder()
+      .setColor("#1f2328")
+      .setTitle(title)
+      .setDescription(`Page ${index + 1}/${pages.length}\n\n${pages[index]}`);
 
     if (pages.length === 1) {
       return safeMessageReply(message, { embeds: [buildEmbed(0)] });
@@ -96,8 +99,16 @@ module.exports = {
     const prevId = `lyrics_prev_${message.id}_${Date.now()}`;
     const nextId = `lyrics_next_${message.id}_${Date.now()}`;
 
-    const buildRow=(index) => new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(prevId).setLabel("\u25C0").setStyle(ButtonStyle.Secondary).setDisabled(index<=0),new ButtonBuilder().setCustomId(nextId).setLabel("\u25B6").setStyle(ButtonStyle.Secondary).setDisabled(index>=pages.length-1),);
-    const buildDisabledRow=(index) => {const row=buildRow(index);return new ActionRowBuilder().addComponents(row.components.map((button) => ButtonBuilder.from(button).setDisabled(true)),);};
+    const buildRow = (index) => new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(prevId).setLabel("\u25C0").setStyle(ButtonStyle.Secondary).setDisabled(index <= 0),
+      new ButtonBuilder().setCustomId(nextId).setLabel("\u25B6").setStyle(ButtonStyle.Secondary).setDisabled(index >= pages.length - 1),
+    );
+    const buildDisabledRow = (index) => {
+      const row = buildRow(index);
+      return new ActionRowBuilder().addComponents(
+        row.components.map((button) => ButtonBuilder.from(button).setDisabled(true)),
+      );
+    };
 
     const sent=await safeMessageReply(message,{embeds:[buildEmbed(pageIndex)],components:[buildRow(pageIndex)],});
     if (!sent || typeof sent.createMessageComponentCollector !== "function") return;
@@ -107,7 +118,7 @@ module.exports = {
     collector.on("collect", async (interaction) => {
       if (interaction.user.id !== message.author.id) {
         await interaction.reply({
-          content: "Solo chi ha richiesto i lyrics puo cambiare pagina.",
+          content: "Solo chi ha richiesto i lyrics può cambiare pagina.",
           ephemeral: true,
         }).catch(() => {});
         return;

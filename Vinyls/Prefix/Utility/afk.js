@@ -14,7 +14,7 @@ module.exports = {
     if (!args || !args.length)
       return safeMessageReply(
         message,
-        "<:vegax:1443934876440068179> Perfavore scrivi un messaggio per impostare il tuo stato AFK.",
+        "<:vegax:1443934876440068179> Per favore scrivi un messaggio per impostare il tuo stato AFK.",
       );
     if (!guildId) return;
 

@@ -56,7 +56,13 @@ async function pickFromPagedMenu({
     cancelId: `pick_cancel_${nonce}`,
   };
 
-  const buildEmbed=(index) => {const page=pages[index]||[];const start=index*pageSize;const lines=page.map((item,i) => lineBuilder(item,start+i));const embed=new EmbedBuilder().setColor(color).setDescription(`Page ${index+1}/${pages.length}\n\n${lines.join("\n")}`);
+  const buildEmbed = (index) => {
+    const page = pages[index] || [];
+    const start = index * pageSize;
+    const lines = page.map((item, i) => lineBuilder(item, start + i));
+    const embed = new EmbedBuilder()
+      .setColor(color)
+      .setDescription(`Page ${index + 1}/${pages.length}\n\n${lines.join("\n")}`);
     if (title) embed.setTitle(String(title));
     return embed;
   };
@@ -68,7 +74,14 @@ async function pickFromPagedMenu({
           }),
         ),
     );
-    const nav=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(ids.firstId).setLabel("<<").setStyle(ButtonStyle.Secondary).setDisabled(index<=0),new ButtonBuilder().setCustomId(ids.prevId).setLabel("<").setStyle(ButtonStyle.Secondary).setDisabled(index<=0),new ButtonBuilder().setCustomId(ids.nextId).setLabel(">").setStyle(ButtonStyle.Secondary).setDisabled(index>=pages.length-1),new ButtonBuilder().setCustomId(ids.lastId).setLabel(">>").setStyle(ButtonStyle.Secondary).setDisabled(index>=pages.length-1),new ButtonBuilder().setCustomId(ids.cancelId).setLabel("X").setStyle(ButtonStyle.Danger),);
+    const nav = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder().setCustomId(ids.firstId).setLabel("<<").setStyle(ButtonStyle.Secondary).setDisabled(index <= 0),
+        new ButtonBuilder().setCustomId(ids.prevId).setLabel("<").setStyle(ButtonStyle.Secondary).setDisabled(index <= 0),
+        new ButtonBuilder().setCustomId(ids.nextId).setLabel(">").setStyle(ButtonStyle.Secondary).setDisabled(index >= pages.length - 1),
+        new ButtonBuilder().setCustomId(ids.lastId).setLabel(">>").setStyle(ButtonStyle.Secondary).setDisabled(index >= pages.length - 1),
+        new ButtonBuilder().setCustomId(ids.cancelId).setLabel("X").setStyle(ButtonStyle.Danger),
+      );
     return [select, nav];
   };
 

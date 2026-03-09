@@ -85,7 +85,18 @@ async function handleMentionReactions(message, args) {
   }
 
   if (!["set", "add", "remove", "del", "rm"].includes(sub)) {
-    const help=new EmbedBuilder().setColor("Red").setDescription(["<:vegax:1443934876440068179> Uso corretto:","`+reaction mention show`","`+reaction mention set 😀 <:emoji:123...>`","`+reaction mention add 😀`","`+reaction mention remove 😀`","`+reaction mention clear`",].join("\n"),);
+    const help = new EmbedBuilder()
+      .setColor("Red")
+      .setDescription(
+        [
+          "<:vegax:1443934876440068179> Uso corretto:",
+          "`+reaction mention show`",
+          "`+reaction mention set 😀 <:emoji:123...>`",
+          "`+reaction mention add 😀`",
+          "`+reaction mention remove 😀`",
+          "`+reaction mention clear`",
+        ].join("\n"),
+      );
     await safeMessageReply(message, {
       embeds: [help],
       allowedMentions: { repliedUser: false },
@@ -126,7 +137,7 @@ async function handleMentionReactions(message, args) {
   const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Reaction menzioni aggiornate").setDescription(next.length?`Nuove reaction: ${next.map(toDisplay).join(" ")}`
         : "Nessuna reaction attiva.",
     )
-    .setFooter({ text: `Massimo ${MAX_REACTIONS}reaction.` });
+    .setFooter({ text: `Massimo ${MAX_REACTIONS} reaction.` });
   await safeMessageReply(message, {
     embeds: [embed],
     allowedMentions: { repliedUser: false },
@@ -141,8 +152,20 @@ async function handleAutoResponders(message, args) {
   const rest = args.slice(1).join(" ").trim();
 
   if (!sub || sub === "help") {
-    const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Reaction AutoResponder").setDescription(["`+reaction auto list`","`+reaction auto add trigger | risposta | 😀 <:emoji:123...>`","`+reaction auto add ciao, salve, buongiorno | risposta | 😀`","`+reaction auto remove trigger`","`+reaction auto clear`","","Note:",`- Massimo ${MAX_RULES}regole`,
-          `-Massimo ${MAX_REACTIONS}reaction per regola`,
+    const embed = new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle("Reaction AutoResponder")
+      .setDescription(
+        [
+          "`+reaction auto list`",
+          "`+reaction auto add trigger | risposta | 😀 <:emoji:123...>`",
+          "`+reaction auto add ciao, salve, buongiorno | risposta | 😀`",
+          "`+reaction auto remove trigger`",
+          "`+reaction auto clear`",
+          "",
+          "Note:",
+          `- Massimo ${MAX_RULES} regole`,
+          `- Massimo ${MAX_REACTIONS} reaction per regola`,
           "- Trigger multipli con separatore virgola",
         ].join("\n"),
       );
@@ -310,7 +333,14 @@ async function handleAutoResponders(message, args) {
     invalidateGuildAutoResponderCache(guildId);
     const triggerLabel = savedTriggers.map((item) => `\`${item}\``).join(", ");
 
-    const resultEmbed=new EmbedBuilder().setColor("#6f4e37").setTitle("AutoResponder aggiornato").addFields({name:"Trigger",value:triggerLabel.slice(0,1024)||"Nessuno"},{name:"Risposta",value:normalizedResponse?normalizedResponse.slice(0,1024):"Nessuna",},{name:"Reaction",value:reactions.length?reactions.map(toDisplay).join(" "):"Nessuna",},);
+    const resultEmbed = new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle("AutoResponder aggiornato")
+      .addFields(
+        { name: "Trigger", value: triggerLabel.slice(0, 1024) || "Nessuno" },
+        { name: "Risposta", value: normalizedResponse ? normalizedResponse.slice(0, 1024) : "Nessuna" },
+        { name: "Reaction", value: reactions.length ? reactions.map(toDisplay).join(" ") : "Nessuna" },
+      );
     await safeMessageReply(message, {
       embeds: [resultEmbed],
       allowedMentions: { repliedUser: false },

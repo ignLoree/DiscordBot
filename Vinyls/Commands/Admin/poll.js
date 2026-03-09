@@ -9,11 +9,15 @@ const NUMBER_EMOJIS = ["<:1_:1444099163116535930>", "<:2_:1444099161673826368>",
 const pollChannelCache = new Map();
 
 function errorEmbed(description) {
-  return new EmbedBuilder().setDescription(description).setColor("Red");
+  return new EmbedBuilder()
+    .setDescription(description)
+    .setColor("Red");
 }
 
 function successEmbed(description) {
-  return new EmbedBuilder().setDescription(description).setColor("#6f4e37");
+  return new EmbedBuilder()
+    .setDescription(description)
+    .setColor("#6f4e37");
 }
 
 async function getPollChannel(interaction) {
@@ -112,22 +116,11 @@ async function applyPollReactions(pollMessage, reactionEmojis) {
 }
 
 async function findPollById(guildId, pollId) {
-  let pollData = await Poll.findOne(buildGuildPollFilter(guildId, { pollcount: pollId }));
-  if (pollData) return pollData;
-  return Poll.findOne({
-    pollcount: pollId,
-    domanda: { $ne: COUNTER_FILTER_QUESTION },
-  });
+  return Poll.findOne(buildGuildPollFilter(guildId, { pollcount: pollId }));
 }
 
 async function findLastPoll(guildId) {
-  let lastPoll = await Poll.findOne(buildGuildPollFilter(guildId)).sort({
-    pollcount: -1,
-  });
-  if (lastPoll) return lastPoll;
-  return Poll.findOne({ domanda: { $ne: COUNTER_FILTER_QUESTION } }).sort({
-    pollcount: -1,
-  });
+  return Poll.findOne(buildGuildPollFilter(guildId)).sort({ pollcount: -1 });
 }
 
 async function syncPollCounter(guildId, highestPollCountOverride = null) {

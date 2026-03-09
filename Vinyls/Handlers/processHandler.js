@@ -1,4 +1,4 @@
-﻿const logs = require("../Utils/Moderation/logs");
+const logs = require("../Utils/Moderation/logs");
 
 function error(message) {
   logs.error(`[ERROR] ${message}`);
@@ -26,7 +26,11 @@ module.exports = () => {
     error(`UNHANDLED REJECTION: ${err?.stack || err}`);
   });
 
-  process.on("warning", () => {});
+  process.on("warning", (w) => {
+    const msg = w?.message || String(w);
+    const stack = w?.stack ? `\n${w.stack}` : "";
+    logs.warn(`[PROCESS WARNING] ${msg}${stack}`);
+  });
 
   logs.success("[PROCESS] Process handlers loaded.");
 };

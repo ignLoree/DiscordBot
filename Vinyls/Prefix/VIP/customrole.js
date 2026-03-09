@@ -138,7 +138,10 @@ function buildCreatePanelEmbed(role, guild, doc, durationOption) {
   const lines=["<a:VC_Flowers:1468687836055212174> Il tuo ruolo è stato creato/aggiornato. Personalizzalo con i bottoni sotto.","Altri comandi li trovi con `+help`.","","**Ruolo:**",`${role}`,
   ];
 
-  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("<:vegacheckmark:1443666279058772028> Custom Role").setDescription(lines.join("\n"));
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("<:vegacheckmark:1443666279058772028> Custom Role")
+    .setDescription(lines.join("\n"));
 
   if (doc?.expiresAt) {
     embed.addFields({
@@ -168,11 +171,13 @@ function buildCreatePanelEmbed(role, guild, doc, durationOption) {
 }
 
 function buildModifyPanelEmbed(role, guild, doc) {
-  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Modifica Ruolo").setDescription(["<a:VC_Flowers:1468687836055212174> Modifica il tuo ruolo personalizzato.","Altri comandi li trovi con `+help`.","Puoi configurarlo con i pulsanti qui sotto.","","**Ruolo:**",`${role}`,
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("Modifica Ruolo")
+    .setDescription(["<a:VC_Flowers:1468687836055212174> Modifica il tuo ruolo personalizzato.", "Altri comandi li trovi con `+help`.", "Puoi configurarlo con i pulsanti qui sotto.", "", "**Ruolo:**", `${role}`,
         "",
-        `**Scadenza:**${buildExpiryText(doc)}`,
-      ].join("\n"),
-    );
+        `**Scadenza:** ${buildExpiryText(doc)}`,
+      ].join("\n"));
 
   const guildIcon=guild?.iconURL?.({extension:"png",size:256,forceStatic:false})||null;
   if (guildIcon) embed.setThumbnail(guildIcon);

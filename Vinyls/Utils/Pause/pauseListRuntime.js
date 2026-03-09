@@ -125,7 +125,10 @@ async function buildPauseListPayload({ guildId, requesterId, targetUser, isHighS
   }
   const totalScaledDays = computeConsumedPauseDays(pauses);
   const embeds = splitRowsForEmbeds(rows).map((chunk, index, chunks) =>
-    new EmbedBuilder().setColor("#6f4e37").setTitle(`<a:VC_Calendar:1448670320180592724> Pause ${currentYear}-${targetUser.username}${chunks.length > 1 ? ` (${index + 1}/${chunks.length})` : ""}`).setDescription(`${chunk}\n\n<:VC_Clock:1473359204189474886>Totale giorni scalati anno corrente:\`${totalScaledDays}\``),
+    new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle(`<a:VC_Calendar:1448670320180592724> Pause ${currentYear}-${targetUser.username}${chunks.length > 1 ? ` (${index + 1}/${chunks.length})` : ""}`)
+      .setDescription(`${chunk}\n\n<:VC_Clock:1473359204189474886> Totale giorni scalati anno corrente: \`${totalScaledDays}\``),
   );
   return { ok: true, embeds };
 }

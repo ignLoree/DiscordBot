@@ -93,7 +93,12 @@ module.exports = {
     const userId = message.author.id;
     const initial = { color: "#6f4e37" };
 
-    const preview = await message.channel.send({ embeds: [buildPreviewEmbed(initial)], components: buildRows(userId), }).catch(() => null);
+    const preview = await message.channel
+      .send({
+        embeds: [buildPreviewEmbed(initial)],
+        components: buildRows(userId),
+      })
+      .catch(() => null);
 
     if (!preview) {
       return safeMessageReply(message, {

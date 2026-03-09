@@ -82,7 +82,9 @@ module.exports = {
     }
 
     if (!right) {
-      const warn=new EmbedBuilder().setColor("Red").setDescription("<:vegax:1443934876440068179> Non ho trovato un utente valido per la ship.",);
+      const warn = new EmbedBuilder()
+      .setColor("Red")
+      .setDescription("<:vegax:1443934876440068179> Non ho trovato un utente valido per la ship.",);
       await safeMessageReply(message, {
         embeds: [warn],
         allowedMentions: { repliedUser: false },
@@ -91,7 +93,9 @@ module.exports = {
     }
 
     if (left.id === right.id) {
-      const warn=new EmbedBuilder().setColor("Red").setDescription("<:vegax:1443934876440068179> Scegli due utenti diversi.",);
+      const warn = new EmbedBuilder()
+      .setColor("Red")
+      .setDescription("<:vegax:1443934876440068179> Scegli due utenti diversi.",);
       await safeMessageReply(message, {
         embeds: [warn],
         allowedMentions: { repliedUser: false },
@@ -111,7 +115,9 @@ module.exports = {
       });
     } catch (error) {
       global.logger.error("[SHIP COMMAND] Render error:", error);
-      const fail=new EmbedBuilder().setColor("Red").setDescription("<:vegax:1443934876440068179> Non sono riuscito a generare l'immagine della ship.",);
+      const fail = new EmbedBuilder()
+      .setColor("Red")
+      .setDescription("<:vegax:1443934876440068179> Non sono riuscito a generare l'immagine della ship.",);
       await safeMessageReply(message, {
         embeds: [fail],
         allowedMentions: { repliedUser: false },

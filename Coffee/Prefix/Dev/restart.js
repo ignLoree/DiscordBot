@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
 
@@ -19,7 +19,9 @@ function resolveWritableRestartPath(filename) {
 }
 
 function errorEmbed(description) {
-  return new EmbedBuilder().setColor("Red").setDescription(description);
+  return new EmbedBuilder()
+    .setColor("Red")
+    .setDescription(description);
 }
 
 async function sendPermissionError(message) {

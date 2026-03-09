@@ -104,16 +104,17 @@ module.exports = {
       const startTime=toEventTimeLabel(scheduledEvent.scheduledStartAt||scheduledEvent.scheduledStartTimestamp,);
       const endTime=toEventTimeLabel(scheduledEvent.scheduledEndAt||scheduledEvent.scheduledEndTimestamp,);
 
-      const lines=[`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-        `<:VC_right_arrow:1473441155055096081>${toDiscordTimestamp(new Date(),"F")}`,
+      const lines = [
+        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         "**Settings**",
-        `<:VC_right_arrow:1473441155055096081>**Name:**${scheduledEvent.name||"sconosciuto"}`,
-        `<:VC_right_arrow:1473441155055096081>**Privacy Level:**${privacyLabel(scheduledEvent.privacyLevel)}`,
-        `<:VC_right_arrow:1473441155055096081>**Status:**${statusLabel(scheduledEvent.status)}`,
-        `<:VC_right_arrow:1473441155055096081>**Entity Type:**${entityTypeLabel(scheduledEvent.entityType)}`,
-        startTime ? `<:VC_right_arrow:1473441155055096081>**Start Time:**${startTime}` : null,
-        endTime ? `<:VC_right_arrow:1473441155055096081>**End Time:**${endTime}` : null,
+        `<:VC_right_arrow:1473441155055096081> **Name:** ${scheduledEvent.name || "sconosciuto"}`,
+        `<:VC_right_arrow:1473441155055096081> **Privacy Level:** ${privacyLabel(scheduledEvent.privacyLevel)}`,
+        `<:VC_right_arrow:1473441155055096081> **Status:** ${statusLabel(scheduledEvent.status)}`,
+        `<:VC_right_arrow:1473441155055096081> **Entity Type:** ${entityTypeLabel(scheduledEvent.entityType)}`,
+        startTime ? `<:VC_right_arrow:1473441155055096081> **Start Time:** ${startTime}` : null,
+        endTime ? `<:VC_right_arrow:1473441155055096081> **End Time:** ${endTime}` : null,
       ];
 
       if (scheduledEvent.entityMetadata?.location) {
@@ -126,7 +127,10 @@ module.exports = {
         );
       }
 
-      const embed=new EmbedBuilder().setColor("#57F287").setTitle("Guild Scheduled Event Create").setDescription(lines.join("\n"));
+      const embed = new EmbedBuilder()
+        .setColor("#57F287")
+        .setTitle("Guild Scheduled Event Create")
+        .setDescription(lines.join("\n"));
 
       const cover = scheduledEvent.coverImageURL?.({ size: 1024 });
       if (cover) embed.setImage(cover);

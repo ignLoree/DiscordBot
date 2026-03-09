@@ -3,6 +3,7 @@ const IDs = require("../../Utils/Config/ids");
 const { getGuildChannelCached, getGuildMemberCached, } = require("../../Utils/Interaction/interactionEntityCache");
 const { getOrCreateStaffDoc, deleteThreadForMessage } = require("../../Utils/Staff/staffDocUtils");
 const { addStaffWarnFromNegatives, applyFullDepex } = require("../../Services/Staff/staffWarnService");
+const StaffModel = require("../../Schemas/Staff/staffSchema");
 const RESOCONTO_APPLY_PREFIX = "resoconto_apply";
 const RESOCONTO_REJECT_PREFIX = "resoconto_reject";
 const RESOCONTO_REASON_MODAL_PREFIX = "resoconto_reason";
@@ -105,15 +106,18 @@ async function sendValutazioneLogEmbed(guild, actor, targetUser, reason, positiv
   if (!channel?.isTextBased?.()) return;
 
   const title = positive ? "<:thumbsup:1471292172145004768> **__VALUTAZIONE POSITIVA__**" : "<:thumbsdown:1471292163957457013> **__VALUTAZIONE NEGATIVA__**";
-  const embed = new EmbedBuilder().setAuthor({
-    name: `Valutazione eseguita da ${actor.username}`,
-    iconURL: actor.displayAvatarURL(),
-  })
+  const embed = new EmbedBuilder()
+    .setAuthor({
+      name: `Valutazione eseguita da ${actor.username}`,
+      iconURL: actor.displayAvatarURL(),
+    })
     .setTitle(title)
     .setThumbnail(targetUser.displayAvatarURL())
     .setDescription(
-      `<:staff:1443651912179388548> <a:VC_Arrow:1448672967721615452> <@${targetUser.id}>`,
-      `<:VC_reason:1478517122929004544> __${reason}__`,
+      [
+        `<:staff:1443651912179388548> <a:VC_Arrow:1448672967721615452> <@${targetUser.id}>`,
+        `<:VC_reason:1478517122929004544> __${reason}__`,
+      ].join("\n"),
     )
     .setColor("#6f4e37");
 

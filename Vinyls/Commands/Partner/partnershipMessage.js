@@ -6,7 +6,9 @@ const { isChannelInTicketCategory, } = require("../../Utils/Ticket/ticketCategor
 const EPHEMERAL_FLAG = 1 << 6;
 
 function buildErrorEmbed(message) {
-  return new EmbedBuilder().setDescription(message).setColor("Red");
+  return new EmbedBuilder()
+    .setDescription(message)
+    .setColor("Red");
 }
 
 function stripOuterCodeBlock(text) {

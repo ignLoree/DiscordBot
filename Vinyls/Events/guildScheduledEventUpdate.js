@@ -172,8 +172,9 @@ module.exports = {
       }
       if (!tracked.length) return;
 
-      const lines=[`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-        `<:VC_right_arrow:1473441155055096081>${toDiscordTimestamp(new Date(),"F")}`,
+      const lines = [
+        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         "**Changes**",
       ];
@@ -187,7 +188,10 @@ module.exports = {
         );
       }
 
-      const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Guild Scheduled Event Update").setDescription(lines.join("\n"));
+      const embed = new EmbedBuilder()
+        .setColor("#F59E0B")
+        .setTitle("Guild Scheduled Event Update")
+        .setDescription(lines.join("\n"));
 
       const payload = { embeds: [embed] };
       if (eventUrl) {

@@ -66,7 +66,10 @@ module.exports = {
         );
         lines.push(...buildAuditExtraLines(audit.entry, ["name", "type"]));
 
-        const embed = new EmbedBuilder().setColor("#ED4245").setTitle("Channel Delete").setDescription(lines.join("\n"));
+        const embed = new EmbedBuilder()
+          .setColor("#ED4245")
+          .setTitle("Channel Delete")
+          .setDescription(lines.join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => { });
       }

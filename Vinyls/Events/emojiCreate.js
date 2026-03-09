@@ -1,4 +1,4 @@
-﻿const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
+const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 
 const EMOJI_CREATE_ACTION = AuditLogEvent?.EmojiCreate ?? 60;
@@ -69,12 +69,18 @@ module.exports = {
       const responsible = await resolveResponsibleWithRetry(guild, emojiId);
       const responsibleText = formatAuditActor(responsible);
 
-      const embed=new EmbedBuilder().setColor("#57F287").setTitle("Emoji Create").setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-            `<:VC_right_arrow:1473441155055096081>**Target:**${emoji.name||"emoji"}\`${emojiId}\``,`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
+      const embed = new EmbedBuilder()
+        .setColor("#57F287")
+        .setTitle("Emoji Create")
+        .setDescription(
+          [
+            `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+            `<:VC_right_arrow:1473441155055096081> **Target:** ${emoji.name || "emoji"} \`${emojiId}\``,
+            `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
             "",
             "**Settings**",
-            `<:VC_right_arrow:1473441155055096081>**Name:**${emoji.name||"sconosciuto"}`,
-            `<:VC_right_arrow:1473441155055096081>**Animated:**${emoji?.animated?"Yes":"No"}`,
+            `<:VC_right_arrow:1473441155055096081> **Name:** ${emoji.name || "sconosciuto"}`,
+            `<:VC_right_arrow:1473441155055096081> **Animated:** ${emoji?.animated ? "Yes" : "No"}`,
           ].join("\n"),
         );
 

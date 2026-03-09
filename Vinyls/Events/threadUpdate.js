@@ -51,8 +51,10 @@ module.exports = {
       const audit = await resolveResponsibleWithRetry(guild, threadId);
       const responsible = formatAuditActor(audit.executor);
 
-      const lines=[`${ARROW}**Responsible:**${responsible}`,
-        `${ARROW}**Target:**${newThread||oldThread||"thread"}\`${threadId}\``,`${ARROW}${toDiscordTimestamp(new Date(),"F")}`,
+      const lines = [
+        `${ARROW} **Responsible:** ${responsible}`,
+        `${ARROW} **Target:** ${newThread || oldThread || "thread"} \`${threadId}\``,
+        `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         "**Changes**",
       ];
@@ -72,12 +74,15 @@ module.exports = {
       }
       if (tagsChanged) {
         lines.push(
-          `${ARROW} **Tag applicati:** \`${oldTags.join(",") || "nessuno"}\` ${ARROW} \`${newTags.join(",") || "nessuno"}\``,
+          `${ARROW} **Tag applicati:** \`${oldTags.join(", ") || "nessuno"}\` ${ARROW} \`${newTags.join(", ") || "nessuno"}\``,
         );
       }
       lines.push(...buildAuditExtraLines(audit.entry, ["name", "archived", "locked", "applied_tags"]));
 
-      const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Aggiornamento thread").setDescription(lines.join("\n"));
+      const embed = new EmbedBuilder()
+        .setColor("#F59E0B")
+        .setTitle("Aggiornamento thread")
+        .setDescription(lines.join("\n"));
 
       const payload = { embeds: [embed] };
       if (isHttpUrl(newThread?.url)) {

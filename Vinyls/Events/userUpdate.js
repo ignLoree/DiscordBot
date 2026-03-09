@@ -81,12 +81,15 @@ function shouldSkipRecentUserUpdateAction(guildId, userId, match) {
 
 async function punishUsernameMatch(member, match) {
   const reason = "Username matches blocked pattern (post-join filter).";
-  const dmEmbed=new EmbedBuilder().setColor("#6f4e37").setTitle(`You have been kicked! in ${member.guild.name}!`)
+  const dmEmbed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle(`You have been kicked! in ${member.guild.name}!`)
     .setDescription(
       [
-        `${ARROW}**Member:**${member.user}[\`${member.user.id}\`]`,`${ARROW}**Reason:**${reason}`,
-        `${ARROW}**Match Type:**${match.type}`,
-        `${ARROW}**Match:**${match.value}`,
+        `${ARROW} **Member:** ${member.user}[\`${member.user.id}\`]`,
+        `${ARROW} **Reason:** ${reason}`,
+        `${ARROW} **Match Type:** ${match.type}`,
+        `${ARROW} **Match:** ${match.value}`,
       ].join("\n"),
     );
 
@@ -115,17 +118,20 @@ async function punishUsernameMatch(member, match) {
 
   const logChannel=IDs.channels.modLogs?member.guild.channels.cache.get(IDs.channels.modLogs)||(await member.guild.channels.fetch(IDs.channels.modLogs).catch(() => null)):null;
   if (logChannel?.isTextBased?.()) {
-    const logEmbed=punished?new EmbedBuilder().setColor("#A97142").setTitle(`${member.user.username}has been kicked!!`)
+    const logEmbed = punished ? new EmbedBuilder()
+          .setColor("#A97142")
+          .setTitle(`${member.user.username} has been kicked!!`)
           .setDescription(
             [
-              `${ARROW}**Member:**${member.user.username}[\`${member.user.id}\`]`,`${ARROW}**Reason:**${reason}`,
-              `${ARROW}**Rule:**Username Filter(post-join)`,
-              `${ARROW}**Match Type:**${match.type}`,
-              `${ARROW}**Match:**${match.value}`,
+              `${ARROW} **Member:** ${member.user.username}[\`${member.user.id}\`]`,
+              `${ARROW} **Reason:** ${reason}`,
+              `${ARROW} **Rule:** Username Filter (post-join)`,
+              `${ARROW} **Match Type:** ${match.type}`,
+              `${ARROW} **Match:** ${match.value}`,
               "",
               "**More Details:**",
-              `${ARROW}**Member Direct Messaged?**${dmSent?"✅":"❌"}`,
-              `${ARROW}**Member Punished?**${punished?"✅":"❌"}`,
+              `${ARROW} **Member Direct Messaged?** ${dmSent ? "✅" : "❌"}`,
+              `${ARROW} **Member Punished?** ${punished ? "✅" : "❌"}`,
             ].join("\n"),
           )
           .setFooter({ text: "© 2025 Vinili & Caffè. Tutti i diritti riservati." })

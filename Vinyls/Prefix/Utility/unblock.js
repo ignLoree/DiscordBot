@@ -33,7 +33,10 @@ module.exports = {
         );
       } catch {}
 
-      const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Comando sbloccato").setDescription("Hai sbloccato con successo la visualizzazione del tuo avatar.",);
+      const embed = new EmbedBuilder()
+        .setColor("#6f4e37")
+        .setTitle("Comando sbloccato")
+        .setDescription("Hai sbloccato con successo la visualizzazione del tuo avatar.");
       return safeChannelSend(message.channel, { embeds: [embed] });
     }
 
@@ -49,7 +52,10 @@ module.exports = {
         );
       } catch {}
 
-      const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Comando sbloccato").setDescription("Hai sbloccato con successo la visualizzazione del tuo banner.",);
+      const embed = new EmbedBuilder()
+        .setColor("#6f4e37")
+        .setTitle("Comando sbloccato")
+        .setDescription("Hai sbloccato con successo la visualizzazione del tuo banner.");
       return safeChannelSend(message.channel, { embeds: [embed] });
     }
 
@@ -69,7 +75,22 @@ module.exports = {
       const date = now.toLocaleDateString("it-IT");
       const time=now.toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit",});
 
-      const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("<a:VC_Unlock:1470011538432852108> Quote sbloccate").setDescription(["Le quote dei tuoi messaggi sono state sbloccate con successo!","","**Cosa significa?**","Gli altri utenti possono ora creare quote dei tuoi messaggi.","","**Per bloccare nuovamente**","Usa il comando `?block quotes` quando vuoi bloccare di nuovo le quote.",].join("\n"),).setFooter({text:`Sbloccate il ${date}-Oggi alle ${time}`,
+      const embed = new EmbedBuilder()
+        .setColor("#6f4e37")
+        .setTitle("<a:VC_Unlock:1470011538432852108> Quote sbloccate")
+        .setDescription(
+          [
+            "Le quote dei tuoi messaggi sono state sbloccate con successo!",
+            "",
+            "**Cosa significa?**",
+            "Gli altri utenti possono ora creare quote dei tuoi messaggi.",
+            "",
+            "**Per bloccare nuovamente**",
+            "Usa il comando `?block quotes` quando vuoi bloccare di nuovo le quote.",
+          ].join("\n"),
+        )
+        .setFooter({
+          text: `Sbloccate il ${date} - Oggi alle ${time}`,
           iconURL: message.author.displayAvatarURL(),
         });
 

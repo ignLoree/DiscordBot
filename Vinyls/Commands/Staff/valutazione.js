@@ -7,11 +7,15 @@ const { addStaffWarnFromNegatives, applyFullDepex, getHighestStaffRoleId } = req
 const EPHEMERAL_FLAG = 1 << 6;
 
 function errorEmbed(description) {
-  return new EmbedBuilder().setDescription(description).setColor("Red");
+  return new EmbedBuilder()
+    .setDescription(description)
+    .setColor("Red");
 }
 
 function successEmbed(description) {
-  return new EmbedBuilder().setDescription(description).setColor("#6f4e37");
+  return new EmbedBuilder()
+    .setDescription(description)
+    .setColor("#6f4e37");
 }
 
 function ensureStaffDoc(staffDoc, guildId, userId) {
@@ -50,9 +54,11 @@ function makeLogEmbed(
     .setTitle(title)
     .setThumbnail(user.displayAvatarURL())
     .setDescription(
-      `<:staff:1443651912179388548> <a:VC_Arrow:1448672967721615452> ${user} 
-      <:VC_reason:1478517122929004544> __${reason}__ 
-      <:VC_id:1478517313618575419> **ID Valutazione** __\`${idValue}\`__`,
+      [
+        `<:staff:1443651912179388548> <a:VC_Arrow:1448672967721615452> ${user}`,
+        `<:VC_reason:1478517122929004544> __${reason}__`,
+        `<:VC_id:1478517313618575419> **ID Valutazione** __\`${idValue}\`__`,
+      ].join("\n"),
     )
     .setColor(color);
 }
@@ -74,7 +80,7 @@ function makeRemovalEmbed(
     .setTitle(title)
     .setDescription(description.replace("{user}", user.toString()))
     .addFields(
-      { name: "<:VC_reason:1478517122929004544> Motivazione:", value: `${reason}`, inline: false },
+      { name: "<:VC_reason:1478517122929004544> Motivazione: ", value: `${reason}`, inline: false },
       { name: updatedLabel, value: updatedValue, inline: false },
     )
     .setColor("#6f4e37");
@@ -274,7 +280,8 @@ async function handleMedia(interaction, staffUser, doc) {
     });
   }
 
-  const embed = new EmbedBuilder().setTitle(`<:VC_Info:1460670816214585481> Valutazioni di ${staffUser.username}`)
+  const embed = new EmbedBuilder()
+    .setTitle(`<:VC_Info:1460670816214585481> Valutazioni di ${staffUser.username}`)
     .setColor("#6f4e37")
     .addFields(
       {

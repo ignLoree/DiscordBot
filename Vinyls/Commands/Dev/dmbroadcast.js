@@ -34,9 +34,21 @@ module.exports = {
     }
 
     const customId = `dm_broadcast:${interaction.user.id}:${targetUser?.id || "all"}:${confirmAll ? "1" : "0"}`;
-    const modal = new ModalBuilder().setCustomId(customId).setTitle("DM Broadcast");
-    const titleInput = new TextInputBuilder().setCustomId("title").setLabel("Titolo").setStyle(TextInputStyle.Short).setRequired(false).setMaxLength(4000);
-    const messageInput = new TextInputBuilder().setCustomId("message").setLabel("Messaggio").setStyle(TextInputStyle.Paragraph).setRequired(true).setMaxLength(4000);
+    const modal = new ModalBuilder()
+      .setCustomId(customId)
+      .setTitle("DM Broadcast");
+    const titleInput = new TextInputBuilder()
+      .setCustomId("title")
+      .setLabel("Titolo")
+      .setStyle(TextInputStyle.Short)
+      .setRequired(false)
+      .setMaxLength(4000);
+    const messageInput = new TextInputBuilder()
+      .setCustomId("message")
+      .setLabel("Messaggio")
+      .setStyle(TextInputStyle.Paragraph)
+      .setRequired(true)
+      .setMaxLength(4000);
 
     modal.addComponents(
       new ActionRowBuilder().addComponents(titleInput),

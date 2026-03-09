@@ -49,8 +49,10 @@ module.exports = {
     const leftMembers=Math.max(trackedLeft,Math.max(0,totalInvited-activeMembers),);
     const retention=totalInvited>0?Math.round((activeMembers/totalInvited)*100):0;
 
-    const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Informazioni inviti").setDescription(`Statistiche sugli inviti effettuati da **${target.username}**`,
-      )
+    const embed = new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle("Informazioni inviti")
+      .setDescription(`Statistiche sugli inviti effettuati da **${target.username}**`)
       .addFields(
         {
           name: "📊 Totale Invitati",

@@ -1,4 +1,4 @@
-﻿const { AuditLogEvent, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionsBitField, } = require("discord.js");
+const { AuditLogEvent, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionsBitField, } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 
 const DEDUPE_TTL_MS = 15 * 1000;
@@ -115,13 +115,20 @@ module.exports = {
       const responsible = formatAuditActor(entry.executor);
       const messageUrl=messageId?buildMessageUrl(guild.id,channel.id,messageId):null;
 
-      const lines=[`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsible}`,
-        `<:VC_right_arrow:1473441155055096081>**Target:**${channel}\`${channel.id}\``,`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
+      const lines = [
+        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsible}`,
+        `<:VC_right_arrow:1473441155055096081> **Target:** ${channel} \`${channel.id}\``,
+        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         "**Additional Information**",
-        `<:VC_right_arrow:1473441155055096081>**Channel:**${channel}\`${channel.id}\``,`<:VC_right_arrow:1473441155055096081> **Message Id:** \`${messageId||"sconosciuto"}\``,];
+        `<:VC_right_arrow:1473441155055096081> **Channel:** ${channel} \`${channel.id}\``,
+        `<:VC_right_arrow:1473441155055096081> **Message Id:** \`${messageId || "sconosciuto"}\``,
+      ];
 
-      const embed=new EmbedBuilder().setColor(isPin?"#57F287":"#ED4245").setTitle(isPin?"Message Pin":"Message Unpin").setDescription(lines.join("\n"));
+      const embed = new EmbedBuilder()
+        .setColor(isPin ? "#57F287" : "#ED4245")
+        .setTitle(isPin ? "Message Pin" : "Message Unpin")
+        .setDescription(lines.join("\n"));
 
       const payload = { embeds: [embed] };
       if (messageUrl) {

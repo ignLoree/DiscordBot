@@ -423,7 +423,21 @@ async function handleSuggestionVote(interaction) {
       }
 
       const isAccept = action === "accept";
-      const resultEmbed = new EmbedBuilder().setColor(isAccept ? "Green" : "Red").setTitle(isAccept ? "<:success:1461731530333229226> Suggerimento Accettato!" : "<:cancel:1461730653677551691> Suggerimento Rifiutato!",).setDescription(oldEmbed.description || null).setTimestamp().setFooter(oldEmbed.footer || null).setFields(Array.isArray(oldEmbed.fields) ? oldEmbed.fields : []).addFields({ name: isAccept ? "<:VC_reason:1478517122929004544> Motivo:" : "<:VC_reason:1478517122929004544> Motivo:", value: reason, });
+      const resultEmbed = new EmbedBuilder()
+        .setColor(isAccept ? "Green" : "Red")
+        .setTitle(
+          isAccept
+            ? "<:success:1461731530333229226> Suggerimento Accettato!"
+            : "<:cancel:1461730653677551691> Suggerimento Rifiutato!",
+        )
+        .setDescription(oldEmbed.description || null)
+        .setTimestamp()
+        .setFooter(oldEmbed.footer || null)
+        .setFields(Array.isArray(oldEmbed.fields) ? oldEmbed.fields : [])
+        .addFields({
+          name: "<:VC_reason:1478517122929004544> Motivo: ",
+          value: reason,
+        });
 
       const suggestionUpdated = await suggestionMessage
         .edit({ embeds: [resultEmbed], components: [] })

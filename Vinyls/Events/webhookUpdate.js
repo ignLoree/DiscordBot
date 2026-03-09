@@ -165,8 +165,10 @@ module.exports = {
       const appId = String(entry?.target?.applicationId || "").trim();
       const typeText = webhookTypeLabel(entry?.target?.type);
 
-      const lines=[`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsible}`,
-        `<:VC_right_arrow:1473441155055096081>**Target:**${targetName}\`${targetId}\``,`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
+      const lines = [
+        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsible}`,
+        `<:VC_right_arrow:1473441155055096081> **Target:** ${targetName} \`${targetId}\``,
+        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         sectionTitle,
       ];
@@ -187,7 +189,7 @@ module.exports = {
           lines.push(`  ${channelChange?.old ? `<#${channelChange.old}>` : "none"} <:VC_right_arrow:1473441155055096081> ${channelChange?.new ? `<#${channelChange.new}>` : "none"}`);
         }
         if (avatarChange) {
-          lines.push(`<:VC_right_arrow:1473441155055096081> **Avatar aggiornato:** Si`);
+          lines.push(`<:VC_right_arrow:1473441155055096081> **Avatar aggiornato:** Sì`);
         }
       } else {
         lines.push(`<:VC_right_arrow:1473441155055096081> **Channel:** ${channelText}`);
@@ -199,7 +201,10 @@ module.exports = {
       }
 
       if (monitorableExecutor && logChannel?.isTextBased?.()) {
-        const embed = new EmbedBuilder().setColor(color).setTitle(title).setDescription(lines.join("\n"));
+        const embed = new EmbedBuilder()
+          .setColor(color)
+          .setTitle(title)
+          .setDescription(lines.join("\n"));
         await logChannel.send({ embeds: [embed] }).catch(() => {});
       }
 

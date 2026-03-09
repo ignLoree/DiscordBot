@@ -97,7 +97,7 @@ module.exports = {
                 ].join("\n"),
               )
               .setFooter({
-                text: `Se hai bisogno di condividere il messaggio, usa un screenshot o chiedi il permesso diretto. " ${dateText}`,
+                text: `Se hai bisogno di condividere il messaggio, usa un screenshot o chiedi il permesso diretto. ${dateText}`,
               }),
           ],
           allowedMentions: { repliedUser: false },
@@ -135,7 +135,10 @@ module.exports = {
     }
 
     const attachment = new AttachmentBuilder(buffer, { name: "quote.png" });
-    const embed=new EmbedBuilder().setColor("#6f4e37").setDescription(`<a:VC_Sparkles:1468546911936974889> Puoi trovare il post creato nel canale: <#${QUOTE_CHANNEL_ID}>!`,
+    const embed = new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setDescription(
+        `<a:VC_Sparkles:1468546911936974889> Puoi trovare il post creato nel canale: <#${QUOTE_CHANNEL_ID}>!`,
       )
       .addFields({
         name: "📸 Totale immagini generate:",
@@ -150,8 +153,9 @@ module.exports = {
       const postEmbed=buildQuotePostEmbed({messageAuthorId:author.id,creatorId:message.author.id,totalPosts,});
       const originChannelId = message.channel.id;
       const originMessageId = replyMsg?.id || "0";
-      const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`quote_remove:${message.author.id}:${originChannelId}:${originMessageId}`,
-          )
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`quote_remove:${message.author.id}:${originChannelId}:${originMessageId}`)
           .setLabel("Rimuovi questa quote")
           .setEmoji("🗑️")
           .setStyle(ButtonStyle.Danger),

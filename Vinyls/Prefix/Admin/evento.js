@@ -72,7 +72,11 @@ module.exports = {
     if (!guildId) return;
 
     if (!sub || !["start", "stop", "info", "assegna-ruoli", "reset-premi", "classifica", "staff"].includes(sub)) {
-      const usage = new EmbedBuilder().setColor("#6f4e37").setTitle("Comando evento").setDescription(["`+evento start` – Avvia l’evento Activity EXP.", "`+evento stop` – Termina l’evento e ripristina i moltiplicatori.", "`+evento info` – Mostra stato e configurazione evento.", "`+evento assegna-ruoli` – Assegna i livelli a chi ha già Supporter/Verificato/Guilded/Promoter/Propulsor/Catalyst (evento attivo).", "`+evento reset-premi` – Cancella i premi già registrati e riassegna a tutti (senza annuncio).", "`+evento classifica` – Classifica per settimana.", "`+evento classifica staff` – Classifica punti evento staff.", "`+evento staff start|stop|addpoints` – Gestione evento staff.",].join("\n"),);
+      const usage = new EmbedBuilder()
+        .setColor("#6f4e37")
+        .setTitle("Comando evento")
+        .setDescription(["`+evento start` – Avvia l’evento Activity EXP.", "`+evento stop` – Termina l’evento e ripristina i moltiplicatori.", "`+evento info` – Mostra stato e configurazione evento.", "`+evento assegna-ruoli` – Assegna i livelli a chi ha già Supporter/Verificato/Guilded/Promoter/Propulsor/Catalyst (evento attivo).", "`+evento reset-premi` – Cancella i premi già registrati e riassegna a tutti (senza annuncio).", "`+evento classifica` – Classifica per settimana.", "`+evento classifica staff` – Classifica punti evento staff.", "`+evento staff start|stop|addpoints` – Gestione evento staff.",
+        ].join("\n"));
       await safeMessageReply(message, {
         embeds: [usage],
         allowedMentions: { repliedUser: false },
@@ -171,7 +175,11 @@ module.exports = {
         const leaderboard = rawLeaderboard.filter((r) => allowedIds.has(r.userId)).slice(0, 25);
         const lines = leaderboard.length ? leaderboard.map((r, i) => `${i + 1}.<@${r.userId}>—**${r.points}**pt`)
           : ["Nessun punteggio."];
-        const embed = new EmbedBuilder().setColor("#6f4e37").setTitle("Evento Staff — Classifica punti").setDescription(lines.join("\n")).setFooter({ text: `Fine evento: ${fmtDateWithTime(staffSettings.expiresAt)}` });
+        const embed = new EmbedBuilder()
+          .setColor("#6f4e37")
+          .setTitle("Evento Staff — Classifica punti")
+          .setDescription(lines.join("\n"))
+          .setFooter({ text: `Fine evento: ${fmtDateWithTime(staffSettings.expiresAt)}` });
         await safeMessageReply(message, {
           embeds: [embed],
           allowedMentions: { repliedUser: false },
@@ -370,14 +378,21 @@ module.exports = {
           global.logger?.error?.("[evento start] grantEventRewardsForSameDayReviewAndVote failed:", err);
         });
       }, 800);
-      const embed = new EmbedBuilder().setColor("#6f4e37").setTitle("Evento Activity EXP avviato").setDescription([`<:VC_EXP:1468714279673925883> **ACTIVITY EXP EVENT**`, ``, `- Dal **${fmtDate(result.startDate)}**al**${fmtDateWithTime(result.endDate)}**`,
-        `-Moltiplicatore globale:**x${result.eventMultiplier}**`,
-        `-Override ruoli:Server Booster x3,Donator x4,VIP x5`,
-        `-Boost extra x2:<@&${IDs.roles.Veterano}>`,
-        ``,
-        `I boost si sommano al moltiplicatore globale,non tra loro.`,
-      ].join("\n"),
-      );
+      const embed = new EmbedBuilder()
+        .setColor("#6f4e37")
+        .setTitle("Evento Activity EXP avviato")
+        .setDescription(
+          [
+            `<:VC_EXP:1468714279673925883> **ACTIVITY EXP EVENT**`,
+            ``,
+            `- Dal **${fmtDate(result.startDate)}** al **${fmtDateWithTime(result.endDate)}**`,
+            `- Moltiplicatore globale: **x${result.eventMultiplier}**`,
+            `- Override ruoli: Server Booster x3, Donator x4, VIP x5`,
+            `- Boost extra x2: <@&${IDs.roles.Veterano}>`,
+            ``,
+            `I boost si sommano al moltiplicatore globale, non tra loro.`,
+          ].join("\n"),
+        );
       await safeMessageReply(message, {
         embeds: [embed],
         allowedMentions: { repliedUser: false },

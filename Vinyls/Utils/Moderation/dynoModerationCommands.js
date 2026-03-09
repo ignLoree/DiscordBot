@@ -370,7 +370,11 @@ async function runNamed(name, message, args, client) {
     const targetIndex = hasMode ? 1 : 0;
     const { user, member, userId } = await pickUser(message, args, targetIndex);
     if (!userId) {
-      const helpEmbed = new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +ban**", "", "**Descrizione:** Banna un utente, con durata opzionale.", "**Cooldown:** 3 secondi", "**Uso:**", "+ban [utente] [durata] [motivo]", "+ban save [utente] [durata] [motivo]", "+ban noappeal [utente] [durata] [motivo]", "**Esempio:**", "+ban @utente 2d Spam", "", "",].join("\n"),);
+      const helpEmbed = new EmbedBuilder()
+        .setColor("#3498DB")
+        .setDescription(
+          ["**Comando: +ban**", "", "**Descrizione:** Banna un utente, con durata opzionale.", "**Cooldown:** 3 secondi", "**Uso:**", "+ban [utente] [durata] [motivo]", "+ban save [utente] [durata] [motivo]", "+ban noappeal [utente] [durata] [motivo]", "**Esempio:**", "+ban @utente 2d Spam", "", ""].join("\n"),
+        );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
     const guard = await validateModerationTarget(message, member, "ban", userId);
@@ -397,7 +401,11 @@ async function runNamed(name, message, args, client) {
   if (cmd === "kick") {
     const { user, member, userId } = await pickUser(message, args, 0);
     if (!member || !userId) {
-      const helpEmbed = new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +kick**", "", "**Descrizione:** Espelle un utente dal server.", "**Cooldown:** 3 secondi", "**Uso:**", "+kick [utente] [motivo]", "**Esempio:**", "+kick @utente Regolamento non rispettato",].join("\n"),);
+      const helpEmbed = new EmbedBuilder()
+        .setColor("#3498DB")
+        .setDescription(
+          ["**Comando: +kick**", "", "**Descrizione:** Espelle un utente dal server.", "**Cooldown:** 3 secondi", "**Uso:**", "+kick [utente] [motivo]", "**Esempio:**", "+kick @utente Regolamento non rispettato"].join("\n"),
+        );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
     const guard = await validateModerationTarget(message, member, "kick", userId);
@@ -422,7 +430,11 @@ async function runNamed(name, message, args, client) {
   if (cmd === "mute") {
     const { user, member, userId } = await pickUser(message, args, 0);
     if (!member || !userId) {
-      const helpEmbed = new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +mute**", "", "**Descrizione:** Silenzia un utente per un tempo definito.", "**Cooldown:** 3 secondi", "**Uso:**", "+mute [utente] [durata] [motivo]", "**Esempio:**", "+mute @utente 10m Spam", "+mute @utente 1d Flood", "", "",].join("\n"),);
+      const helpEmbed = new EmbedBuilder()
+        .setColor("#3498DB")
+        .setDescription(
+          ["**Comando: +mute**", "", "**Descrizione:** Silenzia un utente per un tempo definito.", "**Cooldown:** 3 secondi", "**Uso:**", "+mute [utente] [durata] [motivo]", "**Esempio:**", "+mute @utente 10m Spam", "+mute @utente 1d Flood", "", ""].join("\n"),
+        );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
     const guard = await validateModerationTarget(message, member, "mute", userId);
@@ -499,7 +511,11 @@ async function runNamed(name, message, args, client) {
   if (cmd === "unban") {
     const raw = String(args[0] || "").trim();
     if (!raw) {
-      const helpEmbed = new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +unban**", "", "**Descrizione:** Revoca il ban di un utente.", "**Cooldown:** 5 secondi", "**Uso:**", "+unban [id_utente] (motivo opzionale)", "**Esempio:**", "+unban 155037590859284481 Appello accettato",].join("\n"),);
+      const helpEmbed = new EmbedBuilder()
+        .setColor("#3498DB")
+        .setDescription(
+          ["**Comando: +unban**", "", "**Descrizione:** Revoca il ban di un utente.", "**Cooldown:** 5 secondi", "**Uso:**", "+unban [id_utente] (motivo opzionale)", "**Esempio:**", "+unban 155037590859284481 Appello accettato"].join("\n"),
+        );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
     const id = raw.replace(/[<@!>]/g, "").trim();
@@ -601,7 +617,11 @@ async function runNamed(name, message, args, client) {
     const target = await pickUser(message, args, 0);
     const warningText = String(args.slice(1).join(" ") || "").trim();
     if (!target.userId || !warningText) {
-      const helpEmbed = new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +delwarn**", "", "**Alias:** +nwarn", "**Descrizione:** Rimuove un warning.", "**Cooldown:** 3 secondi", "**Uso:**", "+delwarn [utente] [testo warning]", "**Esempio:**", "+delwarn @utente Flood in chat generale",].join("\n"),);
+      const helpEmbed = new EmbedBuilder()
+        .setColor("#3498DB")
+        .setDescription(
+          ["**Comando: +delwarn**", "", "**Alias:** +nwarn", "**Descrizione:** Rimuove un warning.", "**Cooldown:** 3 secondi", "**Uso:**", "+delwarn [utente] [testo warning]", "**Esempio:**", "+delwarn @utente Flood in chat generale"].join("\n"),
+        );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
     const guardDelwarn = await validateModerationTarget(message, target.member, "delwarn", target.userId);
@@ -656,7 +676,11 @@ async function runNamed(name, message, args, client) {
   if (cmd === "clearwarn") {
     const target = await pickUser(message, args, 0);
     if (!target.userId) {
-      const helpEmbed = new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +clearwarn**", "", "**Descrizione:** Rimuove tutti i warning attivi da un utente.", "**Uso:**", "+clearwarn [utente]", "**Esempio:**", "+clearwarn @utente",].join("\n"),);
+      const helpEmbed = new EmbedBuilder()
+        .setColor("#3498DB")
+        .setDescription(
+          ["**Comando: +clearwarn**", "", "**Descrizione:** Rimuove tutti i warning attivi da un utente.", "**Uso:**", "+clearwarn [utente]", "**Esempio:**", "+clearwarn @utente"].join("\n"),
+        );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
     const guardClearwarn = await validateModerationTarget(message, target.member, "clearwarn", target.userId);
@@ -714,15 +738,27 @@ async function runNamed(name, message, args, client) {
     const caseId = Number.parseInt(args[0], 10);
     if (!Number.isFinite(caseId) || caseId <= 0) {
       if (cmd === "case") {
-        const helpEmbed = new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +case**", "", "**Descrizione:** Mostra un caso moderazione specifico.", "**Cooldown:** 3 secondi", "**Uso:**", "+case [id caso]", "**Esempio:**", "+case 1234",].join("\n"),);
+        const helpEmbed = new EmbedBuilder()
+          .setColor("#3498DB")
+          .setDescription(
+            ["**Comando: +case**", "", "**Descrizione:** Mostra un caso moderazione specifico.", "**Cooldown:** 3 secondi", "**Uso:**", "+case [id caso]", "**Esempio:**", "+case 1234"].join("\n"),
+          );
         return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
       }
       if (cmd === "reason") {
-        const helpEmbed = new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +reason**", "", "**Descrizione:** Imposta o aggiorna il motivo di un caso moderazione.", "**Cooldown:** 3 secondi", "**Uso:**", "+reason [case num] [reason]", "**Esempio:**", "+reason 5 Spam in immagini non appropriate",].join("\n"),);
+        const helpEmbed = new EmbedBuilder()
+          .setColor("#3498DB")
+          .setDescription(
+            ["**Comando: +reason**", "", "**Descrizione:** Imposta o aggiorna il motivo di un caso moderazione.", "**Cooldown:** 3 secondi", "**Uso:**", "+reason [case num] [reason]", "**Esempio:**", "+reason 5 Spam in immagini non appropriate"].join("\n"),
+          );
         return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
       }
       if (cmd === "duration") {
-        const helpEmbed = new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +duration**", "", "**Descrizione:** Modifica la durata di un mute/ban.", "**Cooldown:** 60 secondi", "**Uso:**", "+duration [modlog ID] [limit]", "**Esempio:**", "+duration 69 420m",].join("\n"),);
+        const helpEmbed = new EmbedBuilder()
+          .setColor("#3498DB")
+          .setDescription(
+            ["**Comando: +duration**", "", "**Descrizione:** Modifica la durata di un mute/ban.", "**Cooldown:** 60 secondi", "**Uso:**", "+duration [modlog ID] [limit]", "**Esempio:**", "+duration 69 420m"].join("\n"),
+          );
         return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
       }
       return reply(message, client, cmd, `Uso: \`+${cmd} <case> [...]\`.`, "Red");
@@ -748,7 +784,11 @@ async function runNamed(name, message, args, client) {
     if (cmd === "reason") {
       const rawReason = String(args.slice(1).join(" ") || "").trim();
       if (!rawReason) {
-        const helpEmbed = new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +reason**", "", "**Descrizione:** Imposta o aggiorna il motivo di un caso moderazione.", "**Cooldown:** 3 secondi", "**Uso:**", "+reason [case num] [reason]", "**Esempio:**", "+reason 5 Spam in immagini non appropriate",].join("\n"),);
+        const helpEmbed = new EmbedBuilder()
+          .setColor("#3498DB")
+          .setDescription(
+            ["**Comando: +reason**", "", "**Descrizione:** Imposta o aggiorna il motivo di un caso moderazione.", "**Cooldown:** 3 secondi", "**Uso:**", "+reason [case num] [reason]", "**Esempio:**", "+reason 5 Spam in immagini non appropriate"].join("\n"),
+          );
         return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
       }
       const nextReason = reasonFrom(args, 1);
@@ -763,7 +803,11 @@ async function runNamed(name, message, args, client) {
       return successReply(message, `case #${caseId}`, "reason was updated");
     }
     if (!String(args[1] || "").trim()) {
-      const helpEmbed = new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +duration**", "", "**Descrizione:** Modifica la durata di un mute/ban.", "**Cooldown:** 60 secondi", "**Uso:**", "+duration [modlog ID] [limit]", "**Esempio:**", "+duration 69 420m",].join("\n"),);
+      const helpEmbed = new EmbedBuilder()
+        .setColor("#3498DB")
+        .setDescription(
+          ["**Comando: +duration**", "", "**Descrizione:** Modifica la durata di un mute/ban.", "**Cooldown:** 60 secondi", "**Uso:**", "+duration [modlog ID] [limit]", "**Esempio:**", "+duration 69 420m"].join("\n"),
+        );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
     if (!["MUTE", "BAN"].includes(String(row.action || "").toUpperCase())) {
@@ -918,9 +962,11 @@ async function runNamed(name, message, args, client) {
       lines.push(blockLines.join("\n"));
     }
 
-    const logsEmbed = new EmbedBuilder().setColor("#3498DB").setTitle(`Modlog di ${targetUser?.username || target.userId}(Pagina ${safePage}di ${totalPages})`)
+    const logsEmbed = new EmbedBuilder()
+      .setColor("#3498DB")
+      .setTitle(`Modlog di ${targetUser?.username || target.userId} (Pagina ${safePage} di ${totalPages})`)
       .setDescription(lines.join("\n\n"))
-      .setFooter({ text: `${total} log totali | Usa+modlogs[utente][pagina] per vedere un 'altra pagina` });
+      .setFooter({ text: `${total} log totali | Usa +modlogs [utente] [pagina] per vedere un'altra pagina` });
 
     return message.channel.send({ embeds: [logsEmbed] }).catch(() => null);
   }
@@ -973,10 +1019,18 @@ async function runNamed(name, message, args, client) {
   if (cmd === "lock" || cmd === "unlock") {
     if (!args.length) {
       if (cmd === "lock") {
-        const helpEmbed = new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +lock**", "", "**Descrizione:** Blocca un canale con timer e messaggio opzionali.", "**Cooldown:** 5 secondi", "**Uso:**", "+lock [canale] (durata) (messaggio)", "**Esempio:**", "+lock #general Torniamo subito", "+lock #support 2h Questo canale restera bloccato per due ore.", "+lock #help 4h",].join("\n"),);
+        const helpEmbed = new EmbedBuilder()
+          .setColor("#3498DB")
+          .setDescription(
+            ["**Comando: +lock**", "", "**Descrizione:** Blocca un canale con timer e messaggio opzionali.", "**Cooldown:** 5 secondi", "**Uso:**", "+lock [canale] (durata) (messaggio)", "**Esempio:**", "+lock #general Torniamo subito", "+lock #support 2h Questo canale resterà bloccato per due ore.", "+lock #help 4h"].join("\n"),
+          );
         return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
       }
-      const helpEmbed = new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +unlock**", "", "**Descrizione:** Sblocca un canale bloccato in precedenza.", "**Cooldown:** 5 secondi", "**Uso:**", "+unlock [canale] (messaggio)", "**Esempio:**", "+unlock #general", "+unlock #support Siamo tornati!",].join("\n"),);
+      const helpEmbed = new EmbedBuilder()
+        .setColor("#3498DB")
+        .setDescription(
+          ["**Comando: +unlock**", "", "**Descrizione:** Sblocca un canale bloccato in precedenza.", "**Cooldown:** 5 secondi", "**Uso:**", "+unlock [canale] (messaggio)", "**Esempio:**", "+unlock #general", "+unlock #support Siamo tornati!"].join("\n"),
+        );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
 

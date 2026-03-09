@@ -166,7 +166,10 @@ async function sendMessageEditLog(previous, updated) {
     lines.push(formatAttachmentsChange(beforeNames, afterNames));
   }
 
-  const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Message Edited").setDescription(lines.join("\n"));
+  const embed = new EmbedBuilder()
+    .setColor("#F59E0B")
+    .setTitle("Message Edited")
+    .setDescription(lines.join("\n"));
 
   const preview = firstImageAttachment(updated);
   if (preview?.url) {
@@ -175,7 +178,8 @@ async function sendMessageEditLog(previous, updated) {
 
   const payload = { embeds: [embed], files };
   if (isHttpUrl(updated.url)) {
-    const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Go to Message").setURL(updated.url),);
+    const row = new ActionRowBuilder()
+    .addComponents(new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Go to Message").setURL(updated.url),);
     payload.components = [row];
   }
 

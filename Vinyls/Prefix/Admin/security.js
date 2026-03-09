@@ -214,7 +214,11 @@ function buildStaticsPaginationRow(customBase, page = PAGE_ROLES) {
 async function openSecurityStaticsPanel(message) {
   let page = PAGE_ROLES;
   const base = `security-statics:${message.author.id}:${Date.now()}`;
-  const sent=await safeMessageReply(message,{embeds:[buildSecurityStaticsPanelEmbed(message.guild.id,page)],components:[buildStaticsPaginationRow(base,page)],allowedMentions:{repliedUser:false},});
+  const sent = await safeMessageReply(message, {
+    embeds: [buildSecurityStaticsPanelEmbed(message.guild.id, page)],
+    components: [buildStaticsPaginationRow(base, page)],
+    allowedMentions: { repliedUser: false },
+  });
   if (!sent) return;
 
   const collector = sent.createMessageComponentCollector({ time: 5 * 60_000 });
@@ -222,7 +226,7 @@ async function openSecurityStaticsPanel(message) {
     try {
       if (interaction.user.id !== message.author.id) {
         await interaction.reply({
-          content: "<:vegax:1443934876440068179> Solo chi ha aperto il pannello puo usarlo.",
+          content: "<:vegax:1443934876440068179> Solo chi ha aperto il pannello può usarlo.",
           ephemeral: true,
         }).catch(() => null);
         return;
@@ -388,7 +392,14 @@ async function executeSecurityStatics(message, args = []) {
       });
       return;
     }
-    const update=slot===6?setModLoggingChannel(guild.id,channel.id):slot===7?setLoggingChannel(guild.id,channel.id):slot===9?setMainChannel(guild.id,channel.id):setVerificationChannel(guild.id,channel.id);
+    const update =
+      slot === 6
+        ? setModLoggingChannel(guild.id, channel.id)
+        : slot === 7
+          ? setLoggingChannel(guild.id, channel.id)
+          : slot === 9
+            ? setMainChannel(guild.id, channel.id)
+            : setVerificationChannel(guild.id, channel.id);
     if (!update?.ok) {
       await safeMessageReply(message, {
         content: "<:vegax:1443934876440068179> Impossibile salvare il canale.",
@@ -589,7 +600,14 @@ async function sendPagedEmbeds(message, embeds, panelKey) {
   };
   const allowed = new Set(Object.values(ids));
 
-  const row=(disabled=false) => new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(ids.first).setLabel("<<").setStyle(ButtonStyle.Secondary).setDisabled(disabled||pageIndex===0),new ButtonBuilder().setCustomId(ids.prev).setLabel("<").setStyle(ButtonStyle.Secondary).setDisabled(disabled||pageIndex===0),new ButtonBuilder().setCustomId(ids.next).setLabel(">").setStyle(ButtonStyle.Secondary).setDisabled(disabled||pageIndex>=embeds.length-1),new ButtonBuilder().setCustomId(ids.last).setLabel(">>").setStyle(ButtonStyle.Secondary).setDisabled(disabled||pageIndex>=embeds.length-1),new ButtonBuilder().setCustomId(ids.close).setLabel("X").setStyle(ButtonStyle.Danger).setDisabled(disabled),);
+  const row = (disabled = false) =>
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(ids.first).setLabel("<<").setStyle(ButtonStyle.Secondary).setDisabled(disabled || pageIndex === 0),
+      new ButtonBuilder().setCustomId(ids.prev).setLabel("<").setStyle(ButtonStyle.Secondary).setDisabled(disabled || pageIndex === 0),
+      new ButtonBuilder().setCustomId(ids.next).setLabel(">").setStyle(ButtonStyle.Secondary).setDisabled(disabled || pageIndex >= embeds.length - 1),
+      new ButtonBuilder().setCustomId(ids.last).setLabel(">>").setStyle(ButtonStyle.Secondary).setDisabled(disabled || pageIndex >= embeds.length - 1),
+      new ButtonBuilder().setCustomId(ids.close).setLabel("X").setStyle(ButtonStyle.Danger).setDisabled(disabled),
+    );
 
   const sent=await safeMessageReply(message,{embeds:[embeds[pageIndex]],components:[row(false)],allowedMentions:{repliedUser:false},});
   if (!sent || typeof sent.createMessageComponentCollector !== "function") return;
@@ -649,20 +667,132 @@ async function buildStatusEmbeds(guild) {
   const lock = autoCfg?.autoLockdown || {};
   const minAgeDays = Number(joinGate?.newAccounts?.minAgeDays || 3);
 
-  const page1=new EmbedBuilder().setColor("#6f4e37").setTitle("Global Anti-Nuke Panel").setDescription(["[1] Status:",`- \`${anti?.enabled?"Enabled":"Disabled"}\``,"","[2] Panic Mode:",`- \`+security panic status\``,"","[3] Backups:",`- [A] Status: \`${backup.enabled?"Enabled":"Disabled"}\``,"- [B] Max immagini: `10`","- [C] Intervallo: `Ogni 3h`","","[4] Prune Detection:",`- \`${antiCfg?.detectPrune?"Enabled":"Disabled"}\``,"","[5] Quarantine Hold:",`- [A] Status: \`${quarantine.enabled?"Enabled":"Disabled"}\``,`- [B] Strict Mode: \`${quarantine.strictMode?"Enabled":"Disabled"}\``,`- [C] Monitor Public Roles: \`${quarantine.monitorPublicRoles?"Enabled":"Disabled"}\``,`- [D] Vanity Protection: \`${antiCfg?.vanityGuard?"Enabled":"Disabled"}\``,`- [E] Strict Member Role Addition: \`${quarantine.strictMemberRoleAddition?"Enabled":"Disabled"}\``,"","[6] Runtime:",`- Panic **${anti?.panicActive?"ON":"OFF"}**,JoinRaid**${raid?.raidActive?"ON":"OFF"}**,AutoMod Panic**${autoPanic.active?"ON":"OFF"}**`,
-        `-JoinLock**${sec.joinLockActive?"ON":"OFF"}**,CmdLock**${sec.commandLockActive?"ON":"OFF"}**`,
-        `-Warned roles:${warnedRoles}`,
+  const page1 = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("Global Anti-Nuke Panel")
+    .setDescription(
+      [
+        "[1] Status:",
+        `- \`${anti?.enabled ? "Enabled" : "Disabled"}\``,
+        "",
+        "[2] Panic Mode:",
+        `- \`+security panic status\``,
+        "",
+        "[3] Backups:",
+        `- [A] Status: \`${backup.enabled ? "Enabled" : "Disabled"}\``,
+        "- [B] Max immagini: `10`",
+        "- [C] Intervallo: `Ogni 3h`",
+        "",
+        "[4] Prune Detection:",
+        `- \`${antiCfg?.detectPrune ? "Enabled" : "Disabled"}\``,
+        "",
+        "[5] Quarantine Hold:",
+        `- [A] Status: \`${quarantine.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Strict Mode: \`${quarantine.strictMode ? "Enabled" : "Disabled"}\``,
+        `- [C] Monitor Public Roles: \`${quarantine.monitorPublicRoles ? "Enabled" : "Disabled"}\``,
+        `- [D] Vanity Protection: \`${antiCfg?.vanityGuard ? "Enabled" : "Disabled"}\``,
+        `- [E] Strict Member Role Addition: \`${quarantine.strictMemberRoleAddition ? "Enabled" : "Disabled"}\``,
+        "",
+        "[6] Runtime:",
+        `- Panic **${anti?.panicActive ? "ON" : "OFF"}**, JoinRaid **${raid?.raidActive ? "ON" : "OFF"}**, AutoMod Panic **${autoPanic.active ? "ON" : "OFF"}**`,
+        `- JoinLock **${sec.joinLockActive ? "ON" : "OFF"}**, CmdLock **${sec.commandLockActive ? "ON" : "OFF"}**`,
+        `- Warned roles: ${warnedRoles}`,
       ].join("\n"),
     );
 
-  const page2=new EmbedBuilder().setColor("#6f4e37").setTitle("Join Raid").setDescription(["[1] Status:        [2] Action:        [3] Warned Roles:",`- \`${raid?.enabled?"Enabled":"Disabled"}\`        - \`${formatActionLabel(raid?.config?.triggerAction,"ban")}\`        - ${raidWarnedRoles}`,
+  const page2 = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("Join Raid")
+    .setDescription(
+      [
+        "[1] Status:        [2] Action:        [3] Warned Roles:",
+        `- \`${raid?.enabled ? "Enabled" : "Disabled"}\`        - \`${formatActionLabel(raid?.config?.triggerAction, "ban")}\`        - ${raidWarnedRoles}`,
         "",
         "[4] Details:",
-        `-[X]Lock Commands While Raid:\`${raid?.config?.lockCommands?"Enabled":"Disabled"}\``,`- [A] Minimum Trigger: \`${Number(raid?.config?.triggerCount||10)}accounts\``,`- [B] Join History: Past \`${toCompactDuration(raid?.config?.triggerWindowMs||0)}\``,`- [C] Trigger Duration: \`${toCompactDuration(raid?.config?.raidDurationMs||0)}\``,"","[5] Age Flag:",`- [A] Status: \`${ageFlag.enabled?"Enabled":"Disabled"}\``,`- [B] Minimum: \`${toCompactDuration(ageFlag.minimumAgeMs||0)}\``,"","[6] NoPFP Flag:",`- \`${noPfpFlag.enabled?"Enabled":"Disabled"}\``,"","[7] ID Flag:",`- [A] Status: \`${idFlag.enabled?"Enabled":"Disabled"}\``,`- [B] Granularity: \`${String(idFlag.categorization||"adaptive")}\``,`- [C] Margin: \`${toCompactDuration(raid?.config?.triggerWindowMs||0)}\``,`- [D] Minimum Matches: \`${Number(idFlag.minimumMatches||4)}\``,].join("\n"),);
+        `- [X] Lock Commands While Raid: \`${raid?.config?.lockCommands ? "Enabled" : "Disabled"}\``,
+        `- [A] Minimum Trigger: \`${Number(raid?.config?.triggerCount || 10)} accounts\``,
+        `- [B] Join History: Past \`${toCompactDuration(raid?.config?.triggerWindowMs || 0)}\``,
+        `- [C] Trigger Duration: \`${toCompactDuration(raid?.config?.raidDurationMs || 0)}\``,
+        "",
+        "[5] Age Flag:",
+        `- [A] Status: \`${ageFlag.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Minimum: \`${toCompactDuration(ageFlag.minimumAgeMs || 0)}\``,
+        "",
+        "[6] NoPFP Flag:",
+        `- \`${noPfpFlag.enabled ? "Enabled" : "Disabled"}\``,
+        "",
+        "[7] ID Flag:",
+        `- [A] Status: \`${idFlag.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Granularity: \`${String(idFlag.categorization || "adaptive")}\``,
+        `- [C] Margin: \`${toCompactDuration(raid?.config?.triggerWindowMs || 0)}\``,
+        `- [D] Minimum Matches: \`${Number(idFlag.minimumMatches || 4)}\``,
+      ].join("\n"),
+    );
 
-  const page3=new EmbedBuilder().setColor("#6f4e37").setTitle("Heat System Panel").setDescription(["[1] Status:",`- \`${autoRules?.status?.enabled?"Enabled":"Disabled"}\``,"","[2] Spam Filters:",`- \`${autoRules?.status?.antiSpamEnabled?"Enabled":"Disabled"}\``,"","[3] Max Heat Percentage:",`- \`${Number(hs.maxHeat||100)}%\``,"","[4] Heat Degradation:",`- \`${Number(hs.decayPerSec||0)}%per second\``,"","[5] Strikes CAP:",`- \`${Number(at.capStrike||3)}\``,"","[6] Auto Timeouts:",`- [A] Status: \`${at.enabled?"Enabled":"Disabled"}\``,`- [B] Regular Strike Duration: \`${toCompactDuration(at.regularStrikeDurationMs)}\``,`- [C] CAP Strike Duration: \`${toCompactDuration(at.capStrikeDurationMs)}\``,"","[7] Heat Panic Mode:",`- [A] Status: \`${panic.enabled?"Enabled":"Disabled"}\``,`- [B] Trigger: \`${Number(panic.triggerCount||3)}Raiders\``,`- [C] Panic Duration: \`${toCompactDuration(panic.durationMs)}\``,"","[8] Auto Server Lockdown:",`- [A] Status: \`${lock.enabled?"Enabled":"Disabled"}\``,`- [B] Mentions: \`${Number(lock.mentionTrigger||50)}\``,`- [C] Under: \`${toCompactDuration(lock.mentionWindowMs)}\``,].join("\n"),);
+  const page3 = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("Heat System Panel")
+    .setDescription(
+      [
+        "[1] Status:",
+        `- \`${autoRules?.status?.enabled ? "Enabled" : "Disabled"}\``,
+        "",
+        "[2] Spam Filters:",
+        `- \`${autoRules?.status?.antiSpamEnabled ? "Enabled" : "Disabled"}\``,
+        "",
+        "[3] Max Heat Percentage:",
+        `- \`${Number(hs.maxHeat || 100)}%\``,
+        "",
+        "[4] Heat Degradation:",
+        `- \`${Number(hs.decayPerSec || 0)}% per second\``,
+        "",
+        "[5] Strikes CAP:",
+        `- \`${Number(at.capStrike || 3)}\``,
+        "",
+        "[6] Auto Timeouts:",
+        `- [A] Status: \`${at.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Regular Strike Duration: \`${toCompactDuration(at.regularStrikeDurationMs)}\``,
+        `- [C] CAP Strike Duration: \`${toCompactDuration(at.capStrikeDurationMs)}\``,
+        "",
+        "[7] Heat Panic Mode:",
+        `- [A] Status: \`${panic.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Trigger: \`${Number(panic.triggerCount || 3)} Raiders\``,
+        `- [C] Panic Duration: \`${toCompactDuration(panic.durationMs)}\``,
+        "",
+        "[8] Auto Server Lockdown:",
+        `- [A] Status: \`${lock.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Mentions: \`${Number(lock.mentionTrigger || 50)}\``,
+        `- [C] Under: \`${toCompactDuration(lock.mentionWindowMs)}\``,
+      ].join("\n"),
+    );
 
-  const page4=new EmbedBuilder().setColor("#6f4e37").setTitle("JoinGate Panel").setDescription(["[1] General:",`- [A] Status: \`${joinGate?.enabled?"Enabled":"Disabled"}\``,`- [B] DM Members: \`${joinGate?.dmPunishedMembers?"Enabled":"Disabled"}\``,"","[2] No Avatar Filter:",`- [A] Status: \`${joinGate?.noAvatar?.enabled?"Enabled":"Disabled"}\``,`- [B] Action: \`${formatActionLabel(joinGate?.noAvatar?.action,"log")}\``,"","[3] Account Age Filter:",`- [A] Status: \`${joinGate?.newAccounts?.enabled?"Enabled":"Disabled"}\``,`- [B] Action: \`${formatActionLabel(joinGate?.newAccounts?.action,"kick")}\``,`- [C] Minimum Age: \`${minAgeDays}days\``,"","[4] Bot Addition Filter:",`- [A] Status: \`${joinGate?.botAdditions?.enabled?"Enabled":"Disabled"}\``,`- [B] Action: \`${formatActionLabel(joinGate?.botAdditions?.action,"kick")}\``,"","[5] Suspicious Account Filter:",`- [A] Status: \`${joinGate?.suspiciousAccount?.enabled?"Enabled":"Disabled"}\``,`- [B] Action: \`${formatActionLabel(joinGate?.suspiciousAccount?.action,"log")}\``,].join("\n"),);
+  const page4 = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("JoinGate Panel")
+    .setDescription(
+      [
+        "[1] General:",
+        `- [A] Status: \`${joinGate?.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] DM Members: \`${joinGate?.dmPunishedMembers ? "Enabled" : "Disabled"}\``,
+        "",
+        "[2] No Avatar Filter:",
+        `- [A] Status: \`${joinGate?.noAvatar?.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Action: \`${formatActionLabel(joinGate?.noAvatar?.action, "log")}\``,
+        "",
+        "[3] Account Age Filter:",
+        `- [A] Status: \`${joinGate?.newAccounts?.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Action: \`${formatActionLabel(joinGate?.newAccounts?.action, "kick")}\``,
+        `- [C] Minimum Age: \`${minAgeDays} days\``,
+        "",
+        "[4] Bot Addition Filter:",
+        `- [A] Status: \`${joinGate?.botAdditions?.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Action: \`${formatActionLabel(joinGate?.botAdditions?.action, "kick")}\``,
+        "",
+        "[5] Suspicious Account Filter:",
+        `- [A] Status: \`${joinGate?.suspiciousAccount?.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Action: \`${formatActionLabel(joinGate?.suspiciousAccount?.action, "log")}\``,
+      ].join("\n"),
+    );
 
   return [page1, page2, page3, page4];
 }
@@ -1012,7 +1142,10 @@ module.exports = {
       const results = await runSecurityAction("enable", target, message.guild, message.author.id);
       const okCount = results.filter((r) => r.ok).length;
       const changedCount = results.filter((r) => r.changed).length;
-      const lines=results.map((r) => {const status=r.ok?"OK":"ERR";const changed=r.changed?"changed":"no-change";return`- **${r.system}**:${status}(${changed})-${r.note}`;
+      const lines = results.map((r) => {
+        const status = r.ok ? "OK" : "ERR";
+        const changed = r.changed ? "changed" : "no-change";
+        return `- **${r.system}**: ${status} (${changed}) - ${r.note}`;
       });
 
       await sendSecurityAuditLog(message.guild, {
@@ -1059,7 +1192,10 @@ module.exports = {
       const results = await runSecurityAction("disable", target, message.guild, message.author.id);
       const okCount = results.filter((r) => r.ok).length;
       const changedCount = results.filter((r) => r.changed).length;
-      const lines=results.map((r) => {const status=r.ok?"OK":"ERR";const changed=r.changed?"changed":"no-change";return`- **${r.system}**:${status}(${changed})-${r.note}`;
+      const lines = results.map((r) => {
+        const status = r.ok ? "OK" : "ERR";
+        const changed = r.changed ? "changed" : "no-change";
+        return `- **${r.system}**: ${status} (${changed}) - ${r.note}`;
       });
 
       await sendSecurityAuditLog(message.guild, {
@@ -1131,7 +1267,10 @@ module.exports = {
 
     const okCount = results.filter((r) => r.ok).length;
     const changedCount = results.filter((r) => r.changed).length;
-    const lines=results.map((r) => {const status=r.ok?"OK":"ERR";const changed=r.changed?"changed":"no-change";return`- **${r.system}**:${status}(${changed})-${r.note}`;
+    const lines = results.map((r) => {
+      const status = r.ok ? "OK" : "ERR";
+      const changed = r.changed ? "changed" : "no-change";
+      return `- **${r.system}**: ${status} (${changed}) - ${r.note}`;
     });
 
     await sendSecurityAuditLog(message.guild, {

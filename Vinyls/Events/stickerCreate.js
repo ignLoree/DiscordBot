@@ -74,16 +74,24 @@ module.exports = {
       const responsible = await resolveResponsible(guild, stickerId);
       const responsibleText = formatAuditActor(responsible);
 
-      const embed=new EmbedBuilder().setColor("#57F287").setTitle("Sticker Create").setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-            `<:VC_right_arrow:1473441155055096081>${toDiscordTimestamp(new Date(),"F")}`,
+      const embed = new EmbedBuilder()
+        .setColor("#57F287")
+        .setTitle("Sticker Create")
+        .setDescription(
+          [
+            `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+            `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
             "",
             "**Settings**",
-            `<:VC_right_arrow:1473441155055096081>**Id:**\`${stickerId}\``,`<:VC_right_arrow:1473441155055096081> **Name:** ${sticker.name||"sconosciuto"}`,
-            `<:VC_right_arrow:1473441155055096081>**Tags:**${sticker.tags||"-"}`,
-            `<:VC_right_arrow:1473441155055096081>**Type:**Local Server Sticker`,
-            `<:VC_right_arrow:1473441155055096081>**Format Type:**${stickerFormatLabel(sticker.formatType)}`,
-            `<:VC_right_arrow:1473441155055096081>**Available:**${yesNo(Boolean(sticker.available))}`,
-            `<:VC_right_arrow:1473441155055096081>**Guild Id:**\`${guild.id}\``,].join("\n"),);
+            `<:VC_right_arrow:1473441155055096081> **Id:** \`${stickerId}\``,
+            `<:VC_right_arrow:1473441155055096081> **Name:** ${sticker.name || "sconosciuto"}`,
+            `<:VC_right_arrow:1473441155055096081> **Tags:** ${sticker.tags || "-"}`,
+            `<:VC_right_arrow:1473441155055096081> **Type:** Local Server Sticker`,
+            `<:VC_right_arrow:1473441155055096081> **Format Type:** ${stickerFormatLabel(sticker.formatType)}`,
+            `<:VC_right_arrow:1473441155055096081> **Available:** ${yesNo(Boolean(sticker.available))}`,
+            `<:VC_right_arrow:1473441155055096081> **Guild Id:** \`${guild.id}\``,
+          ].join("\n"),
+        );
 
       if (sticker.url) embed.setThumbnail(sticker.url);
       await logChannel.send({ embeds: [embed] }).catch(() => null);

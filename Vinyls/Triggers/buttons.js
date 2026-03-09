@@ -9,7 +9,7 @@ const { sendPexDepexLog } = require("../Events/interaction/resocontoHandlers");
 const { checkButtonPermission, checkStringSelectPermission, buildGlobalPermissionDeniedEmbed, buildGlobalNotYourControlEmbed, } = require("../Utils/Moderation/commandPermissions");
 const DIVIDER_URL = "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
 const PRIVATE_FLAG = 1 << 6;
-const MONO_GUILD_DENIED_TEXT = "Questo bot è utilizzabile solo sul server principale di Vinili & Caff?.";
+const MONO_GUILD_DENIED_TEXT = "Questo bot è utilizzabile solo sul server principale di Vinili & Caffè.";
 
 async function handleStaffButtons(interaction) {
   if (!interaction.isButton()) return false;
@@ -56,7 +56,10 @@ async function handleStaffButtons(interaction) {
   }
 
   if (interaction.customId == "sanzioni") {
-    const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setDescription(
+    const embed = new EmbedBuilder()
+      .setImage(DIVIDER_URL)
+      .setColor("#6f4e37")
+      .setDescription(
       "<:reportmessage:1443670575376765130> Ogni staffer per sanzionare dovr\u00e0 __seguire__ <#1442569243626307634>, chi non lo far\u00e0 **ricever\u00e0** una __valutazione negativa__.\n\n" +
       "> <a:VC_Arrow:1448672967721615452> **__LIMITI SETTIMANALI SULLE SANZIONI__**\n" +
       "<:dot:1443660294596329582> Ogni <@&1442568901887000618> dovr\u00e0 __eseguire__ almeno: **`3 sanzioni`**\n" +
@@ -69,7 +72,10 @@ async function handleStaffButtons(interaction) {
   }
 
   if (interaction.customId == "warnstaff") {
-    const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setDescription(
+    const embed = new EmbedBuilder()
+      .setImage(DIVIDER_URL)
+      .setColor("#6f4e37")
+      .setDescription(
       "<:banhammer:1443651875441217639> I **warn staff** vengono __assegnati__ dopo **3 valutazioni negative**. Raggiunti i `2` **warn staff** si verr\u00e0 depexati al ruolo precedente. **__(Per i Mod sar\u00e0 depex completo)__**\n\n" +
       "> L'<@&1442568894349840435> pu\u00f2 decidere di graziare qualcuno al secondo warn, ma in caso di **terzo warn** lo staffer verr\u00e0 depexato **__completamente__**\n\n" +
       "<:attentionfromvega:1443651874032062505> I **warn staff** non possono essere __rimossi__. Il **reset** dei __warn staff__ avviene ogni **__6 mesi__**."
@@ -152,7 +158,7 @@ async function handleStaffButtons(interaction) {
 
             <:dot:1443660294596329582> __Non__ **floodare**, **spammare** e **usare bot** per completare i **\`limiti settimanali testuali\`**
 
-            <:dot:1443660294596329582> __Non__ passare la maggior parte del **tempo** nei **canali vocali privati**, poich? non vengono **conteggiati** al fine dei __limiti settimanali__
+            <:dot:1443660294596329582> __Non__ passare la maggior parte del **tempo** nei **canali vocali privati**, poiché non vengono **conteggiati** al fine dei __limiti settimanali__
 
             <:dot:1443660294596329582> __Non__ **stare da soli** in una __vocale pubblica__ se in un'altra vi è già un altro **staffer** da solo. Inoltre, almeno uno dei due **deve** essere __smutato__`);
     await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
@@ -488,7 +494,7 @@ module.exports = {
       const originChannelId = parts[2] || null;
       const originMessageId = parts[3] || null;
       if (interaction.user.id !== targetId) {
-        const denied = new EmbedBuilder().setColor("#e74c3c").setTitle("<:vegax:1443934876440068179> Accesso negato").setDescription("Solo l'autore della citazione pu? rimuoverla.");
+        const denied = new EmbedBuilder().setColor("#e74c3c").setTitle("<:vegax:1443934876440068179> Accesso negato").setDescription("Solo l'autore della citazione può rimuoverla.");
         return interaction.reply({ embeds: [denied], flags: 1 << 6 });
       }
       const now = new Date();
@@ -546,7 +552,10 @@ module.exports = {
     }
 
     if (interaction.customId == "info_rules") {
-      const commonEmbed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setDescription("<:5751attentionfromvega:1443651874032062505> __Lo staff si riserva il diritto di cambiare sanzioni e regole in base alla situazione.__");
+      const commonEmbed = new EmbedBuilder()
+        .setImage(DIVIDER_URL)
+        .setColor("#6f4e37")
+        .setDescription("<:5751attentionfromvega:1443651874032062505> __Lo staff si riserva il diritto di cambiare sanzioni e regole in base alla situazione.__");
       const generalEmbed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setDescription([
         "<:rules:1443307208543703131> **`REGOLA GENERALE 1.1`**",
         "<:VC_Reply:1468262952934314131> **Rispettare** i [__ToS__](https://discord.com/terms) e le [__Linee Guida__](https://discord.com/guidelines) di Discord.",
@@ -605,7 +614,14 @@ module.exports = {
     }
 
     if (interaction.customId == "info_donations") {
-      const donations = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setAuthor({ name: "Supporta il server con l'acquisto di un VIP o una donazione!", iconURL: "https://emoji.gg/emoji/480166-coffee", }).setDescription([
+      const donations = new EmbedBuilder()
+        .setImage(DIVIDER_URL)
+        .setColor("#6f4e37")
+        .setAuthor({
+          name: "Supporta il server con l'acquisto di un VIP o una donazione!",
+          iconURL: "https://emoji.gg/emoji/480166-coffee",
+        })
+        .setDescription([
         "Usiamo i soldi donati per portare eventi con premi migliori, come Discord Nitro o gift card, e per cercare collaborazioni interessanti per voi utenti.",
         "Le donazioni sono completamente volontarie e contribuiscono alla nostra crescita. In anticipo, grazie.",
         "",
@@ -620,9 +636,13 @@ module.exports = {
         "<:dot:1443660294596329582> Sblocchi i COLORI PLUS (gradienti) su <#1469429150669602961>",
         "<:dot:1443660294596329582> Sblocchi il comando `+quote`",
         "<:dot:1443660294596329582> X3 EXP boost",
-      ].join("\n")).setImage(DIVIDER_URL);
+      ].join("\n"))
+        .setImage(DIVIDER_URL);
 
-      const vip = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setDescription([
+      const vip = new EmbedBuilder()
+        .setImage(DIVIDER_URL)
+        .setColor("#6f4e37")
+        .setDescription([
         "**Vuoi sostenere il server?** Acquista il VIP e riscatta tutti i vantaggi che hai sbloccato qui nel server! <a:VC_HeartsBlue:1468686100045369404>",
         "",
         "ACQUISTA IL <@&1442568950805430312> <a:VC_HeartsPink:1468685897389052008>",
@@ -640,14 +660,28 @@ module.exports = {
         "",
         "<:attentionfromvega:1443651874032062505> DISCLAIMER / I soldi non sono rimborsabili, essendo volontari.",
         "I vantaggi segnati con \"?\" vengono rimossi qualora l'utente violi il regolamento, porti un'immagine negativa al server o sia inattivo per mesi.",
-      ].join("\n")).setImage(DIVIDER_URL);
+      ].join("\n"))
+        .setImage(DIVIDER_URL);
 
-      const ticket = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setTitle("Acquista ora!").setDescription("<:blueflash:1470064803157643468> Apri un ticket nella **terza categoria** su: <#1442569095068254219>.");
+      const ticket = new EmbedBuilder()
+        .setImage(DIVIDER_URL)
+        .setColor("#6f4e37")
+        .setTitle("Acquista ora!")
+        .setDescription("<:blueflash:1470064803157643468> Apri un ticket nella **terza categoria** su: <#1442569095068254219>.");
       await interaction.reply({ embeds: [donations, vip, ticket], flags: 1 << 6 }).catch(() => null);
     }
 
     if (interaction.customId == "info_sponsor") {
-      const sponsorEmbed = new EmbedBuilder().setColor("#6f4e37").setDescription("<:pinnednew:1443670849990430750> **Vinili & Caffè** offre un servizio di __sponsor__ con dei **requisiti** da rispettare. Per fare una __sponsor__ bisognerà aprire un <#1442569095068254219> `Terza Categoria`.\n\n" + "> Ogni server che vorrà effettuare una **sponsor** dovrà rispettare questi 3 requisiti:\n" + "> <:dot:1443660294596329582> Rispettare i [**ToS di Discord**](https://discord.com/terms)\n" + "> <:dot:1443660294596329582> Rispettare le [**Linee Guida di Discord**](https://discord.com/guidelines)\n" + "> <:dot:1443660294596329582> Rispettare il [**Regolamento di Vinili & Caffè**](https://discord.com/channels/1329080093599076474/1442569111119990887)").setImage(DIVIDER_URL);
+      const sponsorEmbed = new EmbedBuilder()
+        .setColor("#6f4e37")
+        .setDescription(
+          "<:pinnednew:1443670849990430750> **Vinili & Caffè** offre un servizio di __sponsor__ con dei **requisiti** da rispettare. Per fare una __sponsor__ bisognerà aprire un <#1442569095068254219> `Terza Categoria`.\n\n" +
+          "> Ogni server che vorrà effettuare una **sponsor** dovrà rispettare questi 3 requisiti:\n" +
+          "> <:dot:1443660294596329582> Rispettare i [**ToS di Discord**](https://discord.com/terms)\n" +
+          "> <:dot:1443660294596329582> Rispettare le [**Linee Guida di Discord**](https://discord.com/guidelines)\n" +
+          "> <:dot:1443660294596329582> Rispettare il [**Regolamento di Vinili & Caffè**](https://discord.com/channels/1329080093599076474/1442569111119990887)",
+        )
+        .setImage(DIVIDER_URL);
       const rowSponsor = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("metodi").setLabel("︲METODI").setEmoji("<:Money:1330544713463500970>").setStyle(ButtonStyle.Secondary), new ButtonBuilder().setCustomId("ping").setLabel("︲PING").setEmoji("<:Discord_Mention:1329524304790028328>").setStyle(ButtonStyle.Secondary));
       await interaction.reply({ embeds: [sponsorEmbed], components: [rowSponsor], flags: 1 << 6 }).catch(() => null);
     }
@@ -674,12 +708,26 @@ module.exports = {
     }
 
     if (interaction.customId == "candidature_premi_partner") {
-      const premiPartnerEmbed = new EmbedBuilder().setColor("#6f4e37").setDescription("<:partneredserverowner:1443651871125409812> **__Vinili & Caffè__** offre un servizio di __pagamento__ in base al numero di **partner** effettuate.\n> Per riscattare eventuali premi bisognerà aprire un <#1442569095068254219> **__`Terza Categoria`__**\n\n<:dot:1443660294596329582> **__`150`__** partner <a:vegarightarrow:1443673039156936837> **__2__ euro** <:paypal:1329524292446191676>\n<:dot:1443660294596329582> **__`175`__** partner <a:vegarightarrow:1443673039156936837> **__3__ euro** <:paypal:1329524292446191676> / **Nitro __Basic__** <:sparkles_nitro_basic:1330196488336310383>\n<:dot:1443660294596329582> **__`250`__** partner <a:vegarightarrow:1443673039156936837> **Nitro __Boost__** <:VC_NitroBoost:1448706966263435326>\n\n<a:flyingnitroboost:1443652205705170986> Naturalmente, in caso di riscatto del **Nitro __Boost__**, almeno un **boost** dovrà andare a **__Vinili & Caffè__**.").setImage(DIVIDER_URL);
+      const premiPartnerEmbed = new EmbedBuilder()
+        .setColor("#6f4e37")
+        .setDescription(
+          "<:partneredserverowner:1443651871125409812> **__Vinili & Caffè__** offre un servizio di __pagamento__ in base al numero di **partner** effettuate.\n" +
+          "> Per riscattare eventuali premi bisognerà aprire un <#1442569095068254219> **__`Terza Categoria`__**\n\n" +
+          "<:dot:1443660294596329582> **__`150`__** partner <a:vegarightarrow:1443673039156936837> **__2__ euro** <:paypal:1329524292446191676>\n" +
+          "<:dot:1443660294596329582> **__`175`__** partner <a:vegarightarrow:1443673039156936837> **__3__ euro** <:paypal:1329524292446191676> / **Nitro __Basic__** <:sparkles_nitro_basic:1330196488336310383>\n" +
+          "<:dot:1443660294596329582> **__`250`__** partner <a:vegarightarrow:1443673039156936837> **Nitro __Boost__** <:VC_NitroBoost:1448706966263435326>\n\n" +
+          "<a:flyingnitroboost:1443652205705170986> Naturalmente, in caso di riscatto del **Nitro __Boost__**, almeno un **boost** dovrà andare a **__Vinili & Caffè__**.",
+        )
+        .setImage(DIVIDER_URL);
       await interaction.reply({ embeds: [premiPartnerEmbed], flags: 1 << 6 }).catch(() => null);
     }
 
     const sendUpdatedView = async (payload) => { const msgFlags = interaction.message?.flags; const isEphemeralSource = Boolean((typeof msgFlags?.has === "function" && msgFlags.has(1 << 6)) || (typeof msgFlags?.bitfield === "number" && (msgFlags.bitfield & (1 << 6)) !== 0) || (typeof msgFlags === "number" && (msgFlags & (1 << 6)) !== 0),); if (isEphemeralSource) { return interaction.update(payload).catch(async () => { return interaction.reply({ ...payload, flags: 1 << 6 }).catch(() => { }); }); } return interaction.reply({ ...payload, flags: 1 << 6 }).catch(() => { }); }; if (interaction.customId == "info_verifica") {
-      const verifyEmbed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setTitle("<a:VC_Verified:1448687631109197978> **__Verificati per ottenere vantaggi unici__**").setDescription([
+      const verifyEmbed = new EmbedBuilder()
+        .setImage(DIVIDER_URL)
+        .setColor("#6f4e37")
+        .setTitle("<a:VC_Verified:1448687631109197978> **__Verificati per ottenere vantaggi unici__**")
+        .setDescription([
         `Per verificare il tuo profilo dovrai andare in <#${IDs.channels.ticket}> e selezionare la terza categoria`,
         "<:VC_Reply:1468262952934314131> successivamente, dovrete mandare una vostra foto in cui si vede bene il viso:",
         "con il vostro nickname scritto su un foglio cartaceo o altrimenti con il cellulare nella schermata del vostro profilo Discord",
@@ -693,7 +741,11 @@ module.exports = {
     }
 
     const buildBoostLevelsPayload = () => {
-      const boostEmbed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setTitle("<a:VC_HeartWhite:1448673535253024860> **__Potenzia il server e sblocca vantaggi unici__**").setDescription([
+      const boostEmbed = new EmbedBuilder()
+        .setImage(DIVIDER_URL)
+        .setColor("#6f4e37")
+        .setTitle("<a:VC_HeartWhite:1448673535253024860> **__Potenzia il server e sblocca vantaggi unici__**")
+        .setDescription([
         "Un modo per sostenere il server è potenziarlo: se hai un Nitro Boost (quello da 9,99€) hai a disposizione 2 potenziamenti che puoi utilizzare in qualunque server tu voglia. Se deciderai di potenziare noi, __Vinili & Caffè__, sbloccherai un sacco di vantaggi.",
         "**Non sai cos'è Discord Nitro?** <:link:1470064815899803668> [Scoprilo qui](<https://discord.com/nitro>).",
         "",
@@ -704,10 +756,15 @@ module.exports = {
         "<:blueflash:1470064803157643468> Possibilità di creare un **ruolo personalizzato** e una **vocale privata personalizzata**",
         "<a:reddiamond:1443652837346377841> Sblocchi il comando `+quote`",
         "<:exp:1470067108543987846> X2 EXP Boost",
-      ].join("\n")).setImage(DIVIDER_URL);
+      ].join("\n"))
+        .setImage(DIVIDER_URL);
 
-      const howtoEmbed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setTitle("<:nitroboost:1470064881674883326> **__Come creare ruolo personalizzato e vocale privata__**").setDescription([
-        `Usa \`+customrole create\` in <#${IDs.channels.commands}> per creare e configurare il ruolo.`,
+      const howtoEmbed = new EmbedBuilder()
+        .setImage(DIVIDER_URL)
+        .setColor("#6f4e37")
+        .setTitle("<:nitroboost:1470064881674883326> **__Come creare ruolo personalizzato e vocale privata__**")
+        .setDescription([
+          `Usa \`+customrole create\` in <#${IDs.channels.commands}> per creare e configurare il ruolo.`,
         "Poi usa \`+customvoc\` nello stesso canale per creare e configurare la vocale privata.",
         "Digita \`+help\` per la lista completa dei comandi.",
       ].join("\n"));
@@ -718,7 +775,11 @@ module.exports = {
     };
 
     const buildLevelsPayload = () => {
-      const levelEmbed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setTitle("<:exp:1470067108543987846> **__Sali di livello e sblocca vantaggi sempre migliori__**").setDescription([
+      const levelEmbed = new EmbedBuilder()
+        .setImage(DIVIDER_URL)
+        .setColor("#6f4e37")
+        .setTitle("<:exp:1470067108543987846> **__Sali di livello e sblocca vantaggi sempre migliori__**")
+        .setDescription([
         "I livelli nel server rappresentano la tua attività: scrivendo in chat testuale e stando nei canali vocali, guadagnerai esperienza che verrà aggiunta al tuo livello globale.",
         "Una volta raggiunta una certa somma di esperienza, farai un **level up**!",
         "",

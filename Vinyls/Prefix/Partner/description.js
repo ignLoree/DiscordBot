@@ -5,7 +5,7 @@ async function resolveTargetUser(message, rawArg) {
   if (!rawArg) return null;
 
   const value = String(rawArg).trim();
-  const id=value.match(/^<@!?(\d+)>$/)?.[1]||(/^\d{17,20}$/.test(value)?value:null);
+  const id = value.match(/^<@!?(\d+)>$/)?.[1] || (/^\d{17,20}$/.test(value) ? value : null;
   if (!id) return null;
   return message.client.users.fetch(id).catch(() => null);
 }

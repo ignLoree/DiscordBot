@@ -73,10 +73,18 @@ async function sendTranscriptWithBrowserLink(
     }
     return sent;
   }
-  const attachment = sent.attachments?.find((att) => { const name = String(att?.name || "").toLowerCase(); const url = String(att?.url || "").toLowerCase(); return name.endsWith(".html") || url.includes(".html"); });
+  const attachment = sent.attachments?.find((att) => {
+    const name = String(att?.name || "").toLowerCase();
+    const url = String(att?.url || "").toLowerCase();
+    return name.endsWith(".html") || url.includes(".html");
+  });
   if (attachment?.url) {
     const baseContent = typeof payload?.content === "string" ? payload.content.trim() : "";
-    const transcriptButton = new ButtonBuilder().setStyle(ButtonStyle.Link).setURL(attachment.url).setLabel("View Transcript").setEmoji("📁");
+    const transcriptButton = new ButtonBuilder()
+      .setStyle(ButtonStyle.Link)
+      .setURL(attachment.url)
+      .setLabel("Visualizza Trascrizione")
+      .setEmoji("<:VC_file:1478515880722698300>");
     const row = new ActionRowBuilder().addComponents(transcriptButton);
     await sent
       .edit({
@@ -112,7 +120,7 @@ function buildTicketClosedEmbed(data) {
     : "Sconosciuto";
   const closedAt = data?.closedAt ? `<t:${Math.floor(new Date(data.closedAt).getTime() / 1000)}:F>`
     : `<t:${Math.floor(Date.now() / 1000)}:F>`;
-  const reasonText = data?.closeReason && String(data.closeReason).trim() ? String(data.closeReason).trim() : "No reason specified";
+  const reasonText = data?.closeReason && String(data.closeReason).trim() ? String(data.closeReason).trim() : "Nessuna motivazione specificata";
   let reasonValue = reasonText;
   if (Number.isFinite(data?.ratingScore) && data.ratingScore >= 1) {
     const s = Math.max(0, Math.min(5, Math.floor(Number(data.ratingScore) || 0)));
@@ -131,7 +139,9 @@ function buildTicketClosedEmbed(data) {
       { name: "<:VC_claim:1478517202016669887> Claimato da", value: data?.claimedBy ? `<@${data.claimedBy}>` : "Non claimato", inline: true },
       { name: "<:VC_close:1478517239136256020> Ora Chiusura", value: closedAt, inline: true },
       { name: "<:VC_reason:1478517122929004544> Motivazione", value: reasonValue, inline: false },
-    );
+    )
+    .setFooter({ text: "© 2025 Vinili & Caffè. Tutti i diritti riservati." })
+    .setTimestamp();
 
   const reordered = [embed.data.fields?.[0], embed.data.fields?.[1], embed.data.fields?.[2], embed.data.fields?.[3], embed.data.fields?.[5], embed.data.fields?.[4], embed.data.fields?.[6],].filter(Boolean);
   embed.setFields(reordered);
@@ -178,7 +188,44 @@ async function fetchTicketMessage(channel, messageId) {
 
 function getTicketPanelConfig(raw) {
   const key = String(raw || "").toLowerCase();
-  const configs = { supporto: { type: "supporto", emoji: "⭐", name: "supporto", label: "Supporto", embed: new EmbedBuilder().setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET SUPPORTO__**").setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`,).setColor("#6f4e37"), }, partnership: { type: "partnership", emoji: "🤝", name: "partnership", label: "Partnership", embed: new EmbedBuilder().setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET PARTNERSHIP__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la descrizione del tuo server/catena tramite il bottone qui in basso.`,).setColor("#6f4e37"), }, highstaff: { type: "high", emoji: "✨", name: "highstaff", label: "High Staff", embed: new EmbedBuilder().setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET HIGH STAFF__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`,).setColor("#6f4e37"), }, };
+  const configs = {
+    supporto: {
+      type: "supporto",
+      emoji: "⭐",
+      name: "supporto",
+      label: "Supporto",
+      embed: new EmbedBuilder()
+        .setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET SUPPORTO__**")
+        .setDescription(
+          `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`,
+        )
+        .setColor("#6f4e37"),
+    },
+    partnership: {
+      type: "partnership",
+      emoji: "🤝",
+      name: "partnership",
+      label: "Partnership",
+      embed: new EmbedBuilder()
+        .setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET PARTNERSHIP__**",)
+        .setDescription(
+          `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la descrizione del tuo server/catena tramite il bottone qui in basso.`,
+        )
+        .setColor("#6f4e37"),
+    },
+    highstaff: {
+      type: "high",
+      emoji: "✨",
+      name: "highstaff",
+      label: "High Staff",
+      embed: new EmbedBuilder()
+        .setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET HIGH STAFF__**",)
+        .setDescription(
+          `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`,
+        )
+        .setColor("#6f4e37"),
+    },
+  };
   const aliases = { supporto: "supporto", prima: "supporto", 1: "supporto", first: "supporto", partnership: "partnership", partner: "partnership", seconda: "partnership", 2: "partnership", second: "partnership", highstaff: "highstaff", high: "highstaff", terza: "highstaff", 3: "highstaff", third: "highstaff", };
   const resolved = aliases[key] || key;
   return configs[resolved] || null;
@@ -526,7 +573,11 @@ module.exports = {
         return;
       }
 
-      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("claim_ticket").setLabel("✅ Claim").setStyle(ButtonStyle.Success),);
+      const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId("close_ticket").setEmoji("<:VC_Lock:1468544444113617063>").setLabel("Chiudi").setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId("close_ticket_motivo").setEmoji("<:VC_reason:1478517122929004544>").setLabel("Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId("claim_ticket").setEmoji("<:VC_claim:1478517202016669887>").setLabel("Claim").setStyle(ButtonStyle.Success),
+  );
 
       const mainMsg = await channel.send({ embeds: [config.embed], components: [row] }).catch(() => null);
       if (mainMsg) {
@@ -687,7 +738,10 @@ module.exports = {
           },
         },
       ).catch(() => { });
-      const closeButton = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("accetta").setEmoji("<:vegacheckmark:1443666279058772028>").setLabel("Accetta e chiudi").setStyle(ButtonStyle.Success), new ButtonBuilder().setCustomId("rifiuta").setEmoji("<:vegax:1443934876440068179>").setLabel("Rifiuta e mantieni aperto").setStyle(ButtonStyle.Secondary),);
+      const closeButton = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId("accetta").setEmoji("<:vegacheckmark:1443666279058772028>").setLabel("Accetta e chiudi").setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId("rifiuta").setEmoji("<:vegax:1443934876440068179>").setLabel("Rifiuta e mantieni aperto").setStyle(ButtonStyle.Secondary),
+      );
 
       await message.channel.send({
         content: `<@${ticketDoc.userId}>`,
@@ -800,12 +854,16 @@ module.exports = {
 
       const closeEmbed = buildTicketClosedEmbed({ ...claimed.toObject(), ticketNumber, closeReason, closedBy: message.author.id, closedAt: new Date(), guildName: message.guild?.name || "Ticket System", guildIconURL: message.guild?.iconURL?.({ size: 128 }) || null, });
       const ratingRows = buildTicketRatingRows(String(claimed._id));
-      const transcriptRows = transcriptHtmlPath ? [new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`ticket_transcript:${claimed._id}`)
-        .setLabel("View Transcript")
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji("📁"),
-      ),
-      ]
+      const transcriptRows = transcriptHtmlPath
+        ? [
+            new ActionRowBuilder().addComponents(
+              new ButtonBuilder()
+                .setCustomId(`ticket_transcript:${claimed._id}`)
+                .setLabel("Visualizza Trascrizione")
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji("<:VC_file:1478515880722698300>"),
+            ),
+          ]
         : [];
       const dmActionRows = [...transcriptRows, ...ratingRows];
 
@@ -941,7 +999,11 @@ module.exports = {
       }
 
       const updatedEmbed = msg.embeds?.[0] ? EmbedBuilder.from(msg.embeds[0]) : new EmbedBuilder().setColor("#6f4e37");
-      const updatedButtons = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒Chiudi").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi con motivo").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("unclaim").setLabel("🗕 Unclaim").setStyle(ButtonStyle.Secondary),);
+      const updatedButtons = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId("close_ticket").setEmoji("<:VC_Lock:1468544444113617063>").setLabel("Chiudi").setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId("close_ticket_motivo").setEmoji("<:VC_reason:1478517122929004544>").setLabel("Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId("unclaim").setEmoji("<a:VC_Unlock:1470011538432852108>").setLabel("Unclaim").setStyle(ButtonStyle.Secondary),
+      );
 
       await msg.edit({ embeds: [updatedEmbed], components: [updatedButtons] });
       await safeMessageReply(message, {
@@ -1027,7 +1089,11 @@ module.exports = {
       }
 
       const originalEmbed = msg.embeds?.[0] ? EmbedBuilder.from(msg.embeds[0]) : new EmbedBuilder().setColor("#6f4e37");
-      const originalButtons = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("claim_ticket").setLabel("✅ Claim").setStyle(ButtonStyle.Success),);
+      const originalButtons = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId("close_ticket").setEmoji("<:VC_Lock:1468544444113617063>").setLabel("Chiudi").setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId("close_ticket_motivo").setEmoji("<:VC_reason:1478517122929004544>").setLabel("Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId("claim_ticket").setEmoji("<:VC_claim:1478517202016669887>").setLabel("Claim").setStyle(ButtonStyle.Success),
+      );
 
       await msg.edit({
         embeds: [originalEmbed],
@@ -1268,7 +1334,13 @@ module.exports = {
 
         const msg = await fetchTicketMessage(targetChannel, ticketDoc.messageId,);
         if (msg) {
-          const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger), new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger), ticketDoc.claimedBy ? new ButtonBuilder().setCustomId("unclaim").setLabel("🗕 Unclaim").setStyle(ButtonStyle.Secondary) : new ButtonBuilder().setCustomId("claim_ticket").setLabel("✅ Claim").setStyle(ButtonStyle.Success),);
+          const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId("close_ticket").setEmoji("<:VC_Lock:1468544444113617063>").setLabel("Chiudi").setStyle(ButtonStyle.Danger),
+            new ButtonBuilder().setCustomId("close_ticket_motivo").setEmoji("<:VC_reason:1478517122929004544>").setLabel("Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
+            ticketDoc.claimedBy
+              ? new ButtonBuilder().setCustomId("unclaim").setEmoji("<a:VC_Unlock:1470011538432852108>").setLabel("Unclaim").setStyle(ButtonStyle.Secondary)
+              : new ButtonBuilder().setCustomId("claim_ticket").setEmoji("<:VC_claim:1478517202016669887>").setLabel("Claim").setStyle(ButtonStyle.Success),
+          );
           await msg
             .edit({ embeds: [panelConfig.embed], components: [row] })
             .catch(() => { });

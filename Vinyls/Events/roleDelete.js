@@ -51,7 +51,10 @@ module.exports = {
         );
         lines.push(...buildAuditExtraLines(audit.entry, ["name", "color", "hoist", "mentionable"]));
 
-        const embed=new EmbedBuilder().setColor("#ED4245").setTitle("Role Delete").setDescription(lines.join("\n"));
+        const embed = new EmbedBuilder()
+        .setColor("#ED4245")
+        .setTitle("Role Delete")
+        .setDescription(lines.join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => {});
       }

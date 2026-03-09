@@ -57,7 +57,13 @@ function buildRadioSelect(pages, pageIndex, customId) {
 
 function buildRows(pages, pageIndex, ids) {
   const { selectId, firstId, prevId, nextId, lastId, cancelId } = ids;
-  const nav=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(firstId).setLabel("<<").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex<=0),new ButtonBuilder().setCustomId(prevId).setLabel("<").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex<=0),new ButtonBuilder().setCustomId(nextId).setLabel(">").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex>=pages.length-1),new ButtonBuilder().setCustomId(lastId).setLabel(">>").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex>=pages.length-1),new ButtonBuilder().setCustomId(cancelId).setLabel("X").setStyle(ButtonStyle.Danger),);
+  const nav = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(firstId).setLabel("<<").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex <= 0),
+    new ButtonBuilder().setCustomId(prevId).setLabel("<").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex <= 0),
+    new ButtonBuilder().setCustomId(nextId).setLabel(">").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex >= pages.length - 1),
+    new ButtonBuilder().setCustomId(lastId).setLabel(">>").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex >= pages.length - 1),
+    new ButtonBuilder().setCustomId(cancelId).setLabel("X").setStyle(ButtonStyle.Danger),
+  );
   const select = new ActionRowBuilder().addComponents(buildRadioSelect(pages, pageIndex, selectId));
   return [select, nav];
 }
@@ -86,7 +92,9 @@ module.exports = {
 
     const voiceChannel = message.member?.voice?.channel;
     if (!voiceChannel) {
-      const noVoiceEmbed = new EmbedBuilder().setColor("#ED4245").setDescription("You are not in a voice channel");
+      const noVoiceEmbed = new EmbedBuilder()
+      .setColor("#ED4245")
+      .setDescription("You are not in a voice channel");
       return safeMessageReply(message, { embeds: [noVoiceEmbed] });
     }
 
@@ -96,13 +104,17 @@ module.exports = {
     }
 
     if (!voiceChannel.joinable || !voiceChannel.speakable) {
-      const noPermEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("Non ho i permessi per entrare/parlare in quel canale vocale.");
+      const noPermEmbed = new EmbedBuilder()
+      .setColor("#ED4245")
+      .setDescription("Non ho i permessi per entrare/parlare in quel canale vocale.");
       return safeMessageReply(message, { embeds: [noPermEmbed] });
     }
 
     const stations = await getItalianStations().catch(() => []);
     if (!stations.length) {
-      const errorEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("Nessuna radio italiana disponibile al momento.");
+      const errorEmbed = new EmbedBuilder()
+      .setColor("#ED4245")
+      .setDescription("Nessuna radio italiana disponibile al momento.");
       return safeMessageReply(message, { embeds: [errorEmbed] });
     }
 
@@ -128,7 +140,7 @@ module.exports = {
 
     buttonCollector.on("collect", async (interaction) => {
       if (interaction.user.id !== message.author.id) {
-        await interaction.reply({ content: "Solo chi ha avviato il comando puo usare il pannello.", ephemeral: true }).catch(() => {});
+        await interaction.reply({ content: "Solo chi ha avviato il comando può usare il pannello.", ephemeral: true }).catch(() => {});
         return;
       }
 
@@ -149,7 +161,7 @@ module.exports = {
 
     selectCollector.on("collect", async (interaction) => {
       if (interaction.user.id !== message.author.id) {
-        await interaction.reply({ content: "Solo chi ha avviato il comando puo usare il pannello.", ephemeral: true }).catch(() => {});
+        await interaction.reply({ content: "Solo chi ha avviato il comando può usare il pannello.", ephemeral: true }).catch(() => {});
         return;
       }
 
@@ -180,7 +192,9 @@ module.exports = {
       selectCollector.stop("selected");
       await interaction.message.delete().catch(() => {});
 
-      const startedEmbed=new EmbedBuilder().setColor("#1f2328").setDescription(`Started playing **${station.name}**`);
+      const startedEmbed = new EmbedBuilder()
+      .setColor("#1f2328")
+      .setDescription(`Started playing **${station.name}**`);
       await message.channel.send({ embeds: [startedEmbed] }).catch(() => {});
     });
 

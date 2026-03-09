@@ -49,14 +49,17 @@ module.exports = {
       if (logChannel?.isTextBased?.()) {
         const responsible = formatResponsible(executor);
 
-        const embed=new EmbedBuilder().setColor("#ED4245").setTitle("Member Banned").setDescription([`${ARROW}**Responsible:**${responsible}`,
-              `${ARROW}**Target:**${ban.user||"sconosciuto"}\`${targetId}\``,`${ARROW}${nowDiscordTs()}`,
-              reason ? `${ARROW}**Reason:**${reason}` : null,
+        const embed = new EmbedBuilder()
+        .setColor("#ED4245")
+        .setTitle("Member Banned")
+        .setDescription([`${ARROW} **Responsible:** ${responsible}`,
+              `${ARROW} **Target:** ${ban.user || "sconosciuto"}\`${targetId}\``,
+              `${ARROW} ${nowDiscordTs()}`,
+              reason ? `${ARROW} **Reason:** ${reason}` : null,
               ...buildAuditExtraLines(auditEntry, ["reason"]),
             ]
               .filter(Boolean)
-              .join("\n"),
-          );
+              .join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => {});
       }

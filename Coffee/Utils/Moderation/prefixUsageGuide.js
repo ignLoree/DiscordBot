@@ -1,4 +1,4 @@
-﻿const {EmbedBuilder,ActionRowBuilder,StringSelectMenuBuilder,ComponentType,}= require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ComponentType } = require("discord.js");
 
 const GUIDE_COLOR = "#3498DB";
 const GUIDE_LIFETIME_MS = 10 * 60 * 1000;
@@ -67,9 +67,19 @@ function buildSubcommandRow(command, ownerId, currentValue = "__default") {
   const subs = normalizeSubcommands(command);
   if (!subs.length) return null;
   const hidden = String(currentValue || "__default").toLowerCase();
-  const filteredSubs = hidden === "__default" ? subs:subs.filter((sub)=>String(sub).toLowerCase()!== hidden);
+  const filteredSubs = hidden === "__default" ? subs : subs.filter((sub) => String(sub).toLowerCase() !== hidden);
 
-  const menu = new StringSelectMenuBuilder().setCustomId(`usage_guide:${command.name}:${ownerId}`).setPlaceholder("View Subcommands").addOptions(...filteredSubs.slice(0,24).map((sub)=>({label:sub,description:getSubDescription(command,sub).slice(0,100),value:sub,})),{label:"default",description:"Torna alla guida principale del comando",value:"__default",},);
+  const menu = new StringSelectMenuBuilder()
+    .setCustomId(`usage_guide:${command.name}:${ownerId}`)
+    .setPlaceholder("View Subcommands")
+    .addOptions(
+      ...filteredSubs.slice(0, 24).map((sub) => ({
+        label: sub,
+        description: getSubDescription(command, sub).slice(0, 100),
+        value: sub,
+      })),
+      { label: "default", description: "Torna alla guida principale del comando", value: "__default" },
+    );
   return new ActionRowBuilder().addComponents(menu);
 }
 
@@ -83,11 +93,19 @@ async function showPrefixUsageGuide({ message, command, prefix = "-", deleteComm
     await deleteCommandMessage().catch(() => {});
   }
 
-  const sent = await message.channel.send({embeds:[defaultEmbed],...(row ?{components:[row]}:{}),}).catch(()=>null);
+  const sent = await message.channel
+    .send({
+      embeds: [defaultEmbed],
+      ...(row ? { components: [row] } : {}),
+    })
+    .catch(() => null);
   if (!sent) return false;
   if (!row) return true;
 
-  const collector = sent.createMessageComponentCollector({componentType:ComponentType.StringSelect,time:GUIDE_LIFETIME_MS,});
+  const collector = sent.createMessageComponentCollector({
+    componentType: ComponentType.StringSelect,
+    time: GUIDE_LIFETIME_MS,
+  });
 
   collector.on("collect", async (interaction) => {
     if (interaction.user.id !== message.author.id) {
@@ -101,7 +119,7 @@ async function showPrefixUsageGuide({ message, command, prefix = "-", deleteComm
     currentValue = picked;
     row = buildSubcommandRow(command, message.author.id, currentValue);
 
-    const nextEmbed = picked === "__default" ? defaultEmbed:buildSubGuideEmbed(command,prefix,picked);
+    const nextEmbed = picked === "__default" ? defaultEmbed : buildSubGuideEmbed(command, prefix, picked);
 
     await interaction
       .update({

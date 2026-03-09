@@ -76,8 +76,9 @@ module.exports = {
       const fallbackTagsChanged=String(oldSticker?.tags||"")!==String(newSticker?.tags||"");
       if (!nameChange && !tagsChange && !fallbackNameChanged && !fallbackTagsChanged) return;
 
-      const lines=[`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-        `<:VC_right_arrow:1473441155055096081>${toDiscordTimestamp(new Date(),"F")}`,
+      const lines = [
+        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         "**Changes**",
       ];
@@ -91,7 +92,10 @@ module.exports = {
         lines.push(`  ${String(tagsChange?.old ?? oldSticker?.tags ?? "-")} <:VC_right_arrow:1473441155055096081> ${String(tagsChange?.new ?? newSticker?.tags ?? "-")}`);
       }
 
-      const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Sticker Update").setDescription(lines.join("\n"));
+      const embed = new EmbedBuilder()
+        .setColor("#F59E0B")
+        .setTitle("Sticker Update")
+        .setDescription(lines.join("\n"));
 
       if (newSticker?.url) embed.setThumbnail(newSticker.url);
       await logChannel.send({ embeds: [embed] }).catch(() => null);
