@@ -111,10 +111,14 @@ async function finalizeVerification(interaction, member) {
   }
 
   const pingContent = `<@${interaction.user.id}>`;
+  const guildForPing = mainGuild || guild;
   for (const channelId of VERIFY_PING_CHANNEL_IDS || []) {
-    const pingChannel = channelId ? await getGuildChannelCached(guild, channelId) : null;
+    const pingChannel = channelId ? await getGuildChannelCached(guildForPing, channelId) : null;
     if (pingChannel?.isTextBased?.()) {
-      const pingMsg = await pingChannel.send({ content: pingContent }).catch(() => null);
+      const pingMsg = await pingChannel.send({ content: pingContent }).catch((err) => {
+        global.logger?.warn?.("[VERIFY] Ping failed for channel", channelId, err?.message || err);
+        return null;
+      });
       if (pingMsg) {
         const pingCleanupTimer = setTimeout(() => pingMsg.delete().catch(() => { }), 1);
         pingCleanupTimer.unref?.();
