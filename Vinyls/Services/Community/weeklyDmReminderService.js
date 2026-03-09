@@ -1146,7 +1146,19 @@ async function sendExternalReturnReminders(client, guild) {
         returnedOnce: Boolean(history?.returnedOnce),
       };
     } catch (err) {
-      global.logger?.warn?.("[weeklyDmReminder] history:", err?.message || err);
+      const msg = err?.message || "";
+      const code = err?.code;
+      const cannotSend = code === 50007 || /cannot send messages to this user/i.test(msg);
+      if (cannotSend) {
+        entry.externalReminderHistory[uid] = {
+          ...history,
+          stopped: true,
+          sendCount: 3,
+          cannotDm: true,
+        };
+      } else {
+        global.logger?.warn?.("[weeklyDmReminder] history:", msg);
+      }
     }
   }
 
