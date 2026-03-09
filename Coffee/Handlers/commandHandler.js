@@ -108,6 +108,18 @@ module.exports = (client) => {
     if (forceDeployEmpty) {
       clearCommandDeployCache(BOT_DEPLOY_CACHE_KEY);
       global.logger?.info?.("[COMMANDS] Lista slash vuota: cache deploy azzerata per forzare invio lista vuota a Discord (rimozione comandi fantasma).");
+      try {
+        await rest.put(Routes.applicationCommands(clientId), { body: [] });
+        const globalCheck = isCommandDeployRequired(BOT_DEPLOY_CACHE_KEY, { clientId }, []);
+        markCommandDeployComplete(BOT_DEPLOY_CACHE_KEY, { clientId }, globalCheck.hash);
+        global.logger?.info?.("[COMMANDS] Comandi globali azzerati (rimozione /backup e altri fantasmi a livello app).");
+      } catch (err) {
+        if (Number(err?.code) === 50001 || Number(err?.status) === 403) {
+          global.logger?.warn?.("[COMMANDS] Skip azzeramento comandi globali: Missing Access.");
+        } else {
+          global.logger?.error?.("[COMMANDS] Errore azzeramento comandi globali:", err);
+        }
+      }
     }
     for (const guildId of allowedGuildIds) {
       const deployCheck = isCommandDeployRequired(BOT_DEPLOY_CACHE_KEY,{clientId,guildId},client.commandArray,);
