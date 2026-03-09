@@ -24,7 +24,6 @@ const PREFIX_HELP_DESCRIPTIONS = {
   leave: "Fa uscire il bot dal canale vocale.",
   voices: "Mostra le voci TTS disponibili.",
   set: "Impostazioni TTS: autojoin e voce personale.",
-  restart: "Riavvia il bot o ricarica moduli specifici.",
 };
 const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   "set.autojoin": "Attiva o disattiva autojoin TTS.",

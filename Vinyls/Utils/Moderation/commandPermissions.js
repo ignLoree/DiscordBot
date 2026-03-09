@@ -678,24 +678,6 @@ async function checkPrefixPermission(message, commandName, subcommandName = null
     return true;
   }
 
-  if (safeCommand === "restart") {
-    let allowed = false;
-    if (message?.guild && message?.member) {
-      const isOwner = String(message.guild.ownerId || "") === String(userId || "");
-      const isAdmin = Boolean(message.member.permissions?.has?.(PermissionFlagsBits.Administrator),);
-      allowed = isOwner || isAdmin;
-    }
-    if (options.returnDetails) {
-      return {
-        allowed,
-        reason: allowed ? null : "missing_permission",
-        requiredRoles: null,
-        channels: null,
-      };
-    }
-    return allowed;
-  }
-
   if (guildId && !onMainGuild && isSponsorGuild(guildId) && safeCommand === "ticket") {
     if (message?.member && hasSponsorStaffRole(message.member, guildId)) {
       if (options.returnDetails) {

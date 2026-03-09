@@ -7,12 +7,9 @@ const baseDir = __dirname;
 const ENABLE_LOADER_GIT_PULL = false;
 const ENABLE_LOADER_NPM_INSTALL = true;
 const BOTS=[{key:'vinyls',label:'Vinyls',folderSuffix:'Vinyls',startupDelayMs:0},{key:'Coffee',label:'Coffee',folderSuffix:'Coffee',startupDelayMs:7000}];
-const RESTART_FLAG = path.resolve(baseDir, 'restart.json');
-const POLL_INTERVAL_MS = 5000;
 const FORCE_KILL_DELAY_MS = 8000;
 const NPM_CACHE_DIR = path.join(os.tmpdir(), '.npm-global');
 const processRefs = {};
-const restarting = {};
 const npmInstallInProgressByDir = {};
 const silencedEnv=process.env.SHOW_NODE_WARNINGS==='1'?{...process.env}:{...process.env,NODE_NO_WARNINGS:'1'};
 const WORKSPACES_ENABLED = hasWorkspacesConfig();
@@ -291,76 +288,4 @@ function runfile(bot, options = {}) {
     });
 }
 
-function restartBot(botKey, options = {}) {
-    const bot = BOTS.find((entry) => entry.key === botKey);
-    if (!bot) return;
-
-    const respectDelay = Boolean(options.respectDelay);
-    if (restarting[botKey]) return;
-    restarting[botKey] = true;
-
-    const proc = processRefs[botKey];
-    const pidFromFile = readPidFile(botKey);
-
-    const startReplacement=()=>{if(!restarting [botKey])return;restarting [botKey]=false;runfile(bot,{bypassDelay:!respectDelay,skipGitPull:true});};
-
-    if (proc && !proc.killed) {
-        console.log(`[Loader] Restart ${bot.label}...`);
-
-        const forceTimer=setTimeout(()=>{try {killPidTree(proc.pid);} catch {}},FORCE_KILL_DELAY_MS);
-
-        proc.once('exit', () => {
-            clearTimeout(forceTimer);
-            startReplacement();
-        });
-
-        try {
-            proc.kill();
-        } catch {
-            startReplacement();
-        }
-        return;
-    }
-
-    if (pidFromFile && isPidRunning(pidFromFile)) {
-        console.log(`[Loader] Restart ${bot.label}: killing stale PID ${pidFromFile}...`);
-        try { killPidTree(pidFromFile); } catch { }
-
-        const startedAt = Date.now();
-        const waitForExit=()=>{if(!isPidRunning(pidFromFile)){try {fs.unlinkSync(pidFile(botKey));} catch {} startReplacement();return;} if(Date.now()-startedAt>=FORCE_KILL_DELAY_MS){console.log(`[Loader] ${bot.label}: PID ${pidFromFile} still alive after timeout, starting replacement anyway.`);startReplacement();return;} setTimeout(waitForExit,250);};
-
-        waitForExit();
-        return;
-    }
-
-    startReplacement();
-}
-
-function readRestartPayload() {
-    if (!fs.existsSync(RESTART_FLAG)) return null;
-
-    try {
-        return JSON.parse(fs.readFileSync(RESTART_FLAG, 'utf8'));
-    } catch (err) {
-        console.error('[Loader] restart.json read/parse failed:', err?.message || err);
-        return null;
-    } finally {
-        try { fs.unlinkSync(RESTART_FLAG); } catch { }
-    }
-}
-
 BOTS.forEach((bot) => runfile(bot, { skipGitPull: true }));
-
-setInterval(() => {
-    const payload = readRestartPayload();
-    if (!payload) return;
-
-    const targetBot = payload?.bot || 'vinyls';
-    const respectDelay = Boolean(payload?.respectDelay);
-
-    if (targetBot === 'all') {
-        BOTS.forEach((bot) => restartBot(bot.key, { respectDelay }));
-    } else {
-        restartBot(targetBot, { respectDelay });
-    }
-}, POLL_INTERVAL_MS);

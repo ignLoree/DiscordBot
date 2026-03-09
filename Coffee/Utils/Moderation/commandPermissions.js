@@ -305,11 +305,6 @@ async function checkPrefixPermission(message, commandName, subcommandName = null
     return hasAdminPermissionWithFallback(message);
   }
 
-  if (commandName === "restart") {
-    const devIds = getDevIds(message?.client);
-    return devIds.includes(String(userId || ""));
-  }
-
   const data = loadPermissions();
   const channelPolicy = resolveCommandChannelPolicy(data,buildPrefixLookupKeys(commandName,subcommandName),);
   if (isOfficialMainGuild(guildId) && Array.isArray(channelPolicy)) {

@@ -614,12 +614,6 @@ function createDashboardServer(client) {
           message: "Bot già avviato. Da spento va avviato dal pannello hosting.",
         });
       }
-      if (action === "restart") {
-        json(res, 200, { ok: true, message: "Riavvio avviato." });
-        const timer = setTimeout(() => process.exit(0), 600);
-        timer.unref?.();
-        return;
-      }
       if (action === "stop") {
         json(res, 200, { ok: true, message: "Spegnimento avviato." });
         const timer = setTimeout(() => process.exit(0), 600);

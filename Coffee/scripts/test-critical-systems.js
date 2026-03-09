@@ -26,7 +26,7 @@ function walkJsFiles(dir, out = []) {
   const permissions = JSON.parse(fs.readFileSync(permissionsPath, "utf8"));
   const prefixPerms = permissions?.prefix || {};
 
-  const requiredPrefixCommands = ["help", "join", "leave", "set", "voices", "restart"];
+  const requiredPrefixCommands = ["help", "join", "leave", "set", "voices"];
   for (const cmd of requiredPrefixCommands) {
     assert(prefixPerms[cmd], `permissions.prefix.${cmd} mancante`);
   }

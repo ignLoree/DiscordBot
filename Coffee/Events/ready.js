@@ -1,21 +1,9 @@
-const path = require("path");
-const fs = require("fs");
 const mongoose = require("mongoose");
 const { restoreTtsConnections } = require("../Services/TTS/ttsService");
 const { startHourlyReminderLoop } = require("../Services/Community/chatReminderService");
-const { getClientChannelCached } = require("../Utils/Interaction/entityCache");
 
 const PRESENCE_STATE = "☕📀 discord.gg/viniliecaffe";
 const PRESENCE_TYPE_CUSTOM = 4;
-const RESTART_CLEANUP_DELAY_MS = 2000;
-const RESTART_NOTIFY_FILE = "restart_notify_test.json";
-
-function getRestartNotifyCandidatePaths() {
-  return [
-    path.resolve(process.cwd(), RESTART_NOTIFY_FILE),
-    path.resolve(process.cwd(), "..", RESTART_NOTIFY_FILE),
-  ];
-}
 
 async function setPresence(client) {
   try {
@@ -58,51 +46,6 @@ async function restoreTtsState(client) {
   await restoreTtsConnections(client);
 }
 
-async function cleanupMessage(channel, messageId) {
-  if (!channel || !messageId) return;
-  const msg = await channel.messages.fetch(messageId).catch(() => null);
-  if (msg) {
-    const cleanupTimer = setTimeout(() => msg.delete().catch(() => {}), RESTART_CLEANUP_DELAY_MS);
-    cleanupTimer.unref?.();
-  }
-}
-
-async function handleRestartNotification(client) {
-  const restartNotifyPath = getRestartNotifyCandidatePaths().find((candidate) => fs.existsSync(candidate));
-  if (!restartNotifyPath) return;
-
-  try {
-    const raw = fs.readFileSync(restartNotifyPath, "utf8");
-    const data = JSON.parse(raw);
-
-    const channel = await getClientChannelCached(client,data ?. channelId,{ttlMs:30_000,});
-    if (channel) {
-      const elapsedMs = data?.at ? Date.now() - Date.parse(data.at) : null;
-      const elapsed = Number.isFinite(elapsedMs)?` in ${Math.max(1,Math.round(elapsedMs /1000))}s`:"";
-
-      const restartMsg = await channel.send(`<:vegacheckmark:1472992042203349084> Bot Test riavviato con successo${elapsed}.`,).catch(()=>null);
-
-      if (restartMsg) {
-        const cleanupTimer = setTimeout(
-          () => restartMsg.delete().catch(() => {}),
-          RESTART_CLEANUP_DELAY_MS,
-        );
-        cleanupTimer.unref?.();
-      }
-
-      await cleanupMessage(channel, data?.notifyMessageId);
-      await cleanupMessage(channel, data?.commandMessageId);
-    }
-
-    fs.unlinkSync(restartNotifyPath);
-  } catch (err) {
-    global.logger.error(
-      " Errore post-restart (restart notify):",
-      err?.message || err,
-    );
-  }
-}
-
 module.exports = {
   name: "clientReady",
   once: true,
@@ -118,6 +61,5 @@ module.exports = {
     } catch (err) {
       global.logger?.error?.("[CHAT REMINDER] Failed to start hourly loop:", err?.message || err);
     }
-    await handleRestartNotification(activeClient);
   },
 };

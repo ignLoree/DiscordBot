@@ -1,4 +1,4 @@
-﻿const tokenInput = document.getElementById("tokenInput");
+const tokenInput = document.getElementById("tokenInput");
 const saveTokenBtn = document.getElementById("saveTokenBtn");
 const guildSelect = document.getElementById("guildSelect");
 const refreshBtn = document.getElementById("refreshBtn");
@@ -6,7 +6,6 @@ const oauthLoginBtn = document.getElementById("oauthLoginBtn");
 const oauthLogoutBtn = document.getElementById("oauthLogoutBtn");
 const authState = document.getElementById("authState");
 const processStartBtn = document.getElementById("processStartBtn");
-const processRestartBtn = document.getElementById("processRestartBtn");
 const processStopBtn = document.getElementById("processStopBtn");
 const processStatus = document.getElementById("processStatus");
 const usersSearchInput = document.getElementById("usersSearchInput");
@@ -489,7 +488,6 @@ guildSelect.addEventListener("change", async () => {
   await refreshUsers().catch(() => {});
 });
 processStartBtn.addEventListener("click", () => processAction("start"));
-processRestartBtn.addEventListener("click", () => processAction("restart"));
 processStopBtn.addEventListener("click", () => processAction("stop"));
 usersSearchBtn.addEventListener("click", async () => {
   usersQuery = String(usersSearchInput.value || "").trim();
