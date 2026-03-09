@@ -367,9 +367,6 @@ module.exports = {
             .setDescription("Specifica il motivo del warn.")
             .setRequired(true),
         ),
-    )
-    .addSubcommand((command) =>
-      command.setName("comandi").setDescription("Elenco comandi staff in un unico posto."),
     ),
 
   async execute(interaction) {
@@ -519,34 +516,6 @@ module.exports = {
         global.logger.error(err);
         return replyCommandError(interaction);
       }
-    }
-
-    if (sub === "comandi") {
-      const embed = new EmbedBuilder()
-        .setColor(SUCCESS_COLOR)
-        .setTitle("<:staff:1443651912179388548> Comandi staff – riepilogo")
-        .setDescription(
-          [
-            "**Slash (/**)**",
-            "• `/staff pex` – Promuovi uno staffer",
-            "• `/staff depex` – Depexa uno staffer",
-            "• `/staff warn` – Assegna un warn staff",
-            "• `/staff comandi` – Questo elenco",
-            "",
-            "**Prefix (+)**",
-            "• `+level set/add/remove/reset` – Gestione EXP/livelli (Admin)",
-            "• `+level config/lock/unlock/ignore` – Configurazione level",
-            "• `+valutazione` – Valutazione positiva/negativa da resoconto",
-            "• `+modlogs [id]` – Log moderazione utente",
-            "• `+moderations [id]` – Sanzioni utente",
-            "• `+case [n]` – Dettaglio case",
-            `• \`+warn / +kick / +ban / +mute / +unmute\` – Moderazione (in <#${IDs.channels?.sanzioniUtenti || "1442569245878648924"}>)`,
-            "• `+duration / +reason` – Modifica durata/motivo case",
-            "",
-            `**Resoconto** – Ogni domenica in <#${IDs.channels?.resocontiStaff || "1442569270784692306"}>: applica Pex/Depex/Valutazioni dai thread.`,
-          ].join("\n"),
-        );
-      return safeEditReply(interaction, { embeds: [embed], flags: PRIVATE_FLAG });
     }
 
   },
