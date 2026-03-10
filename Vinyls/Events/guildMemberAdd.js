@@ -3,7 +3,6 @@ const { InviteTrack, InviteReminderState, } = require("../Schemas/Community/comm
 const IDs = require("../Utils/Config/ids");
 const { shouldBlockDm } = require("../Utils/noDmList");
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
-const{scheduleMemberCounterRefresh,updateMemberCounterNow,}=require("../Utils/Community/memberCounterUtils");
 const{scheduleStaffListRefresh,memberHasStaffRole}=require("../Utils/Community/staffListUtils");
 const{processJoinRaidForMember,registerJoinRaidSecuritySignal,}=require("../Services/Moderation/joinRaidService");
 const{getJoinGateConfigSnapshot,}=require("../Services/Moderation/joinGateService");
@@ -1219,11 +1218,6 @@ module.exports = {
       setImmediate(() => {
         (async () => {
           try {
-            await updateMemberCounterNow(member.guild).catch(() => {});
-            scheduleMemberCounterRefresh(member.guild, {
-              delayMs: 250,
-              secondPassMs: 1800,
-            });
             await applyRolePersistForMember(member).catch(() => {});
             await sendJoinLog(member);
             await sendDmWelcome(member);

@@ -1,10 +1,11 @@
 const { PermissionsBitField, EmbedBuilder } = require("discord.js");
 const IDs = require("../Config/ids");
+const { getGuildChannelCached } = require("../Interaction/interactionEntityCache");
 
 async function resolveModLogChannel(guild) {
   const channelId = IDs.channels?.modLogs;
   if (!guild || !channelId) return null;
-  const channel = guild.channels.cache.get(channelId) || (await guild.channels.fetch(channelId).catch(() => null));
+  const channel = guild.channels.cache.get(channelId) || (await getGuildChannelCached(guild, channelId));
   if (!channel?.isTextBased?.()) return null;
   return channel;
 }

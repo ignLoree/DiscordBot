@@ -1,6 +1,7 @@
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
 const { EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
+const { getGuildChannelCached, getGuildMemberCached } = require("../Utils/Interaction/interactionEntityCache");
 const { markJoinGateKick } = require("../Utils/Moderation/joinGateKickCache");
 const{isSecurityProfileImmune,hasAdminsProfileCapability,}=require("../Services/Moderation/securityProfilesService");
 
@@ -116,7 +117,7 @@ async function punishUsernameMatch(member, match) {
     markJoinGateKick(member.guild.id, member.id, reason);
   }
 
-  const logChannel=IDs.channels.modLogs?member.guild.channels.cache.get(IDs.channels.modLogs)||(await member.guild.channels.fetch(IDs.channels.modLogs).catch(() => null)):null;
+  const logChannel = IDs.channels.modLogs ? (member.guild.channels.cache.get(IDs.channels.modLogs) || (await getGuildChannelCached(member.guild, IDs.channels.modLogs))) : null;
   if (logChannel?.isTextBased?.()) {
     const logEmbed = punished ? new EmbedBuilder()
           .setColor("#A97142")
@@ -165,7 +166,7 @@ module.exports = {
           ) {
             continue;
           }
-          const member=guild.members.cache.get(newUser.id)||(await guild.members.fetch(newUser.id).catch(() => null));
+          const member = guild.members.cache.get(newUser.id) || (await getGuildMemberCached(guild, newUser.id));
           if (!member || member.user?.bot) continue;
           if (hasAdminsProfileCapability(member, "fullImmunity")) continue;
           if (shouldSkipRecentUserUpdateAction(guild.id, newUser.id, match)) continue;

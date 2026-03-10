@@ -1,10 +1,7 @@
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
 const IDs = require("../Config/ids");
-const ENTITY_CACHE_TTL_MS = 15_000;
+const { getClientGuildCached, getGuildChannelCached, getGuildMemberCached } = require("../Interaction/interactionEntityCache");
 const CHANNEL_WARM_TTL_MS = 5 * 60_000;
-const guildChannelCache = new Map();
-const guildCache = new Map();
-const guildMemberCache = new Map();
 const guildChannelWarmCache = new Map();
 const HANDLED_TICKET_BUTTONS = new Set(["ticket_partnership","ticket_highstaff","ticket_supporto","claim_ticket","close_ticket","close_ticket_motivo","accetta","rifiuta","ticket_autoclose_accept","ticket_autoclose_reject","unclaim",]);
 const HANDLED_TICKET_SELECT_MENUS = new Set(["ticket_open_menu"]);
@@ -21,63 +18,12 @@ function getCachedEntity(cache, key) {
   return null;
 }
 
-function setCachedEntity(cache, key, value, ttlMs = ENTITY_CACHE_TTL_MS, promise = null) {
+function setCachedEntity(cache, key, value, ttlMs, promise = null) {
   cache.set(key, {
     value,
-    expiresAt: Date.now() + ttlMs,
+    expiresAt: Date.now() + (ttlMs || 15_000),
     promise,
   });
-}
-
-async function getGuildChannelCached(guild, channelId) {
-  const key = `${guild?.id || ""}:${String(channelId || "")}`;
-  if (!guild || !channelId) return null;
-  const cached = getCachedEntity(guildChannelCache, key);
-  if (cached) return cached;
-  const channel = guild.channels.cache.get(String(channelId));
-  if (channel) {
-    setCachedEntity(guildChannelCache, key, channel);
-    return channel;
-  }
-  const promise = guild.channels.fetch(String(channelId)).catch(() => null);
-  guildChannelCache.set(key, { value: null, expiresAt: 0, promise });
-  const resolved = await promise;
-  setCachedEntity(guildChannelCache, key, resolved);
-  return resolved;
-}
-
-async function getClientGuildCached(client, guildId) {
-  const key = String(guildId || "");
-  if (!client || !key) return null;
-  const cached = getCachedEntity(guildCache, key);
-  if (cached) return cached;
-  const guild = client.guilds.cache.get(key);
-  if (guild) {
-    setCachedEntity(guildCache, key, guild);
-    return guild;
-  }
-  const promise = client.guilds.fetch(key).catch(() => null);
-  guildCache.set(key, { value: null, expiresAt: 0, promise });
-  const resolved = await promise;
-  setCachedEntity(guildCache, key, resolved);
-  return resolved;
-}
-
-async function getGuildMemberCached(guild, userId) {
-  const key = `${guild?.id || ""}:${String(userId || "")}`;
-  if (!guild || !userId) return null;
-  const cached = getCachedEntity(guildMemberCache, key);
-  if (cached) return cached;
-  const member = guild.members.cache.get(String(userId));
-  if (member) {
-    setCachedEntity(guildMemberCache, key, member);
-    return member;
-  }
-  const promise = guild.members.fetch(String(userId)).catch(() => null);
-  guildMemberCache.set(key, { value: null, expiresAt: 0, promise });
-  const resolved = await promise;
-  setCachedEntity(guildMemberCache, key, resolved);
-  return resolved;
 }
 
 async function warmGuildChannels(guild) {

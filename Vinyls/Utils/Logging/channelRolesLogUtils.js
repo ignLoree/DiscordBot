@@ -1,5 +1,6 @@
 const { PermissionsBitField } = require("discord.js");
 const IDs = require("../Config/ids");
+const { getGuildChannelCached } = require("../Interaction/interactionEntityCache");
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
 
 function wait(ms) {
@@ -153,7 +154,7 @@ function buildAuditExtraLines(entry, knownChangeKeys = []) {
 async function resolveChannelRolesLogChannel(guild) {
   const channelId = IDs.channels?.channelRolesLogs || IDs.channels?.logCanaliRuoli || null;
   if (!guild || !channelId) return null;
-  const channel = guild.channels.cache.get(channelId) || (await guild.channels.fetch(channelId).catch(() => null));
+  const channel = guild.channels.cache.get(channelId) || (await getGuildChannelCached(guild, channelId));
   if (!channel?.isTextBased?.()) return null;
   return channel;
 }

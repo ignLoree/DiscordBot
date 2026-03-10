@@ -1,5 +1,6 @@
 const { EmbedBuilder, PermissionsBitField, AuditLogEvent, } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
+const { getGuildChannelCached, getGuildMemberCached } = require("../Utils/Interaction/interactionEntityCache");
 const{scheduleStaffListRefresh,didStaffMembershipChange,}=require("../Utils/Community/staffListUtils");
 const{getJoinGateConfigSnapshot,}=require("../Services/Moderation/joinGateService");
 const{isSecurityProfileImmune,hasAdminsProfileCapability,}=require("../Services/Moderation/securityProfilesService");
@@ -78,10 +79,7 @@ function shouldSkipRoleUpdateLog(guildId, userId, additions = [], removals = [])
 async function resolveActivityLogChannel(guild) {
   const channelId = IDs.channels.activityLogs;
   if (!guild || !channelId) return null;
-  return (
-    guild.channels.cache.get(channelId) ||
-    (await guild.channels.fetch(channelId).catch(() => null))
-  );
+  return guild.channels.cache.get(channelId) || (await getGuildChannelCached(guild, channelId));
 }
 
 function didNickChange(oldMember, newMember) {
@@ -347,7 +345,7 @@ async function addPerkRoleIfPossible(member) {
 
   const added = await member.roles.add(role).then(() => true).catch(() => false);
   if (added) return;
-  const refreshedMember = await member.guild.members.fetch(member.id).catch(() => null);
+  const refreshedMember = await getGuildMemberCached(member.guild, member.id, { preferFresh: true });
   if (!refreshedMember?.roles?.cache?.has(PERK_ROLE_ID)) {
     global.logger?.warn?.("[guildMemberUpdate] Failed to add perk role:", member.guild.id, member.id, PERK_ROLE_ID);
   }
@@ -369,7 +367,7 @@ async function removePlusColorsIfNotEligible(member) {
 
   const removed = await member.roles.remove(removableRoleIds).then(() => true).catch(() => false);
   if (removed) return;
-  const refreshedMember = await member.guild.members.fetch(member.id).catch(() => null);
+  const refreshedMember = await getGuildMemberCached(member.guild, member.id, { preferFresh: true });
   const stillHeldRoles = removableRoleIds.filter((roleId) => refreshedMember?.roles?.cache?.has(roleId));
   if (stillHeldRoles.length) {
     global.logger?.warn?.("[guildMemberUpdate] Failed to remove plus color roles:", member.guild.id, member.id, stillHeldRoles);
@@ -569,7 +567,7 @@ async function enforceJoinGatePostJoinUsername(oldMember, newMember) {
   }
 
   const modLogId = IDs.channels?.modLogs;
-  const logChannel=modLogId?(newMember.guild.channels.cache.get(modLogId)||(await newMember.guild.channels.fetch(modLogId).catch(() => null))):null;
+  const logChannel = modLogId ? (newMember.guild.channels.cache.get(modLogId) || (await getGuildChannelCached(newMember.guild, modLogId))) : null;
   if (!logChannel?.isTextBased?.()) return;
 
   const embed=punished?new EmbedBuilder().setColor("#A97142").setTitle(`${newMember.user.username}has been ${String(appliedAction||"kick").toLowerCase()==="timeout"?"timed out":String(appliedAction||"kick").toLowerCase()==="ban"?"banned":"kicked"}!!`,
@@ -649,7 +647,7 @@ function scheduleBoostFollowup(
 async function handleBoostUpdate(oldMember, newMember) {
   const boostChannelId = IDs.channels.supporters;
   if (!boostChannelId) return;
-  const boostAnnounceChannel=newMember.guild.channels.cache.get(boostChannelId)||(await newMember.guild.channels.fetch(boostChannelId).catch(() => null));
+  const boostAnnounceChannel = newMember.guild.channels.cache.get(boostChannelId) || (await getGuildChannelCached(newMember.guild, boostChannelId));
   if (!boostAnnounceChannel?.isTextBased?.()) return;
 
   const oldBoostTs = oldMember.premiumSinceTimestamp || 0;

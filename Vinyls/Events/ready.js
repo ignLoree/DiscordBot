@@ -26,7 +26,6 @@ const { retroSyncGuildLevels } = require("../Services/Community/expService");
 const IDs = require("../Utils/Config/ids");
 const startupPanelsTrigger = require("../Triggers/embeds");
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
-const{scheduleMemberCounterRefresh,}=require("../Utils/Community/memberCounterUtils");
 const{formatDurationMs,runTaskGroup,runTaskSequence,}=require("../Utils/Startup/readyStartupRuntime");
 
 const STARTUP_PANELS_RETRY_MS = 15000;
@@ -158,7 +157,8 @@ function buildDeferredStartupTasks(client, primaryScheduler, engagementTick) {
   ];
 }
 
-const getChannelSafe=async(client,channelId) => {if(!channelId)return null;return(client.channels.cache.get(channelId)||(await client.channels.fetch(channelId).catch(() => null)));};
+const { getClientChannelCached } = require("../Utils/Interaction/interactionEntityCache");
+const getChannelSafe = async (client, channelId) => { if (!channelId) return null; return client.channels.cache.get(channelId) || (await getClientChannelCached(client, channelId)); };
 
 function buildMongoUrl(client) {
   return (
@@ -349,10 +349,6 @@ async function queueStartupSync(client) {
 
     queueIdsCatalogSync(client, mainGuildId, "startup", { delayMs: 5000 });
 
-    const guild=client.guilds.cache.get(mainGuildId)||(await client.guilds.fetch(mainGuildId).catch(() => null));
-    if (guild) {
-      scheduleMemberCounterRefresh(guild, { delayMs: 800, secondPassMs: 2400 });
-    }
   } catch (err) {
     global.logger?.error?.("[IDS AUTO SYNC] Startup queue failed", err);
   }

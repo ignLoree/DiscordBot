@@ -1,6 +1,7 @@
 const path = require("path");
 const fs = require("fs");
 const IDs = require("../Utils/Config/ids");
+const { getGuildChannelCached, getGuildRoleCached } = require("../Utils/Interaction/interactionEntityCache");
 
 const SPONSOR_PANEL_COLOR = "#6f4e37";
 const SPONSOR_BATCH_SIZE = 6;
@@ -72,13 +73,13 @@ async function sponsorEnsureChannelsFetched(guild) {
 async function sponsorFetchTextChannel(guild, channelId) {
   if (!channelId) return null;
   let ch = guild.channels.cache.get(channelId);
-  if (!ch) ch = await guild.channels.fetch(channelId).catch(() => null);
+  if (!ch) ch = await getGuildChannelCached(guild, channelId);
   return ch?.isTextBased?.() ? ch : null;
 }
 
 async function sponsorResolveRoleMention(guild, roleId, fallback = "`Role`") {
   if (!guild || !roleId) return fallback;
-  const role = guild.roles.cache.get(roleId) || (await guild.roles.fetch(roleId).catch(() => null));
+  const role = guild.roles.cache.get(roleId) || (await getGuildRoleCached(guild, roleId));
   return role ? `<@&${role.id}>` : fallback;
 }
 
@@ -123,7 +124,7 @@ async function processOneGuildTagPanel(client, guildId, config) {
   }
   let boosterRoleMention = "`Server Booster`";
   if (config.boosterRoleId) {
-    const role = await guild.roles.fetch(config.boosterRoleId).catch(() => null);
+    const role = guild.roles.cache.get(config.boosterRoleId) || (await getGuildRoleCached(guild, config.boosterRoleId));
     if (role) boosterRoleMention = `<@&${role.id}>`;
   }
   const embed = buildSponsorTagEmbed(config, boosterRoleMention);

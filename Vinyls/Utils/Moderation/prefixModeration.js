@@ -1,3 +1,4 @@
+const { getGuildMemberCached } = require("../Interaction/interactionEntityCache");
 const memberCache = new Map();
 const CACHE_TTL_MS = 30 * 1000;
 
@@ -25,7 +26,7 @@ async function fetchMemberSafe(guild, userId) {
   if (!guild || !userId) return null;
   const cached = getCachedMember(guild.id, userId);
   if (cached) return cached;
-  const member = await guild.members.fetch(userId).catch(() => null);
+  const member = await getGuildMemberCached(guild, userId);
   if (member) setCachedMember(guild.id, userId, member);
   return member;
 }

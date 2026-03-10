@@ -8,6 +8,7 @@ const prism = require("prism-media");
 const ffmpegStatic = require("ffmpeg-static");
 const VoiceState = require("../../Schemas/Voice/voiceStateSchema");
 const IDs = require("../../Utils/Config/ids");
+const { getClientChannelCached } = require("../../Utils/Interaction/interactionEntityCache");
 const { getVoiceSession } = require("../Voice/voiceSessionService");
 const { EPHEMERAL_TTL_SHORT_MS, scheduleMessageDeletion } = require("../../Utils/Config/ephemeralMessageTtl");
 const ttsStates = new Map();
@@ -508,7 +509,7 @@ async function restoreTtsConnections(client) {
     }
     const states = await VoiceState.find({});
     for (const entry of states) {
-      const channel = await client.channels.fetch(entry.channelId).catch(() => null);
+      const channel = await getClientChannelCached(client, entry.channelId);
       if (!channel || !channel.isVoiceBased?.()) continue;
       await joinTtsChannel(channel);
     }

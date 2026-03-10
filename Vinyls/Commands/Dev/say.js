@@ -1,5 +1,6 @@
 const { safeEditReply } = require("../../../shared/discord/replyRuntime");
 const { SlashCommandBuilder } = require("discord.js");
+const { getGuildChannelCached } = require("../../Utils/Interaction/interactionEntityCache");
 const EPHEMERAL_FLAG = 1 << 6;
 const MESSAGE_LINK_REGEX = /https?:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/channels\/(\d+)\/(\d+)\/(\d+)/;
 
@@ -25,7 +26,7 @@ async function resolveReplyTarget(interaction, messageId, messageLink) {
       };
     }
 
-    const targetChannel = await interaction.guild.channels.fetch(linkData.channelId).catch(() => null);
+    const targetChannel = await getGuildChannelCached(interaction.guild, linkData.channelId);
     if (!targetChannel || !targetChannel.isTextBased()) {
       return {
         error: "<:vegax:1443934876440068179> Canale non valido per rispondere.",

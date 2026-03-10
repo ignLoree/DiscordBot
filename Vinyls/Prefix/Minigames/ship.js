@@ -1,4 +1,5 @@
 const { AttachmentBuilder, EmbedBuilder } = require("discord.js");
+const { getGuildMemberCached } = require("../../Utils/Interaction/interactionEntityCache");
 const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const renderShipCanvas = require("../../Utils/Render/shipCanvas");
 
@@ -11,7 +12,7 @@ function extractId(raw) {
 async function resolveUser(guild, token) {
   const id = extractId(token);
   if (!id) return null;
-  const member=guild.members.cache.get(id)||(await guild.members.fetch(id).catch(() => null));
+  const member = guild.members.cache.get(id) || (await getGuildMemberCached(guild, id));
   return member?.user || null;
 }
 

@@ -2,6 +2,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require(
 const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { ActivityDaily, ActivityUser, ExpUser } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");
+const { getGuildChannelCached, getGuildMemberCached } = require("../../Utils/Interaction/interactionEntityCache");
 const { MESSAGE_EXP, VOICE_EXP_PER_MINUTE, getLevelInfo, } = require("../../Services/Community/expService");
 const { isChannelInTicketCategory } = require("../../Utils/Ticket/ticketCategoryUtils");
 const TOP_LIMIT = 10;
@@ -48,7 +49,7 @@ async function fetchMembers(guild, userIds) {
     if (cached) out.set(id, cached);
     else missingIds.push(id);
   }
-  const fetchedMembers = await Promise.all(missingIds.map((id) => guild.members.fetch(id).catch(() => null)),);
+  const fetchedMembers = await Promise.all(missingIds.map((id) => getGuildMemberCached(guild, id)));
   for (let index = 0; index < missingIds.length; index += 1) {
     const member = fetchedMembers[index];
     if (member) out.set(missingIds[index], member);
@@ -354,7 +355,7 @@ module.exports = {
       return;
     }
 
-    const leaderboardChannel = message.guild.channels.cache.get(LEADERBOARD_CHANNEL_ID) || (await message.guild.channels.fetch(LEADERBOARD_CHANNEL_ID).catch(() => null));
+    const leaderboardChannel = message.guild.channels.cache.get(LEADERBOARD_CHANNEL_ID) || (await getGuildChannelCached(message.guild, LEADERBOARD_CHANNEL_ID));
 
     if (!leaderboardChannel || !leaderboardChannel.isTextBased()) {
       await safeMessageReply(message, {

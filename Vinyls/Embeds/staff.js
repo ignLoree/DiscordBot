@@ -1,13 +1,14 @@
 const IDs = require("../Utils/Config/ids");
+const { getClientChannelCached } = require("../Utils/Interaction/interactionEntityCache");
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const { upsertPanelMessage } = require("../../shared/discord/panelUpsertRuntime");
 
 const DIVIDER_URL = "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
 
 async function run(client) {
-  const moderationChannel = client.channels.cache.get(IDs.channels.moderazioneStaff) || (await client.channels.fetch(IDs.channels.moderazioneStaff).catch(() => null));
-  const bestStaffChannel = client.channels.cache.get(IDs.channels.bestStaff) || (await client.channels.fetch(IDs.channels.bestStaff).catch(() => null));
-  const guideChannel = client.channels.cache.get(IDs.channels.guidaStaff) || (await client.channels.fetch(IDs.channels.guidaStaff).catch(() => null));
+  const moderationChannel = client.channels.cache.get(IDs.channels.moderazioneStaff) || (await getClientChannelCached(client, IDs.channels.moderazioneStaff));
+  const bestStaffChannel = client.channels.cache.get(IDs.channels.bestStaff) || (await getClientChannelCached(client, IDs.channels.bestStaff));
+  const guideChannel = client.channels.cache.get(IDs.channels.guidaStaff) || (await getClientChannelCached(client, IDs.channels.guidaStaff));
 
   const embeds = [
     new EmbedBuilder()

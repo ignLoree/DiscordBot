@@ -1,6 +1,7 @@
 const cron = require("node-cron");
 const Staff = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../../Utils/Config/ids");
+const { getGuildChannelCached } = require("../../Utils/Interaction/interactionEntityCache");
 let dailyPartnerAuditTask = null;
 const SAME_DAY_DUPLICATE_REASON = "Non fare la stessa partnership più di una volta al giorno";
 const SELF_PARTNERSHIP_DAILY_REASON = "Non fare partnership con se stessi più di una volta al giorno";
@@ -113,7 +114,7 @@ async function logPointRemoval(guild, staffUserId, reason, action) {
   const puntiToltiId = IDs.channels.puntiTolti;
   if (!puntiToltiId) return;
 
-  const channel = guild.channels.cache.get(puntiToltiId) || (await guild.channels.fetch(puntiToltiId).catch(() => null));
+  const channel = guild.channels.cache.get(puntiToltiId) || (await getGuildChannelCached(guild, puntiToltiId));
   if (!channel?.isTextBased?.()) return;
 
   const msgRef = Array.isArray(action?.partnerMessageIds) && action.partnerMessageIds.length ? `https://discord.com/channels/${guild.id}/${action.partnershipChannelId || IDs.channels.partnerships}/${action.partnerMessageIds[0]}`

@@ -245,7 +245,7 @@ module.exports = {
           allowedMentions: { repliedUser: false },
         });
         if (NEWS_STAFF_CHANNEL_ID) {
-          const newsStaffChannel = message.client.channels.cache.get(NEWS_STAFF_CHANNEL_ID) || (await message.client.channels.fetch(NEWS_STAFF_CHANNEL_ID).catch(() => null));
+          const newsStaffChannel = message.client.channels.cache.get(NEWS_STAFF_CHANNEL_ID) || (await getClientChannelCached(message.client, NEWS_STAFF_CHANNEL_ID));
           if (newsStaffChannel) {
             const staffMessages = buildStaffEventAnnouncementMessages(fmtDate(now), fmtDateWithTime(endDate.getTime()),);
             for (const content of staffMessages) {

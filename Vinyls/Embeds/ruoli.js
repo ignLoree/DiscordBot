@@ -3,6 +3,7 @@ const fs = require("fs");
 const { EmbedBuilder, AttachmentBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require("discord.js");
 const { PersonalityPanel } = require("../Schemas/Community/communitySchemas");
 const IDs = require("../Utils/Config/ids");
+const { getClientChannelCached } = require("../Utils/Interaction/interactionEntityCache");
 const { upsertPanelMessage } = require("../../shared/discord/panelUpsertRuntime");
 
 const CHANNEL_ID = IDs.channels.ruoliColori;
@@ -18,7 +19,7 @@ const PLUS_COLORS_IMAGE_PATH = path.join(__dirname, "..", "Photos", PLUS_COLORS_
 const DIVIDER_URL = "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
 
 async function run(client) {
-  const channel = client.channels.cache.get(CHANNEL_ID) || (await client.channels.fetch(CHANNEL_ID).catch(() => null));
+  const channel = client.channels.cache.get(CHANNEL_ID) || (await getClientChannelCached(client, CHANNEL_ID));
   if (!channel) return;
   const personalityPhotoPath = fs.existsSync(IMAGE_PATH) ? IMAGE_PATH : (fs.existsSync(IMAGE_PATH_ASCII) ? IMAGE_PATH_ASCII : null);
   const attachment = personalityPhotoPath ? new AttachmentBuilder(personalityPhotoPath, { name: IMAGE_NAME }) : null;

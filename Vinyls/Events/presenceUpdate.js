@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const SupporterStatus = require("../Schemas/Supporter/supporterStatusSchema");
 const IDs = require("../Utils/Config/ids");
 const { grantEventRewardOnce } = require("../Services/Community/activityEventRewardsService");
-const { getGuildMemberCached } = require("../Utils/Interaction/interactionEntityCache");
+const { getGuildChannelCached, getGuildMemberCached } = require("../Utils/Interaction/interactionEntityCache");
 
 const ROLE_ID = IDs.roles.Supporter;
 const PERK_ROLE_ID = IDs.roles.PicPerms;
@@ -238,7 +238,7 @@ function recentlyOnline(info) {
 
 async function hasSupporterRole(member) {
   if (member.roles?.cache?.has(ROLE_ID)) return true;
-  const fresh = await member.guild.members.fetch(member.id).catch(() => null);
+  const fresh = await getGuildMemberCached(member.guild, member.id, { preferFresh: true });
   return fresh?.roles?.cache?.has(ROLE_ID) || false;
 }
 
@@ -255,10 +255,7 @@ async function clearPending(guildId, userId, channel) {
 
 async function resolveSupportersChannel(guild) {
   if (!guild || !CHANNEL_ID) return null;
-  return (
-    guild.channels.cache.get(CHANNEL_ID) ||
-    (await guild.channels.fetch(CHANNEL_ID).catch(() => null))
-  );
+  return guild.channels.cache.get(CHANNEL_ID) || (await getGuildChannelCached(guild, CHANNEL_ID));
 }
 
 async function refreshMember(guild, userId) {

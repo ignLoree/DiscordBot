@@ -1,5 +1,6 @@
 const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
+const { getGuildChannelCached, getGuildMemberCached } = require("../Utils/Interaction/interactionEntityCache");
 const{handleWebhookCreationAction:antiNukeHandleWebhookCreationAction,handleWebhookUpdateAction:antiNukeHandleWebhookUpdateAction,handleWebhookDeletionAction:antiNukeHandleWebhookDeletionAction,}=require("../Services/Moderation/antiNukeService");
 
 const WEBHOOK_CREATE_ACTION = AuditLogEvent?.WebhookCreate ?? 50;
@@ -40,7 +41,7 @@ async function shouldMonitorExecutor(guild, executor) {
   const highStaffRoleId = String(IDs?.roles?.HighStaff || "").trim();
   if (!highStaffRoleId) return true;
 
-  const member=guild.members.cache.get(String(executor.id))||(await guild.members.fetch(String(executor.id)).catch(() => null));
+  const member = guild.members.cache.get(String(executor.id)) || (await getGuildMemberCached(guild, String(executor.id)));
   if (!member) return true;
   return !member.roles.cache.has(highStaffRoleId);
 }
@@ -48,7 +49,7 @@ async function shouldMonitorExecutor(guild, executor) {
 async function resolveLogChannel(guild) {
   const channelId = IDs.channels.activityLogs;
   if (!guild || !channelId) return null;
-  return guild.channels.cache.get(channelId) || (await guild.channels.fetch(channelId).catch(() => null));
+  return guild.channels.cache.get(channelId) || (await getGuildChannelCached(guild, channelId));
 }
 
 function getStore(client) {

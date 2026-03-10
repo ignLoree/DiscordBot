@@ -5,6 +5,7 @@ const { upsertVoteRole } = require("../../Services/Community/communityOpsService
 const { grantEventLevels } = require("../../Services/Community/activityEventRewardsService");
 const { PAUSE_REQUEST_ROLE_IDS, createPauseRequest } = require("../Pause/pauseRequestRuntime");
 const IDs = require("../Config/ids");
+const { getGuildChannelCached, getGuildMemberCached } = require("../Interaction/interactionEntityCache");
 const { EPHEMERAL_TTL_NORMAL_MS, scheduleMessageDeletion } = require("../Config/ephemeralMessageTtl");
 const SuggestionCount = require("../../Schemas/Suggestion/suggestionSchema");
 const VOTE_CHANNEL_ID = IDs.channels.supporters;
@@ -102,7 +103,7 @@ async function getCachedOrFetchMember(guild, userId) {
     return cached.promise;
   }
 
-  const promise = guild.members.fetch(userId).catch(() => null);
+  const promise = getGuildMemberCached(guild, userId);
   memberFetchCache.set(cacheKey, { member: null, expiresAt: 0, promise });
   const member = await promise;
   memberFetchCache.set(cacheKey, {
@@ -174,10 +175,7 @@ async function resolveUserFromMessage(message) {
   const { content, embedText, embedTitle, fieldsText } = getMessageTextParts(message);
   const idFromContent = extractUserIdFromText(content) || extractUserIdFromText(embedText) || extractUserIdFromText(fieldsText);
   if (idFromContent) {
-    return message.guild.members
-      .fetch(idFromContent)
-      .then((m) => m.user)
-      .catch(() => null);
+    return getGuildMemberCached(message.guild, idFromContent).then((m) => m?.user ?? null);
   }
 
   const nameRaw = extractNameFromText(content) || extractNameFromText(embedText) || extractNameFromText(embedTitle) || extractNameFromText(fieldsText);
@@ -360,7 +358,7 @@ async function handleDisboardBump(message, client) {
       thanksMessage = parts.join("\n");
     }
   }
-  const channel = message.channel || (await message.guild.channels.fetch(message.channelId).catch(() => null));
+  const channel = message.channel || (await getGuildChannelCached(message.guild, message.channelId));
   if (channel?.isTextBased?.()) {
     try {
       await channel.send({
@@ -436,7 +434,7 @@ async function handleDiscadiaBump(message, client) {
       thanksMessage = parts.join("\n");
     }
   }
-  const channel = message.channel || (message.channelId ? await message.guild.channels.fetch(message.channelId).catch(() => null) : null);
+  const channel = message.channel || (message.channelId ? await getGuildChannelCached(message.guild, message.channelId) : null);
   if (channel?.isTextBased?.()) {
     try {
       await channel.send({
@@ -449,7 +447,7 @@ async function handleDiscadiaBump(message, client) {
       } catch {
         const fallbackChannelId = IDs.channels.commands || null;
         if (fallbackChannelId) {
-          const fallbackChannel = message.guild.channels.cache.get(fallbackChannelId) || (await message.guild.channels.fetch(fallbackChannelId).catch(() => null));
+          const fallbackChannel = message.guild.channels.cache.get(fallbackChannelId) || (await getGuildChannelCached(message.guild, fallbackChannelId));
           if (fallbackChannel?.isTextBased?.()) {
             await fallbackChannel.send({ content: thanksMessage.trim() }).catch(() => { });
           }

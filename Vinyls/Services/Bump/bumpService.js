@@ -4,7 +4,7 @@ const { DiscadiaBump, DiscadiaVoter } = require("../../Schemas/Discadia/discadia
 const BumpVoteReward = require("../../Schemas/Bump/bumpVoteRewardSchema");
 const IDs = require("../../Utils/Config/ids");
 const { shouldBlockDm } = require("../../Utils/noDmList");
-const { getClientGuildCached, getGuildMemberCached, getUserCached } = require("../../Utils/Interaction/interactionEntityCache");
+const { getClientChannelCached, getClientGuildCached, getGuildMemberCached, getUserCached } = require("../../Utils/Interaction/interactionEntityCache");
 const { addExpWithLevel, shouldIgnoreExpForMember } = require("../Community/expService");
 const discadiaVoteTimers = new Map();
 const STAFF_BYPASS_ROLE_IDS = new Set([IDs.roles.Staff, IDs.roles.Helper, IDs.roles.Mod, IDs.roles.PartnerManager, IDs.roles.Coordinator, IDs.roles.Supervisor, IDs.roles.HighStaff, IDs.roles.Admin, IDs.roles.Manager, IDs.roles.CoFounder, IDs.roles.Founder,].filter(Boolean),);
@@ -32,7 +32,7 @@ function createBumpReminderService(options) {
       );
       return;
     }
-    const channel = client.channels.cache.get(reminderChannelId) || (await client.channels.fetch(reminderChannelId).catch(() => null));
+    const channel = client.channels.cache.get(reminderChannelId) || (await getClientChannelCached(client, reminderChannelId));
     if (!channel) {
       global.logger?.warn?.(
         `${errorTag} reminder channel not found (${reminderChannelId}) for guild ${guildId}`,
@@ -256,7 +256,7 @@ async function sendVoteFallbackChannelReminder(client, guildId, userId) {
     now - lastVoteFallbackSentAt.get(key) < VOTE_FALLBACK_COOLDOWN_MS
   )
     return;
-  const channel = client.channels.cache.get(fallbackId) || (await client.channels.fetch(fallbackId).catch(() => null));
+  const channel = client.channels.cache.get(fallbackId) || (await getClientChannelCached(client, fallbackId));
   if (!channel) return;
   const { embed, components } = buildVoteReminderEmbed(client);
   await channel

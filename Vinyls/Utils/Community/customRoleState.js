@@ -1,5 +1,6 @@
 const { CustomRole } = require("../../Schemas/Community/communitySchemas");
 const { runExpiredCustomRolesSweep, } = require("../../Services/Community/customRoleExpiryService");
+const { getGuildRoleCached } = require("../Interaction/interactionEntityCache");
 
 function isExpired(doc) {
   const expiresAt = doc?.expiresAt ? new Date(doc.expiresAt) : null;
@@ -24,7 +25,7 @@ async function resolveCustomRoleState({ guild, userId, client = null, cleanupExp
     return { status: "expired", doc, role: null };
   }
 
-  const role = guild.roles.cache.get(doc.roleId) || (await guild.roles.fetch(doc.roleId).catch(() => null));
+  const role = guild.roles.cache.get(doc.roleId) || (await getGuildRoleCached(guild, doc.roleId));
   if (!role) {
     await CustomRole.deleteOne({
       guildId: guild.id,

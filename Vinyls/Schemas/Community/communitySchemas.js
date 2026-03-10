@@ -28,7 +28,6 @@ const globalSettingsSchema=new Schema({guildId:{type:String,required:true,unique
 
 const voteRoleSchema=new Schema({guildId:{type:String,required:true},userId:{type:String,required:true,index:true},expiresAt:{type:Date,required:true},},{timestamps:true},);
 voteRoleSchema.index({ guildId: 1, userId: 1 }, { unique: true });
-// TTL: il ruolo voto viene rimosso automaticamente quando scade
 voteRoleSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 const verificationTenureSchema=new Schema({guildId:{type:String,required:true},userId:{type:String,required:true,index:true},verifiedAt:{type:Date,required:true},stage:{type:Number,default:1},});
@@ -74,7 +73,6 @@ staffEventRewardGivenSchema.index({ guildId: 1, userId: 1, rewardType: 1 }, { un
 
 const customRoleSchema=new Schema({guildId:{type:String,required:true},userId:{type:String,required:true},roleId:{type:String,required:true},customVocEmoji:{type:String,default:null},customVocChannelId:{type:String,default:null,index:true},expiresAt:{type:Date,default:null},},{timestamps:true},);
 customRoleSchema.index({ guildId: 1, userId: 1 }, { unique: true });
-// TTL opzionale: se expiresAt è valorizzato, il record viene eliminato quando scade
 customRoleSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 const avatarPrivacySchema=new Schema({guildId:{type:String,required:true},userId:{type:String,required:true,index:true},blocked:{type:Boolean,default:false},views:{type:Number,default:0},},{timestamps:true},);

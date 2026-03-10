@@ -1,6 +1,7 @@
 const { ChannelType, PermissionsBitField } = require("discord.js");
 const { CustomRole } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");
+const { getClientGuildCached, getGuildChannelCached, getGuildRoleCached } = require("../../Utils/Interaction/interactionEntityCache");
 const CUSTOM_VOICE_CATEGORY_ID = IDs.categories.categoryPrivate;
 const CHECK_INTERVAL_MS = 60 * 1000;
 let expiryLoopHandle = null;
@@ -30,7 +31,7 @@ async function resolveVoiceChannel(guild, doc) {
   if (doc.customVocChannelId) {
     channel =
       guild.channels.cache.get(doc.customVocChannelId) ||
-      (await guild.channels.fetch(doc.customVocChannelId).catch(() => null));
+      (await getGuildChannelCached(guild, doc.customVocChannelId));
   }
   if (!channel && doc.roleId) {
     channel = findVoiceByRole(guild, doc.roleId);
@@ -58,7 +59,7 @@ async function canManageChannels(guild) {
 async function processExpiredCustomRole(client, doc) {
   if (!client || !doc?._id) return false;
 
-  const guild = client.guilds.cache.get(doc.guildId) || (await client.guilds.fetch(doc.guildId).catch(() => null));
+  const guild = client.guilds.cache.get(doc.guildId) || (await getClientGuildCached(client, doc.guildId));
   if (!guild) {
     await CustomRole.deleteOne({ _id: doc._id }).catch(() => { });
     return true;
@@ -66,7 +67,7 @@ async function processExpiredCustomRole(client, doc) {
 
   let role =
     guild.roles.cache.get(doc.roleId) ||
-    (await guild.roles.fetch(doc.roleId).catch(() => null));
+    (await getGuildRoleCached(guild, doc.roleId));
   let voiceChannel = await resolveVoiceChannel(guild, doc);
   let roleHandled = !role;
   let channelHandled = !voiceChannel;
@@ -78,7 +79,7 @@ async function processExpiredCustomRole(client, doc) {
         .catch(() => { });
       role =
         guild.roles.cache.get(doc.roleId) ||
-        (await guild.roles.fetch(doc.roleId).catch(() => null));
+        (await getGuildRoleCached(guild, doc.roleId));
       roleHandled = !role;
     }
   }
@@ -88,7 +89,7 @@ async function processExpiredCustomRole(client, doc) {
       await voiceChannel
         .delete(`Custom private voice expired for user ${doc.userId}`)
         .catch(() => { });
-      const stillExists = guild.channels.cache.get(voiceChannel.id) || (await guild.channels.fetch(voiceChannel.id).catch(() => null));
+      const stillExists = guild.channels.cache.get(voiceChannel.id) || (await getGuildChannelCached(guild, voiceChannel.id));
       channelHandled = !stillExists;
       voiceChannel = stillExists;
     }

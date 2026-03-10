@@ -1,4 +1,5 @@
 const IDs = require("../Config/ids");
+const { getClientGuildCached, getGuildChannelCached } = require("../Interaction/interactionEntityCache");
 const StaffModel = require("../../Schemas/Staff/staffSchema");
 const STAFF_LIST_MARKER = "staff list";
 const STAFF_NEW_EMOJI = "<:VC_New:1471891729471770819>";
@@ -142,11 +143,11 @@ async function fetchMembersForStaffList(guild) {
 
 async function refreshStaffList(client, guildId = IDs.guilds.main, { force = false } = {}) {
   const state = ensureState(client);
-  const guild = client.guilds.cache.get(guildId) || (await client.guilds.fetch(guildId).catch(() => null));
+  const guild = client.guilds.cache.get(guildId) || (await getClientGuildCached(client, guildId));
   if (!guild) return;
 
   const channelId = IDs.channels.staffList;
-  const channel = guild.channels.cache.get(channelId) || (await guild.channels.fetch(channelId).catch(() => null));
+  const channel = guild.channels.cache.get(channelId) || (await getGuildChannelCached(guild, channelId));
   if (!channel?.isTextBased?.()) return;
 
   const membersSource = await fetchMembersForStaffList(guild);

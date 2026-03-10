@@ -8,6 +8,7 @@ const { sendEventRewardLog, sendEventRewardDm } = require("./eventRewardLogServi
 const { isEventStaffMember } = require("./expService");
 const IDs = require("../../Utils/Config/ids");
 const { isChannelInTicketCategory } = require("../../Utils/Ticket/ticketCategoryUtils");
+const { getClientChannelCached, getClientGuildCached, getGuildChannelCached, getGuildMemberCached, getGuildRoleCached, getUserCached } = require("../../Utils/Interaction/interactionEntityCache");
 const TIME_ZONE = "Europe/Rome";
 const TARGET_CHANNEL_ID = IDs.channels.topWeeklyUser;
 const NEWS_CHANNEL_ID = IDs.channels.news;
@@ -141,13 +142,13 @@ async function getEventWeekTopThreeTextAndVoice(guild, eventWeekNum) {
   const topVoice = [];
   for (const row of sortedMessages) {
     if (topMessages.length >= 3) break;
-    const member = await guild.members.fetch(row.userId).catch(() => null);
+    const member = await getGuildMemberCached(guild, row.userId);
     if (member && !isEventStaffMember(member))
       topMessages.push({ userId: row.userId, messageCount: row.messageCount });
   }
   for (const row of sortedVoice) {
     if (topVoice.length >= 3) break;
-    const member = await guild.members.fetch(row.userId).catch(() => null);
+    const member = await getGuildMemberCached(guild, row.userId);
     if (member && !isEventStaffMember(member))
       topVoice.push({ userId: row.userId, voiceSeconds: row.voiceSeconds });
   }
@@ -173,7 +174,7 @@ function extractMapEntries(raw) {
 async function resolveMemberRole(guild) {
   if (!guild) return null;
   if (REQUIRED_MEMBER_ROLE_ID) {
-    const role = guild.roles.cache.get(REQUIRED_MEMBER_ROLE_ID) || (await guild.roles.fetch(REQUIRED_MEMBER_ROLE_ID).catch(() => null));
+    const role = guild.roles.cache.get(REQUIRED_MEMBER_ROLE_ID) || (await getGuildRoleCached(guild, REQUIRED_MEMBER_ROLE_ID));
     if (role) return role;
   }
   return guild.roles.everyone || null;
@@ -289,10 +290,10 @@ async function removeRoleFromAllMembers(guild, roleId, keepUserId = "") {
 
 async function assignRoleToUser(guild, userId, roleId) {
   if (!userId || !roleId) return false;
-  const member = guild.members.cache.get(userId) || (await guild.members.fetch(userId).catch(() => null));
+  const member = guild.members.cache.get(userId) || (await getGuildMemberCached(guild, userId));
   if (!member) return false;
   await member.roles.add(roleId).catch(() => { });
-  const refreshedMember = await guild.members.fetch(userId).catch(() => null);
+  const refreshedMember = await getGuildMemberCached(guild, userId, { preferFresh: true });
   return Boolean(refreshedMember?.roles?.cache?.has(roleId));
 }
 
@@ -383,7 +384,7 @@ const EVENT_END_ANNOUNCEMENT_MESSAGE = ["<:VC_Calendar:1448670320180592724> **L'
 async function trySendEventEndAnnouncementToNews(client) {
   const mainGuildId = IDs.guilds?.main;
   if (!mainGuildId || !NEWS_CHANNEL_ID) return;
-  const guild = client.guilds.cache.get(mainGuildId) || (await client.guilds.fetch(mainGuildId).catch(() => null));
+  const guild = client.guilds.cache.get(mainGuildId) || (await getClientGuildCached(client, mainGuildId));
   if (!guild) return;
   const doc = await GlobalSettings.findOne({ guildId: mainGuildId }).lean().catch(() => null);
   if (!doc?.expEventMultiplierExpiresAt) return;
@@ -403,7 +404,7 @@ async function trySendEventEndAnnouncementToNews(client) {
     .setThumbnail(guild.iconURL({ size: 256 }) || null)
     .setFooter({ text: "Evento terminato • Grazie per la partecipazione!" })
     .setTimestamp();
-  const newsChannel = client.channels.cache.get(NEWS_CHANNEL_ID) || (await client.channels.fetch(NEWS_CHANNEL_ID).catch(() => null));
+  const newsChannel = client.channels.cache.get(NEWS_CHANNEL_ID) || (await getClientChannelCached(client, NEWS_CHANNEL_ID));
   if (!newsChannel?.guild) return;
   await newsChannel.send({
     content: `${EVENT_END_ANNOUNCEMENT_MESSAGE}\n\n<a:VC_Ping:1448670620412809298>︲<@&1442569012063109151>`,
@@ -433,7 +434,7 @@ async function trySendEventEndAnnouncementToNews(client) {
     if (last && last.userId !== first?.userId) staffEndLines.push(`**Peggior punteggio:** <@${last.userId}> <a:VC_Arrow:1448672967721615452> **${last.points}** punti`);
     const staffEndContent = ["## <a:VC_Announce:1448687280381235443> **EVENTO STAFF — Terminato**", "", "<:VC_Attention:1443933073438675016> Risultati evento staff:", ...(staffEndLines.length ? staffEndLines : [" - Nessun dato."]), "", `<:VC_Mention:1443994358201323681>︲<@&${IDs.roles.Staff}>`,
     ].join("\n");
-    const newsStaffChannel = NEWS_STAFF_CHANNEL_ID && (client.channels.cache.get(NEWS_STAFF_CHANNEL_ID) || (await client.channels.fetch(NEWS_STAFF_CHANNEL_ID).catch(() => null)));
+    const newsStaffChannel = NEWS_STAFF_CHANNEL_ID && (client.channels.cache.get(NEWS_STAFF_CHANNEL_ID) || (await getClientChannelCached(client, NEWS_STAFF_CHANNEL_ID)));
     if (newsStaffChannel?.guild) {
       await newsStaffChannel.send({
         content: staffEndContent,
@@ -497,7 +498,7 @@ async function publishWeeklyActivityWinners(client, options = {}) {
     const me = guild.members.me;
     for (const userId of topSixUserIds) {
       try {
-        const member = await guild.members.fetch(userId).catch(() => null);
+        const member = await getGuildMemberCached(guild, userId);
         if (member && isEventStaffMember(member)) continue;
         if (eventWeek === 1) {
           await grantEventLevels(
@@ -604,7 +605,7 @@ _ _`,
 }
 
 async function resetWeeklyActivityCounters(client, options = {}) {
-  const channel = client.channels.cache.get(TARGET_CHANNEL_ID) || (await client.channels.fetch(TARGET_CHANNEL_ID).catch(() => null));
+  const channel = client.channels.cache.get(TARGET_CHANNEL_ID) || (await getClientChannelCached(client, TARGET_CHANNEL_ID));
   const guildId = channel?.guild?.id;
   if (!guildId) return;
 
@@ -669,7 +670,7 @@ function startWeeklyActivityWinnersLoop(client) {
     { timezone: TIME_ZONE },
   );
 
-  const runRecoveryIfNeeded = async () => { const now = new Date(); const weekday = getWeekdayRome(now); if (weekday !== "Mon" && weekday !== "Tue") return; const channel = client.channels.cache.get(TARGET_CHANNEL_ID) || (await client.channels.fetch(TARGET_CHANNEL_ID).catch(() => null)); const guildId = channel?.guild?.id; if (!guildId) return; const currentWeekKey = getWeekKey(now); const alreadyReset = await ActivityUser.exists({ guildId, "messages.weeklyKey": currentWeekKey, }).catch(() => false); if (alreadyReset) return; const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000); const previousWeekKey = getWeekKey(yesterday); if (previousWeekKey === currentWeekKey) return; try { global.logger.info("[WEEKLY ACTIVITY] Recovery: running missed weekly winners (bot was likely offline Sunday 21:00).",); await publishWeeklyActivityWinners(client, { weekKey: previousWeekKey }); await resetWeeklyActivityCounters(client, { nextWeekKey: currentWeekKey, }); } catch (error) { global.logger.error("[WEEKLY ACTIVITY] Recovery run failed:", error); } }; runRecoveryIfNeeded();
+  const runRecoveryIfNeeded = async () => { const now = new Date(); const weekday = getWeekdayRome(now); if (weekday !== "Mon" && weekday !== "Tue") return; const channel = client.channels.cache.get(TARGET_CHANNEL_ID) || (await getClientChannelCached(client, TARGET_CHANNEL_ID)); const guildId = channel?.guild?.id; if (!guildId) return; const currentWeekKey = getWeekKey(now); const alreadyReset = await ActivityUser.exists({ guildId, "messages.weeklyKey": currentWeekKey, }).catch(() => false); if (alreadyReset) return; const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000); const previousWeekKey = getWeekKey(yesterday); if (previousWeekKey === currentWeekKey) return; try { global.logger.info("[WEEKLY ACTIVITY] Recovery: running missed weekly winners (bot was likely offline Sunday 21:00).",); await publishWeeklyActivityWinners(client, { weekKey: previousWeekKey }); await resetWeeklyActivityCounters(client, { nextWeekKey: currentWeekKey, }); } catch (error) { global.logger.error("[WEEKLY ACTIVITY] Recovery run failed:", error); } }; runRecoveryIfNeeded();
 }
 
 /**

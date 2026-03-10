@@ -47,7 +47,6 @@ function pruneExpiredMap(map, nowTs) {
 }
 
 function acquireButtonSpamGuard(interaction, client) {
-  // Cooldown disabilitato: tutti i bottoni e select menu passano senza rate limit.
   return {
     blocked: false,
     release: () => { },

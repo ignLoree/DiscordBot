@@ -55,11 +55,11 @@ function buildBirthdayAnnouncement(docs, currentYear) {
 
 async function assignBirthdayRole(guild, userId) {
   if (!guild || !userId || !BIRTHDAY_ROLE_ID) return;
-  const member = guild.members.cache.get(userId) || (await guild.members.fetch(userId).catch(() => null));
+  const member = guild.members.cache.get(userId) || (await getGuildMemberCached(guild, userId));
   if (!member) return;
   if (member.roles.cache.has(BIRTHDAY_ROLE_ID)) return;
   await member.roles.add(BIRTHDAY_ROLE_ID).catch(() => { });
-  const refreshedMember = await guild.members.fetch(userId).catch(() => null);
+  const refreshedMember = await getGuildMemberCached(guild, userId, { preferFresh: true });
   if (!refreshedMember?.roles?.cache?.has(BIRTHDAY_ROLE_ID)) {
     global.logger?.warn?.("[BIRTHDAY] role assign failed:", guild.id, userId, BIRTHDAY_ROLE_ID);
   }

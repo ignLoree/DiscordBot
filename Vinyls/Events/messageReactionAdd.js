@@ -2,6 +2,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBu
 const communitySchemas = require("../Schemas/Community/communitySchemas");
 const SkullboardPost = communitySchemas?.SkullboardPost;
 const IDs = require("../Utils/Config/ids");
+const { getGuildChannelCached, getGuildMemberCached } = require("../Utils/Interaction/interactionEntityCache");
 const renderSkullboardCanvas = require("../Utils/Render/skullboardCanvas");
 const { cacheRoleIcon } = require("../Utils/Cache/roleIconCache");
 const SKULL_EMOJI = "\u{1F480}";
@@ -128,17 +129,11 @@ async function resolveReactionMessage(reaction) {
 
 async function findSkullboardChannel(guild) {
   if (!guild || !SKULLBOARD_CHANNEL_ID) return null;
-  return (
-    guild.channels.cache.get(SKULLBOARD_CHANNEL_ID) ||
-    (await guild.channels.fetch(SKULLBOARD_CHANNEL_ID).catch(() => null))
-  );
+  return guild.channels.cache.get(SKULLBOARD_CHANNEL_ID) || (await getGuildChannelCached(guild, SKULLBOARD_CHANNEL_ID));
 }
 
 async function findAuthorMember(message) {
-  return (
-    message.member ||
-    (await message.guild.members.fetch(message.author.id).catch(() => null))
-  );
+  return message.member || (await getGuildMemberCached(message.guild, message.author.id));
 }
 
 async function renderSkullCanvas(

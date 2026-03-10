@@ -1,5 +1,4 @@
 const { AuditLogEvent, EmbedBuilder } = require("discord.js");
-const{scheduleMemberCounterRefresh,}=require("../Utils/Community/memberCounterUtils");
 const { ARROW, buildAuditExtraLines } = require("../Utils/Logging/channelRolesLogUtils");
 const { resolveModLogChannel, fetchRecentAuditEntry, formatResponsible, nowDiscordTs, } = require("../Utils/Logging/modAuditLogUtils");
 const { handleKickBanAction: antiNukeHandleKickBanAction } = require("../Services/Moderation/antiNukeService");
@@ -35,8 +34,6 @@ module.exports = {
       if (!guild) return;
       const targetId = String(ban?.user?.id || "");
       if (!targetId) return;
-
-      scheduleMemberCounterRefresh(guild, { delayMs: 450, secondPassMs: 2600 });
 
       let executor = null;
       let reason = normalizeReason(ban?.reason);

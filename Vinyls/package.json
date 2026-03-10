@@ -12,8 +12,7 @@
     "fix:mojibake": "node ../scripts/check-mojibake.js Vinyls --fix",
     "automod:sync-words": "node ../scripts/sync-automod-wordlists.js Vinyls",
     "test:critical": "node ../scripts/test-critical-systems.js Vinyls",
-    "test:prefix-metadata": "node ../scripts/test-prefix-metadata.js Vinyls",
-    "docs:commands": "node ../scripts/generate-prefix-docs.js Vinyls"
+    "test:prefix-metadata": "node ../scripts/test-prefix-metadata.js Vinyls"
   },
   "dependencies": {
     "@discord-player/extractor": "^7.1.0",

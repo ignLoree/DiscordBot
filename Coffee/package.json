@@ -9,7 +9,6 @@
     "fix:mojibake": "node ../scripts/check-mojibake.js Coffee --fix",
     "test:critical": "node ../scripts/test-critical-systems.js Coffee",
     "test:prefix-metadata": "node ../scripts/test-prefix-metadata.js Coffee",
-    "docs:commands": "node ../scripts/generate-prefix-docs.js Coffee",
     "automod:sync-words": "node ../scripts/sync-automod-wordlists.js Coffee"
   },
   "dependencies": {

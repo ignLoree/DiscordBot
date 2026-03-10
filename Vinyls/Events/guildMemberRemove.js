@@ -9,7 +9,6 @@ const { MinigameUser } = require("../Schemas/Minigames/minigameSchema");
 const IDs = require("../Utils/Config/ids");
 const { scheduleStaffListRefresh, memberHasStaffRole, } = require("../Utils/Community/staffListUtils");
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
-const { scheduleMemberCounterRefresh, } = require("../Utils/Community/memberCounterUtils");
 const { buildAuditExtraLines } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleKickBanAction: antiNukeHandleKickBanAction } = require("../Services/Moderation/antiNukeService");
 const { consumeRecentJoinGateKick } = require("../Utils/Moderation/joinGateKickCache");
@@ -426,7 +425,6 @@ module.exports = {
       await markInviteInactive(member);
 
       const guild = member.guild;
-      scheduleMemberCounterRefresh(guild, { delayMs: 300, secondPassMs: 2200 });
 
       await closeOpenTicketsForMember(member);
       await handleTrackedStaffLeave(member);

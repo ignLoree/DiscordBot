@@ -1,5 +1,6 @@
 const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
+const { getGuildChannelCached } = require("../Utils/Interaction/interactionEntityCache");
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
 
@@ -47,10 +48,7 @@ function entityTypeLabel(value) {
 async function resolveLogChannel(guild) {
   const channelId = IDs.channels.activityLogs;
   if (!guild || !channelId) return null;
-  return (
-    guild.channels.cache.get(channelId) ||
-    (await guild.channels.fetch(channelId).catch(() => null))
-  );
+  return guild.channels.cache.get(channelId) || (await getGuildChannelCached(guild, channelId));
 }
 
 function sleep(ms) {

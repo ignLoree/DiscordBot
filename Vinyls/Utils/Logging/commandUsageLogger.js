@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const IDs = require("../Config/ids");
+const { getClientChannelCached, getClientGuildCached, getGuildChannelCached } = require("../Interaction/interactionEntityCache");
 const RESOLUTION_CACHE_TTL_MS = 30_000;
 const resolutionCache = new Map();
 
@@ -28,7 +29,7 @@ async function getChannelSafe(client, channelId) {
   const cacheKey = getCacheKey("channel", client?.user?.id, channelId);
   const cached = getCachedValue(cacheKey);
   if (cached) return cached;
-  const channel = (client.channels.cache.get(channelId) || (await client.channels.fetch(channelId).catch(() => null)));
+  const channel = client.channels.cache.get(channelId) || (await getClientChannelCached(client, channelId));
   return setCachedValue(cacheKey, channel);
 }
 
@@ -39,9 +40,9 @@ async function getCentralChannel(client, channelId) {
   if (cached) return cached;
   const mainGuildId = IDs?.guilds?.main || null;
   if (!mainGuildId) return getChannelSafe(client, channelId);
-  const guild = client.guilds.cache.get(mainGuildId) || (await client.guilds.fetch(mainGuildId).catch(() => null));
+  const guild = client.guilds.cache.get(mainGuildId) || (await getClientGuildCached(client, mainGuildId));
   if (!guild) return getChannelSafe(client, channelId);
-  const centralChannel = (guild.channels.cache.get(channelId) || (await guild.channels.fetch(channelId).catch(() => null)));
+  const centralChannel = guild.channels.cache.get(channelId) || (await getGuildChannelCached(guild, channelId));
   if (centralChannel) return setCachedValue(cacheKey, centralChannel);
   return getChannelSafe(client, channelId);
 }

@@ -53,8 +53,9 @@ async function runIdsCatalogSync(client, guildId) {
   runningGuilds.add(gid);
   try {
     const reasons = consumeReasons(gid);
-    const guild = client.guilds.cache.get(gid) || (await client.guilds.fetch(gid).catch(() => null));
+    let guild = client.guilds.cache.get(gid) || (await client.guilds.fetch(gid).catch(() => null));
     if (!guild) return { changed: false, reason: "guild-not-found" };
+    guild = await guild.fetch().catch(() => guild) || guild;
 
     const IDs = require("./ids");
     const payload = await collectGuildCatalog(guild, IDs);

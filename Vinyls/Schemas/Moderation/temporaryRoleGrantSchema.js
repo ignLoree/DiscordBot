@@ -8,7 +8,6 @@ temporaryRoleGrantSchema.index(
   { unique: true },
 );
 
-// Rimuove automaticamente i grant scaduti in base a expiresAt
 temporaryRoleGrantSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 module.exports =

@@ -4,6 +4,7 @@ const { EmbedBuilder, PermissionsBitField, PermissionFlagsBits, } = require("dis
 const IDs = require("../Config/ids");
 const { hasAdminsProfileCapability } = require("../../Services/Moderation/securityProfilesService");
 const { buildPrefixLookupKeys, buildSlashLookupKeys, hasTemporaryCommandPermission, } = require("./temporaryCommandPermissions");
+const { getGuildMemberCached } = require("../Interaction/interactionEntityCache");
 const PERMISSIONS_CANDIDATES = [path.resolve(__dirname, "../../permissions.json"), path.join(process.cwd(), "permissions.json"),];
 const EMPTY_PERMISSIONS = { slash: {}, prefix: {}, channels: {}, buttons: {}, selectMenus: {}, modals: {}, };
 const PERMISSIONS_CACHE_TTL_MS = 3000;
@@ -329,7 +330,7 @@ async function fetchLiveMember(entity) {
   if (cached?.promise) {
     return cached.promise;
   }
-  const promise = guild.members.fetch(userId).catch(() => null);
+  const promise = getGuildMemberCached(guild, userId);
   liveMemberCache.set(cacheKey, {
     member: null,
     expiresAt: 0,

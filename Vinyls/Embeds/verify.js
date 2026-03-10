@@ -1,5 +1,6 @@
 const path = require("path");
 const IDs = require("../Utils/Config/ids");
+const { getClientChannelCached } = require("../Utils/Interaction/interactionEntityCache");
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require("discord.js");
 const { PersonalityPanel: Panel } = require("../Schemas/Community/communitySchemas");
 const { upsertPanelMessage } = require("../../shared/discord/panelUpsertRuntime");
@@ -10,7 +11,7 @@ const VERIFY_MEDIA_PATH = path.join(__dirname, "..", "Photos", VERIFY_MEDIA_NAME
 const DIVIDER_URL = "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
 
 async function run(client) {
-  const channel = client.channels.cache.get(VERIFY_CHANNEL_ID) || (await client.channels.fetch(VERIFY_CHANNEL_ID).catch(() => null));
+  const channel = client.channels.cache.get(VERIFY_CHANNEL_ID) || (await getClientChannelCached(client, VERIFY_CHANNEL_ID));
   if (!channel?.isTextBased?.()) return;
   const guildId = channel.guild?.id;
   if (!guildId) return;
