@@ -1,3 +1,5 @@
+'use strict';
+
 function parseNameIdText(text) {
   return String(text || '')
     .split(/\r?\n/)
@@ -28,74 +30,61 @@ function toMultiValueMap(entries) {
   }
   return map;
 }
-
 const categoriesRaw = `
 ⁰¹・ START ・ -> 1442847153474109500
-⁰²・ INFO ・ -> 1442569064793903356
-⁰³・ COMMUNITY ・ -> 1442569067473928243
-⁰⁴・ PERKS ・ -> 1442569069613289595
-⁰⁵・ GAMES ・ -> 1442569074310643845
-⁰⁶・ PUBLICS ・ -> 1442569076902989844
-⁰⁷・ PRIVATE ・ -> 1442569078379118755
-⁰⁸・ SPONSOR ・ -> 1442569081214599223
+⁰³・ INFO ・ -> 1442569064793903356
+⁰⁴・ COMMUNITY ・ -> 1442569067473928243
+⁰⁵・ PERKS ・ -> 1442569069613289595
+⁰⁶・ GAMES ・ -> 1442569074310643845
+⁰⁷・ VOCALI ・ -> 1442569076902989844
+⁰⁸・ PRIVATE ・ -> 1442569078379118755
+⁰²・ SPONSOR ・ -> 1442569081214599223
 ⁰⁹・ PARTNER ・ -> 1442569079931146240
 ¹⁰・ STAFF ・ -> 1442569084414853232
 ¹¹・ BENCH ・ -> 1442569086717530142
 ¹²・ REPORT ・ -> 1443250372482306150
-¹⁴・ CHAT ・ -> 1442569090219773993
-¹³・ SYSTEM ・ -> 1442569088705630410
+¹³・ CHAT ・ -> 1442569090219773993
+¹⁴・ SYSTEM ・ -> 1442569088705630410
 ¹⁵・ MID/HIGH ・ -> 1442569091301773312
 ¹⁶・ LOGS ・ -> 1442569092761391178
 `;
 const channelsRaw = `
-〝 -> 1442569132406083748
-〝 -> 1442569197019463780
 〝 -> 1442569107923795998
-〝 -> 1442569098121711818
-〝 -> 1446492233002909848
-〝 -> 1442569280326602964
-〝 -> 1470775925426618468
-〝 -> 1442569143948804198
 〝 -> 1442569117717626930
-〝 -> 1442938093165613118
+〝 -> 1442569143948804198
+〝 -> 1442569280326602964
 ༄⏸️︲pause -> 1442569255315832945
-༄☕︲User: 375 -> 1442569096700104754
 ༄⛔︲sanzioni -> 1442569245878648924
 ༄⛩️︲pokétwo -> 1442569184281362552
-༄✨︲Trio³ -> 1470170531830693989
+༄✨︲Trio⁰³ -> 1470170531830693989
 ༄🌁︲staffers -> 1442569260059725844
 ༄🌃︲chat -> 1442569130573303898
 ༄🌐︲channel᲼roles᲼logs -> 1442569302422192209
 ༄🌙︲The Moon Is Beautiful, Isn't It -> 1442569150575935781
-༄🌬️︲Lounge² -> 1442569106514645042
+༄🌬️︲Lounge⁰² -> 1442569106514645042
 ༄🌵︲partners -> 1442569209849843823
-༄🍀︲Squad³ -> 1470170601154150686
-༄🎂︲birthday -> 1468233267458084884
+༄🍀︲Squad⁰³ -> 1470170601154150686
 ༄🎎︲mudae -> 1442569182825681077
-༄🎏︲Duo¹ -> 1442569113108218058
-༄🎡︲Squad¹ -> 1442569134532726855
-༄🎨︲roles -> 1469429150669602961
+༄🎏︲Duo⁰¹ -> 1442569113108218058
+༄🎡︲Squad⁰¹ -> 1442569134532726855
+༄🎨︲ruoli᲼colori -> 1469429150669602961
 ༄🎪︲Circo di Diunk -> 1442569156695294078
 ༄🎫︲tickets -> 1442569095068254219
 ༄🎫︲ticket᲼logs -> 1442569290682208296
-༄🎭︲Duo² -> 1442569114785943713
-༄🎯︲Squad² -> 1442569140077461613
+༄🎭︲Duo⁰² -> 1442569114785943713
+༄🎯︲Squad⁰² -> 1442569140077461613
 ༄🎲︲gradi -> 1460407013925327033
-༄🎹︲music -> 1442569189486497905
-༄🏅︲poll᲼best᲼staff -> 1446104429181927434
 ༄🏆︲best᲼staff -> 1442569253281730653
 ༄🏆︲top᲼weekly -> 1470183921236049940
-༄🏡︲info -> 1442569111119990887
+༄🏡︲informazioni -> 1442569111119990887
 ༄🐭︲hamster᲼house -> 1448693699432153218
 ༄👔︲high -> 1442569285909217301
-༄👥︲Duo³ -> 1470170379078078656
+༄👥︲Duo⁰³ -> 1470170379078078656
 ༄👮︲warn᲼staff -> 1443250635108646943
 ༄💞︲ship -> 1469685688814407726
-༄💡︲suggestions -> 1442569147559973094
-༄💤︲AFK -> 1442569145995759756
+༄💡︲suggerimenti -> 1442569147559973094
 ༄💭︲quotes -> 1468540884537573479
-༄💰︲Lounge³ -> 1470168983507435631
-༄💸︲staff᲼pagato -> 1442579412280410194
+༄💰︲Lounge⁰³ -> 1470168983507435631
 ༄📀︲click᲼me -> 1442569058406109216
 ༄📄︲staff᲼list -> 1442569235426705653
 ༄📈︲valutazioni -> 1442569249649459340
@@ -105,15 +94,14 @@ const channelsRaw = `
 ༄📒︲guida᲼middle -> 1442569266066096309
 ༄📖︲regolamento -> 1442569199229730836
 ༄📚︲guida᲼staff -> 1442569237142044773
-༄📜︲description -> 1442569194905534494
+༄📜︲descrizione -> 1442569194905534494
 ༄📝︲candidature -> 1442569232507473951
 ༄📬︲visione᲼moduli -> 1442569278049095913
 ༄📰︲news -> 1442569115972669541
 ༄📰︲staff᲼news -> 1442569239063167139
 ༄📲︲media -> 1442569136067575809
 ༄📸︲selfie᲼verificati -> 1470029899740873029
-༄📺︲forum -> 1442569141717438495
-༄🔇︲no᲼mic -> 1442569187376763010
+༄🪧︲forum -> 1442569141717438495
 ༄🔍︲verify -> 1442569059983163403
 ༄🔢︲counting -> 1442569179743125554
 ༄🔬︲Riunione Staff -> 1443958044802420798
@@ -121,24 +109,23 @@ const channelsRaw = `
 ༄🤖︲high᲼cmds -> 1442569288161558528
 ༄🤖︲staff᲼cmds -> 1442569262689554444
 ༄🤝︲partnerships -> 1442569193470824448
-༄🤝︲partner᲼logs -> 1467533670129729680
-༄🧆︲Trio² -> 1442569125753913498
+༄🧆︲Trio⁰² -> 1442569125753913498
 ༄🪅︲Poetry Room -> 1442569152614367262
-༄🪇︲info᲼sponsor -> 1442569211611185323
-༄🪤︲Lounge¹ -> 1442569101225496819
+༄🪤︲Lounge⁰¹ -> 1442569101225496819
 ༄🫀︲middle -> 1442569268666568897
-༄🫘︲Trio¹ -> 1442569121350025306
+༄🫘︲Trio⁰¹ -> 1442569121350025306
 ༄🫦︲supporters -> 1442569123426074736
 ༄🚨︲moderazione -> 1442569243626307634
 ༄🚨︲mod᲼logs -> 1442569294796820541
 ༄🚩︲activity᲼logs -> 1442569299725385851
 ༄🛃︲join᲼leave᲼logs -> 1442569306608111776
 ༄🆙︲pex᲼depex -> 1442569234004709391
+༄🎉︲vincita -> 1479467059417976974
+༄🔄︲zorror3£ -> 1479466812465877184
+༄🦠︲Lounge⁰⁴ -> 1478156483915939880
+༄🎉︲event᲼logs -> 1477994178230095903
 `;
 const rolesRaw = `
-༄ Wick Premium -> 1443565454260965471
-༄ Dyno -> 1329483828326174723
-༄ Xenon -> 1329507234002108500
 ༄ Mudae -> 1442929251103014923
 ༄ DISBOARD.org -> 1442940553087025244
 ༄ Pokétwo -> 1442929519705980998
@@ -271,23 +258,23 @@ const rolesRaw = `
 ༄ Estero -> 1442569025790939167
 ༄ Fidanzato -> 1442569028173299732
 ༄ Single -> 1442569029263818906
-༄ Vinili & Caffè Bot Test -> 1472986943380783163
 ༄ Bot Ufficiale -> 1472903558792740956
 ༄ Guilded -> 1471955147692179497
+༄ Catalyst -> 1474361806956007425
+༄ Propulsor -> 1474357579143577610
+༄ Birthday -> 1474729085719548048
+Vinili & Caffè Bot Test -> 1476595481626017795
 `;
 const botsRaw = `
-Xenon -> 416358583220043796
 .fmbot -> 356268235697553409
 Pokétwo -> 716390085896962058
-Vinili&CaffèBot -> 1329118940110127204
+Vinili -> 1329118940110127204
 Discadia -> 1222548162741538938
 Mudae -> 432610292342587392
-Dyno -> 155149108183695360
 Poké-Name -> 874910942490677270
 Jockie Music -> 411916947773587456
-Wick -> 548410451818708993
 DISBOARD -> 302050872383242240
-Vinili & Caffè Test Bot -> 1466495522474037463
+Caffè -> 1466495522474037463
 `;
 const emojisRaw = `
 VC_1 -> 1444099819680563200
@@ -581,6 +568,11 @@ VC_Winner -> 1448687700235256009
 VC_WTF -> 1331620919331913758
 VC_Yoda -> 1331623446089568367
 VC_right_arrow -> 1473441155055096081
+VC_Deezer -> 1476933250835288167
+VC_Nails -> 1476166664201441280
+VC_PepeFoto -> 1479131953100750882
+VC_SoundCloud -> 1476933157906419866
+VC_YouTube -> 1476933074301485259
 `;
 
 const categories = parseNameIdText(categoriesRaw);
@@ -590,43 +582,9 @@ const bots = parseNameIdText(botsRaw);
 const emojis = parseNameIdText(emojisRaw);
 
 module.exports = {
-  raw: {
-    categories: categoriesRaw,
-    channels: channelsRaw,
-    roles: rolesRaw,
-    bots: botsRaw,
-    emojis: emojisRaw
-  },
-  entries: {
-    categories,
-    channels,
-    roles,
-    bots,
-    emojis
-  },
-  maps: {
-    categories: toLastValueMap(categories),
-    channels: toLastValueMap(channels),
-    roles: toLastValueMap(roles),
-    bots: toLastValueMap(bots),
-    emojis: toLastValueMap(emojis)
-  },
-  multi: {
-    categories: toMultiValueMap(categories),
-    channels: toMultiValueMap(channels),
-    roles: toMultiValueMap(roles),
-    bots: toMultiValueMap(bots),
-    emojis: toMultiValueMap(emojis)
-  },
-  meta: {
-    guildMain: "1329080093599076474",
-    emojis: {
-      loadingAnimatedId: "1448687876018540695",
-      loadingFallbackId: "1462504528774430962"
-    },
-    links: {
-      vote: "https://discadia.com/server/viniliecaffe/",
-      invite: "https://discord.gg/viniliecaffe"
-    }
-  }
+  raw: { categories: categoriesRaw, channels: channelsRaw, roles: rolesRaw, bots: botsRaw, emojis: emojisRaw },
+  entries: { categories, channels, roles, bots, emojis },
+  maps: { categories: toLastValueMap(categories), channels: toLastValueMap(channels), roles: toLastValueMap(roles), bots: toLastValueMap(bots), emojis: toLastValueMap(emojis) },
+  multi: { categories: toMultiValueMap(categories), channels: toMultiValueMap(channels), roles: toMultiValueMap(roles), bots: toMultiValueMap(bots), emojis: toMultiValueMap(emojis) },
+  meta: { guildMain: "1329080093599076474", emojis: { loadingAnimatedId: "1448687876018540695", loadingFallbackId: "1462504528774430962" }, links: { vote: "https://discadia.com/server/viniliecaffe/", invite: "https://discord.gg/viniliecaffe" } }
 };

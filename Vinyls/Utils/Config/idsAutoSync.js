@@ -31,8 +31,6 @@ async function runIdsCatalogSync(client, guildId) {
   const gid = String(guildId || "");
   if (!gid) return { changed: false, reason: "missing-guild-id" };
 
-  global.logger?.info?.("[IDS AUTO SYNC] run:", { guildId: gid });
-
   if (runningGuilds.has(gid)) {
     rerunGuilds.add(gid);
     return { changed: false, reason: "already-running" };
@@ -42,10 +40,7 @@ async function runIdsCatalogSync(client, guildId) {
   try {
     const reasons = consumeReasons(gid);
     let guild = client.guilds.cache.get(gid) || (await client.guilds.fetch(gid).catch(() => null));
-    if (!guild) {
-      global.logger?.warn?.("[IDS AUTO SYNC] guild-not-found:", gid);
-      return { changed: false, reason: "guild-not-found" };
-    }
+    if (!guild) return { changed: false, reason: "guild-not-found" };
     guild = await guild.fetch().catch(() => guild) || guild;
 
     const IDs = require("./ids");
@@ -54,19 +49,11 @@ async function runIdsCatalogSync(client, guildId) {
     const catalogPath = getCatalogPath(baseDir);
     const previous = fs.existsSync(catalogPath) ? fs.readFileSync(catalogPath, "utf8") : "";
 
-    const categoryCount = (payload.categoriesLines || []).length;
-    const channelCount = (payload.channelsLines || []).length;
-    global.logger?.info?.("[IDS AUTO SYNC] collected:", { categories: categoryCount, channels: channelCount, path: catalogPath });
-
-    if (previous === payload.catalogSource) {
-      global.logger?.info?.("[IDS AUTO SYNC] no-diff, file unchanged");
-      return { changed: false, reason: "no-diff", triggers: reasons };
-    }
+    if (previous === payload.catalogSource) return { changed: false, reason: "no-diff", triggers: reasons };
 
     writeCatalogFiles(baseDir, payload);
     delete require.cache[require.resolve("./idsCatalog")];
     delete require.cache[require.resolve("./ids")];
-    global.logger?.info?.("[IDS AUTO SYNC] written:", catalogPath);
 
     return { changed: true, triggers: reasons };
   } catch (error) {
