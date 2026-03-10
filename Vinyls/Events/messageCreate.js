@@ -7,6 +7,7 @@ const{channelAllowsMedia,getCachedOrFetchMember,handleDisboardBump,handleDiscadi
 const{handleAfk,handleAutoResponders,handleCounting,handleMentionAutoReactions,logEventError,}=require("../Utils/Message/officialMessageCommunityHandlers");
 const { runAutoModMessage } = require("../Services/Moderation/automodService");
 const IDs = require("../Utils/Config/ids");
+const { EPHEMERAL_TTL_SHORT_MS, scheduleMessageDeletion } = require("../Utils/Config/ephemeralMessageTtl");
 const STAFF_BYPASS_PERMISSIONS=[PermissionFlagsBits.Administrator,PermissionFlagsBits.ManageGuild,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.ManageRoles,PermissionFlagsBits.ManageMessages,PermissionFlagsBits.KickMembers,PermissionFlagsBits.BanMembers,PermissionFlagsBits.ModerateMembers,];
 const FORCE_DELETE_CHANNEL_IDS=new Set([]);
 const MEDIA_BLOCK_EXEMPT_CATEGORY_ID = IDs.categories.categorChat;
@@ -78,11 +79,8 @@ async function maybeSendWrongPrefixHint(message, resolvedClient, validPrefix = "
   if (!shouldSendWrongPrefixHint(message, attempt.usedPrefix, command.name)) {
     return true;
   }
-  const hint=await message.channel.send({content:`\`${attempt.usedPrefix}${attempt.token}\` non è valido. Usa \`${safePrefix}${command.name}\`.`,}).catch(() => null);
-  if (hint) {
-    const hintCleanupTimer = setTimeout(() => hint.delete().catch(() => {}), 6000);
-    hintCleanupTimer.unref?.();
-  }
+  const hint = await message.channel.send({ content: `\`${attempt.usedPrefix}${attempt.token}\` non è valido. Usa \`${safePrefix}${command.name}\`.`, }).catch(() => null);
+  if (hint) scheduleMessageDeletion(hint, EPHEMERAL_TTL_SHORT_MS);
   return true;
 }
 

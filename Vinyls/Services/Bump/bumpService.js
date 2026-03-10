@@ -147,7 +147,10 @@ function createBumpReminderService(options) {
   }
 
   async function restorePendingReminders(client) {
-    const docs = await model.find({ reminderSentAt: null, lastBumpAt: { $exists: true }, });
+    const docs = await model.find(
+      { reminderSentAt: null, lastBumpAt: { $exists: true } },
+      { guildId: 1, lastBumpAt: 1 },
+    ).limit(500).lean();
     if (docs.length > 0 && !suppressInfoLogs) {
       global.logger?.info?.(
         `${logTag} restoring ${docs.length} pending reminder(s)`,

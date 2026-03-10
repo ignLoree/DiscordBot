@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const IDs = require("../../Utils/Config/ids");
+const { EPHEMERAL_TTL_PING_ONLY_MS, scheduleMessageDeletion } = require("../../Utils/Config/ephemeralMessageTtl");
 const { getGuildChannelCached, getGuildMemberCached, } = require("../../Utils/Interaction/interactionEntityCache");
 const { getOrCreateStaffDoc, deleteThreadForMessage } = require("../../Utils/Staff/staffDocUtils");
 const BOT_ROOT = path.resolve(__dirname, "..", "..");
@@ -588,12 +589,7 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
       .catch(() => null);
     if (thread?.isTextBased?.() && highStaffRoleId) {
       const pingMsg = await thread.send({ content: `<@&${highStaffRoleId}>` }).catch(() => null);
-      if (pingMsg) {
-        const pingCleanupTimer = setTimeout(() => {
-          pingMsg.delete().catch(() => { });
-        }, 2500);
-        pingCleanupTimer.unref?.();
-      }
+      if (pingMsg) scheduleMessageDeletion(pingMsg, EPHEMERAL_TTL_PING_ONLY_MS);
     }
   }
 

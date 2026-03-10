@@ -7,6 +7,7 @@ const{parseFlexibleDuration,}=require("../../Utils/Moderation/durationParser");
 const { resolveCustomRoleState, buildExpiryText, } = require("../../Utils/Community/customRoleState");
 
 const CUSTOM_VOICE_CATEGORY_ID = IDs.categories.categoryPrivate;
+const { getGuildChannelCached } = require("../../Utils/Interaction/interactionEntityCache");
 
 function parseOptionalDuration(raw) {
   const value=String(raw||"").trim().toLowerCase();
@@ -209,7 +210,7 @@ module.exports = {
       return;
     }
 
-    const category=message.guild.channels.cache.get(CUSTOM_VOICE_CATEGORY_ID)||(await message.guild.channels.fetch(CUSTOM_VOICE_CATEGORY_ID).catch(() => null));
+    const category = message.guild.channels.cache.get(CUSTOM_VOICE_CATEGORY_ID) || (await getGuildChannelCached(message.guild, CUSTOM_VOICE_CATEGORY_ID));
     if (!category || category.type !== ChannelType.GuildCategory) {
       await safeMessageReply(message, {
         embeds: [

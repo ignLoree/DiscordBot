@@ -6,6 +6,7 @@ const { givePmStaff15PointsAtStart, giveExistingInvitesPointsAtStart, addStaffEv
 const { buildEventoClassificaPayload } = require("../../Services/Community/eventoClassificaService");
 const { getEventDiagnostics } = require("../../Services/Community/weeklyActivityWinnersService");
 const IDs = require("../../Utils/Config/ids");
+const { getClientChannelCached, getGuildMemberCached } = require("../../Utils/Interaction/interactionEntityCache");
 const TIME_ZONE = "Europe/Rome";
 const EVENT_DURATION_DAYS = 31;
 const EVENT_GLOBAL_MULTI = 3;
@@ -286,7 +287,7 @@ module.exports = {
           });
           return;
         }
-        const member = message.guild.members.cache.get(userId) || await message.guild.members.fetch(userId).catch(() => null);
+        const member = message.guild.members.cache.get(userId) || (await getGuildMemberCached(message.guild, userId));
         if (!member || !isStaffButNotHighStaff(member)) {
           await safeMessageReply(message, {
             content: "<:vegax:1443934876440068179> Solo chi ha il ruolo Staff (e non HighStaff, né solo Partner Manager) può ricevere punti evento staff.",
@@ -402,7 +403,7 @@ module.exports = {
       });
 
       if (NEWS_CHANNEL_ID) {
-        const newsChannel = message.client.channels.cache.get(NEWS_CHANNEL_ID) || (await message.client.channels.fetch(NEWS_CHANNEL_ID).catch(() => null));
+        const newsChannel = message.client.channels.cache.get(NEWS_CHANNEL_ID) || (await getClientChannelCached(message.client, NEWS_CHANNEL_ID));
         if (newsChannel) {
           const startStr = fmtDate(result.startDate);
           const endStr = fmtDateWithTime(result.endDate);

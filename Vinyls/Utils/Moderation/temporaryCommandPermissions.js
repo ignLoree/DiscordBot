@@ -155,6 +155,7 @@ async function listTemporaryCommandPermissionsForUser({ guildId, userId }) {
       expiresAt: { $gt: now },
     })
       .sort({ expiresAt: 1, commandKey: 1 })
+      .limit(200)
       .lean();
   } catch {
     return [];

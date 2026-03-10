@@ -1,6 +1,7 @@
 const { safeChannelSend } = require("../../../shared/discord/replyRuntime");
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const { BannerPrivacy } = require("../../Schemas/Community/communitySchemas");
+const { getGuildMemberCached } = require("../../Utils/Interaction/interactionEntityCache");
 
 function normalize(text) {
   return String(text || "")
@@ -13,13 +14,7 @@ async function resolveMember(message, query) {
   if (mention) return mention;
   const id = String(query || "").replace(/[<@!>]/g, "");
   if (/^\d{17,20}$/.test(id)) {
-    const cached = message.guild.members.cache.get(id);
-    if (cached) return cached;
-    try {
-      return await message.guild.members.fetch(id);
-    } catch {
-      return null;
-    }
+    return await getGuildMemberCached(message.guild, id);
   }
   if (!query) return null;
   const target = normalize(query);

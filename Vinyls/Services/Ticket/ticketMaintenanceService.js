@@ -2,6 +2,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require(
 const fs = require("fs");
 const path = require("path");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
+const { getClientChannelCached } = require("../../Utils/Interaction/interactionEntityCache");
 const BOT_ROOT = path.resolve(__dirname, "..", "..");
 const OPEN_FOR_MS = 24 * 60 * 60 * 1000;
 const INACTIVE_FOR_MS = 2 * 60 * 60 * 1000;
@@ -37,11 +38,32 @@ async function getLatestHumanMessageTimestamp(channel, fallbackDate) {
 async function processTickets(client) {
   const now = Date.now();
   const openBefore = new Date(now - OPEN_FOR_MS);
-  const tickets = await Ticket.find({ open: true, createdAt: { $lte: openBefore }, $or: [{ autoClosePromptSentAt: { $exists: false } }, { autoClosePromptSentAt: null },], }).limit(100).catch(() => []);
+  const tickets = await Ticket.find(
+    {
+      open: true,
+      createdAt: { $lte: openBefore },
+      $or: [
+        { autoClosePromptSentAt: { $exists: false } },
+        { autoClosePromptSentAt: null },
+      ],
+    },
+    {
+      _id: 1,
+      guildId: 1,
+      userId: 1,
+      claimedBy: 1,
+      channelId: 1,
+      createdAt: 1,
+      autoClosePromptSentAt: 1,
+    },
+  )
+    .limit(100)
+    .lean()
+    .catch(() => []);
 
   for (const ticket of tickets) {
     try {
-      const channel = client.channels.cache.get(ticket.channelId) || (await client.channels.fetch(ticket.channelId).catch(() => null));
+      const channel = client.channels?.cache?.get(ticket.channelId) || (await getClientChannelCached(client, ticket.channelId));
       if (!channel || !channel.isTextBased?.()) continue;
 
       const lastActiveAt = await getLatestHumanMessageTimestamp(channel, ticket.createdAt,);

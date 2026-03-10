@@ -2,6 +2,7 @@ const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { joinTtsChannel } = require("../../Services/TTS/ttsService");
 const { setVoiceSession, getVoiceSession } = require("../../Services/Voice/voiceSessionService");
+const { EPHEMERAL_TTL_SHORT_MS, scheduleMessageDeletion } = require("../../Utils/Config/ephemeralMessageTtl");
 
 module.exports = {
   name: "join",
@@ -15,10 +16,7 @@ module.exports = {
       .setColor("#ED4245")
       .setDescription("Devi essere in un canale vocale.");
       const warn=await safeMessageReply(message,{embeds:[warnEmbed]},);
-      if (warn?.delete) {
-        const timer=setTimeout(() => warn.delete().catch(() => {}), 5000);
-        timer.unref?.();
-      }
+      if (warn) scheduleMessageDeletion(warn, EPHEMERAL_TTL_SHORT_MS);
       return;
     }
 

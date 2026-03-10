@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const { resolveTarget, extractUserId, } = require("../../Utils/Moderation/prefixModeration");
+const { EPHEMERAL_TTL_NORMAL_MS, scheduleMessageDeletion } = require("../../Utils/Config/ephemeralMessageTtl");
 
 const DISCORD_BULK_DELETE_MAX = 100;
 const BULK_DELETE_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
@@ -67,7 +68,7 @@ module.exports = {
 
     const userArgIndex=Array.isArray(args)?args.findIndex((arg) => Boolean(extractUserId(String(arg||""),message)),):-1;
     const{user}=await resolveTarget(message,args,userArgIndex>=0?userArgIndex:0,);
-    const deleteLater=(msg) => {const timer=setTimeout(() => msg.delete().catch(() => {}),5000);timer.unref?.();return timer;};
+    const deleteLater = (msg) => { scheduleMessageDeletion(msg, EPHEMERAL_TTL_NORMAL_MS); return null; };
     const replyTemp=async(payload) => {const msg=await message.channel.send({...payload,allowedMentions:{repliedUser:false},});deleteLater(msg);return msg;};await message.delete().catch(() => {});
 
     const { token: amountToken, invalidToken } = pickAmountToken(args);

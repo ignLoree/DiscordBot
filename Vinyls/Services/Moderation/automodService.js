@@ -9,6 +9,7 @@ const { isJoinGateSuspiciousAccount, } = require("./suspiciousAccountService");
 const AutoModBadUser = require("../../Schemas/Moderation/autoModBadUserSchema");
 const { isChannelInTicketCategory } = require("../../Utils/Ticket/ticketCategoryUtils");
 const { createModCase, getModConfig, logModCase, formatDuration } = require("../../Utils/Moderation/moderation");
+const { getGuildChannelCached, getGuildMemberCached } = require("../../Utils/Interaction/interactionEntityCache");
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
 const USER_STATE = new Map();
 const ACTION_COOLDOWN = new Map();
@@ -2028,10 +2029,7 @@ function canActNow(message) {
 async function resolveLogChannel(guild) {
   const channelId = IDs.channels.modLogs || IDs.channels.activityLogs;
   if (!channelId) return null;
-  return (
-    guild.channels.cache.get(channelId) ||
-    (await guild.channels.fetch(channelId).catch(() => null))
-  );
+  return guild.channels.cache.get(channelId) || (await getGuildChannelCached(guild, channelId));
 }
 
 function truncateText(input, max = 700) {
@@ -2391,8 +2389,8 @@ async function runAutoModMessage(message) {
     ]);
     return { blocked: true, action: "delete_webhook", heat: 0 };
   }
-  if (!message?.member && message?.guild?.members?.fetch) {
-    const fetchedMember = await message.guild.members.fetch(message.author.id).catch(() => null);
+  if (!message?.member && message?.guild) {
+    const fetchedMember = await getGuildMemberCached(message.guild, message.author.id);
     if (fetchedMember) {
       try {
         message.member = fetchedMember;

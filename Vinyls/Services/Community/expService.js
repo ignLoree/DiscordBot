@@ -1,5 +1,6 @@
 const { ExpUser, GlobalSettings, LevelHistory, EventUserExpSnapshot, } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");
+const { getGuildChannelCached, getGuildMemberCached, getGuildRoleCached, getClientGuildCached } = require("../../Utils/Interaction/interactionEntityCache");
 const { shouldBlockDm } = require("../../Utils/noDmList");
 const EXP_EXCLUDED_CATEGORY_IDS = new Set([IDs.categories.categoryGames].filter(Boolean).map((id) => String(id)),);
 const TIME_ZONE = "Europe/Rome";
@@ -509,7 +510,7 @@ async function maybeSendPerkNearReminder(guild, member, result) {
 
   const targetExp = getTotalExpForLevel(nextPerkLevel);
   const missingExp = Math.max(0, targetExp - Number(result.afterExp || 0));
-  const role = guild.roles.cache.get(roleId) || (await guild.roles.fetch(roleId).catch(() => null));
+  const role = guild.roles.cache.get(roleId) || (await getGuildRoleCached(guild, roleId));
   const roleLabel = role?.name || `ID ${roleId}`;
   const payload = buildPerkNearDmEmbed(member, nextPerkLevel, roleLabel, missingExp,);
 
@@ -525,10 +526,7 @@ async function maybeSendPerkNearReminder(guild, member, result) {
 
 async function getLevelUpChannel(guild) {
   if (!guild || !LEVEL_UP_CHANNEL_ID) return null;
-  return (
-    guild.channels.cache.get(LEVEL_UP_CHANNEL_ID) ||
-    (await guild.channels.fetch(LEVEL_UP_CHANNEL_ID).catch(() => null))
-  );
+  return guild.channels.cache.get(LEVEL_UP_CHANNEL_ID) || (await getGuildChannelCached(guild, LEVEL_UP_CHANNEL_ID));
 }
 
 const EVENT_LEVEL_UP_DEBOUNCE_MS = 1800;
@@ -543,7 +541,7 @@ function scheduleEventLevelUpMessage(clientOrGuild, guildId, userId, level) {
   if (existing) {
     clearTimeout(existing.timeoutId);
   }
-  const timeoutId = setTimeout(async () => { eventLevelUpPending.delete(key); try { const guild = client.guilds.cache.get(guildId) || (await client.guilds.fetch(guildId).catch(() => null)); if (!guild) return; const member = guild.members.cache.get(userId) || (await guild.members.fetch(userId).catch(() => null)); if (!member) return; await sendLevelUpMessage(guild, member, level); } catch (err) { global.logger?.error?.("[expService] scheduleEventLevelUpMessage flush error:", err); } }, EVENT_LEVEL_UP_DEBOUNCE_MS); timeoutId.unref?.(); eventLevelUpPending.set(key, { timeoutId, level, guildId, client });
+  const timeoutId = setTimeout(async () => { eventLevelUpPending.delete(key); try { const guild = client.guilds.cache.get(guildId) || (await getClientGuildCached(client, guildId)); if (!guild) return; const member = await getGuildMemberCached(guild, userId); if (!member) return; await sendLevelUpMessage(guild, member, level); } catch (err) { global.logger?.error?.("[expService] scheduleEventLevelUpMessage flush error:", err); } }, EVENT_LEVEL_UP_DEBOUNCE_MS); timeoutId.unref?.(); eventLevelUpPending.set(key, { timeoutId, level, guildId, client });
 }
 
 async function sendLevelUpPayload(channel, member, payload) {
@@ -558,10 +556,7 @@ async function sendLevelUpPayload(channel, member, payload) {
 
 async function fetchGuildMember(guild, userId) {
   if (!guild || !userId) return null;
-  return (
-    guild.members.cache.get(userId) ||
-    (await guild.members.fetch(userId).catch(() => null))
-  );
+  return getGuildMemberCached(guild, userId);
 }
 
 async function addLevelRoleIfPossible(member, roleId) {
@@ -569,12 +564,12 @@ async function addLevelRoleIfPossible(member, roleId) {
   const me = member.guild.members.me;
   if (!me) return false;
   if (!me.permissions.has("ManageRoles")) return false;
-  const role = member.guild.roles.cache.get(roleId) || (await member.guild.roles.fetch(roleId).catch(() => null));
+  const role = member.guild.roles.cache.get(roleId) || (await getGuildRoleCached(member.guild, roleId));
   if (!role) return false;
   if (role.position >= me.roles.highest.position) return false;
   if (member.roles.cache.has(roleId)) return true;
   await member.roles.add(role).catch(() => { });
-  const refreshedMember = await member.guild.members.fetch(member.id).catch(() => null);
+  const refreshedMember = await getGuildMemberCached(member.guild, member.id, { preferFresh: true });
   return Boolean(refreshedMember?.roles?.cache?.has(roleId));
 }
 
@@ -587,7 +582,7 @@ async function addPerkRoleIfPossible(member) {
   if (role.position >= me.roles.highest.position) return;
   if (member.roles.cache.has(PERK_ROLE_ID)) return;
   await member.roles.add(role).catch(() => { });
-  const refreshedMember = await member.guild.members.fetch(member.id).catch(() => null);
+  const refreshedMember = await getGuildMemberCached(member.guild, member.id, { preferFresh: true });
   if (!refreshedMember?.roles?.cache?.has(PERK_ROLE_ID)) {
     global.logger?.warn?.("[EXP] perk role assign failed:", member.guild.id, member.id, PERK_ROLE_ID);
   }
@@ -596,7 +591,7 @@ async function addPerkRoleIfPossible(member) {
 async function syncLevelRolesForMember(guild, userId, level) {
   if (!guild || !userId) return [];
   const safeLevel = Math.max(0, Math.floor(Number(level || 0)));
-  const member = guild.members.cache.get(userId) || (await guild.members.fetch(userId).catch(() => null));
+  const member = await getGuildMemberCached(guild, userId);
   if (!member) return [];
   const awarded = [];
   const reachedPerkLevels = Array.from(LEVEL_ROLE_MAP.keys()).filter((perkLevel) => perkLevel <= safeLevel).sort((a, b) => a - b);
@@ -733,7 +728,7 @@ async function resolveMemberVisibilityRoleForExp(guild) {
   if (!guild) return null;
   const configuredId = String(IDs.roles?.Member || "").trim();
   if (configuredId) {
-    const role = guild.roles?.cache?.get(configuredId) || (await guild.roles?.fetch(configuredId).catch(() => null));
+    const role = guild.roles?.cache?.get(configuredId) || (await getGuildRoleCached(guild, configuredId));
     if (role) return role;
   }
   return guild.roles?.everyone || null;
@@ -745,7 +740,7 @@ async function isChannelEligibleForMemberExp(guild, channelId) {
   const role = await resolveMemberVisibilityRoleForExp(guild);
   if (!role) return true;
 
-  const channel = guild.channels?.cache?.get(id) || (await guild.channels?.fetch(id).catch(() => null));
+  const channel = guild.channels?.cache?.get(id) || (await getGuildChannelCached(guild, id));
   if (!channel) return false;
 
   const perms = channel.permissionsFor(role);

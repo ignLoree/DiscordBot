@@ -6,6 +6,7 @@ const AFK = require("../../Schemas/Afk/afkSchema");
 const { getGuildAutoResponderCache, setGuildAutoResponderCache } = require("../Community/autoResponderCache");
 const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const IDs = require("../Config/ids");
+const { EPHEMERAL_TTL_NORMAL_MS, EPHEMERAL_TTL_LONG_MS, scheduleMessageDeletion } = require("../Config/ephemeralMessageTtl");
 const COUNTING_CHANNEL_ID = IDs.channels.counting;
 const COUNTING_ALLOWED_REGEX = /^[0-9+\-*/x:() ]+$/;
 const COUNTING_CACHE_TTL_MS = 60_000;
@@ -46,12 +47,7 @@ async function handleAfk(message) {
     await AFK.deleteOne({ guildId, userId });
     const msg = await safeMessageReply(message, `<:VC_PepeWave:1331589315175907412> Bentornato <@${userId}>! Ho rimosso il tuo stato AFK.`,
     );
-    if (msg) {
-      const timer = setTimeout(() => {
-        msg.delete().catch(() => { });
-      }, 5000);
-      timer.unref?.();
-    }
+    if (msg) scheduleMessageDeletion(msg, EPHEMERAL_TTL_LONG_MS);
   }
 
   const mentions = message.mentions?.users;
@@ -65,12 +61,7 @@ async function handleAfk(message) {
     const reason = targetAfk.reason ? `\n <:VC_reason:1478517122929004544> Motivo: ${targetAfk.reason}` : "";
     const msg = await safeMessageReply(message, `**${mentionedUser.username}** è AFK dal <t:${Math.floor(new Date(targetAfk.since || targetAfk.createdAt || Date.now()).getTime() / 1000,)}:R>.${reason}`,
     );
-    if (msg) {
-      const timer = setTimeout(() => {
-        msg.delete().catch(() => { });
-      }, 7000);
-      timer.unref?.();
-    }
+    if (msg) scheduleMessageDeletion(msg, EPHEMERAL_TTL_NORMAL_MS);
   }
 }
 

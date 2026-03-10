@@ -6,6 +6,7 @@ activityUserSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
 const expUserSchema=new Schema({guildId:{type:String,required:true},userId:{type:String,required:true,index:true},totalExp:{type:Number,default:0},weeklyExp:{type:Number,default:0},level:{type:Number,default:0},weeklyKey:{type:String,default:""},perkNearReminderLevels:{type:[Number],default:[]},},{timestamps:true},);
 expUserSchema.index({ guildId: 1, userId: 1 }, { unique: true });
+expUserSchema.index({ guildId: 1, totalExp: -1 });
 
 const activityDailySchema=new Schema({guildId:{type:String,required:true,index:true},dateKey:{type:String,required:true,index:true},userId:{type:String,required:true,index:true},textCount:{type:Number,default:0},voiceSeconds:{type:Number,default:0},textChannels:{type:Map,of:Number,default:{}},voiceChannels:{type:Map,of:Number,default:{}},},{timestamps:true},);
 activityDailySchema.index(
@@ -27,6 +28,8 @@ const globalSettingsSchema=new Schema({guildId:{type:String,required:true,unique
 
 const voteRoleSchema=new Schema({guildId:{type:String,required:true},userId:{type:String,required:true,index:true},expiresAt:{type:Date,required:true},},{timestamps:true},);
 voteRoleSchema.index({ guildId: 1, userId: 1 }, { unique: true });
+// TTL: il ruolo voto viene rimosso automaticamente quando scade
+voteRoleSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 const verificationTenureSchema=new Schema({guildId:{type:String,required:true},userId:{type:String,required:true,index:true},verifiedAt:{type:Date,required:true},stage:{type:Number,default:1},});
 verificationTenureSchema.index({ guildId: 1, userId: 1 }, { unique: true });
@@ -69,8 +72,10 @@ staffEventWeeklyRewardSchema.index({ guildId: 1, userId: 1, week: 1 }, { unique:
 const staffEventRewardGivenSchema=new Schema({guildId:{type:String,required:true,index:true},userId:{type:String,required:true,index:true},rewardType:{type:String,required:true},},{timestamps:true},);
 staffEventRewardGivenSchema.index({ guildId: 1, userId: 1, rewardType: 1 }, { unique: true });
 
-const customRoleSchema=new Schema({guildId:{type:String,required:true},userId:{type:String,required:true},roleId:{type:String,required:true},customVocEmoji:{type:String,default:null},customVocChannelId:{type:String,default:null,index:true},expiresAt:{type:Date,default:null,index:true},},{timestamps:true},);
+const customRoleSchema=new Schema({guildId:{type:String,required:true},userId:{type:String,required:true},roleId:{type:String,required:true},customVocEmoji:{type:String,default:null},customVocChannelId:{type:String,default:null,index:true},expiresAt:{type:Date,default:null},},{timestamps:true},);
 customRoleSchema.index({ guildId: 1, userId: 1 }, { unique: true });
+// TTL opzionale: se expiresAt è valorizzato, il record viene eliminato quando scade
+customRoleSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 const avatarPrivacySchema=new Schema({guildId:{type:String,required:true},userId:{type:String,required:true,index:true},blocked:{type:Boolean,default:false},views:{type:Number,default:0},},{timestamps:true},);
 avatarPrivacySchema.index({ guildId: 1, userId: 1 }, { unique: true });

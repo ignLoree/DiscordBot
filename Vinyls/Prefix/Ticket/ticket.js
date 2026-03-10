@@ -6,7 +6,7 @@ const { getNextTicketId } = require("../../Utils/Ticket/ticketIdUtils");
 const { TICKETS_CATEGORY_NAME, isChannelInTicketCategory } = require("../../Utils/Ticket/ticketCategoryUtils");
 const { buildTicketChannelName, resolveTicketRenamePrefix, sanitizeTicketChannelTail } = require("../../Utils/Ticket/ticketNamingRuntime");
 const IDs = require("../../Utils/Config/ids");
-const { getClientGuildCached, getGuildChannelCached, getUserCached, } = require("../../Utils/Interaction/interactionEntityCache");
+const { getClientGuildCached, getGuildChannelCached, getGuildMemberCached, getUserCached, } = require("../../Utils/Interaction/interactionEntityCache");
 const LOG_CHANNEL_ID = IDs.channels.ticketLogs;
 const STAFF_ROLE_ID = IDs.roles.Staff;
 const HIGHSTAFF_ROLE_ID = IDs.roles.HighStaff;
@@ -391,7 +391,8 @@ module.exports = {
     const normalizedRest = Array.isArray(rest) ? (() => { if (!rest.length) return rest; const first = String(rest[0] || "").toLowerCase(); if (first === subcommand) return rest.slice(1); return rest; })() : [];
     const inTicketCategory = Boolean(message.channel && isChannelInTicketCategory(message.channel));
     const effectiveChannelId = message.channel?.isThread?.() ? message.channel?.parentId || message.channel?.id : message.channel?.id;
-    const activeTicketInChannel = effectiveChannelId ? await Ticket.findOne({ channelId: effectiveChannelId, open: true }).catch(() => null) : null;
+    const TICKET_READ_PROJECTION = { _id: 1, channelId: 1, open: 1, userId: 1, claimedBy: 1, guildId: 1, ticketNumber: 1, ticketType: 1 };
+const activeTicketInChannel = effectiveChannelId ? await Ticket.findOne({ channelId: effectiveChannelId, open: true }, { _id: 1 }).lean().catch(() => null) : null;
 
     if (!subcommand) {
       await safeMessageReply(message, {
@@ -452,7 +453,7 @@ module.exports = {
         return;
       }
 
-      const ticketDoc = await Ticket.findOne({ guildId: message.guild.id, ticketNumber, }).catch(() => null);
+      const ticketDoc = await Ticket.findOne({ guildId: message.guild.id, ticketNumber }, TICKET_READ_PROJECTION).lean().catch(() => null);
 
       if (!ticketDoc) {
         await safeMessageReply(message, {
@@ -480,7 +481,7 @@ module.exports = {
         return;
       }
 
-      const existingOpen = await Ticket.findOne({ guildId: message.guild.id, userId: ticketDoc.userId, open: true, }).catch(() => null);
+      const existingOpen = await Ticket.findOne({ guildId: message.guild.id, userId: ticketDoc.userId, open: true }, { _id: 1 }).lean().catch(() => null);
 
       if (existingOpen) {
         await safeMessageReply(message, {
@@ -495,7 +496,7 @@ module.exports = {
         return;
       }
 
-      const ticketMember = await message.guild.members.fetch(ticketDoc.userId).catch(() => null);
+      const ticketMember = await getGuildMemberCached(message.guild, ticketDoc.userId);
       if (!ticketMember) {
         await safeMessageReply(message, {
           embeds: [
@@ -588,7 +589,7 @@ module.exports = {
       const tagRole = config.type === "partnership" ? PARTNERMANAGER_ROLE_ID : STAFF_ROLE_ID;
       const mentionMsg = await channel.send(`<@${ticketDoc.userId}>${tagRole ? `<@&${tagRole}>` : ""}`).catch(() => null);
       if (mentionMsg) {
-        const timer = setTimeout(() => mentionMsg.delete().catch(() => { }), 150);
+        const timer = setTimeout(() => mentionMsg.delete().catch(() => { }), 1);
         timer.unref?.();
       }
 
@@ -676,7 +677,7 @@ module.exports = {
 
     if (subcommand === "closerequest") {
       const reason = normalizedRest.join(" ").trim();
-      const ticketDoc = await Ticket.findOne({ channelId: effectiveChannelId });
+      const ticketDoc = await Ticket.findOne({ channelId: effectiveChannelId }, TICKET_READ_PROJECTION).lean().catch(() => null);
       if (!ticketDoc) {
         await safeMessageReply(message, {
           embeds: [
@@ -735,7 +736,7 @@ module.exports = {
     }
 
     if (subcommand === "close") {
-      const ticketDoc = await Ticket.findOne({ channelId: effectiveChannelId });
+      const ticketDoc = await Ticket.findOne({ channelId: effectiveChannelId }, TICKET_READ_PROJECTION).lean().catch(() => null);
       if (!ticketDoc) {
         await safeMessageReply(message, {
           embeds: [
@@ -855,7 +856,7 @@ module.exports = {
         );
       }
 
-      const member = await message.guild.members.fetch(claimed.userId).catch(() => null);
+      const member = await getGuildMemberCached(message.guild, claimed.userId);
       if (member) {
         try {
           await sendTranscriptWithBrowserLink(
@@ -1194,7 +1195,7 @@ module.exports = {
           return;
         }
 
-        const openerMember = await message.guild.members.fetch(ticketDoc.userId).catch(() => null);
+        const openerMember = await getGuildMemberCached(message.guild, ticketDoc.userId);
         const openerName = openerMember?.user?.username || "utente";
         const safeOpenerName = String(openerName).replace(/[^\w.-]/g, "").slice(0, 20) || "utente";
         const newChannelName = `༄${panelConfig.emoji}︲${panelConfig.name}᲼${safeOpenerName}`;

@@ -1,5 +1,6 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const Giveaway = require("../../Schemas/Giveaway/giveawaySchema");
+const { getClientChannelCached } = require("../../Utils/Interaction/interactionEntityCache");
 const GIVEAWAY_ENTER_PREFIX = "giveaway_enter:";
 const GIVEAWAY_REROLL_PREFIX = "giveaway_reroll:";
 
@@ -163,8 +164,10 @@ function pickWinners(participants, winnerCount) {
   return list.slice(0, count);
 }
 
+const GIVEAWAY_READ_PROJECTION = { participants: 1, winnerCount: 1, channelId: 1, messageId: 1, _id: 1, prize: 1, endAt: 1, hostId: 1, hostTag: 1, ended: 1, winnerIds: 1 };
+
 async function endGiveaway(giveawayId, client) {
-  const giveaway = await Giveaway.findOne({ _id: giveawayId });
+  const giveaway = await Giveaway.findOne({ _id: giveawayId }, GIVEAWAY_READ_PROJECTION).lean();
   if (!giveaway || giveaway.ended) return null;
 
   const participants = Array.isArray(giveaway.participants) ? giveaway.participants : [];
@@ -175,15 +178,13 @@ async function endGiveaway(giveawayId, client) {
     { $set: { ended: true, winnerIds } },
   );
 
-  const channel =
-    client?.channels?.cache?.get(giveaway.channelId) ||
-    (await client?.channels?.fetch(giveaway.channelId).catch(() => null));
+  const channel = await getClientChannelCached(client, giveaway.channelId);
   if (channel?.isTextBased?.()) {
     try {
       const msg = await channel.messages.fetch(giveaway.messageId).catch(() => null);
       if (msg?.editable) {
         const endedEmbed = buildGiveawayEmbed(
-          { ...giveaway.toObject(), ended: true, winnerIds },
+          { ...giveaway, ended: true, winnerIds },
         );
         const rerollRow = buildRerollButton(giveaway._id.toString());
         await msg.edit({ embeds: [endedEmbed], components: [rerollRow] }).catch(() => { });
@@ -216,7 +217,7 @@ async function rerollGiveaway(interaction, client) {
   const giveawayId = customId.slice(GIVEAWAY_REROLL_PREFIX.length).trim();
   if (!giveawayId) return false;
 
-  const giveaway = await Giveaway.findOne({ _id: giveawayId });
+  const giveaway = await Giveaway.findOne({ _id: giveawayId }, GIVEAWAY_READ_PROJECTION).lean();
   if (!giveaway) {
     await interaction.reply({ content: "<a:VC_Alert:1448670089670037675> Giveaway non trovato.", flags: 1 << 6 }).catch(() => { });
     return true;
@@ -238,14 +239,12 @@ async function rerollGiveaway(interaction, client) {
     );
   }
 
-  const channel =
-    client?.channels?.cache?.get(giveaway.channelId) ||
-    (await client?.channels?.fetch(giveaway.channelId).catch(() => null));
+  const channel = await getClientChannelCached(client, giveaway.channelId);
   if (channel?.isTextBased?.() && newWinnerIds !== null) {
     try {
       const msg = await channel.messages.fetch(giveaway.messageId).catch(() => null);
       if (msg?.editable) {
-        const updated = { ...giveaway.toObject(), winnerIds: newWinnerIds };
+        const updated = { ...giveaway, winnerIds: newWinnerIds };
         const embed = buildGiveawayEmbed(updated);
         const rerollRow = buildRerollButton(giveawayId);
         await msg.edit({ embeds: [embed], components: [rerollRow] }).catch(() => { });
@@ -276,7 +275,7 @@ async function rerollGiveaway(interaction, client) {
  */
 async function rerollGiveawayByMessageId(messageId, client) {
   if (!messageId || !client) return { ok: false, error: "<a:VC_Alert:1448670089670037675> Parametri mancanti." };
-  const giveaway = await Giveaway.findOne({ messageId: String(messageId) });
+  const giveaway = await Giveaway.findOne({ messageId: String(messageId) }, GIVEAWAY_READ_PROJECTION).lean();
   if (!giveaway) return { ok: false, error: "<a:VC_Alert:1448670089670037675> Giveaway non trovato (messaggio non valido)." };
   if (!giveaway.ended) return { ok: false, error: "<a:VC_Alert:1448670089670037675> Il giveaway non è ancora terminato." };
 
@@ -292,14 +291,12 @@ async function rerollGiveawayByMessageId(messageId, client) {
     );
   }
 
-  const channel =
-    client?.channels?.cache?.get(giveaway.channelId) ||
-    (await client?.channels?.fetch(giveaway.channelId).catch(() => null));
+  const channel = await getClientChannelCached(client, giveaway.channelId);
   if (channel?.isTextBased?.() && newWinnerIds !== null) {
     try {
       const msg = await channel.messages.fetch(giveaway.messageId).catch(() => null);
       if (msg?.editable) {
-        const updated = { ...giveaway.toObject(), winnerIds: newWinnerIds };
+        const updated = { ...giveaway, winnerIds: newWinnerIds };
         const embed = buildGiveawayEmbed(updated);
         const rerollRow = buildRerollButton(giveaway._id.toString());
         await msg.edit({ embeds: [embed], components: [rerollRow] }).catch(() => {});

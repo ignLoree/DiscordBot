@@ -168,7 +168,7 @@ async function computeLeaderboardRows(guild, mode = "alltime") {
         ],
       },
       { userId: 1, messages: 1, voice: 1 },
-    ).lean().catch(() => []);
+    ).limit(5000).lean().catch(() => []);
 
     const rows = docs
       .map((doc) => {

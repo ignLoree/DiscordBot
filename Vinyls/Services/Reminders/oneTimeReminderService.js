@@ -1,4 +1,4 @@
-﻿const OneTimeReminder = require("../../Schemas/Reminders/oneTimeReminderSchema");
+const OneTimeReminder = require("../../Schemas/Reminders/oneTimeReminderSchema");
 
 async function ensureOneTimeReminder({ key, userId, message, sendAt }) {
   if (!key || !userId || !message || !sendAt) return null;
@@ -11,7 +11,7 @@ async function ensureOneTimeReminder({ key, userId, message, sendAt }) {
 
 async function runDueOneTimeReminders(client) {
   const now = new Date();
-  const due = await OneTimeReminder.find({ sentAt: null, sendAt: { $lte: now }, });
+  const due = await OneTimeReminder.find({ sentAt: null, sendAt: { $lte: now } }).limit(100);
   if (!due.length) return;
   for (const reminder of due) {
     try {

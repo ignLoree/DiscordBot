@@ -9,6 +9,7 @@ const { shouldBlockModerationCommands } = require("../../Services/Moderation/ant
 const { getSecurityLockState } = require("../../Services/Moderation/securityOrchestratorService");
 const { showPrefixUsageGuide } = require("../Moderation/prefixUsageGuide");
 const IDs = require("../Config/ids");
+const { EPHEMERAL_TTL_SHORT_MS } = require("../Config/ephemeralMessageTtl");
 const PREFIX_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.Staff;
 const PREFIX_PRECHECK_TIMEOUT_MS = 4000;
 const PREFIX_EXECUTION_TIMEOUT_MS = Math.max(15_000, Number(process.env.PREFIX_EXECUTION_TIMEOUT_MS || 120_000),);
@@ -310,7 +311,7 @@ async function handleOfficialPrefixMessage({ message, resolvedClient, defaultPre
         content:
           `<:VC_Lock:1468544444113617063> Server in lockdown di sicurezza: comandi temporaneamente bloccati. ${lockSources?.length ? ` (${lockSources.join(", ")})` : ""}`,
       },
-      5000,
+      EPHEMERAL_TTL_SHORT_MS,
     );
     return;
   }
@@ -330,7 +331,7 @@ async function handleOfficialPrefixMessage({ message, resolvedClient, defaultPre
         content:
           "<:VC_Lock:1468544444113617063> Comandi di moderazione temporaneamente bloccati.",
       },
-      5000,
+      EPHEMERAL_TTL_SHORT_MS,
     );
     return;
   }
@@ -345,13 +346,13 @@ async function handleOfficialPrefixMessage({ message, resolvedClient, defaultPre
     ) {
       await deleteCommandMessage();
       const embed = buildGlobalChannelDeniedEmbed(permissionResult.channels, "comando",);
-      await sendTemporaryMessage(message.channel, { embeds: [embed] }, 5000);
+      await sendTemporaryMessage(message.channel, { embeds: [embed] }, EPHEMERAL_TTL_SHORT_MS);
       return;
     }
     const requiredRoles = getPrefixRequiredRoles(command.name, prefixSubcommand);
     const embed = buildGlobalPermissionDeniedEmbed(requiredRoles);
     await deleteCommandMessage();
-    await sendTemporaryMessage(message.channel, { embeds: [embed] }, 2000);
+    await sendTemporaryMessage(message.channel, { embeds: [embed] }, EPHEMERAL_TTL_SHORT_MS);
     return;
   }
 
@@ -362,7 +363,7 @@ async function handleOfficialPrefixMessage({ message, resolvedClient, defaultPre
     if (!shown) {
       const embed = buildMissingArgumentsErrorEmbed();
       await deleteCommandMessage();
-      await sendTemporaryMessage(message.channel, { embeds: [embed] }, 2000);
+      await sendTemporaryMessage(message.channel, { embeds: [embed] }, EPHEMERAL_TTL_SHORT_MS);
     }
     return;
   }
@@ -403,7 +404,7 @@ async function handleOfficialPrefixMessage({ message, resolvedClient, defaultPre
 
   const userId = message.author.id;
   const queueLockId = `${message.guild.id}:${userId}`;
-  const sendBusyQueueNotice = async () => { const now = Date.now(); const lastNoticeAt = resolvedClient.prefixCommandBusyNoticeAt.get(queueLockId) || 0; if (now - lastNoticeAt < 5000) return; resolvedClient.prefixCommandBusyNoticeAt.set(queueLockId, now); const embed = buildBusyCommandErrorEmbed(); await sendTemporaryMessage(message.channel, { embeds: [embed] }, 5000); };
+  const sendBusyQueueNotice = async () => { const now = Date.now(); const lastNoticeAt = resolvedClient.prefixCommandBusyNoticeAt.get(queueLockId) || 0; if (now - lastNoticeAt < EPHEMERAL_TTL_SHORT_MS) return; resolvedClient.prefixCommandBusyNoticeAt.set(queueLockId, now); const embed = buildBusyCommandErrorEmbed(); await sendTemporaryMessage(message.channel, { embeds: [embed] }, EPHEMERAL_TTL_SHORT_MS); };
 
   const enqueueCommand = async () => { const loadingEmojiId = IDs.emojis?.loadingAnimatedId; const fallbackEmojiId = IDs.emojis?.loadingFallbackId; const emoji = loadingEmojiId ? message.client?.emojis?.cache?.get(loadingEmojiId) : null; if (emoji) { await message.react(emoji).catch(() => { }); } else if (fallbackEmojiId) { await message.react(fallbackEmojiId).catch(() => { }); } else { await message.react("\u23F3").catch(() => { }); } if (!resolvedClient.prefixCommandQueue.has(queueLockId)) { resolvedClient.prefixCommandQueue.set(queueLockId, []); } resolvedClient.prefixCommandQueue.get(queueLockId).push({ message, args, command, channelId: message.channelId, messageId: message.id, enqueuedAt: Date.now(), }); }; if (resolvedClient.prefixCommandLocks.has(queueLockId)) {
     await enqueueCommand();

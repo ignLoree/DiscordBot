@@ -1,6 +1,7 @@
-﻿const cron = require("node-cron");
+const cron = require("node-cron");
 const IDs = require("../../Utils/Config/ids");
 const BirthdayProfile = require("../../Schemas/Community/birthdayProfileSchema");
+const { getGuildMemberCached, getGuildChannelCached } = require("../../Utils/Interaction/interactionEntityCache");
 const DEFAULT_TIME_ZONE = "Europe/Rome";
 const BIRTHDAY_ROLE_ID = "1474729085719548048";
 const BIRTHDAY_REACTIONS = ["<a:VC_Events:1448688007438667796>", "<a:VC_HelloKittyGift:1329447876857958471>",];
@@ -89,10 +90,7 @@ async function runBirthdayTick(client) {
       if (!guild) continue;
 
       let channel =
-        (channelId
-          ? guild.channels.cache.get(channelId) ||
-          (await guild.channels.fetch(channelId).catch(() => null))
-          : null) || null;
+        (channelId ? (guild.channels.cache.get(channelId) || (await getGuildChannelCached(guild, channelId))) : null) || null;
       if (!channel?.isTextBased?.()) {
         channel =
           guild.channels.cache.find(

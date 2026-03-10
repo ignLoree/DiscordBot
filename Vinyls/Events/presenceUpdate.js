@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const SupporterStatus = require("../Schemas/Supporter/supporterStatusSchema");
 const IDs = require("../Utils/Config/ids");
 const { grantEventRewardOnce } = require("../Services/Community/activityEventRewardsService");
+const { getGuildMemberCached } = require("../Utils/Interaction/interactionEntityCache");
 
 const ROLE_ID = IDs.roles.Supporter;
 const PERK_ROLE_ID = IDs.roles.PicPerms;
@@ -262,7 +263,7 @@ async function resolveSupportersChannel(guild) {
 
 async function refreshMember(guild, userId) {
   if (!guild || !userId) return null;
-  return guild.members.cache.get(userId) || (await guild.members.fetch(userId).catch(() => null));
+  return getGuildMemberCached(guild, userId);
 }
 
 function scheduleRemovalConfirm(member, channel) {
@@ -433,7 +434,7 @@ function startCleanupClock(client, guildId) {
       const shouldCheck = info?.hasLink || info?.lastMessageId;
       if (!shouldCheck) continue;
 
-      const member = guild.members.cache.get(userId) || (await guild.members.fetch(userId).catch(() => null));
+      const member = await getGuildMemberCached(guild, userId);
       if (!member) continue;
       if (isOfflinePresence(member.presence)) continue;
       if (hasPendingState(guildId, userId)) continue;

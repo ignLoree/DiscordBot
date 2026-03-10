@@ -5,6 +5,7 @@ const { upsertVoteRole } = require("../../Services/Community/communityOpsService
 const { grantEventLevels } = require("../../Services/Community/activityEventRewardsService");
 const { PAUSE_REQUEST_ROLE_IDS, createPauseRequest } = require("../Pause/pauseRequestRuntime");
 const IDs = require("../Config/ids");
+const { EPHEMERAL_TTL_NORMAL_MS, scheduleMessageDeletion } = require("../Config/ephemeralMessageTtl");
 const SuggestionCount = require("../../Schemas/Suggestion/suggestionSchema");
 const VOTE_CHANNEL_ID = IDs.channels.supporters;
 const VOTE_ROLE_ID = IDs.roles.Voter;
@@ -545,10 +546,7 @@ async function handlePauseChannelMessage(message) {
   if (!match) {
     const warning = await message.channel.send({ content: `${message.author} formato non valido. Usa: \`<data richiesta> - <data ritorno> - <motivazione>\`` }).catch(() => null);
     await message.delete().catch(() => { });
-    if (warning) {
-      const timer = setTimeout(() => warning.delete().catch(() => { }), 8000);
-      timer.unref?.();
-    }
+    if (warning) scheduleMessageDeletion(warning, EPHEMERAL_TTL_NORMAL_MS);
     return true;
   }
 
@@ -559,10 +557,7 @@ async function handlePauseChannelMessage(message) {
   if (!result.ok) {
     const warning = await message.channel.send({ content: `${message.author} <:vegax:1443934876440068179> ${result.error}` }).catch(() => null);
     await message.delete().catch(() => { });
-    if (warning) {
-      const timer = setTimeout(() => warning.delete().catch(() => { }), 8000);
-      timer.unref?.();
-    }
+    if (warning) scheduleMessageDeletion(warning, EPHEMERAL_TTL_NORMAL_MS);
     return true;
   }
 

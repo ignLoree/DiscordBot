@@ -2,6 +2,7 @@ const { EmbedBuilder } = require("discord.js");
 const { ModConfig } = require("../../Schemas/Moderation/moderationSchemas");
 const { ModCase } = require("../../Schemas/Moderation/moderationSchemas");
 const { sendStaffActionToModLogs } = require("../Logging/modAuditLogUtils");
+const { getGuildChannelCached } = require("../Interaction/interactionEntityCache");
 const IDs = require("../Config/ids");
 const BOT_MODERATOR_IDS = new Set(Object.values(IDs?.bots || {}).filter(Boolean).map((id) => String(id)),);
 
@@ -146,7 +147,7 @@ function closeCase(modCase, closeReason = null) {
 
 async function logModCase({ client, guild, modCase, config }) {
   const channelId = config?.logChannelId;
-  const channel = channelId ? (guild.channels.cache.get(channelId) || (await guild.channels.fetch(channelId).catch(() => null))) : null;
+  const channel = channelId ? (await getGuildChannelCached(guild, channelId)) : null;
   const duration = modCase.durationMs ? formatDuration(modCase.durationMs) : null;
   const isUserId = /^\d{17,20}$/.test(String(modCase.userId));
   const userLabel = isUserId ? `<@${modCase.userId}>(\`${modCase.userId}\`)` : String(modCase.userId);

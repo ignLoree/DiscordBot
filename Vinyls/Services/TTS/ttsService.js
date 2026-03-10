@@ -9,6 +9,7 @@ const ffmpegStatic = require("ffmpeg-static");
 const VoiceState = require("../../Schemas/Voice/voiceStateSchema");
 const IDs = require("../../Utils/Config/ids");
 const { getVoiceSession } = require("../Voice/voiceSessionService");
+const { EPHEMERAL_TTL_SHORT_MS, scheduleMessageDeletion } = require("../../Utils/Config/ephemeralMessageTtl");
 const ttsStates = new Map();
 const guildLocks = new Map();
 const lastSavedChannels = new Map();
@@ -359,8 +360,7 @@ async function handleTtsMessage(message, client, prefix) {
   }
   if (!voiceChannel) {
     const warn = await message.reply("<a:VC_Alert:1448670089670037675> Devi essere in un canale vocale per usare il TTS.",);
-    const timer = setTimeout(() => warn.delete().catch(() => { }), 5000);
-    timer.unref?.();
+    if (warn) scheduleMessageDeletion(warn, EPHEMERAL_TTL_SHORT_MS);
     return;
   }
   if (!voiceChannel.joinable) return;
