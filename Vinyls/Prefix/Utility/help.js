@@ -10,28 +10,85 @@ const HELP_EMBED_COLOR = "#6f4e37";
 const ERROR_EMBED_COLOR = "Red";
 const PRIVATE_FLAG = 1 << 6;
 const NO_REPLY_MENTIONS = { repliedUser: false };
-const PAGE_ROLE_IDS=[IDs.roles.Member,IDs.roles.Staff,IDs.roles.HighStaff,IDs.roles.Founder,].filter(Boolean);
-const PAGE_TITLES={[IDs.roles.Member]:"Comandi Utente",[IDs.roles.Staff]:"Comandi Staff",[IDs.roles.HighStaff]:"Comandi High Staff",[IDs.roles.Founder]:"Comandi Dev",all:"Comandi Disponibili",};
-const CATEGORY_LABELS={utility:"Utility",tts:"TTS",level:"Level",minigames:"Minigames",stats:"Stats",partner:"Partner",ticket:"Ticket",moderation:"Moderation",admin:"Admin",staff:"Staff",vip:"VIP",dev:"Dev",};
-const CATEGORY_ORDER=["utility","tts","level","minigames","stats","vip","partner","ticket","moderation","admin","staff","dev",];
+const PAGE_ROLE_IDS = [IDs.roles.Member, IDs.roles.Staff, IDs.roles.HighStaff, IDs.roles.Founder,].filter(Boolean);
+const PAGE_TITLES = { [IDs.roles.Member]: "Comandi Utente", [IDs.roles.Staff]: "Comandi Staff", [IDs.roles.HighStaff]: "Comandi High Staff", [IDs.roles.Founder]: "Comandi Dev", all: "Comandi Disponibili", };
+const CATEGORY_LABELS = { utility: "Utility", tts: "TTS", level: "Level", minigames: "Minigames", stats: "Stats", partner: "Partner", ticket: "Ticket", moderation: "Moderation", admin: "Admin", staff: "Staff", vip: "VIP", dev: "Dev", };
+const CATEGORY_ORDER = ["utility", "tts", "level", "minigames", "stats", "vip", "partner", "ticket", "moderation", "admin", "staff", "dev",];
 const HELP_NEW_EMOJI = "<:VC_New:1471891729471770819>";
-const HELP_NEW_INVOKES = new Set(["birthday", "embed", "no-dm-list", "block", "unblock", "reaction", "customrole", "customvoc", "quote", "dm-disable", "dm-enable", "no-dm", "moderations", "modstats", "recensione", "temprole", "perms",]);
-const HELP_NEW_CATEGORIES = new Set(["minigames", "tts", "stats"]);
+const HELP_NEW_DAYS = 14;
+const HELP_NEW_UNTIL_PATH = path.join(__dirname, "..", "..", "Utils", "Config", "helpNewUntil.json");
+const HELP_NEW_INVOKES = new Set([]);
+const HELP_NEW_CATEGORIES = new Set(["minigames", "tts", "stats", "level", "utility", "music"]);
 const HELP_PAGE_SIZE = 18;
 const MAX_HELP_TEXT_LENGTH = 3900;
-const PREFIX_HELP_DESCRIPTIONS={help:"Mostra tutti i comandi disponibili con il bot.",afk:"Imposta il tuo stato AFK con un messaggio personalizzato.",avatar:"Mostra l'avatar di un utente o l'icona del server.",banner:"Mostra il banner di un utente o del server.",block:"Blocca privacy contenuti: avatar, banner, quotes.",voices:"Mostra le voci TTS disponibili.",membercount:"Mostra il numero totale di membri del server.","no-dm":"Pannello per disattivare/attivare le categorie di DM (promemoria, bump, broadcast, inviti, livelli).","dm-enable":"Pannello per riattivare le categorie di DM o attivare tutto.",ping:"Mostra latenza bot, database e informazioni di uptime.",set:"Impostazioni TTS: autojoin e voce personale.",ship:"Calcola la compatibilità tra due utenti.",adorable:"Genera un avatar stile fun partendo da un seed o testo.",birb:"Invia un'immagine casuale di un uccellino.",cat:"Invia un'immagine casuale di un gatto.",catfacts:"Mostra una curiosità casuale sui gatti.",chucknorris:"Mostra una battuta casuale su Chuck Norris.",country:"Mostra informazioni su un paese.",dadjoke:"Mostra una battuta spiritosa casuale.",define:"Cerca la definizione di una parola.",dog:"Invia un'immagine casuale di un cane.",dogfacts:"Mostra una curiosità casuale sui cani.",flip:"Lancia una moneta.",github:"Cerca un repository GitHub per nome o keyword.",itunes:"Cerca una traccia musicale su iTunes.",joke:"Mostra una battuta casuale.",math:"Calcola espressioni matematiche o mostra curiosità sui numeri.",movie:"Cerca informazioni su un film.",pokemon:"Mostra info e stats base di un Pokémon.",pug:"Invia un'immagine casuale di un pug.",quotes:"Mostra una citazione casuale testuale.",roll:"Tira uno o più dadi.",rps:"Gioca a sasso, carta, forbici contro il bot.",slots:"Gioca alle slot machine.",space:"Mostra posizione ISS e persone nello spazio.",steamstatus:"Mostra lo stato dei servizi Steam.",weather:"Mostra il meteo per una località.",snipe:"Recupera l'ultimo messaggio eliminato nel canale.",join:"Fa entrare il bot nel tuo canale vocale.",leave:"Fa uscire il bot dal canale vocale.",unblock:"Sblocca privacy contenuti: avatar, banner, quotes.",classifica:"Mostra la classifica livelli.",mstats:"Mostra statistiche minigiochi di un utente.",me:"Mostra le tue statistiche attività.",user:"Mostra le statistiche attività di un utente specifico.",server:"Mostra statistiche attività del server.",top:"Mostra la top completa utenti/canali.",rank:"Mostra livello, exp e posizione in classifica di un utente.",birthday:"Imposta o modifica la tua data di compleanno, età e privacy.","dm-disable":"Pannello per disattivare le categorie di DM o disattivare tutto.",embed:"Apre il builder embed interattivo per creare e inviare embed personalizzati.",info:"Mostra una scheda completa di un utente: account, ruoli, permessi, strike e stato sicurezza.",reaction:"Configura le reaction quando sei menzionato e le regole di risposta automatica a parole o frasi.",description:"Invia nel ticket la descrizione ufficiale del server.","no-dm-list":"Mostra la lista utenti con preferenze DM e cosa hanno disattivato (categorie o tutto).",purge:"Elimina messaggi da un canale.",ban:"Banna un utente.",unban:"Rimuove il ban di un utente.",kick:"Kicka un utente dal server.",mute:"Applica timeout a un utente.",unmute:"Rimuove il timeout da un utente.",warn:"Warna un utente.",warnings:"Mostra i warn attivi di un utente.",delwarn:"Rimuove un warn attivo da un utente.",clearwarn:"Rimuove tutti i warning attivi da un utente.",case:"Mostra una singola case moderazione.",reason:"Aggiorna il motivo di una case.",duration:"Aggiorna la durata di una case temporanea.",modlogs:"Mostra gli ultimi log moderazione di un utente.",moderations:"Mostra tutte le moderazioni temporanee attive (mute/ban). Senza utente: elenco globale; con utente: solo le sue.",modstats:"Mostra statistiche moderazione per staffer.",lock:"Blocca un canale.",unlock:"Sblocca un canale.",recensione:"Premia una recensione assegnando livelli.",ticket:"Gestisce i ticket.",verify:"Verifica manualmente un utente.",perms:"Assegna o revoca permessi temporanei su comandi e imposta quali canali possono usare un comando.",temprole:"Assegna o rimuove ruoli temporanei agli utenti.",security:"Hub sicurezza: status globale e gestione panic.",level:"Configura il sistema EXP/livelli: imposta o modifica exp, blocca canali, moltiplicatori, ruoli ignorati.",customrole:"Crea o modifica il tuo ruolo personalizzato e gestisci chi può usarlo.",customvoc:"Crea e gestisce la tua vocale privata.",quote:"Genera una quote da un messaggio.",};
-const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS={"level.set":"Imposta EXP o livello a un valore preciso per un utente.","level.add":"Aggiunge EXP a un utente.","level.remove":"Rimuove EXP da un utente.","level.reset":"Azzera EXP e livello di un utente.","level.lock":"Blocca il guadagno EXP in un canale.","level.unlock":"Sblocca il guadagno EXP in un canale.","level.multiplier":"Imposta un moltiplicatore EXP temporaneo.","level.gmulti":"Imposta il moltiplicatore globale EXP del server.","level.config":"Mostra la configurazione EXP corrente del server.","level.ignore":"Esclude un ruolo dal guadagno EXP.","level.unignore":"Riabilita un ruolo al guadagno EXP.","security.status":"Mostra un pannello paginato con lo stato dei sistemi sicurezza.","security.enable":"Riattiva completamente i moduli sicurezza selezionati.","security.disable":"Disabilita completamente i moduli sicurezza selezionati.","security.panic":"Gestisce Panic Mode centralizzata.","security.statics":"Configura ruoli, canali e utenti statici per la sicurezza.","ticket.add":"Aggiunge uno o più utenti al ticket corrente.","ticket.remove":"Rimuove uno o più utenti dal ticket corrente.","ticket.closerequest":"Invia richiesta di chiusura ticket.","ticket.close":"Chiude il ticket corrente.","ticket.claim":"Claima un ticket.","ticket.unclaim":"Unclaim un ticket.","ticket.switchpanel":"Sposta il ticket a un pannello differente.","ticket.rename":"Rinomina il canale ticket.","ticket.reopen":"Riapre un ticket già chiuso.","birthday.set":"Imposta la tua data di compleanno.","birthday.edit":"Modifica la tua data di compleanno.","birthday.remove":"Rimuove il tuo profilo compleanno.","avatar.server":"Mostra l'avatar di un utente impostato per questo server.","avatar.user":"Mostra l'avatar di un utente.","avatar.guild":"Mostra l'icona del server.","banner.user":"Mostra il banner di un utente.","banner.server":"Mostra il banner di un utente impostato per questo server.","banner.guild":"Mostra il banner del server.","block.avatar":"Blocca la visualizzazione del tuo avatar.","block.banner":"Blocca la visualizzazione del tuo banner.","block.quotes":"Blocca la creazione di quote dei tuoi messaggi.","unblock.avatar":"Sblocca la visualizzazione del tuo avatar.","unblock.banner":"Sblocca la visualizzazione del tuo banner.","unblock.quotes":"Sblocca la creazione di quote dei tuoi messaggi.","classifica.alltime":"Mostra la classifica alltime.","classifica.weekly":"Mostra la classifica settimanale.","set.autojoin":"Attiva o disattiva autojoin TTS.","set.voice":"Imposta la lingua TTS personale.","embed.create":"Avvia il builder interattivo dell'embed con anteprima e invio finale.","perms.grant":"Assegna permessi a un utente su comandi.","perms.revoke":"Revoca permessi specifici a un utente.","perms.list":"Mostra i permessi attivi di un utente.","perms.clear":"Rimuove tutti i permessi temporanei di un utente.","reaction.mention":"Mostra o imposta le reaction che il bot aggiunge quando qualcuno ti menziona.","reaction.auto":"Crea o modifica regole di risposta automatica a parole/frasi con risposta e reaction opzionali.","temprole.add":"Assegna un ruolo temporaneo a un utente.","temprole.remove":"Rimuove un ruolo temporaneo da un utente.","customrole.create":"Crea o aggiorna il tuo ruolo personalizzato.","customrole.modify":"Apre il pannello di modifica del tuo ruolo personalizzato.","customrole.add":"Aggiunge un utente al tuo ruolo personalizzato.","customrole.remove":"Rimuove un utente dal tuo ruolo personalizzato.",};
-const CONTEXT_HELP_DESCRIPTIONS={Partnership:"Esegui una partnership direttamente dal messaggio.",};
-const CONTEXT_CATEGORY_OVERRIDES={partnership:"partner",};
+const PREFIX_HELP_DESCRIPTIONS = { help: "Mostra tutti i comandi disponibili con il bot.", afk: "Imposta il tuo stato AFK con un messaggio personalizzato.", avatar: "Mostra l'avatar di un utente o l'icona del server.", banner: "Mostra il banner di un utente o del server.", block: "Blocca privacy contenuti: avatar, banner, quotes.", voices: "Mostra le voci TTS disponibili.", membercount: "Mostra il numero totale di membri del server.", "no-dm": "Pannello per disattivare/attivare le categorie di DM (promemoria, bump, broadcast, inviti, livelli).", "dm-enable": "Pannello per riattivare le categorie di DM o attivare tutto.", ping: "Mostra latenza bot, database e informazioni di uptime.", set: "Impostazioni TTS: autojoin e voce personale.", ship: "Calcola la compatibilità tra due utenti.", adorable: "Genera un avatar stile fun partendo da un seed o testo.", birb: "Invia un'immagine casuale di un uccellino.", cat: "Invia un'immagine casuale di un gatto.", catfacts: "Mostra una curiosità casuale sui gatti.", chucknorris: "Mostra una battuta casuale su Chuck Norris.", country: "Mostra informazioni su un paese.", dadjoke: "Mostra una battuta spiritosa casuale.", define: "Cerca la definizione di una parola.", dog: "Invia un'immagine casuale di un cane.", dogfacts: "Mostra una curiosità casuale sui cani.", flip: "Lancia una moneta.", github: "Cerca un repository GitHub per nome o keyword.", itunes: "Cerca una traccia musicale su iTunes.", joke: "Mostra una battuta casuale.", math: "Calcola espressioni matematiche o mostra curiosità sui numeri.", movie: "Cerca informazioni su un film.", pokemon: "Mostra info e stats base di un Pokémon.", pug: "Invia un'immagine casuale di un pug.", quotes: "Mostra una citazione casuale testuale.", roll: "Tira uno o più dadi.", rps: "Gioca a sasso, carta, forbici contro il bot.", slots: "Gioca alle slot machine.", space: "Mostra posizione ISS e persone nello spazio.", steamstatus: "Mostra lo stato dei servizi Steam.", weather: "Mostra il meteo per una località.", snipe: "Recupera l'ultimo messaggio eliminato nel canale.", join: "Fa entrare il bot nel tuo canale vocale.", leave: "Fa uscire il bot dal canale vocale.", unblock: "Sblocca privacy contenuti: avatar, banner, quotes.", classifica: "Mostra la classifica livelli.", mstats: "Mostra statistiche minigiochi di un utente.", me: "Mostra le tue statistiche attività.", user: "Mostra le statistiche attività di un utente specifico.", server: "Mostra statistiche attività del server.", top: "Mostra la top completa utenti/canali.", rank: "Mostra livello, exp e posizione in classifica di un utente.", birthday: "Imposta o modifica la tua data di compleanno, età e privacy.", "dm-disable": "Pannello per disattivare le categorie di DM o disattivare tutto.", embed: "Apre il builder embed interattivo per creare e inviare embed personalizzati.", info: "Mostra una scheda completa di un utente: account, ruoli, permessi, strike e stato sicurezza.", reaction: "Configura le reaction quando sei menzionato e le regole di risposta automatica a parole o frasi.", description: "Invia nel ticket la descrizione ufficiale del server.", "no-dm-list": "Mostra la lista utenti con preferenze DM e cosa hanno disattivato (categorie o tutto).", purge: "Elimina messaggi da un canale.", ban: "Banna un utente.", unban: "Rimuove il ban di un utente.", kick: "Kicka un utente dal server.", mute: "Applica timeout a un utente.", unmute: "Rimuove il timeout da un utente.", warn: "Warna un utente.", warnings: "Mostra i warn attivi di un utente.", delwarn: "Rimuove un warn attivo da un utente.", clearwarn: "Rimuove tutti i warning attivi da un utente.", case: "Mostra una singola case moderazione.", reason: "Aggiorna il motivo di una case.", duration: "Aggiorna la durata di una case temporanea.", modlogs: "Mostra gli ultimi log moderazione di un utente.", moderations: "Mostra tutte le moderazioni temporanee attive (mute/ban). Senza utente: elenco globale; con utente: solo le sue.", modstats: "Mostra statistiche moderazione per staffer.", lock: "Blocca un canale.", unlock: "Sblocca un canale.", recensione: "Premia una recensione assegnando livelli.", ticket: "Gestisce i ticket.", verify: "Verifica manualmente un utente.", perms: "Assegna o revoca permessi temporanei su comandi e imposta quali canali possono usare un comando.", temprole: "Assegna o rimuove ruoli temporanei agli utenti.", security: "Hub sicurezza: status globale e gestione panic.", level: "Configura il sistema EXP/livelli: imposta o modifica exp, blocca canali, moltiplicatori, ruoli ignorati.", customrole: "Crea o modifica il tuo ruolo personalizzato e gestisci chi può usarlo.", customvoc: "Crea e gestisce la tua vocale privata.", quote: "Genera una quote da un messaggio.", };
+const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = { "level.set": "Imposta EXP o livello a un valore preciso per un utente.", "level.add": "Aggiunge EXP a un utente.", "level.remove": "Rimuove EXP da un utente.", "level.reset": "Azzera EXP e livello di un utente.", "level.lock": "Blocca il guadagno EXP in un canale.", "level.unlock": "Sblocca il guadagno EXP in un canale.", "level.multiplier": "Imposta un moltiplicatore EXP temporaneo.", "level.gmulti": "Imposta il moltiplicatore globale EXP del server.", "level.config": "Mostra la configurazione EXP corrente del server.", "level.ignore": "Esclude un ruolo dal guadagno EXP.", "level.unignore": "Riabilita un ruolo al guadagno EXP.", "security.status": "Mostra un pannello paginato con lo stato dei sistemi sicurezza.", "security.enable": "Riattiva completamente i moduli sicurezza selezionati.", "security.disable": "Disabilita completamente i moduli sicurezza selezionati.", "security.panic": "Gestisce Panic Mode centralizzata.", "security.statics": "Configura ruoli, canali e utenti statici per la sicurezza.", "ticket.add": "Aggiunge uno o più utenti al ticket corrente.", "ticket.remove": "Rimuove uno o più utenti dal ticket corrente.", "ticket.closerequest": "Invia richiesta di chiusura ticket.", "ticket.close": "Chiude il ticket corrente.", "ticket.claim": "Claima un ticket.", "ticket.unclaim": "Unclaim un ticket.", "ticket.switchpanel": "Sposta il ticket a un pannello differente.", "ticket.rename": "Rinomina il canale ticket.", "ticket.reopen": "Riapre un ticket già chiuso.", "birthday.set": "Imposta la tua data di compleanno.", "birthday.edit": "Modifica la tua data di compleanno.", "birthday.remove": "Rimuove il tuo profilo compleanno.", "avatar.server": "Mostra l'avatar di un utente impostato per questo server.", "avatar.user": "Mostra l'avatar di un utente.", "avatar.guild": "Mostra l'icona del server.", "banner.user": "Mostra il banner di un utente.", "banner.server": "Mostra il banner di un utente impostato per questo server.", "banner.guild": "Mostra il banner del server.", "block.avatar": "Blocca la visualizzazione del tuo avatar.", "block.banner": "Blocca la visualizzazione del tuo banner.", "block.quotes": "Blocca la creazione di quote dei tuoi messaggi.", "unblock.avatar": "Sblocca la visualizzazione del tuo avatar.", "unblock.banner": "Sblocca la visualizzazione del tuo banner.", "unblock.quotes": "Sblocca la creazione di quote dei tuoi messaggi.", "classifica.alltime": "Mostra la classifica alltime.", "classifica.weekly": "Mostra la classifica settimanale.", "set.autojoin": "Attiva o disattiva autojoin TTS.", "set.voice": "Imposta la lingua TTS personale.", "embed.create": "Avvia il builder interattivo dell'embed con anteprima e invio finale.", "perms.grant": "Assegna permessi a un utente su comandi.", "perms.revoke": "Revoca permessi specifici a un utente.", "perms.list": "Mostra i permessi attivi di un utente.", "perms.clear": "Rimuove tutti i permessi temporanei di un utente.", "reaction.mention": "Mostra o imposta le reaction che il bot aggiunge quando qualcuno ti menziona.", "reaction.auto": "Crea o modifica regole di risposta automatica a parole/frasi con risposta e reaction opzionali.", "temprole.add": "Assegna un ruolo temporaneo a un utente.", "temprole.remove": "Rimuove un ruolo temporaneo da un utente.", "customrole.create": "Crea o aggiorna il tuo ruolo personalizzato.", "customrole.modify": "Apre il pannello di modifica del tuo ruolo personalizzato.", "customrole.add": "Aggiunge un utente al tuo ruolo personalizzato.", "customrole.remove": "Rimuove un utente dal tuo ruolo personalizzato.", };
+const CONTEXT_HELP_DESCRIPTIONS = { Partnership: "Esegui una partnership direttamente dal messaggio.", };
+const CONTEXT_CATEGORY_OVERRIDES = { partnership: "partner", };
 const PERMISSIONS_CACHE_TTL_MS = 30_000;
 let permissionsCache = null;
 let permissionsCacheAt = 0;
 
-function isNewHelpEntry(entry) {
+function getHelpNewEntryKey(entry) {
+  const type = String(entry?.type || "").toLowerCase();
+  const invoke = normalizeInvokeLookup(entry?.invoke || "");
+  return `${type}:${invoke}`.trim() || null;
+}
+
+function loadHelpNewUntilMap() {
+  const now = Date.now();
+  try {
+    if (fs.existsSync(HELP_NEW_UNTIL_PATH)) {
+      const raw = fs.readFileSync(HELP_NEW_UNTIL_PATH, "utf8");
+      const data = JSON.parse(raw);
+      if (!data || typeof data !== "object") return {};
+      const filtered = {};
+      for (const [k, v] of Object.entries(data)) {
+        if (typeof v === "number" && v > now) filtered[k] = v;
+      }
+      if (Object.keys(filtered).length !== Object.keys(data).length) saveHelpNewUntilMap(filtered);
+      return filtered;
+    }
+  } catch (_) { }
+  return {};
+}
+
+function saveHelpNewUntilMap(data) {
+  try {
+    const dir = path.dirname(HELP_NEW_UNTIL_PATH);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(HELP_NEW_UNTIL_PATH, JSON.stringify(data, null, 2), "utf8");
+  } catch (err) {
+    global.logger?.warn?.("[help] saveHelpNewUntilMap:", err?.message || err);
+  }
+}
+
+function ensureHelpNewUntilForEntries(entries, newUntilMap) {
+  const now = Date.now();
+  const expiryMs = HELP_NEW_DAYS * 24 * 60 * 60 * 1000;
+  let dirty = false;
+  for (const entry of entries) {
+    const key = getHelpNewEntryKey(entry);
+    if (!key) continue;
+    if (!Object.prototype.hasOwnProperty.call(newUntilMap, key)) {
+      newUntilMap[key] = now + expiryMs;
+      dirty = true;
+    }
+  }
+  if (dirty) saveHelpNewUntilMap(newUntilMap);
+  return newUntilMap;
+}
+
+function isNewHelpEntry(entry, newUntilMap = null) {
   const category = String(entry?.category || "").toLowerCase();
   if (HELP_NEW_CATEGORIES.has(category)) return true;
   const token = (normalizeInvokeLookup(entry.invoke) || "").split(" ")[0];
-  return token && HELP_NEW_INVOKES.has(token.toLowerCase());
+  if (token && HELP_NEW_INVOKES.has(token.toLowerCase())) return true;
+  if (newUntilMap) {
+    const key = getHelpNewEntryKey(entry);
+    if (key && typeof newUntilMap[key] === "number" && Date.now() < newUntilMap[key]) return true;
+  }
+  return false;
 }
 
 function buildMiniHelpNotFoundEmbed(query) {
@@ -119,7 +176,7 @@ function getPrefixDescription(command) {
   if (PREFIX_HELP_DESCRIPTIONS[commandName]) {
     return PREFIX_HELP_DESCRIPTIONS[commandName];
   }
-  const fromCommand=normalizeDescription(command?.description||command?.desc||command?.help||command?.usage,"",);
+  const fromCommand = normalizeDescription(command?.description || command?.desc || command?.help || command?.usage, "",);
   if (fromCommand) return fromCommand;
   return "Descrizione non disponibile.";
 }
@@ -139,9 +196,9 @@ function getPrefixSubcommandDescription(command, subcommandName) {
   if (PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS[key]) {
     return PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS[key];
   }
-  const commandSubDesc=command?.subcommandDescriptions||command?.subcommandsDescriptions||command?.subcommandHelp||command?.subcommandsHelp||null;
+  const commandSubDesc = command?.subcommandDescriptions || command?.subcommandsDescriptions || command?.subcommandHelp || command?.subcommandsHelp || null;
   if (commandSubDesc && typeof commandSubDesc === "object") {
-    const fromCommand=commandSubDesc[String(subcommandName||"").toLowerCase()]||commandSubDesc[String(subcommandName||"").trim()];
+    const fromCommand = commandSubDesc[String(subcommandName || "").toLowerCase()] || commandSubDesc[String(subcommandName || "").trim()];
     if (String(fromCommand || "").trim())
       return normalizeDescription(fromCommand);
   }
@@ -160,7 +217,7 @@ function normalizeCategoryKey(value) {
 }
 
 function resolveContextCategory(command, dataJson) {
-  const contextName=String(dataJson?.name||"").trim().toLowerCase();
+  const contextName = String(dataJson?.name || "").trim().toLowerCase();
   if (contextName && CONTEXT_CATEGORY_OVERRIDES[contextName]) {
     return normalizeCategoryKey(CONTEXT_CATEGORY_OVERRIDES[contextName]);
   }
@@ -168,10 +225,10 @@ function resolveContextCategory(command, dataJson) {
 }
 
 function extractPrefixSubcommands(command) {
-  const fromMeta=Array.isArray(command?.subcommands)?command.subcommands.map((s) => String(s||"").trim().toLowerCase(),).filter(Boolean):[];
-  const fromAliases=command?.subcommandAliases&&typeof command.subcommandAliases==="object"?Object.values(command.subcommandAliases).map((s) => String(s||"").trim().toLowerCase(),).filter(Boolean):[];
-  const commandSubDesc=command?.subcommandDescriptions||command?.subcommandsDescriptions||command?.subcommandHelp||command?.subcommandsHelp||null;
-  const fromSubDesc=commandSubDesc&&typeof commandSubDesc==="object"?Object.keys(commandSubDesc).map((s) => String(s||"").trim().toLowerCase(),).filter(Boolean):[];
+  const fromMeta = Array.isArray(command?.subcommands) ? command.subcommands.map((s) => String(s || "").trim().toLowerCase(),).filter(Boolean) : [];
+  const fromAliases = command?.subcommandAliases && typeof command.subcommandAliases === "object" ? Object.values(command.subcommandAliases).map((s) => String(s || "").trim().toLowerCase(),).filter(Boolean) : [];
+  const commandSubDesc = command?.subcommandDescriptions || command?.subcommandsDescriptions || command?.subcommandHelp || command?.subcommandsHelp || null;
+  const fromSubDesc = commandSubDesc && typeof commandSubDesc === "object" ? Object.keys(commandSubDesc).map((s) => String(s || "").trim().toLowerCase(),).filter(Boolean) : [];
 
   const src = String(command?.execute || "");
   const found = new Set();
@@ -198,12 +255,12 @@ function extractPrefixSubcommands(command) {
 }
 
 function extractDirectAliasesForSubcommand(command, subcommandName) {
-  const mapped=command?.subcommandAliases&&typeof command.subcommandAliases==="object"?command.subcommandAliases:{};
+  const mapped = command?.subcommandAliases && typeof command.subcommandAliases === "object" ? command.subcommandAliases : {};
   const out = [];
 
   for (const [alias, target] of Object.entries(mapped)) {
-    const normalizedAlias=String(alias||"").trim().toLowerCase();
-    const normalizedTarget=String(target||"").trim().toLowerCase();
+    const normalizedAlias = String(alias || "").trim().toLowerCase();
+    const normalizedTarget = String(target || "").trim().toLowerCase();
     if (!normalizedAlias || !normalizedTarget) continue;
     if (normalizedTarget !== subcommandName) continue;
     out.push(normalizedAlias);
@@ -245,8 +302,9 @@ function getSubcommandEntries(commandName, dataJson, permissionConfig, commandTy
   const commandRoles = normalizePermissionRoles(permissionConfig?.roles);
   const topDesc = getSlashTopLevelDescription(dataJson);
 
-  const parseSubOption=(subOption,groupName=null) => {if(!subOption?.name)return;const subName=subOption.name;const key=groupName?`${groupName}.${subName}` : subName;
-    const allowedRoles=Object.prototype.hasOwnProperty.call(subPermissions,key,)?subPermissions[key]:commandRoles;
+  const parseSubOption = (subOption, groupName = null) => {
+    if (!subOption?.name) return; const subName = subOption.name; const key = groupName ? `${groupName}.${subName}` : subName;
+    const allowedRoles = Object.prototype.hasOwnProperty.call(subPermissions, key,) ? subPermissions[key] : commandRoles;
     const roleList = normalizePermissionRoles(allowedRoles);
 
     const invokeDisplay = groupName
@@ -281,13 +339,13 @@ function buildEntries(client, permissions) {
     if (!command?.name) continue;
 
     const perm = permissions.prefix?.[command.name];
-    const commandRoles=Array.isArray(perm)?perm:Array.isArray(perm?.roles)?perm.roles:null;
-    const subcommandRoles=perm&&typeof perm==="object"&&!Array.isArray(perm)?perm.subcommands||{}:{};
-    const aliases=Array.isArray(command.aliases)?command.aliases.filter((alias) => typeof alias==="string"&&alias.trim().length,):[];
+    const commandRoles = Array.isArray(perm) ? perm : Array.isArray(perm?.roles) ? perm.roles : null;
+    const subcommandRoles = perm && typeof perm === "object" && !Array.isArray(perm) ? perm.subcommands || {} : {};
+    const aliases = Array.isArray(command.aliases) ? command.aliases.filter((alias) => typeof alias === "string" && alias.trim().length,) : [];
     const prefixBase = getPrefixBase(command);
-    const base={type:"prefix",description:getPrefixDescription(command),aliases,prefixBase,category:normalizeCategoryKey(command.folder||"misc"),roles:commandRoles,};
+    const base = { type: "prefix", description: getPrefixDescription(command), aliases, prefixBase, category: normalizeCategoryKey(command.folder || "misc"), roles: commandRoles, };
 
-    const canonicalSubs=Array.isArray(command?.canonicalSubcommands)?Array.from(new Set(command.canonicalSubcommands.map((s) => String(s||"").trim().toLowerCase()).filter(Boolean),),):Array.isArray(command?.subcommands)?Array.from(new Set(command.subcommands.map((s) => String(s||"").trim().toLowerCase()).filter(Boolean),),):[];
+    const canonicalSubs = Array.isArray(command?.canonicalSubcommands) ? Array.from(new Set(command.canonicalSubcommands.map((s) => String(s || "").trim().toLowerCase()).filter(Boolean),),) : Array.isArray(command?.subcommands) ? Array.from(new Set(command.subcommands.map((s) => String(s || "").trim().toLowerCase()).filter(Boolean),),) : [];
     if (canonicalSubs.length) {
       for (const sub of canonicalSubs) {
         entries.push({
@@ -322,7 +380,7 @@ function buildEntries(client, permissions) {
 
     const perm = getCommandPermissionNode(permissions.slash, dataJson.name);
     const category = normalizeCategoryKey(command?.category || "misc");
-    const hasSubcommands=Array.isArray(dataJson.options)&&dataJson.options.some((opt) => opt?.type===1||opt?.type===2);
+    const hasSubcommands = Array.isArray(dataJson.options) && dataJson.options.some((opt) => opt?.type === 1 || opt?.type === 2);
 
     const roles = normalizePermissionRoles(perm);
     if (hasSubcommands) {
@@ -377,12 +435,12 @@ function buildEntries(client, permissions) {
   const dedupe = new Map();
   for (const entry of entries) {
     if (String(entry?.category || "").toLowerCase() === "misc") continue;
-    const roleKey=Array.isArray(entry.roles)?entry.roles.slice().sort().join(","):"utente";
+    const roleKey = Array.isArray(entry.roles) ? entry.roles.slice().sort().join(",") : "utente";
     const key = `${entry.type}:${entry.invoke}:${roleKey}`;
     if (!dedupe.has(key)) dedupe.set(key, entry);
   }
 
-  const getCategoryIndex=(entry) => {const key=String(entry?.category||"misc").toLowerCase();const idx=CATEGORY_ORDER.indexOf(key);return idx===-1?CATEGORY_ORDER.length:idx;};
+  const getCategoryIndex = (entry) => { const key = String(entry?.category || "misc").toLowerCase(); const idx = CATEGORY_ORDER.indexOf(key); return idx === -1 ? CATEGORY_ORDER.length : idx; };
 
   return Array.from(dedupe.values()).sort((a, b) => {
     const catCmp = getCategoryIndex(a) - getCategoryIndex(b);
@@ -396,7 +454,7 @@ function hasAnyRole(memberRoles, roleIds) {
   return roleIds.some((roleId) => memberRoles.has(roleId));
 }
 
-const STAFF_TIER_ROLES=[IDs.roles.Founder,IDs.roles.HighStaff,IDs.roles.Staff,IDs.roles.PartnerManager,].filter(Boolean);
+const STAFF_TIER_ROLES = [IDs.roles.Founder, IDs.roles.HighStaff, IDs.roles.Staff, IDs.roles.PartnerManager,].filter(Boolean);
 
 function getEntryDisplayTier(entry) {
   const roles = entry?.roles;
@@ -426,7 +484,7 @@ function memberCanSeeEntry(entry, memberRoles, pageRoleId) {
   if (pageRoleId === "utente") {
     if (!Array.isArray(entry.roles) || !entry.roles.length) return true;
     if (entry.roles.some((r) => STAFF_TIER_ROLES.includes(r))) return false;
-    const entryOnlyVip=entry.roles.length>0&&entry.roles.every((r) => String(r)===String(IDs.roles.VIP||""));
+    const entryOnlyVip = entry.roles.length > 0 && entry.roles.every((r) => String(r) === String(IDs.roles.VIP || ""));
     const memberHasMemberRole = IDs.roles.Member && memberRoles?.has(IDs.roles.Member);
     if (entryOnlyVip && memberHasMemberRole) return true;
     return hasAnyRole(memberRoles, entry.roles);
@@ -447,7 +505,7 @@ function canMemberSeeEntry(entry, memberRoles) {
   if (!Array.isArray(roles) || roles.length === 0) return true;
   if (hasAnyRole(memberRoles, roles)) return true;
   const memberHasMemberRole = IDs.roles.Member && memberRoles?.has(IDs.roles.Member);
-  const entryOnlyVip=roles.length>0&&roles.every((r) => String(r)===String(IDs.roles.VIP||""));
+  const entryOnlyVip = roles.length > 0 && roles.every((r) => String(r) === String(IDs.roles.VIP || ""));
   if (memberHasMemberRole && entryOnlyVip) return true;
   return false;
 }
@@ -469,11 +527,11 @@ function chunkEntriesByCategory(entries, maxPerPage) {
     if (!byCategory.has(key)) byCategory.set(key, []);
     byCategory.get(key).push(entry);
   }
-  const orderedCategories=Array.from(byCategory.keys()).sort((a,b) => {const ai=CATEGORY_ORDER.indexOf(a);const bi=CATEGORY_ORDER.indexOf(b);const safeA=ai===-1?CATEGORY_ORDER.length:ai;const safeB=bi===-1?CATEGORY_ORDER.length:bi;return safeA-safeB;});
+  const orderedCategories = Array.from(byCategory.keys()).sort((a, b) => { const ai = CATEGORY_ORDER.indexOf(a); const bi = CATEGORY_ORDER.indexOf(b); const safeA = ai === -1 ? CATEGORY_ORDER.length : ai; const safeB = bi === -1 ? CATEGORY_ORDER.length : bi; return safeA - safeB; });
   const chunks = [];
   let currentPage = [];
   for (const cat of orderedCategories) {
-    const catEntries=(byCategory.get(cat)||[]).slice().sort((a,b) => String(a.invoke||"").localeCompare(String(b.invoke||""),"it"),);
+    const catEntries = (byCategory.get(cat) || []).slice().sort((a, b) => String(a.invoke || "").localeCompare(String(b.invoke || ""), "it"),);
     if (!catEntries.length) continue;
     if (currentPage.length + catEntries.length <= maxPerPage) {
       currentPage.push(...catEntries);
@@ -491,7 +549,7 @@ function chunkEntriesByCategory(entries, maxPerPage) {
   return chunks.length ? chunks : [];
 }
 
-function renderPageText(page) {
+function renderPageText(page, newUntilMap = null) {
   const grouped = new Map();
   for (const entry of page.items) {
     const key = String(entry.category || "misc").toLowerCase();
@@ -500,27 +558,28 @@ function renderPageText(page) {
     grouped.get(key).push(entry);
   }
 
-  const orderedKeys=Array.from(grouped.keys()).sort((a,b) => {const ai=CATEGORY_ORDER.indexOf(a);const bi=CATEGORY_ORDER.indexOf(b);const safeA=ai===-1?CATEGORY_ORDER.length:ai;const safeB=bi===-1?CATEGORY_ORDER.length:bi;return safeA-safeB;});
+  const orderedKeys = Array.from(grouped.keys()).sort((a, b) => { const ai = CATEGORY_ORDER.indexOf(a); const bi = CATEGORY_ORDER.indexOf(b); const safeA = ai === -1 ? CATEGORY_ORDER.length : ai; const safeB = bi === -1 ? CATEGORY_ORDER.length : bi; return safeA - safeB; });
 
   const sections = [];
   for (const categoryKey of orderedKeys) {
-    const categoryEntries=(grouped.get(categoryKey)||[]).slice().sort((a,b) => String(a.invoke||"").localeCompare(String(b.invoke||""),"it"),);
-    const categoryLabel=CATEGORY_LABELS[categoryKey]||categoryKey.charAt(0).toUpperCase()+categoryKey.slice(1);
-    const rows=categoryEntries.map((entry) => {const invokeNorm=normalizeInvokeLookup(entry.invoke);const prefixForAlias=entry.prefixBase!=null?String(entry.prefixBase):"+";let aliasList=Array.isArray(entry.aliases)&&entry.aliases.length?entry.aliases.map((a) => String(a||"").trim()).filter((a) => a&&normalizeInvokeLookup(prefixForAlias+a.replace(/^[/+]+/,""))!==invokeNorm):[];const isTicketCommand=invokeNorm.startsWith("ticket")||String(entry.invoke||"").toLowerCase().startsWith("+ticket");if(isTicketCommand&&Array.isArray(entry.subAliases)&&entry.subAliases.length){const existingNorm=new Set(aliasList.map((a) => normalizeInvokeLookup(prefixForAlias+a.replace(/^[/+]+/,""))));for(const a of entry.subAliases){const s=String(a||"").trim();if(!s)continue;const norm=normalizeInvokeLookup(prefixForAlias+s.replace(/^[/+]+/,""));if(norm!==invokeNorm&&!existingNorm.has(norm)){existingNorm.add(norm);aliasList.push(s);}}}const aliasPart=aliasList.length?" | "+aliasList.map((a) => "`"+(a.startsWith("+")||a.startsWith("/")?a:prefixForAlias+a)+"`").join(", "):"";const onlyMemberRole=Array.isArray(entry.roles)&&entry.roles.length===1&&String(entry.roles[0])===String(IDs.roles.Member);const roleHint=Array.isArray(entry.roles)&&entry.roles.length>0&&!onlyMemberRole?` *(Richiede: ${entry.roles.map((id) => `<@&${id}>`).join(", ")})*`:"";const newBadge=isNewHelpEntry(entry)?` ${HELP_NEW_EMOJI}`:"";return`- \`${entry.invoke}\`${aliasPart} - ${entry.description}${newBadge}${roleHint}`;
+    const categoryEntries = (grouped.get(categoryKey) || []).slice().sort((a, b) => String(a.invoke || "").localeCompare(String(b.invoke || ""), "it"),);
+    const categoryLabel = CATEGORY_LABELS[categoryKey] || categoryKey.charAt(0).toUpperCase() + categoryKey.slice(1);
+    const rows = categoryEntries.map((entry) => {
+      const invokeNorm = normalizeInvokeLookup(entry.invoke); const prefixForAlias = entry.prefixBase != null ? String(entry.prefixBase) : "+"; let aliasList = Array.isArray(entry.aliases) && entry.aliases.length ? entry.aliases.map((a) => String(a || "").trim()).filter((a) => a && normalizeInvokeLookup(prefixForAlias + a.replace(/^[/+]+/, "")) !== invokeNorm) : []; const isTicketCommand = invokeNorm.startsWith("ticket") || String(entry.invoke || "").toLowerCase().startsWith("+ticket"); if (isTicketCommand && Array.isArray(entry.subAliases) && entry.subAliases.length) { const existingNorm = new Set(aliasList.map((a) => normalizeInvokeLookup(prefixForAlias + a.replace(/^[/+]+/, "")))); for (const a of entry.subAliases) { const s = String(a || "").trim(); if (!s) continue; const norm = normalizeInvokeLookup(prefixForAlias + s.replace(/^[/+]+/, "")); if (norm !== invokeNorm && !existingNorm.has(norm)) { existingNorm.add(norm); aliasList.push(s); } } } const aliasPart = aliasList.length ? " | " + aliasList.map((a) => "`" + (a.startsWith("+") || a.startsWith("/") ? a : prefixForAlias + a) + "`").join(", ") : ""; const onlyMemberRole = Array.isArray(entry.roles) && entry.roles.length === 1 && String(entry.roles[0]) === String(IDs.roles.Member); const roleHint = Array.isArray(entry.roles) && entry.roles.length > 0 && !onlyMemberRole ? ` *(Richiede: ${entry.roles.map((id) => `<@&${id}>`).join(", ")})*` : ""; const newBadge = isNewHelpEntry(entry, newUntilMap) ? ` ${HELP_NEW_EMOJI}` : ""; return `- \`${entry.invoke}\`${aliasPart} - ${entry.description}${newBadge}${roleHint}`;
     });
     sections.push(`**${categoryLabel}**\n${rows.join("\n")}`);
   }
 
-  const raw=page.items.length?["## Comandi Disponibili","",`### ${PAGE_TITLES[page.roleId]||"Comandi"}`,
-      "",
-      "Ecco la lista dei comandi disponibili.",
-      "Usa il prefix, slash o context menu in base al comando.",
-      "Mini-help rapido: `+help<comando>`.",
-      "",
-      sections.join("\n\n"),
-    ].join("\n")
-    : "<:vegax:1443934876440068179> Nessun comando disponibile in questa pagina.";
-  return raw;
+  if (!page.items.length) return "<:vegax:1443934876440068179> Nessun comando disponibile in questa pagina.";
+  const header = ["## Comandi Disponibili", "", `### ${PAGE_TITLES[page.roleId] || "Comandi"}`,
+    "",
+    "Ecco la lista dei comandi disponibili.",
+    "Usa il prefix, slash o context menu in base al comando.",
+    "Mini-help rapido: `+help <comando>`.",
+    "",
+  ].join("\n");
+  const body = sections.join("\n\n");
+  return { header, body };
 }
 
 function splitHelpTextByLength(text, maxLen = MAX_HELP_TEXT_LENGTH) {
@@ -532,7 +591,7 @@ function splitHelpTextByLength(text, maxLen = MAX_HELP_TEXT_LENGTH) {
   const chunks = [];
   let current = "";
 
-  const pushCurrent=() => {if(!current.length)return;chunks.push(current);current="";};
+  const pushCurrent = () => { if (!current.length) return; chunks.push(current); current = ""; };
 
   for (const line of lines) {
     const piece = current.length ? `\n${line}` : line;
@@ -560,16 +619,24 @@ function splitHelpTextByLength(text, maxLen = MAX_HELP_TEXT_LENGTH) {
   return chunks.length ? chunks : [input.slice(0, maxLen)];
 }
 
-function expandHelpDisplayPages(basePages) {
+const HELP_PAGE_FOOTER_LEN = 28;
+
+function expandHelpDisplayPages(basePages, newUntilMap = null) {
   const expanded = [];
 
   for (const page of basePages) {
-    const fullText = renderPageText(page);
-    const chunks = splitHelpTextByLength(fullText, MAX_HELP_TEXT_LENGTH - 28);
-    for (const chunk of chunks) {
+    const result = renderPageText(page, newUntilMap);
+    if (typeof result === "string") {
+      expanded.push({ ...page, renderedText: result });
+      continue;
+    }
+    const parts = result;
+    const maxBodyLen = Math.max(200, MAX_HELP_TEXT_LENGTH - HELP_PAGE_FOOTER_LEN - parts.header.length);
+    const bodyChunks = splitHelpTextByLength(parts.body, maxBodyLen);
+    for (const chunk of bodyChunks) {
       expanded.push({
         ...page,
-        renderedText: chunk,
+        renderedText: parts.header + chunk,
       });
     }
   }
@@ -599,7 +666,12 @@ function buildNavigationRow(state) {
 }
 
 function buildHelpV2Container(page, navState) {
-  const components=[{type:ComponentType.TextDisplay,content:page?.renderedText||renderPageText(page),},];
+  let content = page?.renderedText;
+  if (content == null) {
+    const r = renderPageText(page);
+    content = typeof r === "string" ? r : r.header + r.body;
+  }
+  const components = [{ type: ComponentType.TextDisplay, content, },];
   if (navState.total > 1) {
     components.push(buildNavigationRow(navState).toJSON());
   }
@@ -665,7 +737,9 @@ function pushChunkedField(fields, name, lines, inline = false, maxLen = 980) {
   let current = "";
   let idx = 0;
 
-  const flush=() => {if(!current.trim().length)return;fields.push({name:idx===0?name:`${name}(cont.)`,
+  const flush = () => {
+    if (!current.trim().length) return; fields.push({
+      name: idx === 0 ? name : `${name}(cont.)`,
       value: current.trim(),
       inline,
     });
@@ -691,14 +765,14 @@ function collectCommandUsageSnippets(command, commandName, prefixBase) {
   const snippets = new Set();
   const name = String(commandName || "").toLowerCase();
   const prefix = String(prefixBase || "+");
-  const knownAliases=Array.isArray(command?.aliases)?command.aliases.map((alias) => String(alias||"").trim().toLowerCase(),).filter(Boolean):[];
+  const knownAliases = Array.isArray(command?.aliases) ? command.aliases.map((alias) => String(alias || "").trim().toLowerCase(),).filter(Boolean) : [];
 
-  const addSnippet=(value) => {const text=String(value||"").trim();if(!text)return;if(text.length>200)return;snippets.add(text.replace(/\s+/g," "));};
+  const addSnippet = (value) => { const text = String(value || "").trim(); if (!text) return; if (text.length > 200) return; snippets.add(text.replace(/\s+/g, " ")); };
 
-  const candidateMeta=[command?.usage,command?.example,command?.helpUsage,...(Array.isArray(command?.usages)?command.usages:[]),...(Array.isArray(command?.examples)?command.examples:[]),];
+  const candidateMeta = [command?.usage, command?.example, command?.helpUsage, ...(Array.isArray(command?.usages) ? command.usages : []), ...(Array.isArray(command?.examples) ? command.examples : []),];
   for (const candidate of candidateMeta) {
     if (typeof candidate !== "string") continue;
-    const lines=candidate.split("\n").map((line) => line.trim()).filter(Boolean);
+    const lines = candidate.split("\n").map((line) => line.trim()).filter(Boolean);
     for (const line of lines) addSnippet(line);
   }
 
@@ -718,15 +792,15 @@ function collectCommandUsageSnippets(command, commandName, prefixBase) {
     }
   }
 
-  const ordered=Array.from(snippets.values()).sort((a,b) => a.length-b.length,);
+  const ordered = Array.from(snippets.values()).sort((a, b) => a.length - b.length,);
   return ordered.slice(0, 12);
 }
 
 function collectPrefixExampleLines(command, commandName, prefixBase, subEntries = [], requestedSub = null) {
   const out = [];
-  const push=(line) => {const value=String(line||"").trim();if(!value)return;if(!out.includes(value))out.push(value);};
+  const push = (line) => { const value = String(line || "").trim(); if (!value) return; if (!out.includes(value)) out.push(value); };
 
-  const snippets=collectCommandUsageSnippets(command,commandName,prefixBase,);
+  const snippets = collectCommandUsageSnippets(command, commandName, prefixBase,);
   if (requestedSub) {
     for (const row of snippets) {
       const lower = row.toLowerCase();
@@ -758,7 +832,7 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
   const queryToken = tokens[0] || "";
   if (!queryToken) return null;
 
-  const commands=Array.from(context?.client?.pcommands?.values?.()||[],).filter((cmd) => String(cmd?.name||"").trim().length);
+  const commands = Array.from(context?.client?.pcommands?.values?.() || [],).filter((cmd) => String(cmd?.name || "").trim().length);
   if (!commands.length) return null;
 
   let command =
@@ -783,13 +857,13 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
   }
   if (!command) return null;
 
-  const commandName=String(command.name||"").trim().toLowerCase();
+  const commandName = String(command.name || "").trim().toLowerCase();
   const prefixBase = getPrefixBase(command);
-  const visibleForCommand=entries.filter((entry) => {if(entry.type!=="prefix")return false;const invoke=normalizeInvokeLookup(entry.invoke);return invoke.split(" ")[0]===commandName;});
+  const visibleForCommand = entries.filter((entry) => { if (entry.type !== "prefix") return false; const invoke = normalizeInvokeLookup(entry.invoke); return invoke.split(" ")[0] === commandName; });
   if (!visibleForCommand.length) return null;
   const permissions = context?.permissions || {};
   const permConfig = getPrefixPermissionConfig(permissions, commandName);
-  const subAliasesMap=command?.subcommandAliases&&typeof command.subcommandAliases==="object"?command.subcommandAliases:{};
+  const subAliasesMap = command?.subcommandAliases && typeof command.subcommandAliases === "object" ? command.subcommandAliases : {};
 
   let requestedSub = tokens[1] || null;
   if (requestedSub && subAliasesMap[requestedSub]) {
@@ -800,14 +874,14 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
   }
 
   const usageLines = [];
-  const allSubs=Array.from(new Set(visibleForCommand.map((entry) => normalizeInvokeLookup(entry.invoke).split(" ")[1]||null,).filter(Boolean),),);
+  const allSubs = Array.from(new Set(visibleForCommand.map((entry) => normalizeInvokeLookup(entry.invoke).split(" ")[1] || null,).filter(Boolean),),);
   if (allSubs.length) {
     usageLines.push(`\`${prefixBase}${commandName} <subcommand>\``);
   } else {
     usageLines.push(`\`${prefixBase}${commandName}\``);
   }
 
-  const aliases=Array.isArray(command.aliases)?command.aliases.map((alias) => String(alias||"").trim().toLowerCase(),).filter(Boolean):[];
+  const aliases = Array.isArray(command.aliases) ? command.aliases.map((alias) => String(alias || "").trim().toLowerCase(),).filter(Boolean) : [];
   if (aliases.length) {
     usageLines.push(
       `Alias comando: ${aliases.map((alias) => `\`${prefixBase}${alias}\``).join(", ")}`,
@@ -815,13 +889,13 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
   }
   usageLines.push(`Ruoli richiesti: ${formatRoleMentions(permConfig.roles)}`);
 
-  const subEntries=visibleForCommand.filter((entry) => normalizeInvokeLookup(entry.invoke).split(" ").length>1,).filter((entry) => {if(!requestedSub)return true;return normalizeInvokeLookup(entry.invoke).split(" ")[1]===requestedSub;}).sort((a,b) => String(a.invoke||"").localeCompare(String(b.invoke||""),"it"),);
+  const subEntries = visibleForCommand.filter((entry) => normalizeInvokeLookup(entry.invoke).split(" ").length > 1,).filter((entry) => { if (!requestedSub) return true; return normalizeInvokeLookup(entry.invoke).split(" ")[1] === requestedSub; }).sort((a, b) => String(a.invoke || "").localeCompare(String(b.invoke || ""), "it"),);
 
   const subLines = [];
   const visibleInvokeSet = getVisibleInvokeSet(visibleForCommand);
   for (const entry of subEntries) {
     const subName = normalizeInvokeLookup(entry.invoke).split(" ")[1];
-    const subRoleIds=Array.isArray(permConfig.subcommands?.[subName])?permConfig.subcommands[subName]:permConfig.roles;
+    const subRoleIds = Array.isArray(permConfig.subcommands?.[subName]) ? permConfig.subcommands[subName] : permConfig.roles;
     const subAliases = entry.subAliases ?? extractDirectAliasesForSubcommand(command, subName);
     const subAliasPart = Array.isArray(subAliases) && subAliases.length ? ` (${subAliases.join(", ")})` : "";
     subLines.push(
@@ -830,12 +904,12 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
     subLines.push(`Ruoli: ${formatRoleMentions(subRoleIds)}`);
   }
   if (requestedSub && !subLines.length) {
-    const allKnownSubs=listPrefixSubcommandsForCommand(command,commandName,permissions,);
+    const allKnownSubs = listPrefixSubcommandsForCommand(command, commandName, permissions,);
     for (const sub of allKnownSubs) {
       const invoke = `${prefixBase}${commandName} ${sub}`;
       const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
       const lock = isVisible ? "" : " *(non accessibile con i tuoi ruoli)*";
-      const subRoleIds=Array.isArray(permConfig.subcommands?.[sub])?permConfig.subcommands[sub]:permConfig.roles;
+      const subRoleIds = Array.isArray(permConfig.subcommands?.[sub]) ? permConfig.subcommands[sub] : permConfig.roles;
       const subAliases = extractDirectAliasesForSubcommand(command, sub);
       const subAliasPart = subAliases.length ? ` (${subAliases.join(", ")})` : "";
       subLines.push(
@@ -845,9 +919,9 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
     }
   }
 
-  const snippetLines=collectPrefixExampleLines(command,commandName,prefixBase,subEntries.map((entry) => ({invoke:entry.invoke})),requestedSub,);
+  const snippetLines = collectPrefixExampleLines(command, commandName, prefixBase, subEntries.map((entry) => ({ invoke: entry.invoke })), requestedSub,);
 
-  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle(`Guida comando: ${prefixBase}${commandName}`)
+  const embed = new EmbedBuilder().setColor("#6f4e37").setTitle(`Guida comando: ${prefixBase}${commandName}`)
     .setDescription(getPrefixDescription(command));
 
   const fields = [];
@@ -865,7 +939,7 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
 }
 
 function getOptionTypeLabel(type) {
-  const labels={1:"Subcommand",2:"Gruppo",3:"String",4:"Integer",5:"Boolean",6:"User",7:"Channel",8:"Role",9:"Mentionable",10:"Number",11:"Attachment",};
+  const labels = { 1: "Subcommand", 2: "Gruppo", 3: "String", 4: "Integer", 5: "Boolean", 6: "User", 7: "Channel", 8: "Role", 9: "Mentionable", 10: "Number", 11: "Attachment", };
   return labels[type] || "Option";
 }
 
@@ -887,7 +961,7 @@ function getSlashSampleValueByType(optionType) {
   return "valore";
 }
 
-function buildSlashExampleLine( commandName, groupName, subName, optionList = [] ) {
+function buildSlashExampleLine(commandName, groupName, subName, optionList = []) {
   const parts = [`/${commandName}`];
   if (groupName) parts.push(groupName);
   if (subName) parts.push(subName);
@@ -918,14 +992,14 @@ function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
   }
   if (!slashCommands.length) return null;
 
-  const hit=slashCommands.find(({dataJson}) => String(dataJson.name||"").trim().toLowerCase()===queryToken,);
+  const hit = slashCommands.find(({ dataJson }) => String(dataJson.name || "").trim().toLowerCase() === queryToken,);
   if (!hit) return null;
 
-  const commandName=String(hit.dataJson.name||"").trim().toLowerCase();
-  const visibleForCommand=entries.filter((entry) => entry.type==="slash"&&normalizeInvokeLookup(entry.invoke).split(" ")[0]===commandName,);
+  const commandName = String(hit.dataJson.name || "").trim().toLowerCase();
+  const visibleForCommand = entries.filter((entry) => entry.type === "slash" && normalizeInvokeLookup(entry.invoke).split(" ")[0] === commandName,);
   if (!visibleForCommand.length) return null;
 
-  const options=Array.isArray(hit.dataJson.options)?hit.dataJson.options:[];
+  const options = Array.isArray(hit.dataJson.options) ? hit.dataJson.options : [];
   const hasSub = options.some((opt) => opt?.type === 1 || opt?.type === 2);
   const requestedSub = tokens[1] || null;
 
@@ -934,7 +1008,7 @@ function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
   const exampleLines = [];
 
   if (!hasSub) {
-    const placeholders=options.filter((opt) => opt?.type>=3&&opt?.type<=11).map((opt) => formatSlashOptionPlaceholder(opt)).filter(Boolean);
+    const placeholders = options.filter((opt) => opt?.type >= 3 && opt?.type <= 11).map((opt) => formatSlashOptionPlaceholder(opt)).filter(Boolean);
     syntaxLines.push(
       `\`/${commandName}${placeholders.length ? ` ${placeholders.join(" ")}` : ""}\``,
     );
@@ -942,8 +1016,8 @@ function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
     for (const opt of options) {
       if (!opt?.name || opt?.type < 3 || opt?.type > 11) continue;
       const required = opt.required ? "obbligatoria" : "opzionale";
-      const choices=Array.isArray(opt.choices)&&opt.choices.length?` | scelte: ${opt.choices.map((c) => `\`${c.name}\``).join(", ")}`
-          : "";
+      const choices = Array.isArray(opt.choices) && opt.choices.length ? ` | scelte: ${opt.choices.map((c) => `\`${c.name}\``).join(", ")}`
+        : "";
       optionLines.push(
         `- \`${opt.name}\` (${getOptionTypeLabel(opt.type)}, ${required}) - ${normalizeDescription(opt.description, "Nessuna descrizione.")}${choices}`,
       );
@@ -951,9 +1025,9 @@ function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
   } else {
     for (const opt of options) {
       if (opt?.type === 1) {
-        const subName=String(opt.name||"").trim().toLowerCase();
+        const subName = String(opt.name || "").trim().toLowerCase();
         if (requestedSub && requestedSub !== subName) continue;
-        const subPlaceholders=(Array.isArray(opt.options)?opt.options:[]).filter((child) => child?.type>=3&&child?.type<=11).map((child) => formatSlashOptionPlaceholder(child)).filter(Boolean);
+        const subPlaceholders = (Array.isArray(opt.options) ? opt.options : []).filter((child) => child?.type >= 3 && child?.type <= 11).map((child) => formatSlashOptionPlaceholder(child)).filter(Boolean);
         syntaxLines.push(
           `\`/${commandName} ${subName}${subPlaceholders.length ? ` ${subPlaceholders.join(" ")}` : ""}\``,
         );
@@ -971,25 +1045,25 @@ function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
         for (const child of Array.isArray(opt.options) ? opt.options : []) {
           if (!child?.name || child?.type < 3 || child?.type > 11) continue;
           const required = child.required ? "obbligatoria" : "opzionale";
-          const choices=Array.isArray(child.choices)&&child.choices.length?` | scelte: ${child.choices.map((c) => `\`${c.name}\``).join(", ")}`
-              : "";
+          const choices = Array.isArray(child.choices) && child.choices.length ? ` | scelte: ${child.choices.map((c) => `\`${c.name}\``).join(", ")}`
+            : "";
           optionLines.push(
             `  - \`${child.name}\` (${getOptionTypeLabel(child.type)}, ${required})${choices}`,
           );
         }
       }
       if (opt?.type === 2 && Array.isArray(opt.options)) {
-        const groupName=String(opt.name||"").trim().toLowerCase();
+        const groupName = String(opt.name || "").trim().toLowerCase();
         for (const sub of opt.options) {
           if (sub?.type !== 1 || !sub?.name) continue;
-          const subName=String(sub.name||"").trim().toLowerCase();
+          const subName = String(sub.name || "").trim().toLowerCase();
           if (
             requestedSub &&
             requestedSub !== groupName &&
             requestedSub !== subName
           )
             continue;
-          const subPlaceholders=(Array.isArray(sub.options)?sub.options:[]).filter((child) => child?.type>=3&&child?.type<=11).map((child) => formatSlashOptionPlaceholder(child)).filter(Boolean);
+          const subPlaceholders = (Array.isArray(sub.options) ? sub.options : []).filter((child) => child?.type >= 3 && child?.type <= 11).map((child) => formatSlashOptionPlaceholder(child)).filter(Boolean);
           syntaxLines.push(
             `\`/${commandName} ${groupName} ${subName}${subPlaceholders.length ? ` ${subPlaceholders.join(" ")}` : ""}\``,
           );
@@ -1007,8 +1081,8 @@ function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
           for (const child of Array.isArray(sub.options) ? sub.options : []) {
             if (!child?.name || child?.type < 3 || child?.type > 11) continue;
             const required = child.required ? "obbligatoria" : "opzionale";
-            const choices=Array.isArray(child.choices)&&child.choices.length?` | scelte: ${child.choices.map((c) => `\`${c.name}\``).join(", ")}`
-                : "";
+            const choices = Array.isArray(child.choices) && child.choices.length ? ` | scelte: ${child.choices.map((c) => `\`${c.name}\``).join(", ")}`
+              : "";
             optionLines.push(
               `  - \`${child.name}\` (${getOptionTypeLabel(child.type)}, ${required})${choices}`,
             );
@@ -1019,9 +1093,9 @@ function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
   }
 
   const perm = context?.permissions?.slash?.[commandName];
-  const roleIds=Array.isArray(perm)?perm:Array.isArray(perm?.roles)?perm.roles:null;
-  const effectiveSyntax=syntaxLines.length?syntaxLines:[`\`/${commandName}\``];
-  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle(`Guida comando: /${commandName}`)
+  const roleIds = Array.isArray(perm) ? perm : Array.isArray(perm?.roles) ? perm.roles : null;
+  const effectiveSyntax = syntaxLines.length ? syntaxLines : [`\`/${commandName}\``];
+  const embed = new EmbedBuilder().setColor("#6f4e37").setTitle(`Guida comando: /${commandName}`)
     .setDescription(
       normalizeDescription(hit.dataJson.description, "Comando slash."),
     );
@@ -1089,20 +1163,20 @@ function getVisibleInvokeSet(entries) {
 }
 
 function resolvePrefixCommandByToken(client, token) {
-  const safeToken=String(token||"").trim().toLowerCase();
+  const safeToken = String(token || "").trim().toLowerCase();
   if (!safeToken) return null;
   const commands = Array.from(client?.pcommands?.values?.() || []);
   for (const command of commands) {
-    const name=String(command?.name||"").trim().toLowerCase();
+    const name = String(command?.name || "").trim().toLowerCase();
     if (name && name === safeToken) return command;
-    const aliases=Array.isArray(command?.aliases)?command.aliases.map((alias) => String(alias||"").trim().toLowerCase(),):[];
+    const aliases = Array.isArray(command?.aliases) ? command.aliases.map((alias) => String(alias || "").trim().toLowerCase(),) : [];
     if (aliases.includes(safeToken)) return command;
   }
   return null;
 }
 
 function listPrefixSubcommandsForCommand(command, commandName, permissions) {
-  const baseSubcommands=Array.from(new Set([...extractPrefixSubcommands(command),...(Array.isArray(command?.subcommands)?command.subcommands.map((s) => String(s||"").trim().toLowerCase(),).filter(Boolean):[]),]),);
+  const baseSubcommands = Array.from(new Set([...extractPrefixSubcommands(command), ...(Array.isArray(command?.subcommands) ? command.subcommands.map((s) => String(s || "").trim().toLowerCase(),).filter(Boolean) : []),]),);
   if (String(commandName || "").toLowerCase() === "security") {
     baseSubcommands.push("panic status", "panic enable", "panic disable");
   }
@@ -1119,18 +1193,19 @@ function buildSubcommandFallbackEmbed(query, visibleEntries, context = {}) {
   const permissions = context?.permissions || {};
   const visibleInvokeSet = getVisibleInvokeSet(visibleEntries);
 
-  const prefixCommand=resolvePrefixCommandByToken(context?.client,queryToken,);
+  const prefixCommand = resolvePrefixCommandByToken(context?.client, queryToken,);
   if (prefixCommand) {
-    const commandName=String(prefixCommand.name||"").trim().toLowerCase();
+    const commandName = String(prefixCommand.name || "").trim().toLowerCase();
     const prefixBase = getPrefixBase(prefixCommand);
-    const subcommands=listPrefixSubcommandsForCommand(prefixCommand,commandName,permissions,);
+    const subcommands = listPrefixSubcommandsForCommand(prefixCommand, commandName, permissions,);
     if (subcommands.length) {
-      const lines=subcommands.map((sub) => {const invoke=`${prefixBase}${commandName}${sub}`;
+      const lines = subcommands.map((sub) => {
+        const invoke = `${prefixBase}${commandName}${sub}`;
         const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
         const lock = isVisible ? "" : " *(non accessibile con i tuoi ruoli)*";
         const subAliases = extractDirectAliasesForSubcommand(prefixCommand, sub);
         const subAliasPart = subAliases.length ? `(${subAliases.join(", ")})` : "";
-        return `-\`${invoke}\`${subAliasPart}-${getPrefixSubcommandDescription(prefixCommand,sub)}${lock}`;
+        return `-\`${invoke}\`${subAliasPart}-${getPrefixSubcommandDescription(prefixCommand, sub)}${lock}`;
       });
       return new EmbedBuilder()
         .setColor(HELP_EMBED_COLOR)
@@ -1151,10 +1226,10 @@ function buildSubcommandFallbackEmbed(query, visibleEntries, context = {}) {
     seen.add(key);
     slashCommands.push({ cmd, dataJson });
   }
-  const slashHit=slashCommands.find(({dataJson}) => String(dataJson?.name||"").trim().toLowerCase()===queryToken,);
+  const slashHit = slashCommands.find(({ dataJson }) => String(dataJson?.name || "").trim().toLowerCase() === queryToken,);
   if (slashHit) {
-    const commandName=String(slashHit.dataJson.name||"").trim().toLowerCase();
-    const options=Array.isArray(slashHit.dataJson.options)?slashHit.dataJson.options:[];
+    const commandName = String(slashHit.dataJson.name || "").trim().toLowerCase();
+    const options = Array.isArray(slashHit.dataJson.options) ? slashHit.dataJson.options : [];
     const subLines = [];
     for (const opt of options) {
       if (opt?.type === 1 && opt?.name) {
@@ -1193,7 +1268,8 @@ function buildMiniHelpEmbed(query, entries, context = {}) {
   if (detailed) return detailed;
 
   const normalizedQuery = normalizeInvokeLookup(query);
-  const matches=entries.filter((entry) => {const invoke=normalizeInvokeLookup(entry.invoke);if(!invoke)return false;const commandToken=invoke.split(" ")[0]||"";const baseMatch=invoke===normalizedQuery||invoke.startsWith(`${normalizedQuery}`) ||
+  const matches = entries.filter((entry) => {
+    const invoke = normalizeInvokeLookup(entry.invoke); if (!invoke) return false; const commandToken = invoke.split(" ")[0] || ""; const baseMatch = invoke === normalizedQuery || invoke.startsWith(`${normalizedQuery}`) ||
       commandToken === normalizedQuery;
     if (baseMatch) return true;
     if (entry.type !== "prefix" || !Array.isArray(entry.aliases)) return false;
@@ -1209,10 +1285,12 @@ function buildMiniHelpEmbed(query, entries, context = {}) {
   }
 
   const limited = matches.slice(0, 20);
-  const lines=limited.map((entry) => {const categoryKey=String(entry.category||"").toLowerCase();const categoryLabel=CATEGORY_LABELS[categoryKey]||categoryKey||"Misc";const invokeNorm=normalizeInvokeLookup(entry.invoke);const prefixForAlias=entry.prefixBase!=null?String(entry.prefixBase):"+";let aliasList=Array.isArray(entry.aliases)&&entry.aliases.length?entry.aliases.map((a) => String(a||"").trim()).filter((a) => a&&normalizeInvokeLookup(prefixForAlias+a.replace(/^[/+]+/,""))!==invokeNorm):[];const isTicketCommand=invokeNorm.startsWith("ticket")||String(entry.invoke||"").toLowerCase().startsWith("+ticket");if(isTicketCommand&&Array.isArray(entry.subAliases)&&entry.subAliases.length){const existingNorm=new Set(aliasList.map((a) => normalizeInvokeLookup(prefixForAlias+a.replace(/^[/+]+/,""))));for(const a of entry.subAliases){const s=String(a||"").trim();if(!s)continue;const norm=normalizeInvokeLookup(prefixForAlias+s.replace(/^[/+]+/,""));if(norm!==invokeNorm&&!existingNorm.has(norm)){existingNorm.add(norm);aliasList.push(s);}}}const aliasPart=aliasList.length?" | "+aliasList.map((a) => "`"+(a.startsWith("+")||a.startsWith("/")?a:prefixForAlias+a)+"`").join(", "):"";const onlyMemberRole=Array.isArray(entry.roles)&&entry.roles.length===1&&String(entry.roles[0])===String(IDs.roles.Member);const roleHint=Array.isArray(entry.roles)&&entry.roles.length>0&&!onlyMemberRole?`\n  \`Ruolo:\` ${entry.roles.map((id) => `<@&${id}>`).join(", ")}`:"";const newBadge=isNewHelpEntry(entry)?` ${HELP_NEW_EMOJI}`:"";return`- \`${entry.invoke}\`${aliasPart} - ${entry.description}${newBadge}\n\`Categoria:\` ${categoryLabel}${roleHint}`;
+  const newUntilMap = context.newUntilMap || null;
+  const lines = limited.map((entry) => {
+    const categoryKey = String(entry.category || "").toLowerCase(); const categoryLabel = CATEGORY_LABELS[categoryKey] || categoryKey || "Misc"; const invokeNorm = normalizeInvokeLookup(entry.invoke); const prefixForAlias = entry.prefixBase != null ? String(entry.prefixBase) : "+"; let aliasList = Array.isArray(entry.aliases) && entry.aliases.length ? entry.aliases.map((a) => String(a || "").trim()).filter((a) => a && normalizeInvokeLookup(prefixForAlias + a.replace(/^[/+]+/, "")) !== invokeNorm) : []; const isTicketCommand = invokeNorm.startsWith("ticket") || String(entry.invoke || "").toLowerCase().startsWith("+ticket"); if (isTicketCommand && Array.isArray(entry.subAliases) && entry.subAliases.length) { const existingNorm = new Set(aliasList.map((a) => normalizeInvokeLookup(prefixForAlias + a.replace(/^[/+]+/, "")))); for (const a of entry.subAliases) { const s = String(a || "").trim(); if (!s) continue; const norm = normalizeInvokeLookup(prefixForAlias + s.replace(/^[/+]+/, "")); if (norm !== invokeNorm && !existingNorm.has(norm)) { existingNorm.add(norm); aliasList.push(s); } } } const aliasPart = aliasList.length ? " | " + aliasList.map((a) => "`" + (a.startsWith("+") || a.startsWith("/") ? a : prefixForAlias + a) + "`").join(", ") : ""; const onlyMemberRole = Array.isArray(entry.roles) && entry.roles.length === 1 && String(entry.roles[0]) === String(IDs.roles.Member); const roleHint = Array.isArray(entry.roles) && entry.roles.length > 0 && !onlyMemberRole ? `\n  \`Ruolo:\` ${entry.roles.map((id) => `<@&${id}>`).join(", ")}` : ""; const newBadge = isNewHelpEntry(entry, newUntilMap) ? ` ${HELP_NEW_EMOJI}` : ""; return `- \`${entry.invoke}\`${aliasPart} - ${entry.description}${newBadge}\n\`Categoria:\` ${categoryLabel}${roleHint}`;
   });
-  const extra=matches.length>limited.length?`\n\n...e altri**${matches.length-limited.length}**risultati.`
-      : "";
+  const extra = matches.length > limited.length ? `\n\n...e altri**${matches.length - limited.length}**risultati.`
+    : "";
 
   return new EmbedBuilder()
     .setColor(HELP_EMBED_COLOR)
@@ -1228,11 +1306,12 @@ module.exports = {
     await message.channel.sendTyping().catch(() => { });
     const permissions = loadPermissions();
     const allEntries = buildEntries(client, permissions);
-    const freshMember=await getGuildMemberCached(message.guild,message.author.id,{ttlMs:20_000,preferFresh:true,});
+    const newUntilMap = ensureHelpNewUntilForEntries(allEntries, loadHelpNewUntilMap());
+    const freshMember = await getGuildMemberCached(message.guild, message.author.id, { ttlMs: 20_000, preferFresh: true, });
     const resolvedMember = freshMember || message.member;
     const memberRoles = resolvedMember?.roles?.cache || new Map();
-    const rolePages=PAGE_ROLE_IDS.filter((roleId) => memberRoles?.has(roleId),);
-    const hasPartnerManager=Boolean(memberRoles?.has?.(IDs.roles.PartnerManager),);
+    const rolePages = PAGE_ROLE_IDS.filter((roleId) => memberRoles?.has(roleId),);
+    const hasPartnerManager = Boolean(memberRoles?.has?.(IDs.roles.PartnerManager),);
     const hasHighStaff = Boolean(memberRoles?.has?.(IDs.roles.HighStaff));
     const hasFounder = Boolean(memberRoles?.has?.(IDs.roles.Founder));
     if (
@@ -1241,11 +1320,11 @@ module.exports = {
     ) {
       rolePages.push(IDs.roles.Staff);
     }
-    const visibleEntriesForQuery=dedupeAndSortEntries(allEntries.filter((entry) => canMemberSeeEntry(entry,memberRoles)),);
+    const visibleEntriesForQuery = dedupeAndSortEntries(allEntries.filter((entry) => canMemberSeeEntry(entry, memberRoles)),);
 
     const query = Array.isArray(args) ? args.join(" ").trim() : "";
     if (query.length) {
-      const embed=buildMiniHelpEmbed(query,visibleEntriesForQuery,{client,permissions,});
+      const embed = buildMiniHelpEmbed(query, visibleEntriesForQuery, { client, permissions, });
       await safeMessageReply(message, {
         embeds: [embed],
         allowedMentions: NO_REPLY_MENTIONS,
@@ -1253,11 +1332,11 @@ module.exports = {
       return;
     }
 
-    const allVisibleEntries=allEntries.filter((entry) => canMemberSeeEntry(entry,memberRoles),);
+    const allVisibleEntries = allEntries.filter((entry) => canMemberSeeEntry(entry, memberRoles),);
     const sortedVisible = dedupeAndSortEntries(allVisibleEntries);
     const chunks = chunkEntriesByCategory(sortedVisible, HELP_PAGE_SIZE);
-    const groupedPages=chunks.map((items,idx) => ({roleId:"all",items,indexLabel:"",groupLabel:PAGE_TITLES.all||"Comandi Disponibili",}));
-    const displayPages = expandHelpDisplayPages(groupedPages);
+    const groupedPages = chunks.map((items, idx) => ({ roleId: "all", items, indexLabel: "", groupLabel: PAGE_TITLES.all || "Comandi Disponibili", }));
+    const displayPages = expandHelpDisplayPages(groupedPages, newUntilMap);
 
     if (!displayPages.length) {
       return safeMessageReply(message, {
@@ -1269,14 +1348,15 @@ module.exports = {
     const initialPageIndex = 0;
 
     const uniqueToken = `${message.id}_${Date.now()}`;
-    const navState={currentIndex:initialPageIndex,total:displayPages.length,prevId:`help_prev_${uniqueToken}`,
+    const navState = {
+      currentIndex: initialPageIndex, total: displayPages.length, prevId: `help_prev_${uniqueToken}`,
       nextId: `help_next_${uniqueToken}`,
     };
 
-    const sent=await safeMessageReply(message,{components:[buildHelpV2Container(displayPages[navState.currentIndex],navState)],flags:MessageFlags.IsComponentsV2,allowedMentions:NO_REPLY_MENTIONS,});
+    const sent = await safeMessageReply(message, { components: [buildHelpV2Container(displayPages[navState.currentIndex], navState)], flags: MessageFlags.IsComponentsV2, allowedMentions: NO_REPLY_MENTIONS, });
     if (!sent) return;
 
-    const collector=sent.createMessageComponentCollector({time:MAX_HELP_COLLECTOR_MS,idle:MAX_HELP_COLLECTOR_MS,});
+    const collector = sent.createMessageComponentCollector({ time: MAX_HELP_COLLECTOR_MS, idle: MAX_HELP_COLLECTOR_MS, });
 
     collector.on("collect", async (interaction) => {
       if (interaction.user.id !== message.author.id) {
@@ -1304,7 +1384,7 @@ module.exports = {
       }
 
       const page = displayPages[navState.currentIndex];
-      const updated=await interaction.update({components:[buildHelpV2Container(page,navState)],}).then(() => true).catch(() => false);
+      const updated = await interaction.update({ components: [buildHelpV2Container(page, navState)], }).then(() => true).catch(() => false);
       if (!updated) {
         navState.currentIndex = prevIndex;
       }
