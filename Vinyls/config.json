@@ -190,7 +190,7 @@
   "tts": {
     "enabled": true,
     "lang": "it",
-    "maxChars": 1000,
+    "maxChars": 2000,
     "autojoin": false,
     "includeUsername": false,
     "stayConnected": false
