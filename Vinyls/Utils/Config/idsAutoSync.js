@@ -3,6 +3,8 @@ const path = require("path");
 const { collectGuildCatalog, writeCatalogFiles } = require("./buildIdsCatalog");
 const DEFAULT_DELAY_MS = 15000;
 const BOT_ROOT = path.resolve(__dirname, "..", "..");
+const PROJECT_ROOT = path.resolve(BOT_ROOT, "..");
+const LOG_IDS_SYNC = String(process.env.LOG_IDS_SYNC || "0") === "1";
 const timers = new Map();
 const pendingReasons = new Map();
 const runningGuilds = new Set();
@@ -27,8 +29,23 @@ function consumeReasons(guildId) {
   return Array.from(reasons || []);
 }
 
+function readIdsAutoSyncWriteFromEnvFile() {
+  const envPath = path.join(PROJECT_ROOT, ".env");
+  if (!fs.existsSync(envPath)) return null;
+  try {
+    const content = fs.readFileSync(envPath, "utf8");
+    const match = content.match(/^\s*IDS_AUTOSYNC_WRITE\s*=\s*(.+)/m);
+    return match ? String(match[1]).trim().replace(/^["']|["']$/g, "") : null;
+  } catch {
+    return null;
+  }
+}
+
 function isIdsAutoSyncWriteEnabled() {
-  const raw = process.env.IDS_AUTOSYNC_WRITE;
+  let raw = process.env.IDS_AUTOSYNC_WRITE;
+  if (raw == null || raw === "" || String(raw).trim() === "0") {
+    raw = readIdsAutoSyncWriteFromEnvFile();
+  }
   if (raw == null || raw === "") return false;
   const v = String(raw).trim().toLowerCase();
   return v === "1" || v === "true" || v === "yes" || v === "on";
@@ -39,15 +56,13 @@ async function runIdsCatalogSync(client, guildId) {
   if (!gid) return { changed: false, reason: "missing-guild-id" };
 
   const writeEnabled = isIdsAutoSyncWriteEnabled();
-  const envValue = process.env.IDS_AUTOSYNC_WRITE;
-  global.logger?.info?.("[IDS AUTO SYNC] run:", { guildId: gid, writeEnabled, envValue: envValue != null ? String(envValue) : "undefined" });
+  const envValue = process.env.IDS_AUTOSYNC_WRITE ?? readIdsAutoSyncWriteFromEnvFile();
+  if (LOG_IDS_SYNC) global.logger?.info?.("[IDS AUTO SYNC] run:", { guildId: gid, writeEnabled, envValue: envValue != null ? String(envValue) : "undefined" });
 
   if (!writeEnabled) {
-    if (!loggedDisabledNotice) {
+    if (!loggedDisabledNotice && LOG_IDS_SYNC) {
       loggedDisabledNotice = true;
-      global.logger?.info?.(
-        "[IDS AUTO SYNC] Runtime write disabled (set IDS_AUTOSYNC_WRITE=1 in .env).",
-      );
+      global.logger?.info?.("[IDS AUTO SYNC] Runtime write disabled (set IDS_AUTOSYNC_WRITE=1 in .env).");
     }
     consumeReasons(gid);
     return { changed: false, reason: "write-disabled" };

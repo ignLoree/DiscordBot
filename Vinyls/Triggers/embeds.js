@@ -39,7 +39,7 @@ async function runEmbedOnlySections(client) {
   for (const panel of Embeds.getPanelsBySection(Embeds.SECTION_EMBED_ONLY)) {
     await runPanelTask("runEmbedOnlySections", panel.name, panel.run, client);
   }
-  global.logger?.info?.(`[PANELS] runEmbedOnlySections finished in ${Date.now() - startedAt}ms.`);
+  if (LOG_PANELS) global.logger?.info?.(`[PANELS] runEmbedOnlySections finished in ${Date.now() - startedAt}ms.`);
 }
 
 async function warmupSponsorGuilds(client) {
