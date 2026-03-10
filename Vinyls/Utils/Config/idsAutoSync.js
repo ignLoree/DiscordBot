@@ -28,7 +28,10 @@ function consumeReasons(guildId) {
 }
 
 function isIdsAutoSyncWriteEnabled() {
-  return String(process.env.IDS_AUTOSYNC_WRITE || "0") === "1";
+  const raw = process.env.IDS_AUTOSYNC_WRITE;
+  if (raw == null || raw === "") return false;
+  const v = String(raw).trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes" || v === "on";
 }
 
 async function runIdsCatalogSync(client, guildId) {

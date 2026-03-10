@@ -3714,7 +3714,7 @@ async function loadRotationState(client, cfg) {
   const doc = await MinigameRotation.findOne({ guildId, channelId }).lean().catch(() => null);
   if (doc && Array.isArray(doc.queue) && doc.dateKey === dateKey) {
     rotationDate = doc.dateKey;
-    rotationQueue = doc.queue.slice();
+    rotationQueue = shuffleArray(doc.queue.slice());
     return;
   }
   rotationDate = dateKey;
@@ -4918,6 +4918,25 @@ function parseDrivingQuizFromPayload(payload) {
   };
 }
 
+function isDrivingPatenteRelated(statement) {
+  if (!statement || typeof statement !== "string") return false;
+  const s = statement.toLowerCase();
+  const offTopic = [
+    "logo", "animale", "animal", "marchio", "brand", "manufacturer", "automobilistica",
+    "raffigurato", "depicted", "which animal", "quale animale", "porsche", "ferrari",
+    "symbol of", "simbolo del", "casa automobilistica", "car manufacturer", "depicted on",
+  ];
+  if (offTopic.some((w) => s.includes(w))) return false;
+  const onTopic = [
+    "conducente", "segnale", "strada", "velocit", "speed", "limit", "limite", "patente",
+    "veicolo", "vehicle", "semaforo", "traffic", "precedenza", "priority", "divieto",
+    "obbligo", "corsia", "lane", "autostrada", "highway", "sorpasso", "overtak",
+    "sosta", "parking", "pedonale", "pedestrian", "incrocio", "intersection", "freno",
+    "brake", "cintura", "seat belt", "triangolo", "hazard", "incident", "incidente",
+  ];
+  return onTopic.some((w) => s.includes(w));
+}
+
 function appendCacheBuster(url) {
   if (!url || typeof url !== "string") return url;
   const sep = url.includes("?") ? "&" : "?";
@@ -4948,10 +4967,12 @@ async function startDrivingQuizGame(client, cfg) {
   const customApiUrl = cfg?.drivingQuiz?.apiUrl || null;
   if (customApiUrl) {
     row = await fetchDrivingQuizFromApi(appendCacheBuster(customApiUrl));
+    if (row && !isDrivingPatenteRelated(row.statement)) row = null;
     if (row) fromApi = true;
   }
   if (!row && (cfg?.drivingQuiz?.useDefaultApi !== false)) {
     row = await fetchDrivingQuizFromApi(appendCacheBuster(DEFAULT_DRIVING_QUIZ_API_URL));
+    if (row && !isDrivingPatenteRelated(row.statement)) row = null;
     if (row) fromApi = true;
   }
 
