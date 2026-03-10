@@ -46,7 +46,9 @@ for (const rel of FILES) {
   const localPath = path.join(ROOT, rel);
   if (!fs.existsSync(localDir)) fs.mkdirSync(localDir, { recursive: true });
   try {
-    execSync("scp", [remote, localPath], { stdio: "inherit", cwd: ROOT });
+    const quotedRemote = remote.includes(" ") ? `"${remote}"` : remote;
+    const quotedLocal = localPath.includes(" ") ? `"${localPath.replace(/"/g, '\\"')}"` : localPath;
+    execSync(`scp ${quotedRemote} ${quotedLocal}`, { stdio: "inherit", cwd: ROOT, shell: true });
     console.log("OK:", rel);
   } catch (e) {
     const ext = path.extname(rel).toLowerCase();
