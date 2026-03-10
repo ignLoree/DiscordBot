@@ -3,12 +3,10 @@ const path = require("path");
 const { collectGuildCatalog, writeCatalogFiles } = require("./buildIdsCatalog");
 const DEFAULT_DELAY_MS = 15000;
 const BOT_ROOT = path.resolve(__dirname, "..", "..");
-const PROJECT_ROOT = path.resolve(BOT_ROOT, "..");
 const timers = new Map();
 const pendingReasons = new Map();
 const runningGuilds = new Set();
 const rerunGuilds = new Set();
-let loggedDisabledNotice = false;
 
 function getCatalogPath(baseDir) {
   return path.join(baseDir, "Utils", "Config", "idsCatalog.js");
@@ -28,44 +26,12 @@ function consumeReasons(guildId) {
   return Array.from(reasons || []);
 }
 
-function readIdsAutoSyncWriteFromEnvFile() {
-  const envPath = path.join(PROJECT_ROOT, ".env");
-  if (!fs.existsSync(envPath)) return null;
-  try {
-    const content = fs.readFileSync(envPath, "utf8");
-    const match = content.match(/^\s*IDS_AUTOSYNC_WRITE\s*=\s*(.+)/m);
-    return match ? String(match[1]).trim().replace(/^["']|["']$/g, "") : null;
-  } catch {
-    return null;
-  }
-}
-
-function isIdsAutoSyncWriteEnabled() {
-  let raw = process.env.IDS_AUTOSYNC_WRITE;
-  if (raw == null || raw === "" || String(raw).trim() === "0") {
-    raw = readIdsAutoSyncWriteFromEnvFile();
-  }
-  if (raw == null || raw === "") return false;
-  const v = String(raw).trim().toLowerCase();
-  return v === "1" || v === "true" || v === "yes" || v === "on";
-}
 
 async function runIdsCatalogSync(client, guildId) {
   const gid = String(guildId || "");
   if (!gid) return { changed: false, reason: "missing-guild-id" };
 
-  const writeEnabled = isIdsAutoSyncWriteEnabled();
-  const envValue = process.env.IDS_AUTOSYNC_WRITE ?? readIdsAutoSyncWriteFromEnvFile();
-  global.logger?.info?.("[IDS AUTO SYNC] run:", { guildId: gid, writeEnabled, envValue: envValue != null ? String(envValue) : "undefined" });
-
-  if (!writeEnabled) {
-    if (!loggedDisabledNotice) {
-      loggedDisabledNotice = true;
-      global.logger?.info?.("[IDS AUTO SYNC] Runtime write disabled (set IDS_AUTOSYNC_WRITE=1 in .env).");
-    }
-    consumeReasons(gid);
-    return { changed: false, reason: "write-disabled" };
-  }
+  global.logger?.info?.("[IDS AUTO SYNC] run:", { guildId: gid });
 
   if (runningGuilds.has(gid)) {
     rerunGuilds.add(gid);
