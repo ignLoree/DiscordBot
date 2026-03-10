@@ -13,7 +13,8 @@ function loadPanels() {
   Object.keys(byName).forEach((k) => delete byName[k]);
   const files = listJsFilesRecursive(EMBEDS_DIR).filter((p) => {
     const rel = path.relative(EMBEDS_DIR, p);
-    return rel !== "index.js" && rel.endsWith(".js") && !rel.includes(path.sep);
+    const base = path.basename(rel, ".js");
+    return rel !== "index.js" && rel.endsWith(".js") && !rel.includes(path.sep) && !base.endsWith("Helpers");
   });
   for (const filePath of files) {
     try {

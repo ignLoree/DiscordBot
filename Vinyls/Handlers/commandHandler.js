@@ -6,6 +6,7 @@ const ascii = require("ascii-table");
 const IDs = require("../Utils/Config/ids");
 const{isCommandDeployRequired,markCommandDeployComplete,}=require("../../shared/runtime/commandDeployCache");
 
+const LOG_COMMANDS = String(process.env.LOG_COMMANDS || "0") === "1";
 const BOT_DEPLOY_CACHE_KEY = "official";
 
 function shouldForceSlashDeploy() {
@@ -61,53 +62,47 @@ module.exports = (client) => {
       }
     }
 
-    const table = new ascii().setHeading("Folder", "File", "Status");
-    for (const [key, status] of Array.from(statusMap.entries()).sort((a, b) =>
-      a[0].localeCompare(b[0]),
-    )) {
-      const [folder, file] = key.split("/");
-      table.addRow(folder, file, status);
+    if (LOG_COMMANDS) {
+      const table = new ascii().setHeading("Folder", "File", "Status");
+      for (const [key, status] of Array.from(statusMap.entries()).sort((a, b) =>
+        a[0].localeCompare(b[0]),
+      )) {
+        const [folder, file] = key.split("/");
+        table.addRow(folder, file, status);
+      }
+      global.logger.info(table.toString());
+      global.logger.info(`[COMMANDS] Loaded ${client.commands.size} SlashCommands.`);
     }
-
-    global.logger.info(table.toString());
-    global.logger.info(
-      `[COMMANDS] Loaded ${client.commands.size} SlashCommands.`,
-    );
 
     const token=process.env.DISCORD_TOKEN||process.env.DISCORD_TOKEN_OFFICIAL||client?.config?.token;
     const clientId=process.env.DISCORD_CLIENT_ID||process.env.DISCORD_CLIENT_ID_OFFICIAL||IDs.bots.ViniliCaffeBot;
     const isPrimary = !client.shard || client.shard.ids?.[0] === 0;
     if (!isPrimary) {
-      global.logger.info(`[COMMANDS] Deploy slash eseguito solo sul primary shard, skip su questo processo.`);
+      if (LOG_COMMANDS) global.logger.info(`[COMMANDS] Deploy slash eseguito solo sul primary shard, skip su questo processo.`);
       return;
     }
     const deployCheck=isCommandDeployRequired(BOT_DEPLOY_CACHE_KEY,{clientId},client.commandArray,);
     const forceDeploy = shouldForceSlashDeploy();
     if (!deployCheck.required && !forceDeploy) {
-      global.logger.info(`[COMMANDS] Nessuna modifica ai comandi globali, deploy REST saltato. scope=${deployCheck.scopeKey} hash=${deployCheck.hash}`);
+      if (LOG_COMMANDS) global.logger.info(`[COMMANDS] Nessuna modifica ai comandi globali, deploy REST saltato. scope=${deployCheck.scopeKey} hash=${deployCheck.hash}`);
       return;
     }
-    global.logger.info(`[COMMANDS] Deploy slash richiesto. scope=${deployCheck.scopeKey} prev=${deployCheck.previousHash || "none"} next=${deployCheck.hash}${forceDeploy ? " force=true" : ""}`);
+    if (LOG_COMMANDS) global.logger.info(`[COMMANDS] Deploy slash richiesto. scope=${deployCheck.scopeKey} prev=${deployCheck.previousHash || "none"} next=${deployCheck.hash}${forceDeploy ? " force=true" : ""}`);
 
     const rest = new REST({ version: "10" }).setToken(token);
 
     try {
       const me = await rest.get(Routes.currentApplication());
       const tokenAppId = me?.id || null;
-      if (tokenAppId && String(tokenAppId) !== String(clientId)) {
-        global.logger.warn(
-          `[COMMANDS] Token appartiene all'app ${tokenAppId}, ma in codice usi clientId ${clientId}. Imposta DISCORD_CLIENT_ID uguale all'Application ID dell'app del token.`,
-        );
+      if (tokenAppId && String(tokenAppId) !== String(clientId) && LOG_COMMANDS) {
+        global.logger.warn(`[COMMANDS] Token appartiene all'app ${tokenAppId}, ma in codice usi clientId ${clientId}. Imposta DISCORD_CLIENT_ID uguale all'Application ID dell'app del token.`);
       }
     } catch (e) {
-      global.logger.warn(
-        "[COMMANDS] Impossibile verificare app del token:",
-        e?.message || e,
-      );
+      if (LOG_COMMANDS) global.logger.warn("[COMMANDS] Impossibile verificare app del token:", e?.message || e);
     }
 
     try {
-      client.logs.info("[FUNCTION] Refreshing application (/) commands...");
+      if (LOG_COMMANDS) client.logs.info("[FUNCTION] Refreshing application (/) commands...");
       await rest.put(Routes.applicationCommands(clientId), {
         body: client.commandArray,
       });
@@ -116,9 +111,7 @@ module.exports = (client) => {
         { clientId },
         deployCheck.hash,
       );
-      client.logs.success(
-        "[FUNCTION] Successfully reloaded application (/) commands.",
-      );
+      if (LOG_COMMANDS) client.logs.success("[FUNCTION] Successfully reloaded application (/) commands.");
     } catch (error) {
       global.logger.error("[COMMANDS] Failed to deploy commands:", error);
       if (error?.code === 20012 || error?.status === 403) {

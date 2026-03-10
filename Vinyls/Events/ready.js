@@ -38,6 +38,8 @@ function shouldRunVerificationTenureBackfill(client) {
   return Boolean(client?.config?.verificationTenureBackfillOnStartup);
 }
 
+const LOG_STARTUP = String(process.env.LOG_STARTUP || "0") === "1";
+
 function logError(client, ...args) {
   if (client?.logs?.error) {
     client.logs.error(...args);
@@ -47,6 +49,7 @@ function logError(client, ...args) {
 }
 
 function logInfo(client, ...args) {
+  if (!LOG_STARTUP) return;
   if (client?.logs?.success) {
     client.logs.success(...args);
     return;
@@ -55,6 +58,7 @@ function logInfo(client, ...args) {
 }
 
 function logLaunch(client, ...args) {
+  if (!LOG_STARTUP) return;
   if (client?.logs?.logging) {
     client.logs.logging(...args);
     return;

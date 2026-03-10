@@ -6,6 +6,8 @@ const ascii = require("ascii-table");
 const IDs = require("../Utils/Config/ids");
 const { clearCommandDeployCache, isCommandDeployRequired, markCommandDeployComplete } = require("../../shared/runtime/commandDeployCache");
 
+const LOG_COMMANDS = String(process.env.LOG_COMMANDS || "0") === "1";
+
 function toArrayUnique(values = []) {
   return Array.from(new Set(values.filter(Boolean).map((x) => String(x))));
 }
@@ -68,7 +70,7 @@ module.exports = (client) => {
       }
     }
 
-    if (statusMap.size > 0) {
+    if (statusMap.size > 0 && LOG_COMMANDS) {
       const table = new ascii().setHeading("Folder", "File", "Status");
       for (const [key, status] of Array.from(statusMap.entries()).sort((a, b) =>
         a[0].localeCompare(b[0]),
@@ -78,9 +80,7 @@ module.exports = (client) => {
       }
       global.logger?.info?.(table.toString());
     }
-    global.logger?.info?.(
-      `[COMMANDS] Loaded ${client.commands.size} slash command(s).`,
-    );
+    if (LOG_COMMANDS) global.logger?.info?.(`[COMMANDS] Loaded ${client.commands.size} slash command(s).`);
 
     const token = process.env.DISCORD_TOKEN_TEST || client?.config?.token;
     let clientId =
@@ -107,15 +107,15 @@ module.exports = (client) => {
     const forceDeployEmpty = client.commandArray.length === 0;
     if (forceDeployEmpty) {
       clearCommandDeployCache(BOT_DEPLOY_CACHE_KEY);
-      global.logger?.info?.("[COMMANDS] Lista slash vuota: cache deploy azzerata per forzare invio lista vuota a Discord (rimozione comandi fantasma).");
+      if (LOG_COMMANDS) global.logger?.info?.("[COMMANDS] Lista slash vuota: cache deploy azzerata per forzare invio lista vuota a Discord (rimozione comandi fantasma).");
       try {
         await rest.put(Routes.applicationCommands(clientId), { body: [] });
         const globalCheck = isCommandDeployRequired(BOT_DEPLOY_CACHE_KEY, { clientId }, []);
         markCommandDeployComplete(BOT_DEPLOY_CACHE_KEY, { clientId }, globalCheck.hash);
-        global.logger?.info?.("[COMMANDS] Comandi globali azzerati (rimozione /backup e altri fantasmi a livello app).");
+        if (LOG_COMMANDS) global.logger?.info?.("[COMMANDS] Comandi globali azzerati (rimozione /backup e altri fantasmi a livello app).");
       } catch (err) {
         if (Number(err?.code) === 50001 || Number(err?.status) === 403) {
-          global.logger?.warn?.("[COMMANDS] Skip azzeramento comandi globali: Missing Access.");
+          if (LOG_COMMANDS) global.logger?.warn?.("[COMMANDS] Skip azzeramento comandi globali: Missing Access.");
         } else {
           global.logger?.error?.("[COMMANDS] Errore azzeramento comandi globali:", err);
         }
@@ -125,14 +125,10 @@ module.exports = (client) => {
       const deployCheck = isCommandDeployRequired(BOT_DEPLOY_CACHE_KEY,{clientId,guildId},client.commandArray,);
       const forceDeploy = shouldForceSlashDeploy() || forceDeployEmpty;
       if (!deployCheck.required && !forceDeploy) {
-        global.logger?.info?.(
-          `[COMMANDS] Nessuna modifica ai comandi per guild ${guildId}, deploy REST saltato. scope=${deployCheck.scopeKey} hash=${deployCheck.hash}`,
-        );
+        if (LOG_COMMANDS) global.logger?.info?.(`[COMMANDS] Nessuna modifica ai comandi per guild ${guildId}, deploy REST saltato. scope=${deployCheck.scopeKey} hash=${deployCheck.hash}`);
         continue;
       }
-      global.logger?.info?.(
-        `[COMMANDS] Deploy slash richiesto. scope=${deployCheck.scopeKey} prev=${deployCheck.previousHash || "none"} next=${deployCheck.hash}${forceDeploy ? " force=true" : ""}`,
-      );
+      if (LOG_COMMANDS) global.logger?.info?.(`[COMMANDS] Deploy slash richiesto. scope=${deployCheck.scopeKey} prev=${deployCheck.previousHash || "none"} next=${deployCheck.hash}${forceDeploy ? " force=true" : ""}`);
       try {
         await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
           body: client.commandArray,
@@ -144,9 +140,7 @@ module.exports = (client) => {
         );
       } catch (error) {
         if (Number(error?.code) === 50001 || Number(error?.status) === 403) {
-          global.logger?.warn?.(
-            `[COMMANDS] Skip deploy guild ${guildId}: Missing Access (bot non presente o senza scope applications.commands).`,
-          );
+          if (LOG_COMMANDS) global.logger?.warn?.(`[COMMANDS] Skip deploy guild ${guildId}: Missing Access (bot non presente o senza scope applications.commands).`);
           continue;
         }
         global.logger?.error?.(

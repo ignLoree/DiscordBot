@@ -9,8 +9,9 @@ const DIVIDER_URL = "https://cdn.discordapp.com/attachments/1467927329140641936/
 
 async function run(client) {
   const candidatureChannel = client.channels.cache.get(IDs.channels.candidatureStaff) || (await getClientChannelCached(client, IDs.channels.candidatureStaff));
+  const logPanels = String(process.env.LOG_PANELS || "0") === "1";
   if (!candidatureChannel?.isTextBased?.()) {
-    global.logger.warn("[CLIENT READY] Candidature panel channel missing/unusable:", IDs.channels.candidatureStaff);
+    if (logPanels) global.logger.warn("[CLIENT READY] Candidature panel channel missing/unusable:", IDs.channels.candidatureStaff);
     return;
   }
   const candidatureEmbed = new EmbedBuilder()
