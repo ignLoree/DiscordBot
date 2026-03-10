@@ -17,6 +17,16 @@ const OPENROUTER_RETRY_DELAY_MS = 1500;
 const OPENROUTER_RATE_LIMIT_COOLDOWN_MS = 15 * 60 * 1000;
 const GENERIC_OPENROUTER_MODEL_ALIASES = new Set(["openrouter/free", "openrouter/auto"]);
 let openRouterCooldownUntil = 0;
+const WARN_POLL_OPENROUTER_INTERVAL_MS = 60 * 1000;
+let lastWarnPollOpenRouterAt = 0;
+
+function warnPollOpenRouter(...args) {
+  const now = Date.now();
+  if (now - lastWarnPollOpenRouterAt < WARN_POLL_OPENROUTER_INTERVAL_MS) return;
+  lastWarnPollOpenRouterAt = now;
+  global.logger?.warn?.("[poll.auto]", ...args);
+}
+
 const LOCAL_THEME_POLLS = [{ question: "Qual è il momento migliore della giornata?", answers: ["Mattina presto", "Tarda mattinata", "Pomeriggio", "Prima serata", "Notte"], }, { question: "Quale stagione ti rappresenta di più?", answers: ["Primavera", "Estate", "Autunno", "Inverno"], }, { question: "Come preferisci iniziare la giornata?", answers: ["Con calma", "Con una colazione abbondante", "Allenandomi", "Con musica o podcast", "Di corsa ma produttivo"], }, { question: "Quale tipo di vacanza sceglieresti?", answers: ["Mare", "Montagna", "Città d'arte", "Road trip", "Relax totale"], }, { question: "Cosa conta di più in un film?", answers: ["Trama", "Personaggi", "Colonna sonora", "Finale", "Fotografia"], }, { question: "Quale pasto preferisci in assoluto?", answers: ["Colazione", "Pranzo", "Cena", "Spuntino"], }, { question: "Che rapporto hai con il freddo?", answers: ["Lo adoro", "Mi piace solo se sono coperto bene", "Lo tollero", "Lo odio"], }, { question: "Se potessi vivere in un'altra epoca, quale sceglieresti?", answers: ["Anni 80", "Anni 90", "Primi 2000", "Futuro", "Resto nel presente"], }, { question: "Quale qualità apprezzi di più in una persona?", answers: ["Sincerità", "Ironia", "Intelligenza", "Gentilezza", "Determinazione"], }, { question: "Come scegli di solito cosa guardare la sera?", answers: ["Consigli degli amici", "Trending", "Vado a caso", "Riguardo qualcosa che conosco", "Recensioni online"], }, { question: "Qual è il tuo comfort food ideale?", answers: ["Pizza", "Pasta", "Dolci", "Panino o fast food", "Cibo fatto in casa"], }, { question: "Che tipo di weekend preferisci?", answers: ["Pieno di impegni", "Fuori casa", "Chill totale", "Tra amici", "Improvvisato"], }, { question: "Quale mezzo di trasporto sopporti meglio?", answers: ["Auto", "Treno", "Aereo", "Moto", "A piedi"], }, { question: "Quale app usi più spesso in una giornata normale?", answers: ["WhatsApp", "Instagram", "TikTok", "YouTube", "Spotify"], }, { question: "Che tipo di meteo ti mette più di buon umore?", answers: ["Sole pieno", "Pioggia leggera", "Temporale", "Freddo secco", "Cielo coperto"], }, { question: "Se dovessi scegliere un superpotere, quale prenderesti?", answers: ["Teletrasporto", "Leggere nel pensiero", "Invisibilità", "Volare", "Fermare il tempo"], }, { question: "Che tipo di contenuto ti intrattiene di più?", answers: ["Video brevi", "Film", "Serie TV", "Podcast", "Streaming live"], }, { question: "Quando sei stanco, cosa ti recupera prima?", answers: ["Dormire", "Mangiare", "Uscire", "Musica", "Stare da solo"], }, { question: "Quale snack vince sempre?", answers: ["Patatine", "Cioccolato", "Popcorn", "Gelato", "Frutta"], }, { question: "Che tipo di persona sei nelle chat di gruppo?", answers: ["Quello che legge e basta", "Quello che manda meme", "Quello che risponde a tutti", "Quello che sparisce", "Quello che organizza"], }, { question: "Qual è il miglior modo per passare il tempo da solo?", answers: ["Guardare qualcosa", "Giocare", "Ascoltare musica", "Dormire", "Fare una passeggiata"], }, { question: "Cosa non dovrebbe mai mancare in una casa ideale?", answers: ["Spazio", "Silenzio", "Luce naturale", "Una cucina grande", "Una postazione relax"], }, { question: "Quale sapore scegli più spesso?", answers: ["Dolce", "Salato", "Piccante", "Amaro", "Aspro"], }, { question: "Come reagisci di solito agli imprevisti?", answers: ["Mi adatto subito", "Mi innervosisco", "Cerco un piano B", "Aspetto e vedo", "Dipende dalla situazione"], }, { question: "Qual è il miglior periodo dell'anno?", answers: ["Gennaio-Marzo", "Aprile-Giugno", "Luglio-Settembre", "Ottobre-Dicembre"], }, { question: "Che tipo di musica metti più spesso in cuffia?", answers: ["Per caricarmi", "Per rilassarmi", "Per concentrarmi", "Per nostalgia", "Dipende dal mood"], }, { question: "Sei più tipo da piano o improvvisazione?", answers: ["Programmo tutto", "Organizzo il minimo", "Vado d'istinto", "Cambio idea spesso"], }, { question: "Quale posto scegli per rilassarti davvero?", answers: ["Casa", "Mare", "Montagna", "Città", "Ovunque purché in pace"], }, { question: "Quanto conta per te il primo impatto?", answers: ["Tantissimo", "Abbastanza", "Il giusto", "Poco"], },];
 
 function normalizeText(value) {
@@ -319,7 +329,7 @@ async function fetchPollFromOpenRouter(cfg = {}, forcedTargetOptions = null) {
       if (status === 429) startOpenRouterCooldown();
       if (status === 400) {
         const detail = error?.response?.data?.error?.message || error?.response?.data?.message || error?.response?.data;
-        global.logger?.warn?.("[poll.auto] OpenRouter 400 for model " + model + ":", detail || error?.message);
+        warnPollOpenRouter("OpenRouter 400 for model " + model + ":", detail || error?.message);
         lastError = error;
         continue;
       }
@@ -332,7 +342,7 @@ async function fetchPollFromOpenRouter(cfg = {}, forcedTargetOptions = null) {
   }
 
   if (lastError) {
-    global.logger?.warn?.("[poll.auto] all OpenRouter model attempts failed:", lastError?.message || lastError);
+    warnPollOpenRouter("all OpenRouter model attempts failed:", lastError?.message || lastError);
   }
   return null;
 }
@@ -354,9 +364,9 @@ async function fetchPollFromOpenRouterWithRetry(cfg = {}, forcedTargetOptions = 
   }
 
   if (isOpenRouterCoolingDown()) {
-    global.logger?.warn?.("[poll.auto] OpenRouter cooling down after rate limit, falling back to local.");
+    warnPollOpenRouter("OpenRouter cooling down after rate limit, falling back to local.");
   } else {
-    global.logger?.warn?.("[poll.auto] OpenRouter retries exhausted, falling back to local.");
+    warnPollOpenRouter("OpenRouter retries exhausted, falling back to local.");
   }
   return null;
 }
@@ -373,6 +383,7 @@ async function pickPollCandidate(cfg = {}, forcedTargetOptions = null) {
         global.logger?.warn?.("[poll.auto] openrouter generation failed:", error?.message || error);
         return null;
       });
+      if (!candidate) candidate = buildLocalThemePoll(cfg, forcedTargetOptions);
     }
 
     if (!candidate && source === "local") {
@@ -413,8 +424,9 @@ async function runAutoPoll(client) {
   if (!payload) return;
 
   const result = await createPollForGuild(guild, { question: payload.question, answers: payload.answers, source: "auto", });
-
-  void result;
+  if (!result?.ok) {
+    global.logger?.warn?.("[poll.auto] createPollForGuild failed:", result?.error || "unknown");
+  }
 }
 
 function startAutoPollLoop(client) {

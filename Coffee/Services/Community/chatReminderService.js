@@ -6,10 +6,14 @@ const DEFAULT_TIME_ZONE = "Europe/Rome";
 const DEFAULT_START_HOUR = 9;
 const DEFAULT_END_HOUR = 21;
 const REMINDER_FIXED_INTERVAL_MINUTES = 45;
+const REMINDER_EVENT_INTERVAL_MINUTES = 15;
+const EVENT_REMINDER_MIN_GAP_MS = 10 * 60 * 1000;
 const DEFAULT_MIN_GAP_MS = 30 * 60 * 1000;
 const scheduledHours = new Map();
 const scheduledTimeouts = new Map();
 let lastReminderSlotKey = null;
+let lastEventReminderSlotKey = null;
+let lastEventReminderAt = null;
 let rotationDate = null;
 let rotationQueue = [];
 let rotationGuildId = null;
@@ -286,6 +290,32 @@ const reminderPool = [
       ].join("\n")),
 ];
 
+function getEventReminderEmbed() {
+  return new EmbedBuilder()
+    .setColor("#e8c547")
+    .setTitle("<a:VC_Events:1448688007438667796> Evento in corso!")
+    .setDescription(
+      [
+        "<:VC_EXP:1468714279673925883> **È attivo un moltiplicatore EXP**: messaggi in chat e minigiochi danno più punti!",
+        "",
+        "<a:VC_Arrow:1448672967721615452> Partecipa in chat, gioca ai minigiochi e scala la classifica prima che finisca.",
+        "",
+        "> <:VC_Info:1460670816214585481> Livelli e premi in <#1442569111119990887>",
+      ].join("\n"),
+    );
+}
+
+async function isActivityEventActive(guildId) {
+  if (!guildId) return false;
+  try {
+    const { getGuildExpSettings } = require("../../Vinyls/Services/Community/expService");
+    const settings = await getGuildExpSettings(guildId);
+    return settings?.eventExpiresAt != null && new Date(settings.eventExpiresAt).getTime() > Date.now();
+  } catch (err) {
+    return false;
+  }
+}
+
 function getDateKey(parts) {
   const y = parts.year;
   const m = String(parts.month).padStart(2, "0");
@@ -450,6 +480,14 @@ function isReminderFixedSlot(parts, client) {
   return (totalMins - startMins) % REMINDER_FIXED_INTERVAL_MINUTES === 0;
 }
 
+function isEventReminderSlot(parts, client) {
+  const { hour, minute } = parts;
+  const start = getStartHour(client);
+  const end = getEndHour(client);
+  if (hour < start || hour > end) return false;
+  return minute % REMINDER_EVENT_INTERVAL_MINUTES === 0;
+}
+
 function rand(max) {
   if (max <= 0) return 0;
   return randomInt(0, max + 1);
@@ -568,6 +606,24 @@ async function sendReminder(client, scheduleId, kind = "first") {
   }
 }
 
+async function sendEventReminderAtSlot(client, parts, slotKey) {
+  const channelId = getReminderChannelId(client);
+  if (!channelId) return;
+  const now = Date.now();
+  if (lastEventReminderAt != null && now - lastEventReminderAt < EVENT_REMINDER_MIN_GAP_MS) return;
+  const { count30m: activityCount30m } = await getActivityCounts(client);
+  const minForSlot = Math.max(1, Number(getCfg(client)?.minMessagesForEventSlot ?? 1));
+  if (activityCount30m < minForSlot) return;
+  const channel =
+    client.channels.cache.get(channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
+  if (!channel) return;
+  const embed = getEventReminderEmbed();
+  await channel.send({ embeds: [embed] }).catch(() => { });
+  lastEventReminderAt = now;
+  lastEventReminderSlotKey = slotKey;
+}
+
 async function sendReminderAtFixedSlot(client, parts, slotKey) {
   const channelId = getReminderChannelId(client);
   if (!channelId) return;
@@ -683,10 +739,20 @@ function startHourlyReminderLoop(client) {
   const tick = async () => {
     cleanupScheduledHourKeys();
     const parts = getRomeParts(new Date(), client);
-    if (!isReminderFixedSlot(parts, client)) return;
     const slotKey = `${getDateKey(parts)}_${parts.hour}_${parts.minute}`;
-    if (slotKey === lastReminderSlotKey) return;
     const guildId = client.guilds.cache.first()?.id || null;
+
+    // Reminder evento in corso: ogni 15 min, più spesso degli altri
+    if (guildId && isEventReminderSlot(parts, client) && slotKey !== lastEventReminderSlotKey) {
+      const eventActive = await isActivityEventActive(guildId);
+      if (eventActive) {
+        await sendEventReminderAtSlot(client, parts, slotKey);
+      }
+    }
+
+    // Reminder normale: slot fissi ogni 45 min
+    if (!isReminderFixedSlot(parts, client)) return;
+    if (slotKey === lastReminderSlotKey) return;
     if (!guildId) return;
     await loadRotationState(guildId, getDateKey(parts));
     await sendReminderAtFixedSlot(client, parts, slotKey);

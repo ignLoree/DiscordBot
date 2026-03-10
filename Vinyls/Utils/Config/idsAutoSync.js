@@ -26,7 +26,6 @@ function consumeReasons(guildId) {
   return Array.from(reasons || []);
 }
 
-
 async function runIdsCatalogSync(client, guildId) {
   const gid = String(guildId || "");
   if (!gid) return { changed: false, reason: "missing-guild-id" };
