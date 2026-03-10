@@ -137,7 +137,6 @@ dist
 
 # Generated at runtime / synced from server; avoid merge conflicts
 Vinyls/Utils/Config/helpNewUntil.json
-Vinyls/Utils/Config/idsCatalog.js
 Vinili & Caffè Bot Ufficiale/Utils/Config/idsCatalog.snapshot.txt
 
 # Runtime data folders for bot instances

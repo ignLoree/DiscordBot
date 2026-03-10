@@ -86,6 +86,19 @@ function resolveNodeExecutable() {
 }
 
 
+function runSyncFromServerIfConfigured() {
+    const syncServer = process.env.SYNC_SERVER || '';
+    if (!syncServer.trim()) return;
+    const scriptPath = path.join(baseDir, 'scripts', 'sync-from-server.js');
+    if (!fs.existsSync(scriptPath)) return;
+    try {
+        console.log('[Loader] Sync da server...');
+        child_process.spawnSync(process.execPath, [scriptPath], { cwd: baseDir, stdio: 'inherit', env: process.env });
+    } catch (err) {
+        console.warn('[Loader] Sync da server fallito:', err?.message || err);
+    }
+}
+
 function pidFile(botKey) {
     return path.resolve(baseDir, `.shard_${botKey}.pid`);
 }
@@ -284,7 +297,7 @@ function runfile(bot, options = {}) {
         const bypassDelay = Boolean(options.bypassDelay);
         const useWorkspaces = WORKSPACES_ENABLED;
 
-        const start=()=>{cleanupStalePid(bot.key);const repoRoot=fs.existsSync(path.join(baseDir,'.git'))?baseDir:workingDir;if(!skipGitPull&&ENABLE_LOADER_GIT_PULL){updateRepo(repoRoot);} const depTask=ENABLE_LOADER_NPM_INSTALL?ensureDependencies(workingDir,false):Promise.resolve();depTask.finally(()=>spawnBotProcess(bot,workingDir,file,resolve));};const delay=bypassDelay?0 : Number(bot.startupDelayMs || 0);
+        const start=()=>{cleanupStalePid(bot.key);runSyncFromServerIfConfigured();const repoRoot=fs.existsSync(path.join(baseDir,'.git'))?baseDir:workingDir;if(!skipGitPull&&ENABLE_LOADER_GIT_PULL){updateRepo(repoRoot);} const depTask=ENABLE_LOADER_NPM_INSTALL?ensureDependencies(workingDir,false):Promise.resolve();depTask.finally(()=>spawnBotProcess(bot,workingDir,file,resolve));};const delay=bypassDelay?0 : Number(bot.startupDelayMs || 0);
         if (delay > 0) {
             console.log(`[Loader] Ritardo avvio ${bot.label}: ${delay}ms`);
             setTimeout(start, delay);

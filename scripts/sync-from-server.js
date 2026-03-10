@@ -13,6 +13,7 @@ const { execSync } = require("child_process");
 const fs = require("fs");
 
 const ROOT = path.resolve(__dirname, "..");
+const TEMP_PREFIX = "sync-from-server-";
 
 function loadEnv() {
   const envPath = path.join(ROOT, ".env");
@@ -45,16 +46,29 @@ for (const rel of FILES) {
   const localDir = path.join(ROOT, path.dirname(rel));
   const localPath = path.join(ROOT, rel);
   if (!fs.existsSync(localDir)) fs.mkdirSync(localDir, { recursive: true });
+  const tempPath = path.join(ROOT, path.dirname(rel), TEMP_PREFIX + path.basename(rel));
   try {
     const quotedRemote = remote.includes(" ") ? `"${remote}"` : remote;
-    const quotedLocal = localPath.includes(" ") ? `"${localPath.replace(/"/g, '\\"')}"` : localPath;
-    execSync(`scp ${quotedRemote} ${quotedLocal}`, { stdio: "inherit", cwd: ROOT, shell: true });
-    console.log("OK:", rel);
+    const quotedTemp = tempPath.includes(" ") ? `"${tempPath.replace(/"/g, '\\"')}"` : tempPath;
+    execSync(`scp ${quotedRemote} ${quotedTemp}`, { stdio: "pipe", cwd: ROOT, shell: true });
+    const remoteContent = fs.readFileSync(tempPath, "utf8");
+    const localExists = fs.existsSync(localPath);
+    const localContent = localExists ? fs.readFileSync(localPath, "utf8") : "";
+    if (localContent === remoteContent) {
+      try { fs.unlinkSync(tempPath); } catch (_) {}
+      continue;
+    }
+    fs.writeFileSync(localPath, remoteContent, "utf8");
+    try { fs.unlinkSync(tempPath); } catch (_) {}
+    console.log("Aggiornato:", rel);
   } catch (e) {
+    try { if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath); } catch (_) {}
     const ext = path.extname(rel).toLowerCase();
     const placeholder = ext === ".json" ? "{}" : "module.exports = {};\n";
-    fs.writeFileSync(localPath, placeholder, "utf8");
-    console.warn("Creato placeholder locale (file assente sul server):", rel);
+    if (!fs.existsSync(localPath)) {
+      fs.writeFileSync(localPath, placeholder, "utf8");
+      console.warn("Creato placeholder locale (file assente sul server):", rel);
+    }
   }
 }
 
