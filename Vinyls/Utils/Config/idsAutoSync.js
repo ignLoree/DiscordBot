@@ -4,7 +4,6 @@ const { collectGuildCatalog, writeCatalogFiles } = require("./buildIdsCatalog");
 const DEFAULT_DELAY_MS = 15000;
 const BOT_ROOT = path.resolve(__dirname, "..", "..");
 const PROJECT_ROOT = path.resolve(BOT_ROOT, "..");
-const LOG_IDS_SYNC = String(process.env.LOG_IDS_SYNC || "0") === "1";
 const timers = new Map();
 const pendingReasons = new Map();
 const runningGuilds = new Set();
@@ -57,10 +56,10 @@ async function runIdsCatalogSync(client, guildId) {
 
   const writeEnabled = isIdsAutoSyncWriteEnabled();
   const envValue = process.env.IDS_AUTOSYNC_WRITE ?? readIdsAutoSyncWriteFromEnvFile();
-  if (LOG_IDS_SYNC) global.logger?.info?.("[IDS AUTO SYNC] run:", { guildId: gid, writeEnabled, envValue: envValue != null ? String(envValue) : "undefined" });
+  global.logger?.info?.("[IDS AUTO SYNC] run:", { guildId: gid, writeEnabled, envValue: envValue != null ? String(envValue) : "undefined" });
 
   if (!writeEnabled) {
-    if (!loggedDisabledNotice && LOG_IDS_SYNC) {
+    if (!loggedDisabledNotice) {
       loggedDisabledNotice = true;
       global.logger?.info?.("[IDS AUTO SYNC] Runtime write disabled (set IDS_AUTOSYNC_WRITE=1 in .env).");
     }
