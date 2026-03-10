@@ -1192,12 +1192,22 @@ async function sendDueJobs(client, guild) {
       continue;
     }
 
+    const hist = entry.reminderHistory?.[userId];
+    const cooldownDays = Number(hist?.cooldownDays) || getBaseCooldownDays(client);
+    if (hasRecentReminderForCooldown(hist, cooldownDays)) {
+      job.skipped = "recent";
+      continue;
+    }
+
     if (await shouldBlockDm(guild.id, userId, "weekly").catch(() => false)) {
       job.skipped = "no-dm";
       continue;
     }
 
-    const member = guild.members.cache.get(userId) || null;
+    let member = guild.members.cache.get(userId) || null;
+    if (!member) {
+      member = await guild.members.fetch(userId).catch(() => null) || null;
+    }
     if (!member) {
       job.skipped = "not-in-guild";
       continue;

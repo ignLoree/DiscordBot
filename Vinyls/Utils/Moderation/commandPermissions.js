@@ -15,8 +15,16 @@ const liveMemberCache = new Map();
 
 const MAIN_GUILD_ID = IDs?.guilds?.main || null;
 const ALLOWED_GUILD_IDS = new Set([IDs?.guilds?.main, IDs?.guilds?.test].filter(Boolean).map(String),);
+const sponsorIdsForComponents = new Set(
+  (Array.isArray(IDs?.guilds?.sponsorGuildIds) ? IDs.guilds.sponsorGuildIds : []).map(String).filter(Boolean),
+);
 function isAllowedGuildUfficiale(guildId) {
   return !guildId || ALLOWED_GUILD_IDS.has(String(guildId));
+}
+function isAllowedGuildForComponents(guildId) {
+  if (!guildId) return true;
+  const s = String(guildId);
+  return ALLOWED_GUILD_IDS.has(s) || sponsorIdsForComponents.has(s);
 }
 function isMainGuild(guildId) {
   return Boolean(MAIN_GUILD_ID) && String(guildId || "") === String(MAIN_GUILD_ID);
@@ -795,7 +803,7 @@ async function checkPrefixPermission(message, commandName, subcommandName = null
 async function checkButtonPermission(interaction) {
   const customId = String(interaction?.customId || "");
   const guildId = interaction?.guildId || interaction?.guild?.id;
-  if (guildId && !isAllowedGuildUfficiale(guildId)) {
+  if (guildId && !isAllowedGuildForComponents(guildId)) {
     if (isVerifyOrTicketInteraction(customId) || isBackupInteraction(customId)) {
       return {
         allowed: true,
@@ -972,7 +980,7 @@ async function checkButtonPermission(interaction) {
 async function checkStringSelectPermission(interaction) {
   const customId = String(interaction?.customId || "");
   const guildId = interaction?.guildId || interaction?.guild?.id;
-  if (guildId && !isAllowedGuildUfficiale(guildId)) {
+  if (guildId && !isAllowedGuildForComponents(guildId)) {
     if (isVerifyOrTicketInteraction(customId) || isBackupInteraction(customId)) {
       return {
         allowed: true,
@@ -1116,7 +1124,7 @@ async function checkStringSelectPermission(interaction) {
 async function checkModalPermission(interaction) {
   const customId = String(interaction?.customId || "");
   const guildId = interaction?.guildId || interaction?.guild?.id;
-  if (guildId && !isAllowedGuildUfficiale(guildId)) {
+  if (guildId && !isAllowedGuildForComponents(guildId)) {
     if (isVerifyOrTicketInteraction(customId) || isBackupInteraction(customId)) {
       return {
         allowed: true,
