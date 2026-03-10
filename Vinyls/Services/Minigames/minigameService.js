@@ -1,4 +1,16 @@
 const axios = require("axios");
+const MINIGAME_429_THROTTLE_MS = 60 * 1000;
+let last429LogAt = 0;
+function warnMinigame(err) {
+  const msg = err?.message || err?.response?.data || String(err);
+  const is429 = err?.response?.status === 429 || (typeof msg === "string" && msg.includes("429"));
+  if (is429) {
+    const now = Date.now();
+    if (now - last429LogAt < MINIGAME_429_THROTTLE_MS) return;
+    last429LogAt = now;
+  }
+  global.logger?.warn?.("[minigameService] ", msg);
+}
 const canvasModule = require("canvas");
 const { createCanvas, loadImage } = canvasModule;
 const { registerCanvasFonts, fontStackPrimaryOnly } = require("../../Utils/Render/canvasFonts");
@@ -488,7 +500,7 @@ async function loadWordList(cfg) {
       const res = await axios.get(apiUrl, { timeout: 15000 });
       list = extractWordListFromApiPayload(res?.data);
     } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
   }
 
@@ -568,7 +580,7 @@ async function loadCountryList(cfg) {
         list = res.data;
       }
     } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
   }
 
@@ -638,7 +650,7 @@ function parseStateTarget(rawTarget, fallback = {}) {
     const parsed = JSON.parse(rawTarget || "{}");
     if (parsed && typeof parsed === "object") return parsed;
   } catch (err) {
-    global.logger?.warn?.("[minigameService] ", err?.message || err);
+    warnMinigame(err);
   }
   return fallback;
 }
@@ -771,7 +783,7 @@ async function fetchWikiRegionImage(regionName) {
         return image;
       }
     } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
   }
 
@@ -810,7 +822,7 @@ async function loadCapitalQuestionBank(cfg) {
       out.push({ country: String(countryDisplay), answers: aliases, image });
     }
   } catch (err) {
-    global.logger?.warn?.("[minigameService] ", err?.message || err);
+    warnMinigame(err);
   }
 
   cachedCapitalQuestions = out.length ? out : getCapitalQuizBank().map((row) => ({ country: row.country, answers: row.answers, image: null }));
@@ -850,7 +862,7 @@ async function loadReverseCapitalQuestionBank(cfg) {
       }
     }
   } catch (err) {
-    global.logger?.warn?.("[minigameService] ", err?.message || err);
+    warnMinigame(err);
   }
   cachedReverseCapitalQuestions = out.length ? out : [];
   cachedReverseCapitalQuestionsAt = now;
@@ -881,7 +893,7 @@ async function loadRegionCapitalQuestionBank(cfg) {
         out.push({ region: String(region), answers });
       }
     } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
   }
 
@@ -926,7 +938,7 @@ async function loadFootballTeamsFromApi(cfg) {
         out.push({ team: displayName, teamId: team?.idTeam ? String(team.idTeam) : null, league, answers: aliases, image: badge });
       }
     } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
   }
 
@@ -970,7 +982,7 @@ async function loadSingersFromApi(cfg) {
       }
     }
   } catch (err) {
-    global.logger?.warn?.("[minigameService] ", err?.message || err);
+    warnMinigame(err);
   }
 
   cachedSingers = out;
@@ -1050,7 +1062,7 @@ async function loadAlbumsFromApi(cfg) {
       out.push({ album: title, artist, answers: buildAliases([title]), image });
     }
   } catch (err) {
-    global.logger?.warn?.("[minigameService] ", err?.message || err);
+    warnMinigame(err);
   }
 
   cachedAlbums = out;
@@ -2335,7 +2347,7 @@ async function loadLeaguePlayersFromApi(cfg) {
         out.push(info);
       }
     } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
   }
 
@@ -2397,7 +2409,7 @@ async function fetchPlayerFromRandomLetter(cfg) {
         aliases: buildPlayerAliases(player),
       };
     } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
   }
   return null;
@@ -2459,7 +2471,7 @@ async function fetchRandomSong(cfg) {
         previewUrl: song.previewUrl || null,
       };
     } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
   }
   return null;
@@ -2516,7 +2528,7 @@ async function loadPopularSongList(cfg) {
       });
     }
   } catch (err) {
-    global.logger?.warn?.("[minigameService] ", err?.message || err);
+    warnMinigame(err);
   }
 
   const feeds = Array.isArray(cfg?.guessSong?.popularFeeds)?.length ? cfg.guessSong.popularFeeds : DEFAULT_POPULAR_FEEDS;
@@ -2542,7 +2554,7 @@ async function loadPopularSongList(cfg) {
         });
       }
     } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
   }
   cachedSongs = all;
@@ -2649,7 +2661,7 @@ async function fetchArtistCountry(cfg, artistName) {
       const country = artist?.country || artist?.area?.name || null;
       if (country) return country;
     } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
   }
   return null;
@@ -2946,7 +2958,7 @@ function scheduleArtworkCensorSteps(params) {
         const payload = gameType === "guessSong" ? { embeds: [embed], components: msg.components, files } : { embeds: [embed], files };
         await msg.edit(payload).catch(() => {});
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
     }, delay);
     if (typeof t.unref === "function") t.unref();
@@ -4678,7 +4690,7 @@ async function startHangmanGame(client, cfg) {
       const list = extractWordListFromApiPayload(res?.data);
       words = list.map(normalizeWord).filter(isValidHangmanWord);
     } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
   }
   if (!words.length) {
@@ -4770,7 +4782,7 @@ async function startItalianGkGame(client, cfg) {
           questionRow = parsed;
           break;
         } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       }
     }
@@ -4880,7 +4892,7 @@ function parseDrivingQuizFromPayload(payload) {
           answer: correct === "true",
         };
     } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
     return null;
   }
@@ -5775,7 +5787,7 @@ async function awardWinAndReply(message, rewardExp, game = null) {
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
   } catch (err) {
-    global.logger?.warn?.("[minigameService] ", err?.message || err);
+    warnMinigame(err);
   }
   const nextTotal = Number(doc?.totalExp ?? 0);
   try {
@@ -5784,7 +5796,7 @@ async function awardWinAndReply(message, rewardExp, game = null) {
       { $set: { currentStreak: 0 } },
     );
   } catch (err) {
-    global.logger?.warn?.("[minigameService] ", err?.message || err);
+    warnMinigame(err);
   }
   const member = message.member || (await getGuildMemberCached(message.guild, message.author.id, { ttlMs: 20_000 }));
   const ignoreExp = await shouldIgnoreExpForMember({ guildId: message.guild.id, member, channelId: message.channel?.id || message.channelId || null, });
@@ -5792,7 +5804,7 @@ async function awardWinAndReply(message, rewardExp, game = null) {
     try {
       await addExpWithLevel(message.guild, message.author.id, effectiveExp, false, false);
     } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
   }
   let reacted = false;
@@ -5800,7 +5812,7 @@ async function awardWinAndReply(message, rewardExp, game = null) {
     await message.react(MINIGAME_WIN_EMOJI);
     reacted = true;
   } catch (err) {
-    global.logger?.warn?.("[minigameService] ", err?.message || err);
+    warnMinigame(err);
   }
   if (!reacted) {
     await message.react(MINIGAME_CORRECT_FALLBACK_EMOJI).catch(() => { });
@@ -6578,7 +6590,7 @@ ${game.previewUrl}`,
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
   } catch (err) {
-    global.logger?.warn?.("[minigameService] ", err?.message || err);
+    warnMinigame(err);
   }
   const nextTotal = Number(doc?.totalExp ?? 0);
   try {
@@ -6587,12 +6599,12 @@ ${game.previewUrl}`,
       { $set: { currentStreak: 0 } },
     );
   } catch (err) {
-    global.logger?.warn?.("[minigameService] ", err?.message || err);
+    warnMinigame(err);
   }
   try {
     await addExpWithLevel(interaction.guild, interaction.user.id, effectiveExp, false, false);
   } catch (err) {
-    global.logger?.warn?.("[minigameService] ", err?.message || err);
+    warnMinigame(err);
   }
 
   const details = (fastBonus > 0 || streakBonus > 0) ? { baseExp, fastBonus, streakBonus, newStreak, bestStreak } : null;
@@ -6617,7 +6629,7 @@ ${game.previewUrl}`,
       await message.delete().catch(() => { });
     }
   } catch (err) {
-    global.logger?.warn?.("[minigameService] ", err?.message || err);
+    warnMinigame(err);
   }
 
   return true;
@@ -6649,7 +6661,7 @@ async function restoreActiveGames(client) {
         const parsed = JSON.parse(state.target || "{}");
         name = parsed?.displayName || name;
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutFlagEmbed(name)] })
@@ -6660,7 +6672,7 @@ async function restoreActiveGames(client) {
         const parsed = JSON.parse(state.target || "{}");
         name = parsed?.name || name;
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutPlayerEmbed(name)] })
@@ -6673,7 +6685,7 @@ async function restoreActiveGames(client) {
         title = parsed?.title || title;
         artist = parsed?.artist || "";
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutSongEmbed(title, artist)] })
@@ -6687,7 +6699,7 @@ async function restoreActiveGames(client) {
         displayAnswer =
           parsed?.displayAnswer || parsed?.answers?.[0] || displayAnswer;
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutCapitalEmbed(country, displayAnswer)] })
@@ -6700,7 +6712,7 @@ async function restoreActiveGames(client) {
         capital = parsed?.capital || capital;
         displayAnswer = parsed?.displayAnswer || parsed?.country || parsed?.answers?.[0] || displayAnswer;
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutReverseCapitalEmbed(capital, displayAnswer)] })
@@ -6714,7 +6726,7 @@ async function restoreActiveGames(client) {
         displayAnswer =
           parsed?.displayAnswer || parsed?.answers?.[0] || displayAnswer;
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({
@@ -6727,7 +6739,7 @@ async function restoreActiveGames(client) {
         const parsed = JSON.parse(state.target || "{}");
         phrase = parsed?.phrase || phrase;
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutFastTypeEmbed(phrase)] })
@@ -6738,7 +6750,7 @@ async function restoreActiveGames(client) {
         const parsed = JSON.parse(state.target || "{}");
         team = parsed?.team || team;
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutTeamEmbed(team)] })
@@ -6749,7 +6761,7 @@ async function restoreActiveGames(client) {
         const parsed = JSON.parse(state.target || "{}");
         name = parsed?.name || name;
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutSingerEmbed(name)] })
@@ -6762,7 +6774,7 @@ async function restoreActiveGames(client) {
         album = parsed?.album || album;
         artist = parsed?.artist || artist;
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutAlbumEmbed(album, artist)] })
@@ -6773,7 +6785,7 @@ async function restoreActiveGames(client) {
         const parsed = JSON.parse(state.target || "{}");
         word = parsed?.word || word;
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutHangmanEmbed(word)] })
@@ -6785,7 +6797,7 @@ async function restoreActiveGames(client) {
         displayAnswer =
           parsed?.displayAnswer || parsed?.answers?.[0] || displayAnswer;
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutItalianGkEmbed(displayAnswer)] })
@@ -6800,7 +6812,7 @@ async function restoreActiveGames(client) {
           gamePayload = { answer: Boolean(parsed?.answer) };
         }
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutDrivingQuizEmbed(gamePayload)] })
@@ -6811,7 +6823,7 @@ async function restoreActiveGames(client) {
         const parsed = JSON.parse(state.target || "{}");
         answer = String(parsed?.answer || answer);
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutMathEmbed(answer)] })
@@ -6836,7 +6848,7 @@ async function restoreActiveGames(client) {
         subtitle = parsed?.subtitle || "";
         year = Number(parsed?.year) || 0;
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutGuessYearEmbed(title, subtitle, year)] })
@@ -6849,7 +6861,7 @@ async function restoreActiveGames(client) {
         song = parsed?.song || song;
         artist = parsed?.artist || artist;
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutCompleteVerseEmbed(answer, song, artist)] })
@@ -6861,7 +6873,7 @@ async function restoreActiveGames(client) {
         emojis = parsed?.emojis || "";
         answer = parsed?.answers?.[0] || "";
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutGuessEmojiEmbed(emojis, answer)] })
@@ -6873,7 +6885,7 @@ async function restoreActiveGames(client) {
         quote = parsed?.quote || quote;
         answer = parsed?.answers?.[0] || "";
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutQuoteFilmEmbed(quote, answer)] })
@@ -6885,7 +6897,7 @@ async function restoreActiveGames(client) {
         start = parsed?.start || "";
         end = parsed?.end || "";
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutCompleteProverbEmbed(start, end)] })
@@ -6898,7 +6910,7 @@ async function restoreActiveGames(client) {
         answer = parsed?.answers?.[0] ?? parsed?.answer ?? "";
         kind = parsed?.kind || "synonym";
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutSynonymAntonymEmbed(word, answer, kind)] })
@@ -6910,7 +6922,7 @@ async function restoreActiveGames(client) {
         landmark = parsed?.landmark || "";
         city = parsed?.city || parsed?.answers?.[0] || "";
       } catch (err) {
-      global.logger?.warn?.("[minigameService] ", err?.message || err);
+      warnMinigame(err);
     }
       await channel
         .send({ embeds: [buildTimeoutGuessCityEmbed(landmark, city)] })
