@@ -577,6 +577,7 @@ function renderPageText(page, newUntilMap = null) {
     "Usa il prefix, slash o context menu in base al comando.",
     "Mini-help rapido: `+help <comando>`.",
     "",
+    "",
   ].join("\n");
   const body = sections.join("\n\n");
   return { header, body };
@@ -621,6 +622,27 @@ function splitHelpTextByLength(text, maxLen = MAX_HELP_TEXT_LENGTH) {
 
 const HELP_PAGE_FOOTER_LEN = 28;
 
+function splitBodyBySections(body, maxBodyLen) {
+  const sections = body.split("\n\n").filter(Boolean);
+  if (!sections.length) return [""];
+  const chunks = [];
+  let current = [];
+  let currentLen = 0;
+  for (const sec of sections) {
+    const sep = current.length ? 2 : 0;
+    if (currentLen + sep + sec.length > maxBodyLen && current.length) {
+      chunks.push(current.join("\n\n"));
+      current = [sec];
+      currentLen = sec.length;
+    } else {
+      current.push(sec);
+      currentLen += sep + sec.length;
+    }
+  }
+  if (current.length) chunks.push(current.join("\n\n"));
+  return chunks;
+}
+
 function expandHelpDisplayPages(basePages, newUntilMap = null) {
   const expanded = [];
 
@@ -632,7 +654,7 @@ function expandHelpDisplayPages(basePages, newUntilMap = null) {
     }
     const parts = result;
     const maxBodyLen = Math.max(200, MAX_HELP_TEXT_LENGTH - HELP_PAGE_FOOTER_LEN - parts.header.length);
-    const bodyChunks = splitHelpTextByLength(parts.body, maxBodyLen);
+    const bodyChunks = splitBodyBySections(parts.body, maxBodyLen);
     for (const chunk of bodyChunks) {
       expanded.push({
         ...page,
