@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const { EmbedBuilder } = require("discord.js");
 const { inspect } = require("node:util");
 const { MentionReaction, AutoResponder } = require("../../Schemas/Community/autoInteractionSchemas");
@@ -13,6 +14,7 @@ const COUNTING_CACHE_TTL_MS = 60_000;
 const countingConfigCache = new Map();
 
 async function getCountingConfig(guildId) {
+  if (mongoose.connection?.readyState !== 1) return null;
   const key = String(guildId || "");
   if (!key) return null;
   const now = Date.now();
@@ -35,6 +37,7 @@ function invalidateCountingConfig(guildId) {
 }
 
 async function handleAfk(message) {
+  if (mongoose.connection?.readyState !== 1) return;
   const guildId = message.guild?.id;
   if (!guildId) return;
   const userId = message.author.id;

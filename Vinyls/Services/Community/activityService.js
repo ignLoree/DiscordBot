@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const { ActivityUser, ActivityDaily, ActivityHourly, } = require("../../Schemas/Community/communitySchemas");
 const { addExpWithLevel, MESSAGE_EXP, VOICE_EXP_PER_MINUTE, shouldIgnoreExpForMember, } = require("./expService");
 const IDs = require("../../Utils/Config/ids");
@@ -265,6 +266,7 @@ async function getOrCreateActivityUser(guildId, userId) {
 }
 
 async function recordMessageActivity(message) {
+  if (mongoose.connection?.readyState !== 1) return;
   if (!message?.guild || !message.author || message.author.bot) return;
   if (isExcludedActivityChannel(message.channel)) return;
   const now = new Date();
