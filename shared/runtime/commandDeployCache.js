@@ -5,7 +5,11 @@ const path = require("path");
 const CACHE_DIR = path.join(os.tmpdir(), "vinili-caffe-command-cache");
 
 function ensureCacheDir() {
-  fs.mkdirSync(CACHE_DIR, { recursive: true });
+  try {
+    fs.mkdirSync(CACHE_DIR, { recursive: true });
+  } catch {
+    // tmp dir may be read-only or missing
+  }
 }
 
 function getStatePath(botKey) {
@@ -51,10 +55,15 @@ function isCommandDeployRequired(botKey, scope, commands) {
 }
 
 function markCommandDeployComplete(botKey, scope, hash) {
-  ensureCacheDir();
-  const state = getCommandDeployState(botKey);
-  state[getScopeKey(scope)] = hash;
-  fs.writeFileSync(getStatePath(botKey), JSON.stringify(state, null, 2), "utf8");
+  try {
+    ensureCacheDir();
+    const state = getCommandDeployState(botKey);
+    state[getScopeKey(scope)] = hash;
+    fs.writeFileSync(getStatePath(botKey), JSON.stringify(state, null, 2), "utf8");
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function clearCommandDeployCache(botKey) {

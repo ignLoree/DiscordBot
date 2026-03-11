@@ -36,7 +36,12 @@ function run(root) {
   const prefixRoot = path.join(root, "Prefix");
 
   assert(fs.existsSync(permissionsPath), "permissions.json mancante");
-  const permissions = JSON.parse(fs.readFileSync(permissionsPath, "utf8"));
+  let permissions;
+  try {
+    permissions = JSON.parse(fs.readFileSync(permissionsPath, "utf8"));
+  } catch (err) {
+    throw new Error(`permissions.json non valido o illeggibile: ${err?.message || err}`);
+  }
   const prefix = permissions?.prefix || {};
   const prefixPerms = prefix;
 

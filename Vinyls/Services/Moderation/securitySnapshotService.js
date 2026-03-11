@@ -18,7 +18,11 @@ function writeJsonSafe(filePath, value) {
 }
 
 async function createSecuritySnapshot({ guildId = "", actorId = "", reason = "manual" } = {}) {
-  const permissionsRaw = fs.existsSync(PERMISSIONS_PATH) ? fs.readFileSync(PERMISSIONS_PATH, "utf8") : "{}\n";
+  let permissionsRaw = "{}\n";
+  try {
+    if (fs.existsSync(PERMISSIONS_PATH)) permissionsRaw = fs.readFileSync(PERMISSIONS_PATH, "utf8");
+  } catch {
+  }
   const antiNukeConfig = getAntiNukeStatusSnapshot(String(guildId || ""))?.config || {};
   const autoModConfig = getAutoModConfigSnapshot();
   const joinGateConfig = getJoinGateConfigSnapshot();

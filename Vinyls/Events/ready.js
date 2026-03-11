@@ -107,10 +107,6 @@ function buildPrimaryHeavyTasks(client, mainGuild, engagementTick) {
       run: () => engagementTick(),
     },
     {
-      label: "heavy task: restore active games",
-      run: () => restoreActiveGames(client),
-    },
-    {
       label: "heavy task: verification tenure backfill",
       run: () =>
         shouldRunVerificationTenureBackfill(client)
@@ -307,7 +303,7 @@ function startPrimaryLoops(client, engagementTick) {
 
   const loopStarters = [
     ["[LIVE VOICE EXP] Failed to start loop", () => startLiveVoiceExpLoop(client)],
-    ["[MINIGAMES] Failed to start loop", () => startMinigameLoop(client)],
+    ["[MINIGAMES] Failed to start loop", () => restoreActiveGames(client).then(() => startMinigameLoop(client), () => startMinigameLoop(client))],
     ["[VOTE ROLE] Failed to start cleanup loop", () => startVoteRoleCleanupLoop(client)],
     ["[WEEKLY DM REMINDER] Failed to start loop", () => startWeeklyDmReminderLoop(client)],
     ["[VERIFY TENURE] Failed to start loop", () => startVerificationTenureLoop(client)],
