@@ -1159,6 +1159,16 @@ async function checkModalPermission(interaction) {
       ownerId: null,
     };
   }
+
+  if (guildId && isAllowedGuildForComponents(guildId) && isApplyOrCandidatureInteraction(customId)) {
+    return {
+      allowed: true,
+      reason: null,
+      requiredRoles: null,
+      ownerId: null,
+    };
+  }
+
   if (!customId) {
     return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
   }
