@@ -4084,7 +4084,7 @@ async function startGuessPlayerGame(client, cfg) {
     fetchLeagueFamousPlayer(cfg),
     fetchPlayerFromRandomLetter(cfg),
   ]);
-  const info = infoFamous || infoLeague || infoLetter;
+  let info = infoFamous || infoLeague || infoLetter;
   if (!info) return false;
 
   if (cfg?.translateApiToItalian !== false) {
