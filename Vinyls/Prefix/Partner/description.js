@@ -36,7 +36,21 @@ module.exports = {
 
   async execute(message, args = []) {
     await message.channel.sendTyping();
-    const descriptionText=["_ _","_ _`` ☕ ``        𓂃        **[Vinili & Caffè](<https://discord.gg/viniliecaffe>)**      ⟢          `` 📀 ``","_ _     𓎢      **social**       ⊹       **italia** **chill**       ୧ ","_ _                            **gaming**","_ _"].join("\n");
+    const descriptionText=[
+      "_ _",
+      "_ _\`\` ☕ \`\`        𓂃        **[Vinili & Caffè](<https://discord.gg/viniliecaffe>)**      ⟢          \`\` 📀 \`\`",
+      "_ _",
+      "_ _      𓎢   **italia**   ⊹   **chill** · **social** · **gaming**    ୧",
+      "_ _",
+      "_ _ Un posto dove ritrovarsi tra musica, una tazza di caffè e chiacchiere.",
+      "_ _ Giri di voce, eventi, minigiochi e un po’ di chaos in buona compagnia.",
+      "_ _",
+      "_ _   ⊹  **crescita**  ·  **rispetto**  ·  **zero tossicità**  ⊹",
+      "_ _",
+      "_ _ Il primo server in Italia con pochissimi bots e gestito quasi completamente dai suoi bots.",
+      "_ _ Se cerchi un server attivo, curato e con un’anima, passa a trovarci.",
+      "_ _",
+    ].join("\n");
     if (!message.inGuild?.() || !message.guild || !message.member) return;
 
     const ticketDoc=await Ticket.findOne({channelId:message.channel.id,open:true,}).lean().catch(() => null);
