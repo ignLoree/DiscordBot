@@ -197,11 +197,12 @@ module.exports = {
       return strikeEmbed;
     };
 
-    const payload={embeds:[buildPageEmbed(0)],allowedMentions:{repliedUser:false},};
+    const payload={embeds:[buildPageEmbed(0)],allowedMentions:{repliedUser:false,users:[]},};
 
     if (totalPages > 1) {
       const scope = `${message.id}:${member.id}:${Date.now()}`;
       payload.components = [buildStrikeButtons(scope, 0, totalPages)];
+      payload.content = `<@${message.author.id}>`;
       const sent = await safeMessageReply(message, payload);
       if (!sent) return;
 
