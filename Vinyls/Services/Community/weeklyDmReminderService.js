@@ -794,8 +794,12 @@ async function buildWeeklyJobs(client, guild) {
   const candidates = [];
   for (const member of guild.members.cache.values()) {
     if (!member || member.user?.bot) continue;
-    if (isStaffMember(member)) continue;
-    if (!isMemberOldEnough(member, minMemberAgeDays)) continue;
+    let m = member;
+    if (!m.roles?.cache?.size) {
+      m = (await guild.members.fetch(member.id).catch(() => null)) || m;
+    }
+    if (isStaffMember(m)) continue;
+    if (!isMemberOldEnough(m, minMemberAgeDays)) continue;
     const id = String(member.id);
     if (await shouldBlockDm(guild.id, id, "weekly").catch(() => false)) continue;
     candidates.push(member);
@@ -917,7 +921,11 @@ async function runStartupBlastOnce(client, guild) {
     const eligibleMembers = [];
     for (const member of guild.members.cache.values()) {
       if (!member || member.user?.bot) continue;
-      if (isStaffMember(member)) continue;
+      let m = member;
+      if (!m.roles?.cache?.size) {
+        m = (await guild.members.fetch(member.id).catch(() => null)) || m;
+      }
+      if (isStaffMember(m)) continue;
       const userId = String(member.id);
       if (!userId || (await shouldBlockDm(guild.id, userId, "weekly").catch(() => false))) continue;
       eligibleMembers.push(member);
@@ -1015,6 +1023,8 @@ async function runExternalStartupBlastOnce(client, guild) {
     const { secondDelayMs } = getExternalTimelineMs(client);
 
     for (const userId of outsideIds) {
+      const member = await guild.members.fetch(userId).catch(() => null);
+      if (member) continue;
       if (await shouldBlockDm(guild.id, String(userId), "weekly").catch(() => false)) continue;
       const existing = entry.externalReminderHistory?.[String(userId)] || {};
       if (existing?.stopped || existing?.returnedOnce) continue;
@@ -1086,6 +1096,8 @@ async function sendExternalReturnReminders(client, guild) {
     const uid = String(userId);
     if (!uid) continue;
     if (guild.members.cache.has(uid)) continue;
+    const member = await guild.members.fetch(uid).catch(() => null);
+    if (member) continue;
     if (await shouldBlockDm(guild.id, uid, "weekly").catch(() => false)) continue;
 
     const history = entry.externalReminderHistory?.[uid] || {};
@@ -1211,6 +1223,9 @@ async function sendDueJobs(client, guild) {
     if (!member) {
       job.skipped = "not-in-guild";
       continue;
+    }
+    if (!member.roles?.cache?.size) {
+      member = (await guild.members.fetch(userId).catch(() => null)) || member;
     }
     if (!isMemberOldEnough(member, minMemberAgeDays)) {
       job.skipped = "member-too-new";

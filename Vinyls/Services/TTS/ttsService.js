@@ -364,6 +364,12 @@ async function handleTtsMessage(message, client, prefix) {
     if (warn) scheduleMessageDeletion(warn, EPHEMERAL_TTL_SHORT_MS);
     return;
   }
+  const authorVoiceId = message.member?.voice?.channelId ?? null;
+  if (!authorVoiceId || String(authorVoiceId) !== String(voiceChannel.id)) {
+    const warn = await message.reply("<a:VC_Alert:1448670089670037675> Devi essere nel canale vocale per usare il TTS.",);
+    if (warn) scheduleMessageDeletion(warn, EPHEMERAL_TTL_SHORT_MS);
+    return;
+  }
   if (!voiceChannel.joinable) return;
   const lockedChannelId = getLockedChannelId(voiceChannel.guild.id);
   if (lockedChannelId && lockedChannelId !== voiceChannel.id) {

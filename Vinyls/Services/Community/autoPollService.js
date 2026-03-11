@@ -2,7 +2,7 @@ const cron = require("node-cron");
 const axios = require("axios");
 const Poll = require("../../Schemas/Poll/pollSchema");
 const IDs = require("../../Utils/Config/ids");
-const { createPollForGuild } = require("../../Commands/Admin/poll");
+const { createPollForGuild, getPollChannelFromGuild } = require("../../Commands/Admin/poll");
 const TIMEZONE = "Europe/Rome";
 const COUNTER_FILTER_QUESTION = "__counter__";
 const DEFAULT_WINDOW_START_HOUR = 19;
@@ -422,6 +422,16 @@ async function runAutoPoll(client) {
   }
 
   if (!payload) return;
+
+  const pollChannel = await getPollChannelFromGuild(guild);
+  if (!pollChannel) {
+    global.logger?.warn?.(
+      "[poll.auto] Canale poll non disponibile. Controlla che il canale esista nel server e che il bot abbia permesso di vederlo.",
+      "guildId=" + guild.id,
+      "channelId=" + (IDs.channels?.polls || "non configurato"),
+    );
+    return;
+  }
 
   const result = await createPollForGuild(guild, { question: payload.question, answers: payload.answers, source: "auto", });
   if (!result?.ok) {

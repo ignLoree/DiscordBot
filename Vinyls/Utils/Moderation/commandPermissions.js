@@ -13,8 +13,20 @@ let idsFallbackCache = null;
 const LIVE_MEMBER_CACHE_TTL_MS = 15_000;
 const liveMemberCache = new Map();
 
-const MAIN_GUILD_ID = IDs?.guilds?.main || null;
-const ALLOWED_GUILD_IDS = new Set([IDs?.guilds?.main, IDs?.guilds?.test].filter(Boolean).map(String),);
+function getMainGuildIdFallback() {
+  try {
+    const configPath = path.join(__dirname, "..", "..", "config.json");
+    const raw = fs.readFileSync(configPath, "utf8");
+    const c = JSON.parse(raw);
+    return c.mainGuildId || c.guildMain || null;
+  } catch {
+    return null;
+  }
+}
+const MAIN_GUILD_ID = IDs?.guilds?.main || getMainGuildIdFallback() || null;
+const ALLOWED_GUILD_IDS = new Set(
+  [MAIN_GUILD_ID, IDs?.guilds?.main, IDs?.guilds?.test].filter(Boolean).map(String),
+);
 const sponsorIdsForComponents = new Set(
   (Array.isArray(IDs?.guilds?.sponsorGuildIds) ? IDs.guilds.sponsorGuildIds : []).map(String).filter(Boolean),
 );
@@ -24,6 +36,7 @@ function isAllowedGuildUfficiale(guildId) {
 function isAllowedGuildForComponents(guildId) {
   if (!guildId) return true;
   const s = String(guildId);
+  if (MAIN_GUILD_ID && s === String(MAIN_GUILD_ID)) return true;
   return ALLOWED_GUILD_IDS.has(s) || sponsorIdsForComponents.has(s);
 }
 function isMainGuild(guildId) {

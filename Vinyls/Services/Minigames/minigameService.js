@@ -1,15 +1,20 @@
 const axios = require("axios");
 const MINIGAME_429_THROTTLE_MS = 60 * 1000;
+const MINIGAME_403_THROTTLE_MS = 60 * 1000;
 let last429LogAt = 0;
+let last403LogAt = 0;
 function warnMinigame(err) {
   const msg = err?.message || err?.response?.data || String(err);
-  const is429 = err?.response?.status === 429 || (typeof msg === "string" && msg.includes("429"));
-  if (is429) {
-    const now = Date.now();
-    if (now - last429LogAt < MINIGAME_429_THROTTLE_MS) return;
-    last429LogAt = now;
-  }
-  global.logger?.warn?.("[minigameService] ", msg);
+  const status = err?.response?.status;
+  const is429 = status === 429 || (typeof msg === "string" && msg.includes("429"));
+  const is403 = status === 403 || (typeof msg === "string" && msg.includes("403"));
+  const now = Date.now();
+  if (is429 && now - last429LogAt < MINIGAME_429_THROTTLE_MS) return;
+  if (is429) last429LogAt = now;
+  if (is403 && now - last403LogAt < MINIGAME_403_THROTTLE_MS) return;
+  if (is403) last403LogAt = now;
+  const logMsg = is403 ? `${msg} (API 403 Forbidden: chiave/permessi o IP bloccato)` : msg;
+  global.logger?.warn?.("[minigameService] ", logMsg);
 }
 const canvasModule = require("canvas");
 const { createCanvas, loadImage } = canvasModule;
@@ -5696,6 +5701,12 @@ async function startGuessCityGame(client, cfg) {
   return true;
 }
 
+function is429Error(error) {
+  const status = error?.response?.status;
+  const msg = error?.message || String(error);
+  return status === 429 || (typeof msg === "string" && msg.includes("429"));
+}
+
 async function safeStartGameByType(client, cfg, gameType) {
   try {
     if (gameType === "guessWord") return startGuessWordGame(client, cfg);
@@ -5726,6 +5737,10 @@ async function safeStartGameByType(client, cfg, gameType) {
     if (gameType === "guessCity") return startGuessCityGame(client, cfg);
     return false;
   } catch (error) {
+    warnMinigame(error);
+    if (is429Error(error)) {
+      return { started: false, skipToNext: true };
+    }
     global.logger.error(`[MINIGAMES] Start failed for ${gameType}:`, error);
     return false;
   }
@@ -5782,7 +5797,8 @@ async function maybeStartRandomGame(client, force = false) {
       }
       tried.add(gameType);
 
-      const started = await safeStartGameByType(client, cfg, gameType);
+      const result = await safeStartGameByType(client, cfg, gameType);
+      const started = result === true || (result && result.started);
 
       if (started) {
         if (cfg.channelId) {
@@ -5798,6 +5814,11 @@ async function maybeStartRandomGame(client, force = false) {
         }
         pendingGames.delete(cfg.channelId);
         return;
+      }
+      if (result && result.skipToNext) {
+        pendingGames.delete(cfg.channelId);
+        pending = null;
+        continue;
       }
       await requeueGameType(client, cfg, gameType);
       pendingGames.delete(cfg.channelId);

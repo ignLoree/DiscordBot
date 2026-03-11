@@ -5,6 +5,7 @@ const IDs = require("../../Utils/Config/ids");
 const EPHEMERAL_FLAG = 1 << 6;
 const COUNTER_FILTER_QUESTION = "__counter__";
 const POLL_CHANNEL_CACHE_TTL_MS = 30_000;
+const POLL_CHANNEL_CACHE_TTL_NULL_MS = 5_000;
 const NUMBER_EMOJIS = ["<:1_:1444099163116535930>", "<:2_:1444099161673826368>", "<:3_:1444099160294031471>", "<:4_:1444099158859321435>", "<:5_:1444099157194440884>", "<:6_:1444099156007194887>", "<:7_:1444099154610618368>", "<:8_:1444099153125703690>", "<:9_:1444099151443919004>", "<:VC_10:1469357839066730627>",];
 const pollChannelCache = new Map();
 
@@ -37,7 +38,7 @@ async function getPollChannelFromGuild(guild) {
   if (cached?.promise) {
     return cached.promise;
   }
-  const fetchPromise = Promise.resolve(guild.channels.cache.get(channelId) || guild.channels.fetch(channelId).catch(() => null),).then((channel) => { pollChannelCache.set(cacheKey, { channel, expiresAt: Date.now() + POLL_CHANNEL_CACHE_TTL_MS, promise: null, }); return channel; });
+  const fetchPromise = Promise.resolve(guild.channels.cache.get(channelId) || guild.channels.fetch(channelId).catch(() => null),).then((channel) => { const ttl = channel ? POLL_CHANNEL_CACHE_TTL_MS : POLL_CHANNEL_CACHE_TTL_NULL_MS; pollChannelCache.set(cacheKey, { channel, expiresAt: Date.now() + ttl, promise: null, }); return channel; });
   pollChannelCache.set(cacheKey, { channel: null, expiresAt: 0, promise: fetchPromise });
   const channel = await fetchPromise;
   if (!channel || !channel.isTextBased?.()) return null;
@@ -518,4 +519,5 @@ module.exports = {
     }
   },
   createPollForGuild,
+  getPollChannelFromGuild,
 };
