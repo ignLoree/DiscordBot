@@ -15,7 +15,7 @@ const { syncLiveVoiceSessionsFromGateway, startLiveVoiceExpLoop, } = require("..
 const { removeExpiredTemporaryRoles, startTemporaryRoleCleanupLoop, } = require("../Services/Community/temporaryRoleService");
 const { runExpiredCustomRolesSweep, startCustomRoleExpiryLoop, } = require("../Services/Community/customRoleExpiryService");
 const{startDailyPartnerAuditLoop,}=require("../Services/Partner/partnerAuditService");
-const { startPartnershipChannelCleanupLoop, runPartnershipChannelCleanup } = require("../Services/Partner/partnershipChannelCleanupService");
+const { startPartnershipChannelCleanupLoop } = require("../Services/Partner/partnershipChannelCleanupService");
 const { startTicketAutoClosePromptLoop, startTranscriptCleanupLoop, } = require("../Services/Ticket/ticketMaintenanceService");
 const { startAutoBackupLoop } = require("../Services/Backup/autoBackupService");
 const { startModCaseLifecycleLoop } = require("../Services/Moderation/modCaseLifecycleService");
@@ -424,11 +424,6 @@ module.exports = {
         startDailyPartnerAuditLoop(client);
       } catch (err) {
         global.logger?.error?.("[DAILY PARTNER AUDIT ERROR]", err);
-      }
-      try {
-        await runPartnershipChannelCleanup(client);
-      } catch (err) {
-        global.logger?.error?.("[PARTNERSHIP CHANNEL CLEANUP RECOVERY ERROR]", err);
       }
       try {
         startPartnershipChannelCleanupLoop(client);
