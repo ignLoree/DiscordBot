@@ -77,6 +77,16 @@ function isVerifyOrTicketInteraction(customId) {
   return false;
 }
 
+function isApplyOrCandidatureInteraction(customId) {
+  if (!customId || typeof customId !== "string") return false;
+  const id = String(customId).trim();
+  if (id === "apply_helper" || id === "apply_partnermanager") return true;
+  if (id.startsWith("apply_start:") || id.startsWith("apply_back:") || id.startsWith("apply_page:")) return true;
+  if (id.startsWith("apply_pex:") || id.startsWith("apply_form:") || id.startsWith("apply_pex_modal:")) return true;
+  if (id === "candidature_premi_partner") return true;
+  return false;
+}
+
 async function isGuildOwnerOrAdmin(interaction) {
   if (!interaction?.inGuild?.()) return false;
   const userId = String(interaction?.user?.id || "");
@@ -815,6 +825,15 @@ async function checkButtonPermission(interaction) {
     return {
       allowed: false,
       reason: "mono_guild",
+      requiredRoles: null,
+      ownerId: null,
+    };
+  }
+
+  if (isMainGuild(guildId) && isApplyOrCandidatureInteraction(customId)) {
+    return {
+      allowed: true,
+      reason: null,
       requiredRoles: null,
       ownerId: null,
     };
