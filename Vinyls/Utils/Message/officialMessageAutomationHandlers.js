@@ -434,25 +434,20 @@ async function handleDiscadiaBump(message, client) {
       thanksMessage = parts.join("\n");
     }
   }
-  const channel = message.channel || (message.channelId ? await getGuildChannelCached(message.guild, message.channelId) : null);
-  if (channel?.isTextBased?.()) {
+  const commandsChannelId = IDs.channels.commands || null;
+  const targetChannel =
+    commandsChannelId
+      ? (message.guild.channels.cache.get(commandsChannelId) || (await getGuildChannelCached(message.guild, commandsChannelId)))
+      : (message.channel || (message.channelId ? await getGuildChannelCached(message.guild, message.channelId) : null));
+  if (targetChannel?.isTextBased?.()) {
+    const isInCommands = String(message.channelId) === String(commandsChannelId);
     try {
-      await channel.send({
+      await targetChannel.send({
         content: thanksMessage.trim(),
-        reply: { messageReference: message.id, failIfNotExists: false },
+        reply: isInCommands ? { messageReference: message.id, failIfNotExists: false } : undefined,
       });
     } catch {
-      try {
-        await channel.send({ content: thanksMessage.trim() });
-      } catch {
-        const fallbackChannelId = IDs.channels.commands || null;
-        if (fallbackChannelId) {
-          const fallbackChannel = message.guild.channels.cache.get(fallbackChannelId) || (await getGuildChannelCached(message.guild, fallbackChannelId));
-          if (fallbackChannel?.isTextBased?.()) {
-            await fallbackChannel.send({ content: thanksMessage.trim() }).catch(() => { });
-          }
-        }
-      }
+      await targetChannel.send({ content: thanksMessage.trim() }).catch(() => { });
     }
   }
   return true;
