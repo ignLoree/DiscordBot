@@ -3,6 +3,9 @@ const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { MinigameUser } = require("../../Schemas/Minigames/minigameSchema");
 const IDs = require("../../Utils/Config/ids");
 
+const MSTATS_CACHE_TTL_MS = 45 * 1000;
+const mstatsCache = new Map();
+
 const EXP_REWARDS=[{exp:100,roleId:IDs.roles.Initiate},{exp:500,roleId:IDs.roles.Rookie},{exp:1000,roleId:IDs.roles.Scout},{exp:1500,roleId:IDs.roles.Explorer},{exp:2500,roleId:IDs.roles.Tracker},{exp:5000,roleId:IDs.roles.Achiever},{exp:10000,roleId:IDs.roles.Vanguard},{exp:50000,roleId:IDs.roles.Mentor},{exp:100000,roleId:IDs.roles.Strategist},];
 
 function getUnlockedRewards(totalExp) {
@@ -32,13 +35,23 @@ module.exports = {
     let totalExp = 0;
     let currentStreak = 0;
     let bestStreak = 0;
-    try {
-      const doc = await MinigameUser.findOne({ guildId: message.guild.id, userId: targetUser.id }).lean();
-      totalExp = Number(doc?.totalExp || 0);
-      currentStreak = Number(doc?.currentStreak ?? 0);
-      bestStreak = Number(doc?.bestStreak ?? 0);
-    } catch (err) {
-      global.logger?.warn?.("[mstats] MinigameUser find:", err?.message || err);
+    const cacheKey = `${message.guild.id}:${targetUser.id}`;
+    const now = Date.now();
+    const cached = mstatsCache.get(cacheKey);
+    if (cached && now < (cached.expiresAt || 0)) {
+      totalExp = Number(cached.doc?.totalExp || 0);
+      currentStreak = Number(cached.doc?.currentStreak ?? 0);
+      bestStreak = Number(cached.doc?.bestStreak ?? 0);
+    } else {
+      try {
+        const doc = await MinigameUser.findOne({ guildId: message.guild.id, userId: targetUser.id }).lean();
+        totalExp = Number(doc?.totalExp || 0);
+        currentStreak = Number(doc?.currentStreak ?? 0);
+        bestStreak = Number(doc?.bestStreak ?? 0);
+        mstatsCache.set(cacheKey, { doc: doc || {}, expiresAt: now + MSTATS_CACHE_TTL_MS });
+      } catch (err) {
+        global.logger?.warn?.("[mstats] MinigameUser find:", err?.message || err);
+      }
     }
 
     const unlocked = getUnlockedRewards(totalExp);

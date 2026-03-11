@@ -618,6 +618,32 @@ const HANGMAN_WORDS = [
   "minigame", "quiz", "indovinello", "enigma", "mistero", "risposta", "domanda", "punteggio",
 ];
 
+function shuffleBankInPlace(arr) {
+  if (!Array.isArray(arr) || arr.length < 2) return;
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+[
+  GUESS_YEAR_BANK,
+  COMPLETE_VERSE_BANK,
+  GUESS_EMOJI_BANK,
+  QUOTE_FILM_BANK,
+  PROVERB_BANK,
+  SYNONYM_ANTONYM_BANK,
+  GUESS_CITY_BANK,
+  CAPITAL_QUIZ_BANK,
+  ITALIAN_REGION_CAPITAL_BANK,
+  ITALIAN_GK_BANK,
+  DRIVING_TRUE_FALSE_BANK,
+  DRIVING_MULTIPLE_CHOICE_BANK,
+  DRIVING_SIGN_QUESTIONS,
+  FAST_TYPING_PHRASES,
+  HANGMAN_WORDS,
+].forEach(shuffleBankInPlace);
+
 function getGuessYearBank() {
   return GUESS_YEAR_BANK;
 }

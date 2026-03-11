@@ -52,7 +52,10 @@ const recentMessages = new Map();
 const standbyChannels = new Set();
 const lastSentAtByChannel = new Map();
 const lastNoParticipationEndAtByChannel = new Map();
-const lastPlayedGameTypeByChannel = new Map();
+const LAST_PLAYED_ROTATION_SIZE = 3;
+const GAME_TYPE_COOLDOWN_MS = 30 * 60 * 1000;
+const lastPlayedGameTypesByChannel = new Map();
+const lastPlayedAtByChannelAndType = new Map();
 const startingChannels = new Set();
 const recentQuestionKeysByChannel = new Map();
 const REWARD_CHANNEL_ID = IDs.channels.commands;
@@ -231,20 +234,26 @@ async function translateToItalian(text, cfg = {}) {
   }
   if (rest) chunks.push(rest);
 
-  const translated = [];
-  for (const chunk of chunks) {
-    if (!chunk) continue;
-    try {
-      const url = `${MYMEMORY_BASE}?q=${encodeURIComponent(chunk)}&langpair=en|it`;
-      const res = await axios.get(url, { timeout: 8000 });
-      const t = res?.data?.responseData?.translatedText;
-      if (t && typeof t === "string") translated.push(t.trim());
-      else translated.push(chunk);
-    } catch {
-      translated.push(chunk);
+  const fetchChunk = async (chunk) => {
+    const url = `${MYMEMORY_BASE}?q=${encodeURIComponent(chunk)}&langpair=en|it`;
+    for (let attempt = 0; attempt <= 1; attempt += 1) {
+      try {
+        const res = await axios.get(url, { timeout: 8000 });
+        const t = res?.data?.responseData?.translatedText;
+        return t && typeof t === "string" ? t.trim() : chunk;
+      } catch (err) {
+        const is429 = err?.response?.status === 429;
+        if (is429 && attempt === 0) {
+          await new Promise((r) => setTimeout(r, 2500));
+          continue;
+        }
+        return chunk;
+      }
     }
-  }
-  return translated.length ? translated.join(" ").replace(/\s+\./g, ".").trim() : raw;
+    return chunk;
+  };
+  const results = await Promise.all(chunks.filter(Boolean).map(fetchChunk));
+  return results.length ? results.join(" ").replace(/\s+\./g, ".").trim() : raw;
 }
 
 function getMinigameTimeZone(client) {
@@ -620,9 +629,50 @@ async function loadCountryList(cfg) {
   return cachedCountries;
 }
 
+const ALLOWED_REWARD_EXP = [100, 150, 200, 250];
+
+function normalizeRewardExp(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return ALLOWED_REWARD_EXP[0];
+  let best = ALLOWED_REWARD_EXP[0];
+  let bestDist = Math.abs(num - best);
+  for (const a of ALLOWED_REWARD_EXP) {
+    const d = Math.abs(num - a);
+    if (d < bestDist) {
+      bestDist = d;
+      best = a;
+    }
+  }
+  return best;
+}
+
 function pickRandomItem(list = []) {
   if (!Array.isArray(list) || !list.length) return null;
   return list[randomBetween(0, list.length - 1)] || null;
+}
+
+function getRecentQuestionKey(questionKey) {
+  return String(questionKey || "").trim().toLowerCase();
+}
+
+function isQuestionKeyRecent(channelId, type, questionKey, recentLimit = 20) {
+  if (!channelId || !type) return false;
+  const key = `${channelId}:${type}`;
+  const recent = recentQuestionKeysByChannel.get(key) || [];
+  const k = getRecentQuestionKey(questionKey);
+  return k && recent.includes(k);
+}
+
+function pushQuestionKeyToRecent(channelId, type, questionKey, recentLimit = 20) {
+  if (!channelId || !type) return;
+  const k = getRecentQuestionKey(questionKey);
+  if (!k) return;
+  const key = `${channelId}:${type}`;
+  const recent = recentQuestionKeysByChannel.get(key) || [];
+  const next = recent.filter((x) => x !== k);
+  next.push(k);
+  while (next.length > Math.max(5, Number(recentLimit || 20))) next.shift();
+  recentQuestionKeysByChannel.set(key, next);
 }
 
 function pickQuestionAvoidRecent(channelId, type, list = [], keySelector, recentLimit = 20) {
@@ -632,16 +682,11 @@ function pickQuestionAvoidRecent(channelId, type, list = [], keySelector, recent
   const key = `${channelId}:${type}`;
   const recent = recentQuestionKeysByChannel.get(key) || [];
   const seen = new Set(recent);
-  const pool = list.filter((item) => { const k = String(keySelector?.(item) || "").trim().toLowerCase(); if (!k) return true; return !seen.has(k); });
+  const pool = list.filter((item) => { const k = getRecentQuestionKey(keySelector?.(item)); if (!k) return true; return !seen.has(k); });
   const picked = pickRandomItem(pool.length ? pool : list);
   if (!picked) return null;
-  const pickedKey = String(keySelector?.(picked) || "").trim().toLowerCase();
-  if (pickedKey) {
-    const next = recent.filter((x) => x !== pickedKey);
-    next.push(pickedKey);
-    while (next.length > Math.max(5, Number(recentLimit || 20))) next.shift();
-    recentQuestionKeysByChannel.set(key, next);
-  }
+  const pickedKey = getRecentQuestionKey(keySelector?.(picked));
+  if (pickedKey) pushQuestionKeyToRecent(channelId, type, pickedKey, recentLimit);
   return picked;
 }
 
@@ -3716,11 +3761,10 @@ function getAvailableGameTypes(cfg) {
   return types;
 }
 
-async function loadRotationState(client, cfg) {
+async function loadRotationState(client, cfg, guildIdOverride = null) {
   const channelId = cfg?.channelId;
   if (!channelId) return;
-  const channel = await getChannelCached(client, channelId);
-  const guildId = channel?.guild?.id || null;
+  const guildId = guildIdOverride ?? cfg?.guildId ?? (await getChannelCached(client, channelId))?.guild?.id ?? null;
   if (!guildId) return;
   const dateKey = getRomeDateKey(new Date());
   const doc = await MinigameRotation.findOne({ guildId, channelId }).lean().catch(() => null);
@@ -3738,11 +3782,10 @@ async function loadRotationState(client, cfg) {
   ).catch(() => { });
 }
 
-async function saveRotationState(client, cfg) {
+async function saveRotationState(client, cfg, guildIdOverride = null) {
   const channelId = cfg?.channelId;
   if (!channelId) return;
-  const channel = await getChannelCached(client, channelId);
-  const guildId = channel?.guild?.id || null;
+  const guildId = guildIdOverride ?? cfg?.guildId ?? (await getChannelCached(client, channelId))?.guild?.id ?? null;
   if (!guildId) return;
   const dateKey = rotationDate || getRomeDateKey(new Date());
   await MinigameRotation.findOneAndUpdate(
@@ -3764,7 +3807,8 @@ function shuffleArray(arr) {
 async function getNextGameType(client, cfg) {
   const available = getAvailableGameTypes(cfg);
   if (available.length === 0) return null;
-  await loadRotationState(client, cfg);
+  const guildId = cfg?.guildId ?? (cfg?.channelId ? (await getChannelCached(client, cfg.channelId))?.guild?.id ?? null : null);
+  await loadRotationState(client, cfg, guildId);
   const todayKey = getRomeDateKey(new Date());
   const queueSet = new Set(rotationQueue);
   const availableSet = new Set(available);
@@ -3773,19 +3817,31 @@ async function getNextGameType(client, cfg) {
     rotationDate = todayKey;
     rotationQueue = shuffleArray(available.slice());
   }
-  let next = rotationQueue.shift() || available[0];
   const channelId = cfg?.channelId;
-  const lastPlayed = channelId ? lastPlayedGameTypeByChannel.get(channelId) : null;
-  if (lastPlayed && next === lastPlayed) {
+  const now = Date.now();
+  const lastPlayedArr = channelId ? (lastPlayedGameTypesByChannel.get(channelId) || []) : [];
+  const excludeSet = new Set(lastPlayedArr);
+  const cooldownUntilByType = channelId ? (lastPlayedAtByChannelAndType.get(channelId) || new Map()) : new Map();
+  const isOnCooldown = (type) => {
+    const at = cooldownUntilByType.get(type);
+    return typeof at === "number" && now - at < GAME_TYPE_COOLDOWN_MS;
+  };
+  const halfAvailable = Math.floor(available.length / 2);
+  if (rotationQueue.length < halfAvailable && available.length > 0) {
+    rotationQueue = shuffleArray(available.slice());
+  }
+  let next = rotationQueue.shift() || available[0];
+  while ((excludeSet.has(next) || isOnCooldown(next)) && (rotationQueue.length > 0 || available.length > 1)) {
     if (rotationQueue.length > 0) {
       rotationQueue.push(next);
       next = rotationQueue.shift();
-    } else if (available.length > 1) {
-      const others = available.filter((t) => t !== lastPlayed);
-      next = others[randomBetween(0, others.length - 1)];
+    } else {
+      const others = available.filter((t) => !excludeSet.has(t) && !isOnCooldown(t));
+      next = others.length ? others[randomBetween(0, others.length - 1)] : available[0];
+      break;
     }
   }
-  await saveRotationState(client, cfg);
+  await saveRotationState(client, cfg, guildId);
   return next;
 }
 
@@ -3835,7 +3891,7 @@ async function startGuessNumberGame(client, cfg) {
 
   const min = Math.max(1, Number(cfg?.guessNumber?.min || 1));
   const max = Math.max(min, Number(cfg?.guessNumber?.max || 100));
-  const rewardExp = Number(cfg?.guessNumber?.rewardExp || 100);
+  const rewardExp = normalizeRewardExp(cfg?.guessNumber?.rewardExp ?? 100);
   const durationMs = Math.max(60000, Number(cfg?.guessNumber?.durationMs || 180000),);
 
   const channel = await getChannelCached(client, channelId);
@@ -3892,7 +3948,7 @@ async function startGuessWordGame(client, cfg) {
   const words = await loadWordList(cfg);
   if (!words.length) return false;
 
-  const rewardExp = Number(cfg?.guessWord?.rewardExp || 150);
+  const rewardExp = normalizeRewardExp(cfg?.guessWord?.rewardExp ?? 150);
   const durationMs = Math.max(60000, Number(cfg?.guessWord?.durationMs || 180000),);
 
   const channel = await getChannelCached(client, channelId);
@@ -3950,13 +4006,13 @@ async function startGuessFlagGame(client, cfg) {
   const countries = await loadCountryList(cfg);
   if (!countries.length) return false;
 
-  const rewardExp = Number(cfg?.guessFlag?.rewardExp || 150);
+  const rewardExp = normalizeRewardExp(cfg?.guessFlag?.rewardExp ?? 150);
   const durationMs = Math.max(60000, Number(cfg?.guessFlag?.durationMs || 180000),);
 
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
 
-  const target = countries[randomBetween(0, countries.length - 1)];
+  const target = pickQuestionAvoidRecent(channelId, "guessFlag", countries, (c) => c?.displayName || (Array.isArray(c?.names) ? c.names[0] : "") || "", 20) || countries[randomBetween(0, countries.length - 1)];
   if (!target) return false;
 
   const roleId = cfg.roleId;
@@ -4017,15 +4073,18 @@ async function startGuessPlayerGame(client, cfg) {
   if (!channelId) return false;
   if (activeGames.has(channelId)) return false;
 
-  const rewardExp = Number(cfg?.guessPlayer?.rewardExp || 100);
+  const rewardExp = normalizeRewardExp(cfg?.guessPlayer?.rewardExp ?? 100);
   const durationMs = Math.max(60000, Number(cfg?.guessPlayer?.durationMs || 180000),);
 
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
 
-  let info = await fetchFamousPlayer(cfg);
-  if (!info) info = await fetchLeagueFamousPlayer(cfg);
-  if (!info) info = await fetchPlayerFromRandomLetter(cfg);
+  const [infoFamous, infoLeague, infoLetter] = await Promise.all([
+    fetchFamousPlayer(cfg),
+    fetchLeagueFamousPlayer(cfg),
+    fetchPlayerFromRandomLetter(cfg),
+  ]);
+  const info = infoFamous || infoLeague || infoLetter;
   if (!info) return false;
 
   if (cfg?.translateApiToItalian !== false) {
@@ -4089,7 +4148,7 @@ async function startGuessSongGame(client, cfg) {
   if (!channelId) return false;
   if (activeGames.has(channelId)) return false;
 
-  const rewardExp = Number(cfg?.guessSong?.rewardExp || 100);
+  const rewardExp = normalizeRewardExp(cfg?.guessSong?.rewardExp ?? 100);
   const durationMs = Math.max(60000, Number(cfg?.guessSong?.durationMs || 180000),);
 
   const channel = await getChannelCached(client, channelId);
@@ -4196,7 +4255,7 @@ async function startGuessCapitalGame(client, cfg) {
   if (!pick?.country || !Array.isArray(pick?.answers) || !pick.answers.length)
     return false;
 
-  const rewardExp = Number(cfg?.guessCapital?.rewardExp || 120);
+  const rewardExp = normalizeRewardExp(cfg?.guessCapital?.rewardExp ?? 150);
   const durationMs = Math.max(60000, Number(cfg?.guessCapital?.durationMs || 180000),);
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
@@ -4257,7 +4316,7 @@ async function startGuessRegionCapitalGame(client, cfg) {
   if (!pick?.region || !Array.isArray(pick?.answers) || !pick.answers.length)
     return false;
 
-  const rewardExp = Number(cfg?.guessRegionCapital?.rewardExp || 120);
+  const rewardExp = normalizeRewardExp(cfg?.guessRegionCapital?.rewardExp ?? 150);
   const durationMs = Math.max(60000, Number(cfg?.guessRegionCapital?.durationMs || 180000),);
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
@@ -4320,7 +4379,7 @@ async function startGuessReverseCapitalGame(client, cfg) {
   if (!pick?.capital || !pick?.country || !Array.isArray(pick?.answers) || !pick.answers.length)
     return false;
 
-  const rewardExp = Number(cfg?.guessReverseCapital?.rewardExp ?? cfg?.guessCapital?.rewardExp ?? 120);
+  const rewardExp = normalizeRewardExp(cfg?.guessReverseCapital?.rewardExp ?? cfg?.guessCapital?.rewardExp ?? 150);
   const durationMs = Math.max(60000, Number(cfg?.guessReverseCapital?.durationMs ?? cfg?.guessCapital?.durationMs ?? 180000),);
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
@@ -4439,7 +4498,7 @@ async function startFastTypeGame(client, cfg) {
   }
   if (!phrase) return false;
 
-  const rewardExp = Number(cfg?.fastType?.rewardExp || 100);
+  const rewardExp = normalizeRewardExp(cfg?.fastType?.rewardExp ?? 100);
   const durationMs = Math.max(60000, Number(cfg?.fastType?.durationMs || 120000),);
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
@@ -4487,10 +4546,10 @@ async function startGuessTeamGame(client, cfg) {
   const channelId = cfg.channelId;
   if (!channelId || activeGames.has(channelId)) return false;
   const teams = await loadFootballTeamsFromApi(cfg);
-  const pick = pickRandomItem(teams);
+  const pick = pickQuestionAvoidRecent(channelId, "guessTeam", teams, (t) => t?.team || t?.id || "", 15) || pickRandomItem(teams);
   if (!pick?.team || !pick?.answers?.length) return false;
 
-  const rewardExp = Number(cfg?.guessTeam?.rewardExp || 130);
+  const rewardExp = normalizeRewardExp(cfg?.guessTeam?.rewardExp ?? 150);
   const durationMs = Math.max(60000, Number(cfg?.guessTeam?.durationMs || 180000),);
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
@@ -4538,11 +4597,11 @@ async function startGuessSingerGame(client, cfg) {
   const channelId = cfg.channelId;
   if (!channelId || activeGames.has(channelId)) return false;
   const singers = await loadSingersFromApi(cfg);
-  const pick = pickRandomItem(singers);
+  const pick = pickQuestionAvoidRecent(channelId, "guessSinger", singers, (s) => s?.name || "", 15) || pickRandomItem(singers);
   if (!pick?.name || !pick?.answers?.length) return false;
   const resolvedImage = pick.image || (await fetchSingerImageFallback(pick.name, cfg));
 
-  const rewardExp = Number(cfg?.guessSinger?.rewardExp || 130);
+  const rewardExp = normalizeRewardExp(cfg?.guessSinger?.rewardExp ?? 150);
   const durationMs = Math.max(60000, Number(cfg?.guessSinger?.durationMs || 180000),);
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
@@ -4590,10 +4649,10 @@ async function startGuessAlbumGame(client, cfg) {
   const channelId = cfg.channelId;
   if (!channelId || activeGames.has(channelId)) return false;
   const albums = await loadAlbumsFromApi(cfg);
-  const pick = pickRandomItem(albums);
+  const pick = pickQuestionAvoidRecent(channelId, "guessAlbum", albums, (a) => `${a?.album || ""}|${a?.artist || ""}`, 15) || pickRandomItem(albums);
   if (!pick?.album || !pick?.answers?.length) return false;
 
-  const rewardExp = Number(cfg?.guessAlbum?.rewardExp || 130);
+  const rewardExp = normalizeRewardExp(cfg?.guessAlbum?.rewardExp ?? 150);
   const durationMs = Math.max(60000, Number(cfg?.guessAlbum?.durationMs || 180000),);
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
@@ -4704,10 +4763,11 @@ async function startHangmanGame(client, cfg) {
   }
   if (!words.length) return false;
 
-  const word = normalizeCountryName(pickRandomItem(words));
+  const pickedWord = pickQuestionAvoidRecent(channelId, "hangman", words, (w) => normalizeCountryName(w) || String(w || "").trim().toLowerCase(), 20) || pickRandomItem(words);
+  const word = normalizeCountryName(pickedWord);
   if (!word) return false;
 
-  const rewardExp = Number(cfg?.hangman?.rewardExp || 150);
+  const rewardExp = normalizeRewardExp(cfg?.hangman?.rewardExp ?? 150);
   const durationMs = Math.max(60000, Number(cfg?.hangman?.durationMs || 240000),);
   const maxMisses = Math.max(3, Number(cfg?.hangman?.maxMisses || 7));
   const channel = await getChannelCached(client, channelId);
@@ -4762,13 +4822,14 @@ async function startItalianGkGame(client, cfg) {
   if (!channelId || activeGames.has(channelId)) return false;
 
   let questionRow = null;
-  const localPick = pickRandomItem(getItalianGkBank());
+  const localPick = pickQuestionAvoidRecent(channelId, "italianGK", getItalianGkBank(), (q) => q?.question, 20);
   if (localPick?.question && Array.isArray(localPick?.answers)) {
     questionRow = {
       question: polishItalianQuestionText(String(localPick.question)),
       answers: buildAliases(localPick.answers),
     };
   }
+  let fromApi = false;
   if (!questionRow) {
     const apiUrls = buildItalianGkApiUrls(cfg);
     const requireItalian = cfg?.italianGK?.requireItalian !== false;
@@ -4779,7 +4840,9 @@ async function startItalianGkGame(client, cfg) {
           const parsed = parseItalianGkQuestionFromPayload(res?.data);
           if (!parsed?.question || !parsed?.answers?.length) continue;
           if (requireItalian && !isLikelyItalianText(parsed.question)) continue;
+          if (isQuestionKeyRecent(channelId, "italianGK", parsed.question, 20)) continue;
           questionRow = parsed;
+          fromApi = true;
           break;
         } catch (err) {
       warnMinigame(err);
@@ -4787,20 +4850,23 @@ async function startItalianGkGame(client, cfg) {
       }
     }
     if (questionRow && apiUrls.length && cfg?.translateApiToItalian !== false) {
-      const q = await translateToItalian(questionRow.question, cfg);
-      const a = await translateToItalian(String(questionRow.answers?.[0] || ""), cfg);
+      const [q, a] = await Promise.all([
+        translateToItalian(questionRow.question, cfg),
+        translateToItalian(String(questionRow.answers?.[0] || ""), cfg),
+      ]);
       if (q) questionRow = { ...questionRow, question: polishItalianQuestionText(q) };
       if (a) questionRow = { ...questionRow, answers: buildAliases([a]) };
     }
   }
   if (!questionRow) return false;
   if (!questionRow.answers.length) return false;
+  if (fromApi) pushQuestionKeyToRecent(channelId, "italianGK", questionRow.question, 20);
   questionRow = {
     ...questionRow,
     question: polishItalianQuestionText(questionRow.question),
   };
 
-  const rewardExp = Number(cfg?.italianGK?.rewardExp || 140);
+  const rewardExp = normalizeRewardExp(cfg?.italianGK?.rewardExp ?? 150);
   const durationMs = Math.max(60000, Number(cfg?.italianGK?.durationMs || 180000),);
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
@@ -4977,19 +5043,30 @@ async function startDrivingQuizGame(client, cfg) {
   let fromApi = false;
 
   const customApiUrl = cfg?.drivingQuiz?.apiUrl || null;
+  const maxApiRetries = 3;
   if (customApiUrl) {
-    row = await fetchDrivingQuizFromApi(appendCacheBuster(customApiUrl));
-    if (row && !isDrivingPatenteRelated(row.statement)) row = null;
-    if (row) fromApi = true;
+    for (let r = 0; r < maxApiRetries && !row; r++) {
+      row = await fetchDrivingQuizFromApi(appendCacheBuster(customApiUrl));
+      if (row && !isDrivingPatenteRelated(row.statement)) row = null;
+      if (row && isQuestionKeyRecent(channelId, "drivingQuiz", row.statement, 20)) row = null;
+      if (row) fromApi = true;
+    }
   }
   if (!row && (cfg?.drivingQuiz?.useDefaultApi !== false)) {
-    row = await fetchDrivingQuizFromApi(appendCacheBuster(DEFAULT_DRIVING_QUIZ_API_URL));
-    if (row && !isDrivingPatenteRelated(row.statement)) row = null;
-    if (row) fromApi = true;
+    for (let r = 0; r < maxApiRetries && !row; r++) {
+      row = await fetchDrivingQuizFromApi(appendCacheBuster(DEFAULT_DRIVING_QUIZ_API_URL));
+      if (row && !isDrivingPatenteRelated(row.statement)) row = null;
+      if (row && isQuestionKeyRecent(channelId, "drivingQuiz", row.statement, 20)) row = null;
+      if (row) fromApi = true;
+    }
   }
 
   if (!row) {
-    const fallbackSources = [() => { const signPick = pickRandomItem(getDrivingSignQuestions()); if (signPick?.statement && signPick?.signType && Array.isArray(signPick?.options) && signPick.options.length >= 2 && typeof signPick?.correctIndex === "number" && signPick.correctIndex >= 0 && signPick.correctIndex < signPick.options.length) { return { questionType: "multiple", signType: String(signPick.signType), statement: String(signPick.statement), options: signPick.options.map((o) => String(o)), correctIndex: signPick.correctIndex, }; } return null; }, () => { const localPick = pickRandomItem(getDrivingMultipleChoiceBank()); if (localPick?.statement && Array.isArray(localPick?.options) && localPick.options.length >= 2 && typeof localPick?.correctIndex === "number" && localPick.correctIndex >= 0 && localPick.correctIndex < localPick.options.length) { return { questionType: "multiple", statement: String(localPick.statement), options: localPick.options.map((o) => String(o)), correctIndex: localPick.correctIndex, }; } return null; }, () => { const localPick = pickRandomItem(getDrivingTrueFalseBank()); if (localPick?.statement != null && typeof localPick?.answer === "boolean") { return { questionType: "trueFalse", statement: String(localPick.statement), answer: Boolean(localPick.answer), }; } return null; },];
+    const fallbackSources = [
+      () => { const signPick = pickQuestionAvoidRecent(channelId, "drivingSign", getDrivingSignQuestions(), (x) => x?.statement, 20); if (signPick?.statement && signPick?.signType && Array.isArray(signPick?.options) && signPick.options.length >= 2 && typeof signPick?.correctIndex === "number" && signPick.correctIndex >= 0 && signPick.correctIndex < signPick.options.length) { return { questionType: "multiple", signType: String(signPick.signType), statement: String(signPick.statement), options: signPick.options.map((o) => String(o)), correctIndex: signPick.correctIndex, }; } return null; },
+      () => { const localPick = pickQuestionAvoidRecent(channelId, "drivingMultiple", getDrivingMultipleChoiceBank(), (x) => x?.statement, 20); if (localPick?.statement && Array.isArray(localPick?.options) && localPick.options.length >= 2 && typeof localPick?.correctIndex === "number" && localPick.correctIndex >= 0 && localPick.correctIndex < localPick.options.length) { return { questionType: "multiple", statement: String(localPick.statement), options: localPick.options.map((o) => String(o)), correctIndex: localPick.correctIndex, }; } return null; },
+      () => { const localPick = pickQuestionAvoidRecent(channelId, "drivingTrueFalse", getDrivingTrueFalseBank(), (x) => x?.statement, 20); if (localPick?.statement != null && typeof localPick?.answer === "boolean") { return { questionType: "trueFalse", statement: String(localPick.statement), answer: Boolean(localPick.answer), }; } return null; },
+    ];
     for (let i = fallbackSources.length - 1; i > 0; i -= 1) {
       const j = Math.floor(Math.random() * (i + 1));
       [fallbackSources[i], fallbackSources[j]] = [fallbackSources[j], fallbackSources[i]];
@@ -5000,17 +5077,17 @@ async function startDrivingQuizGame(client, cfg) {
     }
   }
   if (!row) return false;
+  if (fromApi && row.statement) pushQuestionKeyToRecent(channelId, "drivingQuiz", row.statement, 20);
   if (fromApi && row.statement) {
-    const translated = await translateToItalian(row.statement, cfg);
-    if (translated) row = { ...row, statement: translated };
-    if (row.questionType === "multiple" && Array.isArray(row.options)) {
-      const translatedOpts = await Promise.all(row.options.map((o) => translateToItalian(o, cfg)),);
-      if (translatedOpts.every(Boolean))
-        row = { ...row, options: translatedOpts };
-    }
+    const toTranslate = [row.statement];
+    if (row.questionType === "multiple" && Array.isArray(row.options)) toTranslate.push(...row.options);
+    const translatedAll = await Promise.all(toTranslate.map((o) => translateToItalian(o, cfg)));
+    if (translatedAll[0]) row = { ...row, statement: translatedAll[0] };
+    if (row.questionType === "multiple" && translatedAll.length > 1 && translatedAll.slice(1).every(Boolean))
+      row = { ...row, options: translatedAll.slice(1) };
   }
 
-  const rewardExp = Number(cfg?.drivingQuiz?.rewardExp || 120);
+  const rewardExp = normalizeRewardExp(cfg?.drivingQuiz?.rewardExp ?? 150);
   const durationMs = Math.max(60000, Number(cfg?.drivingQuiz?.durationMs || 180000),);
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
@@ -5087,7 +5164,7 @@ async function startMathExpressionGame(client, cfg) {
   const row = createMathQuestion();
   if (!row?.expression) return false;
 
-  const rewardExp = Number(cfg?.mathExpression?.rewardExp || 110);
+  const rewardExp = normalizeRewardExp(cfg?.mathExpression?.rewardExp ?? 100);
   const durationMs = Math.max(60000, Number(cfg?.mathExpression?.durationMs || 150000),);
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
@@ -5162,7 +5239,7 @@ async function startFindBotGame(client, cfg) {
   if (activeGames.has(channelId)) return false;
 
   const durationMs = Math.max(60000, Number(cfg?.findBot?.durationMs || 300000),);
-  const rewardExp = Number(cfg?.findBot?.rewardExp || 100);
+  const rewardExp = normalizeRewardExp(cfg?.findBot?.rewardExp ?? 100);
   const requiredRoleId = cfg?.findBot?.requiredRoleId || null;
   const excludedChannelIds = cfg?.findBot?.excludedChannelIds || null;
 
@@ -5230,7 +5307,7 @@ async function startGuessYearGame(client, cfg) {
   const bank = getGuessYearBank();
   const pick = pickQuestionAvoidRecent(channelId, "guessYear", bank, (r) => `${r.type}:${r.title}:${r.year}`, 25);
   if (!pick) return false;
-  const rewardExp = Number(cfg?.guessYear?.rewardExp || 150);
+  const rewardExp = normalizeRewardExp(cfg?.guessYear?.rewardExp ?? 150);
   const durationMs = Math.max(60000, Number(cfg?.guessYear?.durationMs || 180000));
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
@@ -5284,7 +5361,7 @@ async function startCompleteVerseGame(client, cfg) {
   const bank = getCompleteVerseBank();
   const pick = pickQuestionAvoidRecent(channelId, "completeVerse", bank, (r) => r.verse, 15);
   if (!pick) return false;
-  const rewardExp = Number(cfg?.completeVerse?.rewardExp || 150);
+  const rewardExp = normalizeRewardExp(cfg?.completeVerse?.rewardExp ?? 150);
   const durationMs = Math.max(60000, Number(cfg?.completeVerse?.durationMs || 180000));
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
@@ -5356,7 +5433,7 @@ async function startGuessEmojiGame(client, cfg) {
     ),
   );
   if (!answers.length) return false;
-  const rewardExp = Number(cfg?.guessEmoji?.rewardExp || 150);
+  const rewardExp = normalizeRewardExp(cfg?.guessEmoji?.rewardExp ?? 150);
   const durationMs = Math.max(60000, Number(cfg?.guessEmoji?.durationMs || 180000));
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
@@ -5408,7 +5485,7 @@ async function startQuoteFilmGame(client, cfg) {
   const bank = getQuoteFilmBank();
   const pick = pickQuestionAvoidRecent(channelId, "quoteFilm", bank, (r) => r.quote, 15);
   if (!pick) return false;
-  const rewardExp = Number(cfg?.quoteFilm?.rewardExp || 150);
+  const rewardExp = normalizeRewardExp(cfg?.quoteFilm?.rewardExp ?? 150);
   const durationMs = Math.max(60000, Number(cfg?.quoteFilm?.durationMs || 180000));
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
@@ -5463,7 +5540,7 @@ async function startCompleteProverbGame(client, cfg) {
   const bank = getProverbBank();
   const pick = pickQuestionAvoidRecent(channelId, "completeProverb", bank, (r) => r.start, 15);
   if (!pick) return false;
-  const rewardExp = Number(cfg?.completeProverb?.rewardExp || 120);
+  const rewardExp = normalizeRewardExp(cfg?.completeProverb?.rewardExp ?? 150);
   const durationMs = Math.max(60000, Number(cfg?.completeProverb?.durationMs || 180000));
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
@@ -5516,7 +5593,7 @@ async function startSynonymAntonymGame(client, cfg) {
   const bank = getSynonymAntonymBank();
   const pick = pickQuestionAvoidRecent(channelId, "synonymAntonym", bank, (r) => `${r.word}:${r.kind}`, 20);
   if (!pick) return false;
-  const rewardExp = Number(cfg?.synonymAntonym?.rewardExp || 120);
+  const rewardExp = normalizeRewardExp(cfg?.synonymAntonym?.rewardExp ?? 150);
   const durationMs = Math.max(60000, Number(cfg?.synonymAntonym?.durationMs || 180000));
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
@@ -5572,7 +5649,7 @@ async function startGuessCityGame(client, cfg) {
   const bank = getGuessCityBank();
   const pick = pickQuestionAvoidRecent(channelId, "guessCity", bank, (r) => r.landmark, 20);
   if (!pick) return false;
-  const rewardExp = Number(cfg?.guessCity?.rewardExp || 150);
+  const rewardExp = normalizeRewardExp(cfg?.guessCity?.rewardExp ?? 150);
   const durationMs = Math.max(60000, Number(cfg?.guessCity?.durationMs || 180000));
   const channel = await getChannelCached(client, channelId);
   if (!channel) return false;
@@ -5708,7 +5785,17 @@ async function maybeStartRandomGame(client, force = false) {
       const started = await safeStartGameByType(client, cfg, gameType);
 
       if (started) {
-        if (cfg.channelId) lastPlayedGameTypeByChannel.set(cfg.channelId, gameType);
+        if (cfg.channelId) {
+          const prev = lastPlayedGameTypesByChannel.get(cfg.channelId) || [];
+          const next = [...prev.filter((t) => t !== gameType), gameType].slice(-LAST_PLAYED_ROTATION_SIZE);
+          lastPlayedGameTypesByChannel.set(cfg.channelId, next);
+          let atMap = lastPlayedAtByChannelAndType.get(cfg.channelId);
+          if (!atMap) {
+            atMap = new Map();
+            lastPlayedAtByChannelAndType.set(cfg.channelId, atMap);
+          }
+          atMap.set(gameType, Date.now());
+        }
         pendingGames.delete(cfg.channelId);
         return;
       }
@@ -5761,7 +5848,7 @@ async function forceStartMinigame(client) {
 async function awardWinAndReply(message, rewardExp, game = null) {
   clearNoParticipationDelay(message.channelId);
   const cfg = getConfig(message.client);
-  const baseExp = Number(rewardExp || 0);
+  const baseExp = normalizeRewardExp(rewardExp || 0);
   const startedAt = game?.startedAt ?? 0;
   const elapsed = typeof startedAt === "number" ? Date.now() - startedAt : Infinity;
   const fastCfg = cfg?.fastGuess ?? {};
@@ -5790,14 +5877,10 @@ async function awardWinAndReply(message, rewardExp, game = null) {
     warnMinigame(err);
   }
   const nextTotal = Number(doc?.totalExp ?? 0);
-  try {
-    await MinigameUser.updateMany(
-      { guildId: message.guild.id, userId: { $ne: message.author.id } },
-      { $set: { currentStreak: 0 } },
-    );
-  } catch (err) {
-    warnMinigame(err);
-  }
+  MinigameUser.updateMany(
+    { guildId: message.guild.id, userId: { $ne: message.author.id } },
+    { $set: { currentStreak: 0 } },
+  ).catch((err) => warnMinigame(err));
   const member = message.member || (await getGuildMemberCached(message.guild, message.author.id, { ttlMs: 20_000 }));
   const ignoreExp = await shouldIgnoreExpForMember({ guildId: message.guild.id, member, channelId: message.channel?.id || message.channelId || null, });
   if (!ignoreExp) {
@@ -5822,7 +5905,7 @@ async function awardWinAndReply(message, rewardExp, game = null) {
   if (member) {
     await handleExpReward(message.client, member, nextTotal);
   }
-  await clearActiveGame(message.client, cfg);
+  await clearActiveGame(message.client, { ...cfg, guildId: message.guild.id });
 }
 
 async function handleMinigameMessage(message, client) {
@@ -6564,7 +6647,7 @@ ${game.previewUrl}`,
   if (game.hintTimeout) clearTimeout(game.hintTimeout);
   activeGames.delete(cfg.channelId);
 
-  const baseExp = Number(game.rewardExp || 0);
+  const baseExp = normalizeRewardExp(game.rewardExp || 0);
   const startedAt = game.startedAt ?? 0;
   const elapsed = typeof startedAt === "number" ? Date.now() - startedAt : Infinity;
   const fastCfg = cfg?.fastGuess ?? {};
@@ -6593,14 +6676,10 @@ ${game.previewUrl}`,
     warnMinigame(err);
   }
   const nextTotal = Number(doc?.totalExp ?? 0);
-  try {
-    await MinigameUser.updateMany(
-      { guildId: interaction.guild.id, userId: { $ne: interaction.user.id } },
-      { $set: { currentStreak: 0 } },
-    );
-  } catch (err) {
-    warnMinigame(err);
-  }
+  MinigameUser.updateMany(
+    { guildId: interaction.guild.id, userId: { $ne: interaction.user.id } },
+    { $set: { currentStreak: 0 } },
+  ).catch((err) => warnMinigame(err));
   try {
     await addExpWithLevel(interaction.guild, interaction.user.id, effectiveExp, false, false);
   } catch (err) {
@@ -6620,7 +6699,7 @@ ${game.previewUrl}`,
   if (member) {
     await handleExpReward(interaction.client, member, nextTotal);
   }
-  await clearActiveGame(interaction.client, cfg);
+  await clearActiveGame(interaction.client, { ...cfg, guildId: interaction.guild.id });
 
   try {
     const channel = interaction.channel;
@@ -7429,7 +7508,7 @@ async function restoreActiveGames(client) {
   }
 }
 
-function clearGameForChannel(channelId) {
+function clearGameForChannel(channelId, client = null, guildId = null) {
   const id = String(channelId || "");
   if (!id) return;
   const game = activeGames.get(id);
@@ -7438,6 +7517,10 @@ function clearGameForChannel(channelId) {
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
   }
   activeGames.delete(id);
+  if (guildId) {
+    MinigameState.deleteOne({ guildId, channelId: id }).catch(() => { });
+    MinigameRotation.deleteOne({ guildId, channelId: id }).catch(() => { });
+  }
 }
 
 module.exports = { startMinigameLoop, forceStartMinigame, restoreActiveGames, handleMinigameMessage, handleMinigameButton, clearGameForChannel };

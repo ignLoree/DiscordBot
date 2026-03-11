@@ -41,7 +41,7 @@ module.exports = {
     const guild = channel.guild || client?.guilds?.cache?.get(channel.guildId) || (await client?.guilds?.fetch?.(channel.guildId).catch(() => null));
     if (!guild) return;
 
-    clearGameForChannel(channel.id);
+    clearGameForChannel(channel.id, client, channel.guildId);
 
     let executorId = "";
     try {

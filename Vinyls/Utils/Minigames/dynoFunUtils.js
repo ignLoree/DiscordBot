@@ -23,9 +23,27 @@ async function replyInfo(message, text, title = null) {
   });
 }
 
+const FETCH_JSON_RETRIES = 2;
+const FETCH_JSON_RETRY_DELAY_MS = 1500;
+
 async function fetchJson(url, options = {}) {
-  const response = await axios.get(url, { timeout: 15000, responseType: "json", ...options, });
-  return response.data;
+  let lastErr;
+  for (let attempt = 0; attempt <= FETCH_JSON_RETRIES; attempt += 1) {
+    try {
+      const response = await axios.get(url, { timeout: 15000, responseType: "json", ...options, });
+      return response.data;
+    } catch (err) {
+      lastErr = err;
+      const status = err?.response?.status;
+      const isRetryable = status >= 500 || status === 429 || err?.code === "ECONNRESET" || err?.code === "ETIMEDOUT";
+      if (attempt < FETCH_JSON_RETRIES && isRetryable) {
+        await new Promise((r) => setTimeout(r, FETCH_JSON_RETRY_DELAY_MS));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastErr;
 }
 
 async function fetchText(url, options = {}) {
