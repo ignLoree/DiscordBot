@@ -518,8 +518,11 @@ function tracksFromLavalinkResponse(result, requestedBy, extra = {}) {
     if (now - lastLavalinkNullLogAt >= LAVALINK_NULL_LOG_THROTTLE_MS) {
       lastLavalinkNullLogAt = now;
       const host = String(process.env.LAVALINK_HOST || "127.0.0.1:2333").trim();
+      const hint = extra?.nodeState !== "CONNECTED"
+        ? "WebSocket not connected. Check LAVALINK_PASSWORD matches application.yml and pm2 logs lavalink."
+        : "REST resolve failed or node unreachable. Check: Lavalink running? LAVALINK_HOST correct? Firewall?";
       logMusic("lavalink_resolve_null", {
-        hint: "REST resolve failed or node unreachable. Check: Lavalink running? LAVALINK_HOST correct? Firewall?",
+        hint,
         host,
         ...(extra?.nodeName != null && { nodeName: extra.nodeName }),
         ...(extra?.nodeState != null && { nodeState: extra.nodeState }),
@@ -832,9 +835,6 @@ async function getPlayer(client) {
     global.logger?.warn?.("[MUSIC] lavalink node close:", nodeName, code, reason);
   });
 
-  await waitForNodeReady(manager).catch((err) => {
-    global.logger?.warn?.("[MUSIC] lavalink wait ready failed:", err?.message || err);
-  });
   client.musicPlayer = buildManagerFacade(client, manager);
   return client.musicPlayer;
 }
