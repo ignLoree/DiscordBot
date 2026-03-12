@@ -133,6 +133,12 @@ initializeCommandCollections(client, { includeSnipes: true });
       client.logBootTables();
     }
 
+    client.once("ready", () => {
+      client.emit("clientReady", client);
+    });
+    const { getPlayer } = require("./Services/Music/musicService");
+    await getPlayer(client).catch(() => {});
+
     client.login(client.config.token).catch((error) => {
       global.logger.error(
         "[LOGIN] Error while logging in. Check if your token is correct or double check your also using the correct intents.",
