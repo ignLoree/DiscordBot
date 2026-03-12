@@ -133,9 +133,6 @@ initializeCommandCollections(client, { includeSnipes: true });
       client.logBootTables();
     }
 
-    client.once("ready", () => {
-      client.emit("clientReady", client);
-    });
     const { getPlayer } = require("./Services/Music/musicService");
     await getPlayer(client).catch(() => {});
 
