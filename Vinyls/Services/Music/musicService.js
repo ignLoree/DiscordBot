@@ -200,6 +200,22 @@ function getConnectedNode(manager) {
   return Array.from(manager.nodes.values()).find((node) => node.state === Constants.State.CONNECTED) || Array.from(manager.nodes.values())[0] || null;
 }
 
+function waitForNodeReady(manager, timeoutMs = 20000) {
+  const node = getConnectedNode(manager);
+  if (node && node.state === Constants.State.CONNECTED) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("Lavalink node connection timeout")), timeoutMs);
+    manager.once("ready", () => {
+      clearTimeout(t);
+      resolve();
+    });
+    manager.once("error", (_, err) => {
+      clearTimeout(t);
+      reject(err);
+    });
+  });
+}
+
 async function fetchYouTubeOEmbed(url) {
   const response = await axios.get("https://www.youtube.com/oembed", { params: { url, format: "json" }, timeout: 12000, }).catch(() => null);
   const data = response?.data;
@@ -395,18 +411,20 @@ async function fetchAppleTracksForQuery(query) {
 }
 
 async function resolveExternalCandidates(manager, candidates, requestedBy, originalQuery) {
+  const node = getConnectedNode(manager);
+  const nodeExtra = { nodeName: node?.name, nodeState: node?.state };
   const resolved = [];
   for (const candidate of candidates.slice(0, 12)) {
     const exactQuery = `${candidate.title || ""} ${candidate.author || ""}`.trim();
     if (!exactQuery) continue;
     let identifier = toYouTubeSearchIdentifier(exactQuery);
     let result = await resolveIdentifier(manager, identifier).catch(() => null);
-    let parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: identifier, originalQuery, source: candidate.source, url: candidate.url, }).tracks;
+    let parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: identifier, originalQuery, source: candidate.source, url: candidate.url, ...nodeExtra }).tracks;
     if (parsed.length === 0) {
       const ytmId = toYouTubeMusicSearchIdentifier(exactQuery);
       if (ytmId) {
         result = await resolveIdentifier(manager, ytmId).catch(() => null);
-        parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: ytmId, originalQuery, source: candidate.source, url: candidate.url, }).tracks;
+        parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: ytmId, originalQuery, source: candidate.source, url: candidate.url, ...nodeExtra }).tracks;
       }
     }
     let bestTrack = null;
@@ -448,7 +466,12 @@ async function runExternalCatalogSearch(manager, query, requestedBy) {
 }
 
 async function resolveIdentifier(manager, identifier) {
-  const node = getConnectedNode(manager);
+  let node = getConnectedNode(manager);
+  if (!node) throw new Error("No Lavalink node available");
+  if (node.state !== Constants.State.CONNECTED) {
+    await waitForNodeReady(manager, 5000).catch(() => {});
+    node = getConnectedNode(manager);
+  }
   if (!node) throw new Error("No Lavalink node available");
   return node.rest.resolve(identifier);
 }
@@ -473,15 +496,16 @@ function toYouTubeMusicSearchIdentifier(query) {
 async function runYouTubeOnlySearch(manager, query, requestedBy) {
   const identifier = toYouTubeSearchIdentifier(query);
   if (!identifier) return [];
+  const node = getConnectedNode(manager);
   let result = await resolveIdentifier(manager, identifier).catch(() => null);
-  let parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: identifier, originalQuery: query, source: "youtube", });
+  let parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: identifier, originalQuery: query, source: "youtube", nodeName: node?.name, nodeState: node?.state });
   let tracks = parsed.tracks || [];
   if (tracks.length === 0) {
     const ytmId = toYouTubeMusicSearchIdentifier(query);
     if (ytmId) {
       logMusic("search_yt_fallback_ytm", { query: query.slice(0, 60) });
       result = await resolveIdentifier(manager, ytmId).catch(() => null);
-      parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: ytmId, originalQuery: query, source: "youtube", });
+      parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: ytmId, originalQuery: query, source: "youtube", nodeName: node?.name, nodeState: node?.state });
       tracks = parsed.tracks || [];
     }
   }
@@ -497,6 +521,8 @@ function tracksFromLavalinkResponse(result, requestedBy, extra = {}) {
       logMusic("lavalink_resolve_null", {
         hint: "REST resolve failed or node unreachable. Check: Lavalink running? LAVALINK_HOST correct? Firewall?",
         host,
+        ...(extra?.nodeName != null && { nodeName: extra.nodeName }),
+        ...(extra?.nodeState != null && { nodeState: extra.nodeState }),
       });
     }
     return { tracks: [], playlist: null };
@@ -806,6 +832,9 @@ async function getPlayer(client) {
     global.logger?.warn?.("[MUSIC] lavalink node close:", nodeName, code, reason);
   });
 
+  await waitForNodeReady(manager).catch((err) => {
+    global.logger?.warn?.("[MUSIC] lavalink wait ready failed:", err?.message || err);
+  });
   client.musicPlayer = buildManagerFacade(client, manager);
   return client.musicPlayer;
 }
