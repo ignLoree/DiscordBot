@@ -975,7 +975,7 @@ async function handleTicketInteraction(interaction) {
         const canClose = await runtimeEnsureClosableTicketOrReply({ interaction, safeReply, makeErrorEmbed, ticketDoc, highStaff: isHighStaffActor(), });
         if (!canClose) return true;
         const modal = new ModalBuilder().setCustomId(`modal_close_ticket:${interaction.user.id}`)
-          .setTitle("<:VC_reason:1478517122929004544> • **__CHIUDI TICKET CON MOTIVO__**");
+          .setTitle("Chiudi ticket con motivo");
         const input = new TextInputBuilder().setCustomId("motivo").setLabel("Motivo della chiusura").setStyle(TextInputStyle.Paragraph).setRequired(true);
         modal.addComponents(new ActionRowBuilder().addComponents(input));
         const shown = await interaction.showModal(modal).then(() => true).catch((err) => { global.logger.error(err); return false; });

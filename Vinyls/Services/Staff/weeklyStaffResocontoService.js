@@ -504,7 +504,7 @@ async function runPreResocontoReminders(client) {
   const guild = await getClientGuildCached(client, guildId);
   if (!guild) return;
 
-  const staffDocs = await StaffModel.find({ guildId }, { userId: 1, pauses: 1 }).lean().catch(() => []);
+  const staffDocs = await StaffModel.find({ guildId }, { userId: 1, pauses: 1, partnerActions: 1 }).lean().catch(() => []);
   const staffUserIds = Array.from(new Set((staffDocs || []).map((r) => String(r?.userId || "")).filter((id) => /^\d{16,20}$/.test(id))));
   if (!staffUserIds.length) return;
 
@@ -521,17 +521,12 @@ async function runPreResocontoReminders(client) {
   const overviewResults = await Promise.all(staffOnlyIds.map((uid) => getUserOverviewStats(guildId, uid, 7)));
   const overviewByUserId = new Map(staffOnlyIds.map((id, i) => [String(id), overviewResults[i] || null]));
   const resocontoTime = "**domenica alle 15:00**";
+  const reminderWindow = getPmResocontoWindow(new Date());
 
   for (const member of reminderMembers) {
     const userId = String(member.id);
     const staffDoc = staffMap.get(userId);
-    const pauseLine = getStaffPauseLine(staffDoc);
-    if (pauseLine) {
-      await member.send({
-        content: `<:staff:1443651912179388548> **Promemoria resoconto**\n\nIl resoconto staff è ${resocontoTime}.\n\n${pauseLine} – non hai obiettivi di messaggi/vocale per questa settimana.`,
-      }).catch(() => null);
-      continue;
-    }
+    if (wasInPauseDuringWeek(staffDoc, reminderWindow.weekStart, reminderWindow.weekEnd)) continue;
 
     const staffRoleId = resolveStaffRole(member);
     if (staffRoleId) {
@@ -555,8 +550,14 @@ async function runPreResocontoReminders(client) {
     }
 
     if (hasPmRole(member)) {
+      const pmWindow = getPmResocontoWindow(new Date());
+      const weeklyPartners = countPmWeeklyPartners(staffDoc, pmWindow.weekStart, pmWindow.weekEnd);
+      const minPartners = 15;
+      if (weeklyPartners >= minPartners) continue;
+      const mancano = minPartners - weeklyPartners;
+      const depexHint = weeklyPartners < 5 ? " (sotto 5 rischi Depex)" : "";
       await member.send({
-        content: `<:partnermanager:1443651916838998099> **Promemoria resoconto**\n\nIl resoconto staff è ${resocontoTime}.\n\nCome Partner Manager la tua azione dipende dal numero di partner della settimana (almeno 5 per evitare Depex).`,
+        content: `<:partnermanager:1443651916838998099> **Promemoria resoconto**\n\nIl resoconto staff è ${resocontoTime}.\n\nCome Partner Manager ti mancano **${mancano}** partner per raggiungere il minimo di ${minPartners}${depexHint}. Attualmente ne hai **${weeklyPartners}**.`,
       }).catch(() => null);
     }
   }

@@ -53,15 +53,25 @@ function buildBirthdayAnnouncement(docs, currentYear) {
   return `${intro}\n<a:VC_Events:1448688007438667796> Oggi compiono ${visibleAges.join(", ")} anni. Tantissimi auguri.`;
 }
 
+function isMemberGoneError(err) {
+  if (!err) return false;
+  const code = err.code ?? err.status;
+  if (code === 10007 || code === 10013) return true;
+  const msg = (err.message || String(err)).toLowerCase();
+  return /unknown (member|user)|(member|user) (not )?found/i.test(msg);
+}
+
 async function assignBirthdayRole(guild, userId) {
   if (!guild || !userId || !BIRTHDAY_ROLE_ID) return;
   const member = guild.members.cache.get(userId) || (await getGuildMemberCached(guild, userId));
   if (!member) return;
   if (member.roles.cache.has(BIRTHDAY_ROLE_ID)) return;
-  await member.roles.add(BIRTHDAY_ROLE_ID).catch(() => { });
+  let addErr = null;
+  await member.roles.add(BIRTHDAY_ROLE_ID).catch((e) => { addErr = e; });
+  if (addErr && isMemberGoneError(addErr)) return;
   const refreshedMember = await getGuildMemberCached(guild, userId, { preferFresh: true });
   if (!refreshedMember?.roles?.cache?.has(BIRTHDAY_ROLE_ID)) {
-    global.logger?.warn?.("[BIRTHDAY] role assign failed:", guild.id, userId, BIRTHDAY_ROLE_ID);
+    global.logger?.warn?.("[BIRTHDAY] role assign failed:", guild.id, userId, BIRTHDAY_ROLE_ID, addErr?.message || addErr);
   }
 }
 

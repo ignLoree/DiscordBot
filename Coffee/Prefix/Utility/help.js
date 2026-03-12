@@ -35,7 +35,7 @@ function buildMiniHelpNotFoundEmbed(query) {
     .setColor(ERROR_EMBED_COLOR)
     .setTitle("Mini Help")
     .setDescription(
-      `<:vegax:1443934876440068179> Nessun comando trovato per \`${query}\`.`,
+      String(`<:vegax:1443934876440068179> Nessun comando trovato per \`${query}\`.`).slice(0, 4096),
     );
 }
 
@@ -680,8 +680,8 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
 
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle(`Guida comando: ${prefixBase}${commandName}`)
-    .setDescription(getPrefixDescription(command));
+    .setTitle(String(`Guida comando: ${prefixBase}${commandName}`).slice(0, 256))
+    .setDescription(String(getPrefixDescription(command) || "").slice(0, 4096));
 
   const fields = [];
   pushChunkedField(fields, "Sintassi", usageLines);
@@ -818,8 +818,8 @@ function buildSubcommandFallbackEmbed(query, visibleEntries, context = {}) {
       });
       return new EmbedBuilder()
         .setColor(HELP_EMBED_COLOR)
-        .setTitle(`Subcommands: ${prefixBase}${commandName}`)
-        .setDescription(lines.join("\n"));
+        .setTitle(String(`Subcommands: ${prefixBase}${commandName}`).slice(0, 256))
+        .setDescription(String(lines.join("\n")).slice(0, 4096));
     }
   }
 
@@ -854,8 +854,8 @@ function buildMiniHelpEmbed(query, entries, context = {}) {
 
   return new EmbedBuilder()
     .setColor(HELP_EMBED_COLOR)
-    .setTitle(`Mini Help: ${query}`)
-    .setDescription(`${lines.join("\n")}${extra}`);
+    .setTitle(String(`Mini Help: ${query}`).slice(0, 256))
+    .setDescription(String(`${lines.join("\n")}${extra}`).slice(0, 4096));
 }
 
 module.exports = {

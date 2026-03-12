@@ -353,6 +353,13 @@ async function handleTtsMessage(message, client, prefix) {
     timer.unref?.();
     return;
   }
+  const authorVoiceId = message.member?.voice?.channelId ?? null;
+  if (!authorVoiceId || String(authorVoiceId) !== String(voiceChannel.id)) {
+    const warn = await message.reply("<:vegax:1443934876440068179> Devi essere nel canale vocale per usare il TTS.",);
+    const timer = setTimeout(() => warn.delete().catch(() => {}), 5000);
+    if (typeof timer?.unref === "function") timer.unref();
+    return;
+  }
   if (!voiceChannel.joinable) return;
   const lockedChannelId = getLockedChannelId(voiceChannel.guild.id);
   if (lockedChannelId && lockedChannelId !== voiceChannel.id) {

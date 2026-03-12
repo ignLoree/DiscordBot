@@ -368,9 +368,9 @@ async function handleRoleActionButton(interaction) {
   }
   if (!modalId) return true;
 
-  const input = new TextInputBuilder().setCustomId("value").setLabel(label).setStyle(TextInputStyle.Short).setRequired(head !== "customrole_emoji").setPlaceholder(placeholder).setMaxLength(4000);
+  const input = new TextInputBuilder().setCustomId("value").setLabel(String(label || "").slice(0, 45)).setStyle(TextInputStyle.Short).setRequired(head !== "customrole_emoji").setPlaceholder(placeholder).setMaxLength(4000);
 
-  const modal = new ModalBuilder().setCustomId(modalId).setTitle(title).addComponents(new ActionRowBuilder().addComponents(input));
+  const modal = new ModalBuilder().setCustomId(modalId).setTitle(String(title || "").slice(0, 45)).addComponents(new ActionRowBuilder().addComponents(input));
   const shown = await interaction.showModal(modal).then(() => true).catch(() => false);
   if (!shown) {
     await replyEphemeral(interaction, {

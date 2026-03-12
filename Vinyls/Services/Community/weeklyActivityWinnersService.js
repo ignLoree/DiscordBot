@@ -290,7 +290,7 @@ async function removeRoleFromAllMembers(guild, roleId, keepUserId = "") {
 
 async function assignRoleToUser(guild, userId, roleId) {
   if (!userId || !roleId) return false;
-  const member = guild.members.cache.get(userId) || (await getGuildMemberCached(guild, userId));
+  const member = await getGuildMemberCached(guild, userId, { preferFresh: true }) || guild.members.cache.get(userId) || (await getGuildMemberCached(guild, userId));
   if (!member) return false;
   await member.roles.add(roleId).catch(() => { });
   const refreshedMember = await getGuildMemberCached(guild, userId, { preferFresh: true });

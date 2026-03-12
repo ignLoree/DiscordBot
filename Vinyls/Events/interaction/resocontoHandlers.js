@@ -375,7 +375,8 @@ async function showReasonModal(interaction, payload) {
   const modalId = [RESOCONTO_REASON_MODAL_PREFIX, payload.kind, payload.userId, payload.roleId, payload.actionKey, interaction.message.id,].join(":");
 
   const titleByAction = { px: "Motivo Pex", dp: "Motivo Depex", vp: "Motivo Valutazione Positiva", vn: "Motivo Valutazione Negativa", };
-  const modal = new ModalBuilder().setCustomId(modalId).setTitle(titleByAction[payload.actionKey] || "Motivo Azione");
+  const rawTitle = titleByAction[payload.actionKey] || "Motivo Azione";
+  const modal = new ModalBuilder().setCustomId(modalId).setTitle(String(rawTitle).slice(0, 45));
   const input = new TextInputBuilder().setCustomId(RESOCONTO_REASON_INPUT_ID).setLabel("Inserisci il motivo").setStyle(TextInputStyle.Paragraph).setRequired(true).setMaxLength(500);
   if (payload.actionKey === "vp") {
     input.setPlaceholder("Es: Limiti settimanali rispettati");

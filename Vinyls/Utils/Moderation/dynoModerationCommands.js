@@ -10,8 +10,8 @@ const { grantTemporaryRole, revokeTemporaryRole } = require("../../Services/Comm
 function embed(client, title, description, color = null) {
   return new EmbedBuilder()
     .setColor(color || client?.config?.embedModLight || "#6f4e37")
-    .setTitle(title)
-    .setDescription(description || "");
+    .setTitle(title != null ? String(title).slice(0, 256) : "")
+    .setDescription(description != null ? String(description).slice(0, 4096) : "");
 }
 
 function reasonFrom(args, start = 0, fallback = "Nessun motivo fornito") {
@@ -607,8 +607,8 @@ async function runNamed(name, message, args, client) {
         : "data sconosciuta";
       lines.push(`<:staff:1443651912179388548> **Moderatore:** ${moderator}\n<:VC_reason:1478517122929004544> ${row.reason || "Nessun motivo"} - ${when}`);
     }
-    const warningEmbed = new EmbedBuilder().setColor("#ED4245").setTitle(`${titleCount}per ${targetUser?.username || userId}(${userId})`)
-      .setDescription(lines.join("\n\n"))
+    const warningEmbed = new EmbedBuilder().setColor("#ED4245").setTitle(String(`${titleCount}per ${targetUser?.username || userId}(${userId})`).slice(0, 256))
+      .setDescription(String(lines.join("\n\n")).slice(0, 4096))
       .setThumbnail(targetUser?.displayAvatarURL?.({ size: 128 }) || null);
     return message.channel.send({ embeds: [warningEmbed] }).catch(() => null);
   }
@@ -964,8 +964,8 @@ async function runNamed(name, message, args, client) {
 
     const logsEmbed = new EmbedBuilder()
       .setColor("#3498DB")
-      .setTitle(`Modlog di ${targetUser?.username || target.userId} (Pagina ${safePage} di ${totalPages})`)
-      .setDescription(lines.join("\n\n"))
+      .setTitle(String(`Modlog di ${targetUser?.username || target.userId} (Pagina ${safePage} di ${totalPages})`).slice(0, 256))
+      .setDescription(String(lines.join("\n\n")).slice(0, 4096))
       .setFooter({ text: `${total} log totali | Usa +modlogs [utente] [pagina] per vedere un'altra pagina` });
 
     return message.channel.send({ embeds: [logsEmbed] }).catch(() => null);

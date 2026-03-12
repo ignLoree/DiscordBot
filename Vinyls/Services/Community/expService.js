@@ -573,18 +573,33 @@ async function addLevelRoleIfPossible(member, roleId) {
   return Boolean(refreshedMember?.roles?.cache?.has(roleId));
 }
 
+function isMemberGoneError(err) {
+  const code = err?.code ?? err?.rawError?.code;
+  const msg = String(err?.message ?? err?.rawError?.message ?? "").toLowerCase();
+  return code === 10007 || code === 10013 || msg.includes("unknown member") || msg.includes("unknown user") || msg.includes("not found");
+}
+
 async function addPerkRoleIfPossible(member) {
+  if (!member?.guild) return;
   const me = member.guild.members.me;
   if (!me) return;
   if (!me.permissions.has("ManageRoles")) return;
-  const role = member.guild.roles.cache.get(PERK_ROLE_ID);
+  const role = member.guild.roles.cache.get(PERK_ROLE_ID) || (await getGuildRoleCached(member.guild, PERK_ROLE_ID));
   if (!role) return;
   if (role.position >= me.roles.highest.position) return;
   if (member.roles.cache.has(PERK_ROLE_ID)) return;
-  await member.roles.add(role).catch(() => { });
+  let addErr = null;
+  await member.roles.add(role).catch((err) => { addErr = err; });
+  if (addErr && isMemberGoneError(addErr)) return;
   const refreshedMember = await getGuildMemberCached(member.guild, member.id, { preferFresh: true });
   if (!refreshedMember?.roles?.cache?.has(PERK_ROLE_ID)) {
-    global.logger?.warn?.("[EXP] perk role assign failed:", member.guild.id, member.id, PERK_ROLE_ID);
+    global.logger?.warn?.(
+      "[EXP] perk role assign failed:",
+      member.guild.id,
+      member.id,
+      PERK_ROLE_ID,
+      addErr ? addErr?.message || String(addErr) : "role not present after add",
+    );
   }
 }
 
@@ -602,7 +617,8 @@ async function syncLevelRolesForMember(guild, userId, level) {
     if (ok) awarded.push(roleId);
   }
   if (safeLevel >= 10) {
-    await addPerkRoleIfPossible(member);
+    const freshMember = await getGuildMemberCached(guild, userId, { preferFresh: true });
+    if (freshMember) await addPerkRoleIfPossible(freshMember);
   }
   return awarded;
 }

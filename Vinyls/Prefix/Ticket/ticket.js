@@ -172,9 +172,30 @@ async function resolveUserFromArg(message, rawArg) {
   if (fromMention) return fromMention;
   if (!rawArg) return null;
 
-  const id = String(rawArg).match(/^<@!?(\d+)>$/)?.[1] || (String(rawArg).match(/^\d{17,20}$/) ? String(rawArg) : null);
-  if (!id) return null;
-  return getUserCached(message.client, id);
+  const str = String(rawArg).trim();
+  const id = str.match(/^<@!?(\d+)>$/)?.[1] || (/^\d{17,20}$/.test(str) ? str : null);
+  if (id) {
+    const user = await getUserCached(message.client, id);
+    if (user) return user;
+  }
+  if (!message.guild) return null;
+  const wanted = str.toLowerCase();
+  let member = message.guild.members.cache.find((m) => {
+    const u = String(m.user?.username || "").toLowerCase();
+    const d = String(m.displayName || "").toLowerCase();
+    return u === wanted || d === wanted;
+  });
+  if (!member && typeof message.guild.members.fetch === "function") {
+    try {
+      const fetched = await message.guild.members.fetch({ query: str.slice(0, 32), limit: 10 });
+      member = fetched.find((m) => {
+        const u = String(m.user?.username || "").toLowerCase();
+        const d = String(m.displayName || "").toLowerCase();
+        return u === wanted || d === wanted;
+      }) || fetched.first();
+    } catch (_) {}
+  }
+  return member?.user || null;
 }
 
 async function fetchTicketMessage(channel, messageId) {

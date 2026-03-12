@@ -420,7 +420,7 @@ function buildModal(type, step, prefillAnswers = {}) {
   if (!selected) return null;
 
   const modal = new ModalBuilder().setCustomId(`${MODAL_PREFIX}:${type}:${step}`)
-    .setTitle(`${cfg.label}- Modulo ${step}/${chunks.length}`);
+    .setTitle(String(`${cfg.label}- Modulo ${step}/${chunks.length}`).slice(0, 45));
 
   const rows = selected.map((q) => {
     const maxLen = q.style === TextInputStyle.Short ? 120 : 1000; const input = new TextInputBuilder().setCustomId(q.id).setLabel(String(q.modalLabel || q.text || "Domanda").replace(/\s+/g, " ").trim().slice(0, 45)).setStyle(q.style || TextInputStyle.Paragraph).setRequired(true).setPlaceholder(`${String(q.text || q.modalLabel || "Domanda").replace(/\s+/g, " ").trim()}|${String(q.placeholder || "Rispondi qui").replace(/\s+/g, " ").trim()}`

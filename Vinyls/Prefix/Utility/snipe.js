@@ -6,19 +6,21 @@ module.exports = {
   allowEmptyArgs: true,
   async execute(message, args, client) {
     await message.channel.sendTyping();
+    if (!message.guild) return;
     if (!client.snipes || !(client.snipes instanceof Map)) {
       client.snipes = new Map();
     }
-    const raw = client.snipes.get(message.channel.id);
+    const targetChannel = message.mentions?.channels?.first() || message.channel;
+    const channelId = targetChannel.id;
+    const raw = client.snipes.get(channelId);
     const history = Array.isArray(raw) ? raw : raw ? [raw] : [];
     const snipe = history.find((item) => !item?.isEmbedOnly) || null;
 
-    if (!message.guild) return;
-
     if (!snipe) {
+      const where = targetChannel.id !== message.channel.id ? ` in ${targetChannel}` : "";
       return safeMessageReply(message, {
         content:
-          "<:vegax:1443934876440068179> Nessun messaggio eliminato recentemente.",
+          `<:vegax:1443934876440068179> Nessun messaggio eliminato recentemente${where}.`,
         allowedMentions: { repliedUser: false },
       });
     }
@@ -37,7 +39,7 @@ module.exports = {
         },
         {
           name: "<:VC_BlackPin:1448687216871084266> Canale:",
-          value: snipe.channel || `${message.channel}`,
+          value: snipe.channel || `${targetChannel}`,
           inline: true,
         },
         {

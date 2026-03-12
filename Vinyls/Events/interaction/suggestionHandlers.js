@@ -122,7 +122,7 @@ async function handleSuggestionVote(interaction) {
 
       const action = customId === STAFF_ACCEPT_BUTTON_ID ? "accept" : "reject";
       const modal = new ModalBuilder().setCustomId(`${STAFF_MODAL_PREFIX}:${action}:${message.id}`)
-        .setTitle(action === "accept" ? "<:success:1461731530333229226> Accetta suggerimento" : "<:cancel:1461730653677551691> Rifiuta suggerimento");
+        .setTitle(action === "accept" ? "Accetta suggerimento" : "Rifiuta suggerimento");
 
       const reasonInput = new TextInputBuilder().setCustomId(STAFF_REASON_INPUT_ID).setLabel("Motivo").setStyle(TextInputStyle.Paragraph).setRequired(true).setMinLength(3).setMaxLength(1000).setPlaceholder("Inserisci il motivo...");
 

@@ -23,14 +23,23 @@ async function resolveMember(message, query) {
   }
   if (!query) return message.member;
   const target = norm(query);
-  return (
-    message.guild.members.cache.find((m) => {
-      const username = norm(m.user?.username);
-      const displayName = norm(m.displayName);
-      const tag = norm(m.user?.tag);
-      return username === target || displayName === target || tag === target;
-    }) || message.member
-  );
+  let found = message.guild.members.cache.find((m) => {
+    const username = norm(m.user?.username);
+    const displayName = norm(m.displayName);
+    const tag = norm(m.user?.tag);
+    return username === target || displayName === target || tag === target;
+  });
+  if (!found && typeof message.guild.members.fetch === "function") {
+    try {
+      const fetched = await message.guild.members.fetch({ query: String(query).slice(0, 32), limit: 10 });
+      found = fetched.find((m) => {
+        const u = norm(m.user?.username);
+        const d = norm(m.displayName);
+        return u === target || d === target;
+      }) || fetched.first();
+    } catch (_) {}
+  }
+  return found || message.member;
 }
 
 function badgeNames(userFlags) {

@@ -98,4 +98,58 @@ function parseUserActivityArgs(args) {
   return { targetId, lookbackDays: normalizeLookbackDays(lookback) };
 }
 
-module.exports = { name: "user", order: 7, match, execute, USER_REFRESH_CUSTOM_ID_PREFIX, USER_PERIOD_OPEN_CUSTOM_ID_PREFIX, USER_PERIOD_SET_CUSTOM_ID_PREFIX, USER_PERIOD_BACK_CUSTOM_ID_PREFIX, buildUserOverviewPayload, buildUserComponents, parseUserActivityArgs };
+/**
+ * Risolve l'utente da messaggio e args: mention, ID (raw o <@!id>), o username.
+ * @param {import("discord.js").Message} message
+ * @param {string[]} args
+ * @returns {Promise<{ targetId: string | null, lookbackDays: number }>}
+ */
+async function resolveUserTargetAndLookback(message, args = []) {
+  const tokens = Array.isArray(args) ? args.map((a) => String(a ?? "").trim()).filter(Boolean) : [];
+  let lookbackDays = 14;
+  const lookbackMatch = tokens.find((t) => /^\d+d?$/i.test(t));
+  if (lookbackMatch) {
+    lookbackDays = normalizeLookbackDays(lookbackMatch.replace(/d$/i, ""));
+  }
+
+  const mention = message?.mentions?.users?.first();
+  if (mention) {
+    return { targetId: mention.id, lookbackDays };
+  }
+
+  const first = tokens.find((t) => !/^\d+d?$/i.test(t));
+  if (!first) return { targetId: null, lookbackDays };
+
+  const mentionId = first.match(/^<@!?(\d+)>$/)?.[1];
+  if (mentionId) return { targetId: mentionId, lookbackDays };
+
+  const numericId = first.replace(/[<@!>]/g, "").trim();
+  if (/^\d{17,20}$/.test(numericId)) {
+    const user = await message.client?.users?.fetch(numericId).catch(() => null);
+    if (user) return { targetId: user.id, lookbackDays };
+  }
+
+  const guild = message.guild;
+  if (guild) {
+    const byUsername = guild.members.cache.find(
+      (m) =>
+        (m.user?.username && String(m.user.username).toLowerCase() === first.toLowerCase()) ||
+        (m.user?.tag && String(m.user.tag).toLowerCase() === first.toLowerCase()) ||
+        (m.displayName && String(m.displayName).toLowerCase() === first.toLowerCase()),
+    );
+    if (byUsername) return { targetId: byUsername.id, lookbackDays };
+    try {
+      const members = await guild.members.fetch({ query: first, limit: 10 });
+      const found = members.find(
+        (m) =>
+          (m.user?.username && String(m.user.username).toLowerCase() === first.toLowerCase()) ||
+          (m.displayName && String(m.displayName).toLowerCase() === first.toLowerCase()),
+      ) || members.first();
+      if (found) return { targetId: found.id, lookbackDays };
+    } catch (_) {}
+  }
+
+  return { targetId: null, lookbackDays };
+}
+
+module.exports = { name: "user", order: 7, match, execute, USER_REFRESH_CUSTOM_ID_PREFIX, USER_PERIOD_OPEN_CUSTOM_ID_PREFIX, USER_PERIOD_SET_CUSTOM_ID_PREFIX, USER_PERIOD_BACK_CUSTOM_ID_PREFIX, buildUserOverviewPayload, buildUserComponents, parseUserActivityArgs, resolveUserTargetAndLookback };

@@ -12,12 +12,22 @@ async function resolveTargetUser(message, rawValue) {
     return message.client.users.fetch(id).catch(() => null);
   }
   const wanted = raw.toLowerCase();
-  const member = message.guild.members.cache.find((item) => {
+  let member = message.guild.members.cache.find((item) => {
     const username = String(item.user?.username || "").toLowerCase();
     const displayName = String(item.displayName || "").toLowerCase();
     const tag = String(item.user?.tag || "").toLowerCase();
     return username === wanted || displayName === wanted || tag === wanted;
   });
+  if (!member && typeof message.guild.members.fetch === "function") {
+    try {
+      const fetched = await message.guild.members.fetch({ query: raw.slice(0, 32), limit: 10 });
+      member = fetched.find((m) => {
+        const u = String(m.user?.username || "").toLowerCase();
+        const d = String(m.displayName || "").toLowerCase();
+        return u === wanted || d === wanted;
+      }) || fetched.first();
+    } catch (_) {}
+  }
   return member?.user || null;
 }
 
