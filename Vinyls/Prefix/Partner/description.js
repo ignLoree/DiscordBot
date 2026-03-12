@@ -50,6 +50,11 @@ module.exports = {
       "_ _ Il primo server in Italia con pochissimi bots e gestito quasi completamente dai suoi bots.",
       "_ _ Se cerchi un server attivo, curato e con un’anima, passa a trovarci.",
       "_ _",
+      "_ _          **Cerchiamo staff e partner manager ୧**",
+      "_ _          **Paghiamo i partner manager ! ! **",
+      "_ _",
+      "_ _`` ☕ ``        𓂃        **[Entra nel server](<https://discord.gg/viniliecaffe>)**      ⟢          `` 📀 ``",
+      "_ _",
     ].join("\n");
     if (!message.inGuild?.() || !message.guild || !message.member) return;
 
