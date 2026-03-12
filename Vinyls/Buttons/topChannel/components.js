@@ -66,7 +66,10 @@ function buildTopChannelComponents(ownerId, lookbackDays, controlsView, selected
 
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(refreshId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_Refresh:1473359252276904203> "),
-    new ButtonBuilder().setCustomId(periodOpenId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_Clock:1473359204189474886>"),
+    new ButtonBuilder().setCustomId(periodOpenId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_Clock:1473359204189474886>")
+  );
+
+  const rowViewSelect = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId(viewSelectId)
       .setPlaceholder("📊 Overview")
@@ -93,7 +96,7 @@ function buildTopChannelComponents(ownerId, lookbackDays, controlsView, selected
     new ButtonBuilder().setCustomId(lastId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page3:1463196404120813766>").setDisabled(safePage >= safeTotal)
   );
 
-  return [row1, row2];
+  return [row1, rowViewSelect, row2];
 }
 
 function buildTopPageJumpModal(ownerId, lookbackDays, controlsView, selectedView, currentPage, totalPages) {

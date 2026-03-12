@@ -1,5 +1,6 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require("discord.js");
 const { getUserOverviewStats } = require("../Services/Community/activityService");
+const { resolveTopChannelEntries } = require("../Prefix/Stats/top");
 const { renderUserActivityCanvas } = require("../Utils/Render/activityCanvas");
 const USER_REFRESH_CUSTOM_ID_PREFIX = "user_refresh";
 const USER_PERIOD_OPEN_CUSTOM_ID_PREFIX = "user_period_open";
@@ -71,7 +72,12 @@ async function buildUserOverviewPayload(guild, targetId, lookbackDays, view, cli
   const avatarUrl = user?.displayAvatarURL?.({ size: 256, extension: "png" }) || null;
   const createdOn = user?.createdAt ?? new Date(0);
   const joinedOn = (member?.joinedAt && member.joinedAt instanceof Date) ? member.joinedAt : (member?.joinedTimestamp ? new Date(member.joinedTimestamp) : createdOn);
-  const buffer = await renderUserActivityCanvas({ guildName: guild.name || "Server", userTag, displayName, avatarUrl, createdOn, joinedOn, lookbackDays: safeLookback, windows: stats.windows, ranks: stats.ranks, topChannelsText: stats.topChannelsText, topChannelsVoice: stats.topChannelsVoice, chart: stats.chart });
+  const emptySnapshot = new Map();
+  const [topChannelsText, topChannelsVoice] = await Promise.all([
+    resolveTopChannelEntries(guild, stats.topChannelsText || [], emptySnapshot),
+    resolveTopChannelEntries(guild, stats.topChannelsVoice || [], emptySnapshot),
+  ]);
+  const buffer = await renderUserActivityCanvas({ guildName: guild.name || "Server", userTag, displayName, avatarUrl, createdOn, joinedOn, lookbackDays: safeLookback, windows: stats.windows, ranks: stats.ranks, topChannelsText, topChannelsVoice, chart: stats.chart });
   const file = new AttachmentBuilder(buffer, { name: "user-activity.png" });
   return { files: [file], components: buildUserComponents(null, targetId, safeLookback, view) };
 }
@@ -81,12 +87,10 @@ function buildUserComponents(ownerId, targetUserId, lookbackDays, view) {
   const o = ownerId || "";
   const base = `${USER_REFRESH_CUSTOM_ID_PREFIX}:${o}:${targetUserId}:${safeLookback}:embed`;
   const periodOpen = `${USER_PERIOD_OPEN_CUSTOM_ID_PREFIX}:${o}:${targetUserId}:${safeLookback}:embed`;
-  const periodBack = `${USER_PERIOD_BACK_CUSTOM_ID_PREFIX}:${o}:${targetUserId}:${safeLookback}:embed`;
 
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(base).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_Refresh:1473359252276904203> "),
-    new ButtonBuilder().setCustomId(periodOpen).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_Clock:1473359204189474886>"),
-    new ButtonBuilder().setCustomId(periodBack).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page5:1463196506143326261> ")
+    new ButtonBuilder().setCustomId(periodOpen).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_Clock:1473359204189474886>")
   );
   return [row];
 }

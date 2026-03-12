@@ -182,7 +182,7 @@ async function runNoDmPanel(message, options = {}) {
               .setColor("#6f4e37")
               .setTitle("<:VC_Success:1468685897389052008> Preferenze DM salvate")
               .setDescription(
-                "<:VC_Info:1448670089670037675> Le tue preferenze sono state aggiornate. Usa `+dm-disable` o `+dm-enable` per modificarle.",
+                "<:VC_Info:1460670816214585481> Le tue preferenze sono state aggiornate. Usa `+dm-disable` o `+dm-enable` per modificarle.",
               ),
           ],
           components: [],

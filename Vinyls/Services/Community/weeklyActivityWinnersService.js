@@ -156,7 +156,7 @@ async function getEventWeekTopThreeTextAndVoice(guild, eventWeekNum) {
 }
 
 function buildEmptyLine(kind) {
-  return `<:VC_Info:1448670089670037675> - Nessun dato disponibile per ${kind}.`;
+  return `<:VC_Info:1460670816214585481> - Nessun dato disponibile per ${kind}.`;
 }
 
 function formatRankLine(index, userMention, value, unit) {
@@ -351,11 +351,11 @@ async function sendEventWeekAnnouncementToNews(client, guild, eventWeek, topMess
   const msgLines = topMessages.length ? topMessages.map((item, i) => {
     const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}> <a:VC_Arrow:1448672967721615452> **${item.messageCount}** _messaggi_`;
   })
-    : ["<:VC_Info:1448670089670037675> - Nessun dato per la classifica testuale."];
+    : ["<:VC_Info:1460670816214585481> - Nessun dato per la classifica testuale."];
   const voiceLines = topVoice.length ? topVoice.map((item, i) => {
     const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}> <a:VC_Arrow:1448672967721615452> **${formatVoiceDuration(item.voiceSeconds)}** _in vocale_`;
   })
-    : ["<:VC_Info:1448670089670037675> - Nessun dato per la classifica vocale."];
+    : ["<:VC_Info:1460670816214585481> - Nessun dato per la classifica vocale."];
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle(`<:VC_Leaderboard:1469659357678669958> Evento Activity EXP — Settimana ${eventWeek}`)
@@ -399,7 +399,7 @@ async function trySendEventEndAnnouncementToNews(client) {
   const lines = top3.length ? top3.map((item, i) => {
     const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}>—**${item.expDuringEvent.toLocaleString("it-IT")}** <:VC_EXP:1468714279673925883>`;
   })
-    : ["<:VC_Info:1448670089670037675> - Nessun dato."];
+    : ["<:VC_Info:1460670816214585481> - Nessun dato."];
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("<:VC_Leaderboard:1469659357678669958> Top 3 EXP totale — Evento Activity EXP")

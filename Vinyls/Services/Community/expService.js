@@ -473,7 +473,7 @@ function buildPerkNearDmEmbed(member, targetLevel, roleLabel, missingExp) {
     embeds: [
       {
         color: 0x6f4e37,
-        title: "<:VC_Info:1448670089670037675> Sei vicino a un nuovo perk!",
+        title: "<:VC_Info:1460670816214585481> Sei vicino a un nuovo perk!",
         thumbnail: {
           url: member?.user?.displayAvatarURL({ size: 256 }),
         },
@@ -482,8 +482,8 @@ function buildPerkNearDmEmbed(member, targetLevel, roleLabel, missingExp) {
           `<:VC_Mention:1443994358201323681> Sei vicino al ruolo **${safeRoleLabel}** (livello \`${targetLevel}\`).`,
           `<:VC_EXP:1468714279673925883> Ti mancano **${Math.max(0, Number(missingExp || 0))} EXP**.`,
           PERKS_CHANNEL_ID
-            ? `<:VC_Info:1448670089670037675> Info perks: <#${PERKS_CHANNEL_ID}>`
-            : "<:VC_Info:1448670089670037675> Controlla il canale info del server.",
+            ? `<:VC_Info:1460670816214585481> Info perks: <#${PERKS_CHANNEL_ID}>`
+            : "<:VC_Info:1460670816214585481> Controlla il canale info del server.",
         ].join("\n"),
       },
     ],

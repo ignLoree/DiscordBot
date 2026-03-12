@@ -199,7 +199,7 @@ module.exports = {
         return;
       }
       const currentWeek = Math.max(1, Math.min(4, Number(getEventWeekNumber(settings) || 1)));
-      const payload = await buildEventoClassificaPayload(message.guild, message.client, settings, currentWeek,);
+      const payload = await buildEventoClassificaPayload(message.guild, currentWeek);
       await safeMessageReply(message, {
         ...payload,
         allowedMentions: { repliedUser: false },
@@ -338,7 +338,7 @@ module.exports = {
         lines.push("- Canali vocali che contano: **" + diag.eligibleVoiceChannels + "**");
         lines.push("- Righe attività (questa settimana): **" + diag.activityDailyCount + "**");
         if (diag.eventWeek >= 1 && diag.eventWeek <= 4 && diag.activityDailyCount === 0) {
-          lines.push("", "<:VC_Info:1448670089670037675> Se nessuno viene calcolato: il bot deve essere online quando scrivono; i canali dove scrivono devono dare al ruolo Member **Visualizza canale** e **Invia messaggi**. Controlla che la chat principale non sia esclusa.");
+          lines.push("", "<:VC_Info:1460670816214585481> Se nessuno viene calcolato: il bot deve essere online quando scrivono; i canali dove scrivono devono dare al ruolo Member **Visualizza canale** e **Invia messaggi**. Controlla che la chat principale non sia esclusa.");
         }
       }
 

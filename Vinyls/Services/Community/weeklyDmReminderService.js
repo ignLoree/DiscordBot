@@ -663,7 +663,7 @@ function createExternalReturnEmbed(guild) {
   const guildName = String(guild?.name || "il server");
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle(`<:VC_Info:1448670089670037675> Ti aspettiamo su ${guildName}`)
+    .setTitle(`<:VC_Info:1460670816214585481> Ti aspettiamo su ${guildName}`)
     .setDescription(
       [
         "<:VC_PepeWave:1331589315175907412> Se vuoi rientrare, sei il benvenuto: il server è sempre attivo.",

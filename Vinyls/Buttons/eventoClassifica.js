@@ -34,7 +34,7 @@ async function execute(interaction, client) {
   }
 
   try {
-    const payload = await buildEventoClassificaPayload(guild, client, settings, week);
+    const payload = await buildEventoClassificaPayload(guild, week);
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply(payload).catch(() => interaction.followUp(payload).catch(() => { }));
     } else {
@@ -55,10 +55,10 @@ async function buildEventoClassificaPayload(guild, currentWeek) {
 
   const msgLines = topMessages.length
     ? topMessages.map((item, i) => `${TROPHY_LABELS[i] || ""}<@${item.userId}> <a:VC_Arrow:1448672967721615452> **${item.messageCount}** _messaggi_`)
-    : ["<:VC_Info:1448670089670037675> - Nessun dato per la classifica testuale."];
+    : ["<:VC_Info:1460670816214585481> - Nessun dato per la classifica testuale."];
   const voiceLines = topVoice.length
     ? topVoice.map((item, i) => `${TROPHY_LABELS[i] || ""}<@${item.userId}> <a:VC_Arrow:1448672967721615452> **${formatVoiceDuration(item.voiceSeconds)}** _in vocale_`)
-    : ["<:VC_Info:1448670089670037675> - Nessun dato per la classifica vocale."];
+    : ["<:VC_Info:1460670816214585481> - Nessun dato per la classifica vocale."];
 
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")

@@ -564,6 +564,7 @@ module.exports = {
   TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX,
   TOP_CHANNEL_PAGE_MODAL_CUSTOM_ID_PREFIX,
   TOP_CHANNEL_PAGE_MODAL_INPUT_CUSTOM_ID,
+  resolveTopChannelEntries,
   buildTopChannelPayload,
   buildTopChannelComponents,
   buildTopPageJumpModal,
