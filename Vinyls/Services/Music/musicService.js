@@ -487,8 +487,12 @@ async function runYouTubeOnlySearch(manager, query, requestedBy) {
 }
 
 function tracksFromLavalinkResponse(result, requestedBy, extra = {}) {
-  if (!result) return { tracks: [], playlist: null };
-  const loadType = normalizeLoadTypeValue(result.loadType || result.load_type || result.type || result.resultType,);
+  if (!result) {
+    logMusic("lavalink_resolve_null", { hint: "REST resolve failed or node unreachable" });
+    return { tracks: [], playlist: null };
+  }
+  const rawLoadType = result.loadType ?? result.load_type ?? result.type ?? result.resultType ?? "";
+  const loadType = normalizeLoadTypeValue(rawLoadType);
 
   if (loadType === "track" && result.data) {
     return { tracks: [toTrack(result.data, requestedBy, extra)], playlist: null };
@@ -520,8 +524,10 @@ function tracksFromLavalinkResponse(result, requestedBy, extra = {}) {
       playlist: null,
     };
   }
-  if (result && (loadType === "empty" || loadType === "error")) {
-    logMusic("lavalink_zero_tracks", { loadType });
+  if (loadType === "empty" || loadType === "error") {
+    logMusic("lavalink_zero_tracks", { loadType, rawLoadType: String(rawLoadType) });
+  } else {
+    logMusic("lavalink_unhandled_response", { rawLoadType: String(rawLoadType), hasData: Boolean(result.data) });
   }
   return { tracks: [], playlist: null };
 }
