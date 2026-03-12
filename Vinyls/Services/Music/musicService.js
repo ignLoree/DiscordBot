@@ -103,8 +103,9 @@ function toTrack(raw, requestedBy = null, extra = {}) {
   const info = raw?.info || {};
   const url = String(info.uri || extra.url || "");
   const source = extra.source || normalizeSourceName(info.sourceName, url);
+  const encoded = String(raw?.encoded || raw?.track || "").trim();
   return {
-    encoded: String(raw?.encoded || ""),
+    encoded,
     identifier: String(info.identifier || ""),
     title: String(info.title || "Sconosciuto"),
     author: String(info.author || "Unknown"),
@@ -503,11 +504,24 @@ function tracksFromLavalinkResponse(result, requestedBy, extra = {}) {
       },
     };
   }
-  if (loadType === "search" && Array.isArray(result.data)) {
+  if (loadType === "search") {
+    const searchTracks = Array.isArray(result.data)
+      ? result.data
+      : Array.isArray(result.data?.tracks)
+        ? result.data.tracks
+        : [];
+    if (searchTracks.length === 0 && result.data != null) {
+      logMusic("lavalink_search_empty_structure", {
+        dataKeys: typeof result.data === "object" ? Object.keys(result.data) : [],
+      });
+    }
     return {
-      tracks: result.data.map((item) => toTrack(item, requestedBy, extra)),
+      tracks: searchTracks.map((item) => toTrack(item, requestedBy, extra)),
       playlist: null,
     };
+  }
+  if (result && (loadType === "empty" || loadType === "error")) {
+    logMusic("lavalink_zero_tracks", { loadType });
   }
   return { tracks: [], playlist: null };
 }
