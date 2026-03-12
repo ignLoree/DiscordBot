@@ -114,7 +114,16 @@ async function runModCaseLifecycleTick(client) {
 
 function startModCaseLifecycleLoop(client) {
   if (loopHandle) return loopHandle;
-  const runner=async() => {await runModCaseLifecycleTick(client).catch((error) => {global.logger?.error?.("[MOD CASE LIFECYCLE] Tick failed",error);});};
+  const runner = async () => {
+    await runModCaseLifecycleTick(client).catch((error) => {
+      const isMongoNetwork = error?.name === "MongoNetworkTimeoutError" || error?.name === "MongoServerSelectionError";
+      if (isMongoNetwork) {
+        global.logger?.warn?.("[MOD CASE LIFECYCLE] Tick skipped (MongoDB timeout), next run in " + LOOP_MS / 1000 + "s.");
+      } else {
+        global.logger?.error?.("[MOD CASE LIFECYCLE] Tick failed", error);
+      }
+    });
+  };
   runner().catch(() => {});
   loopHandle = setInterval(runner, LOOP_MS);
   if (typeof loopHandle.unref === "function") loopHandle.unref();

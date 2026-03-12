@@ -69,6 +69,17 @@ function buildTopChannelComponents(ownerId, lookbackDays, controlsView, selected
     new ButtonBuilder().setCustomId(periodOpenId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_Clock:1473359204189474886>")
   );
 
+  const periodSetId = (days) => (ownerId ? `${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:${ownerId}:${days}:${safeView}:${safePage}` : `${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:${days}:${safeView}:${safePage}`);
+  const periodBackId = ownerId ? `${TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX}:${ownerId}:${safeLookback}:${safeView}:${safePage}` : `${TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX}:${safeLookback}:${safeView}:${safePage}`;
+  const rowPeriod1 = new ActionRowBuilder().addComponents(
+    ...ALLOWED_LOOKBACK.map((d) =>
+      new ButtonBuilder().setCustomId(periodSetId(d)).setStyle(safeLookback === d ? ButtonStyle.Primary : ButtonStyle.Secondary).setLabel(`${d}d`)
+    )
+  );
+  const rowPeriod2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(periodBackId).setStyle(ButtonStyle.Secondary).setLabel("Indietro")
+  );
+
   const rowViewSelect = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId(viewSelectId)
@@ -88,15 +99,18 @@ function buildTopChannelComponents(ownerId, lookbackDays, controlsView, selected
   const nextId = `${TOP_CHANNEL_PAGE_NEXT_CUSTOM_ID_PREFIX}:${suffix}`;
   const lastId = `${TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX}:${suffix}`;
 
-  const row2 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(firstId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page1:1463196324156674289>").setDisabled(safePage <= 1),
-    new ButtonBuilder().setCustomId(prevId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page5:1463196506143326261>").setDisabled(safePage <= 1),
-    new ButtonBuilder().setCustomId(modalOpenId).setStyle(ButtonStyle.Primary).setEmoji("<:VC_page2:1463196369123676414> "),
-    new ButtonBuilder().setCustomId(nextId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page4:1463196456964980808>").setDisabled(safePage >= safeTotal),
-    new ButtonBuilder().setCustomId(lastId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page3:1463196404120813766>").setDisabled(safePage >= safeTotal)
-  );
-
-  return [row1, rowViewSelect, row2];
+  const rows = safeControls === "period" ? [row1, rowPeriod1, rowPeriod2, rowViewSelect] : [row1, rowViewSelect];
+  if (safeView !== "overview") {
+    const row2 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(firstId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page1:1463196324156674289>").setDisabled(safePage <= 1),
+      new ButtonBuilder().setCustomId(prevId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page5:1463196506143326261>").setDisabled(safePage <= 1),
+      new ButtonBuilder().setCustomId(modalOpenId).setStyle(ButtonStyle.Primary).setEmoji("<:VC_page2:1463196369123676414> "),
+      new ButtonBuilder().setCustomId(nextId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page4:1463196456964980808>").setDisabled(safePage >= safeTotal),
+      new ButtonBuilder().setCustomId(lastId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page3:1463196404120813766>").setDisabled(safePage >= safeTotal)
+    );
+    rows.push(row2);
+  }
+  return rows;
 }
 
 function buildTopPageJumpModal(ownerId, lookbackDays, controlsView, selectedView, currentPage, totalPages) {

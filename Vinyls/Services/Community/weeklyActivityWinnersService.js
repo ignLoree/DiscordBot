@@ -6,6 +6,7 @@ const { getEventWeekNumber, grantEventLevels, addEventWeekWinner, getTop3ExpDuri
 const { giveWeekly20PointsIfEligible, getStaffEventLeaderboard, isStaffButNotHighStaff } = require("./staffEventService");
 const { sendEventRewardLog, sendEventRewardDm } = require("./eventRewardLogService");
 const { isEventStaffMember } = require("./expService");
+const { loadLiveVoiceSessions, secondsInDateKeys } = require("./activityService");
 const IDs = require("../../Utils/Config/ids");
 const { isChannelInTicketCategory } = require("../../Utils/Ticket/ticketCategoryUtils");
 const { getClientChannelCached, getClientGuildCached, getGuildChannelCached, getGuildMemberCached, getGuildRoleCached, getUserCached } = require("../../Utils/Interaction/interactionEntityCache");
@@ -136,8 +137,23 @@ async function getEventWeekTopThreeTextAndVoice(guild, eventWeekNum) {
   const dateKeys = getEventWeekDateKeys(settings.eventStartedAt, eventWeekNum);
   if (!dateKeys.length) return { topMessages: [], topVoice: [] };
   const rows = await loadActivityRowsFromDateKeys(guild, dateKeys);
-  const sortedMessages = [...rows].filter((r) => Number(r?.messageCount || 0) > 0).sort((a, b) => (b.messageCount || 0) - (a.messageCount || 0));
-  const sortedVoice = [...rows].filter((r) => Number(r?.voiceSeconds || 0) > 0).sort((a, b) => (b.voiceSeconds || 0) - (a.voiceSeconds || 0));
+  const eligible = await getEligibleChannelSets(guild);
+  const liveSessions = await loadLiveVoiceSessions(guild.id).catch(() => []);
+  const rowsByUser = new Map(rows.map((r) => [r.userId, { userId: r.userId, messageCount: r.messageCount || 0, voiceSeconds: r.voiceSeconds || 0 }]));
+  for (const session of liveSessions) {
+    const channelId = String(session?.voice?.sessionChannelId || "");
+    if (!channelId || !eligible.voice.has(channelId)) continue;
+    const add = secondsInDateKeys(session.voice?.sessionStartedAt, dateKeys);
+    if (add <= 0) continue;
+    const userId = String(session?.userId || "");
+    if (!userId) continue;
+    const row = rowsByUser.get(userId) || { userId, messageCount: 0, voiceSeconds: 0 };
+    row.voiceSeconds = (row.voiceSeconds || 0) + add;
+    rowsByUser.set(userId, row);
+  }
+  const rowsWithLive = Array.from(rowsByUser.values());
+  const sortedMessages = [...rowsWithLive].filter((r) => Number(r?.messageCount || 0) > 0).sort((a, b) => (b.messageCount || 0) - (a.messageCount || 0));
+  const sortedVoice = [...rowsWithLive].filter((r) => Number(r?.voiceSeconds || 0) > 0).sort((a, b) => (b.voiceSeconds || 0) - (a.voiceSeconds || 0));
   const topMessages = [];
   const topVoice = [];
   for (const row of sortedMessages) {
@@ -164,8 +180,23 @@ async function getEventWeekTopNTextAndVoice(guild, eventWeekNum, limit = 10) {
   if (!dateKeys.length) return { topMessages: [], topVoice: [] };
   const cap = Math.max(1, Math.min(25, Number(limit) || 10));
   const rows = await loadActivityRowsFromDateKeys(guild, dateKeys);
-  const sortedMessages = [...rows].filter((r) => Number(r?.messageCount || 0) > 0).sort((a, b) => (b.messageCount || 0) - (a.messageCount || 0));
-  const sortedVoice = [...rows].filter((r) => Number(r?.voiceSeconds || 0) > 0).sort((a, b) => (b.voiceSeconds || 0) - (a.voiceSeconds || 0));
+  const eligible = await getEligibleChannelSets(guild);
+  const liveSessions = await loadLiveVoiceSessions(guild.id).catch(() => []);
+  const rowsByUser = new Map(rows.map((r) => [r.userId, { userId: r.userId, messageCount: r.messageCount || 0, voiceSeconds: r.voiceSeconds || 0 }]));
+  for (const session of liveSessions) {
+    const channelId = String(session?.voice?.sessionChannelId || "");
+    if (!channelId || !eligible.voice.has(channelId)) continue;
+    const add = secondsInDateKeys(session.voice?.sessionStartedAt, dateKeys);
+    if (add <= 0) continue;
+    const userId = String(session?.userId || "");
+    if (!userId) continue;
+    const row = rowsByUser.get(userId) || { userId, messageCount: 0, voiceSeconds: 0 };
+    row.voiceSeconds = (row.voiceSeconds || 0) + add;
+    rowsByUser.set(userId, row);
+  }
+  const rowsWithLive = Array.from(rowsByUser.values());
+  const sortedMessages = [...rowsWithLive].filter((r) => Number(r?.messageCount || 0) > 0).sort((a, b) => (b.messageCount || 0) - (a.messageCount || 0));
+  const sortedVoice = [...rowsWithLive].filter((r) => Number(r?.voiceSeconds || 0) > 0).sort((a, b) => (b.voiceSeconds || 0) - (a.voiceSeconds || 0));
   const topMessages = [];
   const topVoice = [];
   for (const row of sortedMessages) {

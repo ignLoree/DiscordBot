@@ -101,13 +101,13 @@ module.exports = {
 
     if (!isEditedPrefixExecution && message?.guild) {
       try {
-        if (message.author?.id !== resolvedClient?.user?.id) {
-          const handledVote = await handleVoteManagerMessage(message, resolvedClient);
-          if (handledVote) return;
-        }
         if (message.author?.bot || message.webhookId || message.applicationId) {
           if (await handleDisboardBump(message, resolvedClient)) return;
           if (await handleDiscadiaBump(message, resolvedClient)) return;
+        }
+        if (message.author?.id !== resolvedClient?.user?.id) {
+          const handledVote = await handleVoteManagerMessage(message, resolvedClient);
+          if (handledVote) return;
         }
       } catch (error) {
         logEventError(resolvedClient, "EARLY BUMP/VOTE HANDLER ERROR", error);

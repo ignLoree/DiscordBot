@@ -485,6 +485,211 @@ function drawChart(ctx, chart, x, y, w, h) {
   ctx.stroke();
 }
 
+function drawVoiceOnlyChart(ctx, chart, x, y, w, h) {
+  fillRoundRect(ctx, x, y, w, h, 18, "rgba(46, 55, 70, 0.94)");
+  strokeRoundRect(ctx, x, y, w, h, 18, "rgba(255,255,255,0.05)", 1);
+  drawLabel(ctx, "Voice Graph", x + 16, y + 24, {
+    size: 27,
+    weight: "700",
+    color: "#e2e7ef",
+    forcePrimaryFont: true,
+  });
+  const px = x + 16;
+  const py = y + 44;
+  const pw = w - 32;
+  const ph = h - 60;
+  fillRoundRect(ctx, px, py, pw, ph, 12, "rgba(25, 34, 49, 0.98)");
+  const points = Array.isArray(chart) ? chart : [];
+  if (points.length < 2) return;
+  const voiceValues = points.map((p) => Number(p?.voiceSeconds || 0) / 3600);
+  const maxVoice = Math.max(0.01, ...voiceValues);
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.lineWidth = 1;
+  for (let i = 1; i <= 3; i += 1) {
+    const yy = py + ((ph - 10) * i) / 4;
+    ctx.beginPath();
+    ctx.moveTo(px + 8, yy);
+    ctx.lineTo(px + pw - 8, yy);
+    ctx.stroke();
+  }
+  const projectX = (idx) => px + idx * (pw / (points.length - 1));
+  const projectY = (value) => py + ph - (value / maxVoice) * (ph - 16) - 8;
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = "#3ec455";
+  ctx.beginPath();
+  voiceValues.forEach((v, i) => {
+    const cx = projectX(i);
+    const cy = projectY(v);
+    if (i === 0) ctx.moveTo(cx, cy);
+    else ctx.lineTo(cx, cy);
+  });
+  ctx.stroke();
+}
+
+function drawMessageOnlyChart(ctx, chart, x, y, w, h) {
+  fillRoundRect(ctx, x, y, w, h, 18, "rgba(46, 55, 70, 0.94)");
+  strokeRoundRect(ctx, x, y, w, h, 18, "rgba(255,255,255,0.05)", 1);
+  drawLabel(ctx, "Message Graph", x + 16, y + 24, {
+    size: 27,
+    weight: "700",
+    color: "#e2e7ef",
+    forcePrimaryFont: true,
+  });
+  const px = x + 16;
+  const py = y + 44;
+  const pw = w - 32;
+  const ph = h - 60;
+  fillRoundRect(ctx, px, py, pw, ph, 12, "rgba(25, 34, 49, 0.98)");
+  const points = Array.isArray(chart) ? chart : [];
+  if (points.length < 2) return;
+  const textValues = points.map((p) => Number(p?.text || 0));
+  const maxText = Math.max(0.01, ...textValues);
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.lineWidth = 1;
+  for (let i = 1; i <= 3; i += 1) {
+    const yy = py + ((ph - 10) * i) / 4;
+    ctx.beginPath();
+    ctx.moveTo(px + 8, yy);
+    ctx.lineTo(px + pw - 8, yy);
+    ctx.stroke();
+  }
+  const projectX = (idx) => px + idx * (pw / (points.length - 1));
+  const projectY = (value) => py + ph - (value / maxText) * (ph - 16) - 8;
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = "#3ec455";
+  ctx.beginPath();
+  textValues.forEach((v, i) => {
+    const cx = projectX(i);
+    const cy = projectY(v);
+    if (i === 0) ctx.moveTo(cx, cy);
+    else ctx.lineTo(cx, cy);
+  });
+  ctx.stroke();
+}
+
+async function renderChannelActivityCanvas({ channelName, channelIconUrl, createdOn, lookbackDays, windows, topUsersText, topUsersVoice, chart, isTextChannel }) {
+  registerCanvasFonts(getCanvasModule());
+  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays)) ? Number(lookbackDays) : 14;
+  const lookbackWindow = windows?.[`d${safeLookback}`] || windows?.d14 || {};
+  const width = 1280;
+  const height = 900;
+  const canvas = getCanvasModule().createCanvas(width, height);
+  const ctx = canvas.getContext("2d");
+
+  drawBackground(ctx, width, height);
+
+  fillRoundRect(ctx, 20, 16, 1240, 96, 22, "rgba(32, 42, 57, 0.9)");
+  strokeRoundRect(ctx, 20, 16, 1240, 96, 22, "rgba(255,255,255,0.06)", 1);
+
+  if (channelIconUrl && !isTextChannel) {
+    await drawAvatarCircle(ctx, channelIconUrl, 28, 24, 80);
+  } else {
+    fillRoundRect(ctx, 28, 24, 80, 80, 40, "rgba(50, 60, 75, 0.95)");
+    drawLabel(ctx, "#", 68, 64, { size: 36, weight: "700", color: "#8b95a5", align: "center", baseline: "middle" });
+  }
+  drawLabel(ctx, fitText(ctx, channelName || "#channel", 520, 56, "700"), 124, 52, {
+    size: 52,
+    weight: "700",
+    color: "#eef3fb",
+    forcePrimaryFont: true,
+  });
+  drawLabel(ctx, "Channel Overview", 124, 88, {
+    size: 28,
+    weight: "600",
+    color: "#bfc8d6",
+  });
+  drawDateBadge(ctx, "Created On", dateText(createdOn), 650, 24, 270, 80);
+
+  if (isTextChannel) {
+    drawMetricPanel(
+      ctx,
+      "Server Lookback",
+      [{ label: `${safeLookback}d`, value: `${compactNumber(lookbackWindow?.text || 0)} messages` }],
+      20,
+      132,
+      400,
+      140,
+    );
+    drawMetricPanel(
+      ctx,
+      "Messages",
+      [
+        { label: "1d", value: `${compactNumber(windows?.d1?.text || 0)} messages` },
+        { label: "7d", value: `${compactNumber(windows?.d7?.text || 0)} messages` },
+        { label: "30d", value: `${compactNumber(windows?.d30?.text || 0)} messages` },
+      ],
+      440,
+      132,
+      400,
+      220,
+    );
+    drawMetricPanel(
+      ctx,
+      "Contributors",
+      [
+        { label: "1d", value: `${Number(windows?.d1?.contributors || 0)} members` },
+        { label: "7d", value: `${Number(windows?.d7?.contributors || 0)} members` },
+        { label: "30d", value: `${Number(windows?.d30?.contributors || 0)} members` },
+      ],
+      860,
+      132,
+      400,
+      220,
+    );
+    const messageRows = (topUsersText || []).slice(0, 3).map((r) => ({ label: r?.label || "-", value: compactNumber(r?.value || 0) }));
+    await drawTopListCard(ctx, "Top Message Members", messageRows, 20, 370, 600, 260, { unit: "messages" });
+    drawMessageOnlyChart(ctx, chart, 640, 370, 620, 260);
+  } else {
+    drawMetricPanel(
+      ctx,
+      "Server Lookback",
+      [{ label: `${safeLookback}d`, value: `${formatHours(lookbackWindow?.voiceSeconds || 0)} hours` }],
+      20,
+      132,
+      400,
+      140,
+    );
+    drawMetricPanel(
+      ctx,
+      "Voice Activity",
+      [
+        { label: "1d", value: `${formatHours(windows?.d1?.voiceSeconds || 0)} hours` },
+        { label: "7d", value: `${formatHours(windows?.d7?.voiceSeconds || 0)} hours` },
+        { label: "30d", value: `${formatHours(windows?.d30?.voiceSeconds || 0)} hours` },
+      ],
+      440,
+      132,
+      400,
+      220,
+    );
+    drawMetricPanel(
+      ctx,
+      "Contributors",
+      [
+        { label: "1d", value: `${Number(windows?.d1?.contributors || 0)} members` },
+        { label: "7d", value: `${Number(windows?.d7?.contributors || 0)} members` },
+        { label: "30d", value: `${Number(windows?.d30?.contributors || 0)} members` },
+      ],
+      860,
+      132,
+      400,
+      220,
+    );
+    const voiceRows = (topUsersVoice || []).slice(0, 3).map((r) => ({ label: r?.label || "-", value: formatHours(r?.value || 0) }));
+    await drawTopListCard(ctx, "Top Voice Members", voiceRows, 20, 370, 600, 260, { unit: "hours" });
+    drawVoiceOnlyChart(ctx, chart, 640, 370, 620, 260);
+  }
+
+  drawLabel(ctx, `Server Lookback: Last ${safeLookback} days — Timezone: ${ROME_TIME_ZONE}`, 28, 868, {
+    size: 20,
+    weight: "700",
+    color: "#cfd6e2",
+    forcePrimaryFont: true,
+  });
+
+  return canvas.toBuffer("image/png");
+}
+
 async function drawTopListCard(ctx, title, rows, x, y, w, h, options = {}) {
   const unit = String(options.unit || "");
   fillRoundRect(ctx, x, y, w, h, 18, "rgba(46, 55, 70, 0.94)");
@@ -1150,4 +1355,4 @@ async function renderTopLeaderboardPageCanvas({ guildName, guildIconUrl, lookbac
   return canvas.toBuffer("image/png");
 }
 
-module.exports = { renderUserActivityCanvas, renderServerActivityCanvas, renderTopStatisticsCanvas, renderTopStatisticsSingleCanvas, renderTopLeaderboardPageCanvas };
+module.exports = { renderUserActivityCanvas, renderServerActivityCanvas, renderChannelActivityCanvas, renderTopStatisticsCanvas, renderTopStatisticsSingleCanvas, renderTopLeaderboardPageCanvas };

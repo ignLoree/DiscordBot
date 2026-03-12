@@ -329,7 +329,11 @@ function startPrimaryLoops(client, engagementTick) {
       client._joinRaidRestoreInterval = timer;
     }],
     ["[GIVEAWAY] Failed to start scheduled end loop", () => {
-      const tick = () => runScheduledEnds(client).catch((e) => global.logger?.warn?.("[GIVEAWAY] runScheduledEnds", e?.message));
+      const tick = () =>
+        runScheduledEnds(client).catch((e) => {
+          const isMongoNetwork = e?.name === "MongoNetworkTimeoutError" || e?.name === "MongoServerSelectionError";
+          global.logger?.warn?.("[GIVEAWAY] runScheduledEnds", isMongoNetwork ? "MongoDB timeout, will retry next run." : (e?.message || e));
+        });
       tick();
       const timer = setInterval(tick, 60 * 1000);
       if (typeof timer.unref === "function") timer.unref();

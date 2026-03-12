@@ -742,6 +742,11 @@
                 "channels.commands"
             ]
         },
+        "channel": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
         "ship": {
             "roles": [
                 "roles.Member"
@@ -1658,6 +1663,18 @@
             "ownerSegment": 1
         },
         "server_refresh*": {
+            "ownerSegment": 1
+        },
+        "channel_refresh*": {
+            "ownerSegment": 1
+        },
+        "channel_period_open*": {
+            "ownerSegment": 1
+        },
+        "channel_period_set*": {
+            "ownerSegment": 1
+        },
+        "channel_period_back*": {
             "ownerSegment": 1
         },
         "serverDescription": [

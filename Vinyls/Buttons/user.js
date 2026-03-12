@@ -35,11 +35,17 @@ async function execute(interaction, client) {
     return true;
   }
 
+  let view = "main";
+  let lookbackDays = parsed.lookbackDays;
+  if (parsed.prefix === USER_PERIOD_OPEN_CUSTOM_ID_PREFIX) view = "period";
+  else if (parsed.prefix === USER_PERIOD_SET_CUSTOM_ID_PREFIX) lookbackDays = parsed.lookbackDays;
+  else if (parsed.prefix === USER_PERIOD_BACK_CUSTOM_ID_PREFIX) view = "main";
+
   try {
-    const payload = await buildUserOverviewPayload(guild, targetUserId, parsed.lookbackDays, "main", client);
+    const payload = await buildUserOverviewPayload(guild, targetUserId, lookbackDays, view, client);
     const payloadWithComponents = {
       ...payload,
-      components: buildUserComponents(parsed.ownerId || interaction.user?.id, targetUserId, parsed.lookbackDays, "main"),
+      components: buildUserComponents(parsed.ownerId || interaction.user?.id, targetUserId, lookbackDays, view),
     };
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply(payloadWithComponents).catch(() => interaction.followUp(payloadWithComponents).catch(() => { }));
@@ -88,11 +94,27 @@ function buildUserComponents(ownerId, targetUserId, lookbackDays, view) {
   const base = `${USER_REFRESH_CUSTOM_ID_PREFIX}:${o}:${targetUserId}:${safeLookback}:embed`;
   const periodOpen = `${USER_PERIOD_OPEN_CUSTOM_ID_PREFIX}:${o}:${targetUserId}:${safeLookback}:embed`;
 
-  const row = new ActionRowBuilder().addComponents(
+  const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(base).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_Refresh:1473359252276904203> "),
     new ButtonBuilder().setCustomId(periodOpen).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_Clock:1473359204189474886>")
   );
-  return [row];
+
+  if (view === "period") {
+    const periodBack = `${USER_PERIOD_BACK_CUSTOM_ID_PREFIX}:${o}:${targetUserId}:${safeLookback}:embed`;
+    const rowPeriod1 = new ActionRowBuilder().addComponents(
+      ...ALLOWED_LOOKBACK.map((d) =>
+        new ButtonBuilder()
+          .setCustomId(`${USER_PERIOD_SET_CUSTOM_ID_PREFIX}:${o}:${targetUserId}:${d}:embed`)
+          .setStyle(safeLookback === d ? ButtonStyle.Primary : ButtonStyle.Secondary)
+          .setLabel(`${d}d`)
+      )
+    );
+    const rowPeriod2 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(periodBack).setStyle(ButtonStyle.Secondary).setLabel("Indietro")
+    );
+    return [row1, rowPeriod1, rowPeriod2];
+  }
+  return [row1];
 }
 
 function parseUserActivityArgs(args) {

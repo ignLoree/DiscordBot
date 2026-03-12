@@ -30,12 +30,12 @@ function buildTicketClosedEmbed(data) {
     { name: "<:VC_claim:1478517202016669887> Claimato da", value: data?.claimedBy ? `<@${data.claimedBy}>` : "Non claimato", inline: true },
     { name: "<:VC_close:1478517239136256020> Ora Chiusura", value: closedAt, inline: true },
   ];
+  fields.push({ name: "<:VC_reason:1478517122929004544> Motivazione", value: reasonText, inline: true });
   if (Number.isFinite(data?.ratingScore) && data.ratingScore >= 1) {
     const stars = formatRatingStars(data.ratingScore);
     const byPart = data?.ratingBy ? ` – da <@${data.ratingBy}>` : "";
-    fields.push({ name: "<:VC_EXP:1468714279673925883> Valutazione", value: `${stars}${byPart}`, inline: false });
+    fields.push({ name: "<:VC_EXP:1468714279673925883> Valutazione", value: `${stars}${byPart}`, inline: true });
   }
-  fields.push({ name: "<:VC_reason:1478517122929004544> Motivazione", value: reasonText, inline: false });
 
   const embed = new EmbedBuilder()
     .setAuthor({ name: data?.guildName || "<:VC_Ticket:1448694637106692156> Sistema Ticket", iconURL: data?.guildIconURL || undefined, })

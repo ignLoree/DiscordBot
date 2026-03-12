@@ -280,7 +280,12 @@ async function persistStatus(guildId, userId, payload) {
       { upsert: true },
     );
   } catch (error) {
-    global.logger?.error?.("[SUPPORTER STATUS] Persist failed:", error);
+    const isMongoNetwork = error?.name === "MongoNetworkTimeoutError" || error?.name === "MongoServerSelectionError";
+    if (isMongoNetwork) {
+      global.logger?.warn?.("[SUPPORTER STATUS] Persist skipped (MongoDB timeout), will retry on next update.");
+    } else {
+      global.logger?.error?.("[SUPPORTER STATUS] Persist failed:", error);
+    }
   }
 }
 
@@ -289,7 +294,12 @@ async function clearPersistedStatus(guildId, userId) {
   try {
     await SupporterStatus.deleteOne({ guildId, userId });
   } catch (error) {
-    global.logger?.error?.("[SUPPORTER STATUS] Delete failed:", error);
+    const isMongoNetwork = error?.name === "MongoNetworkTimeoutError" || error?.name === "MongoServerSelectionError";
+    if (isMongoNetwork) {
+      global.logger?.warn?.("[SUPPORTER STATUS] Delete skipped (MongoDB timeout).");
+    } else {
+      global.logger?.error?.("[SUPPORTER STATUS] Delete failed:", error);
+    }
   }
 }
 

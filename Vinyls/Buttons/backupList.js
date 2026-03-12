@@ -13,17 +13,24 @@ async function execute(interaction) {
   const userId = interaction.user?.id;
   if (!userId) return false;
 
+  const restStr = customId.startsWith(PREFIX_PREV) ? customId.slice(PREFIX_PREV.length) : customId.slice(PREFIX_NEXT.length);
+  const authorId = restStr.split(":")[0];
+  if (authorId && authorId !== userId) {
+    await interaction.reply({ content: "<a:VC_Alert:1448670089670037675> Questo controllo non appartiene a te.", flags: 1 << 6 }).catch(() => {});
+    return true;
+  }
+
   let page = 1;
   if (customId.startsWith(PREFIX_PREV)) {
-    const rest = customId.slice(PREFIX_PREV.length).split(":");
+    const rest = restStr.split(":");
     page = Math.max(1, Number.parseInt(rest[1] || "1", 10) - 1);
   } else if (customId.startsWith(PREFIX_NEXT)) {
-    const rest = customId.slice(PREFIX_NEXT.length).split(":");
+    const rest = restStr.split(":");
     page = Number.parseInt(rest[1] || "1", 10) + 1;
   }
 
   try {
-    const payload = await renderList(interaction, userId, page);
+    const payload = await renderList(userId, page);
     const { safeEditReply } = require("../../shared/discord/replyRuntime");
     await safeEditReply(interaction, { ...payload, flags: 1 << 6 });
     return true;

@@ -166,33 +166,13 @@ async function closeOpenTicketsForMember(member) {
         guildIconURL: guild?.iconURL?.({ size: 128 }) || null,
       };
       const closeEmbed = buildTicketClosedEmbed(closeEmbedData);
-
-      const htmlAttachment = transcriptHtmlPath
-        ? [{ attachment: transcriptHtmlPath, name: `transcript_ticket_${ticket.ticketNumber || ticket._id}.html` }]
+      const transcriptRows = transcriptHtmlPath
+        ? [new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`ticket_transcript:${ticket._id}`).setLabel("Visualizza Trascrizione").setStyle(ButtonStyle.Secondary).setEmoji("<:VC_file:1478515880722698300>"))]
         : [];
 
-      let logSentMessage = null;
-      await logChannel
-        .send({ embeds: [closeEmbed], files: htmlAttachment })
-        .then((msg) => {
-          logSentMessage = msg;
-          return msg;
-        })
-        .catch(() => { });
-
-      if (logSentMessage && transcriptHtmlPath) {
-        const attachment = logSentMessage.attachments?.find((att) => {
-          const name = String(att?.name || "").toLowerCase();
-          const url = String(att?.url || "").toLowerCase();
-          return name.endsWith(".html") || url.includes(".html");
-        });
-        if (attachment?.url) {
-          const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setStyle(ButtonStyle.Link).setURL(attachment.url).setLabel("Visualizza Trascrizione").setEmoji("<:VC_file:1478515880722698300>"),
-          );
-          await logSentMessage.edit({ components: [row] }).catch(() => { });
-        }
-      }
+      const logSentMessage = await logChannel
+        .send({ embeds: [closeEmbed], components: transcriptRows })
+        .catch(() => null);
 
       if (logSentMessage?.id && logChannel?.id) {
         await Ticket.updateOne(

@@ -226,8 +226,11 @@ async function handleVoteManagerMessage(message, client) {
   const voteText = `${content}${embedText}${embedTitle}${fieldsText}`.toLowerCase();
   const looksLikeVote = /has voted|voted/i.test(voteText) || /ha votato|votato/i.test(voteText) || (voteText.includes("discadia") && /(vote|voto|votato)/i.test(voteText));
   if (!looksLikeVote) return false;
+  const looksLikeBumpSuccess = /(server has been bumped|has been successfully bumped|bump(?:ed)?\s*successfully|successfully bumped|bump complete|bump done|thanks for bumping|you can bump again)/i.test(voteText);
+  if (looksLikeBumpSuccess) return false;
 
-  const user = await resolveUserFromMessage(message);
+  let user = await resolveUserFromMessage(message);
+  if (user?.bot) user = null;
   const nameRaw = extractNameFromText(content) || extractNameFromText(embedText) || extractNameFromText(embedTitle) || extractNameFromText(fieldsText);
   const nameClean = sanitizeName(nameRaw) || "Utente";
 

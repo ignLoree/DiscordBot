@@ -2,6 +2,7 @@ const Buttons = require("../../Buttons");
 const { SERVER_REFRESH_CUSTOM_ID_PREFIX } = Buttons.server;
 const { ME_REFRESH_CUSTOM_ID_PREFIX, ME_PERIOD_OPEN_CUSTOM_ID_PREFIX, ME_PERIOD_SET_CUSTOM_ID_PREFIX, ME_PERIOD_BACK_CUSTOM_ID_PREFIX, normalizeLookbackDays } = Buttons.me;
 const { USER_REFRESH_CUSTOM_ID_PREFIX, USER_PERIOD_OPEN_CUSTOM_ID_PREFIX, USER_PERIOD_SET_CUSTOM_ID_PREFIX, USER_PERIOD_BACK_CUSTOM_ID_PREFIX } = Buttons.user;
+const { CHANNEL_REFRESH_CUSTOM_ID_PREFIX, CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX, CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX, CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX, normalizeLookbackDays: normalizeChannelLookback } = Buttons.channel;
 const { TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX, TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX, TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX, TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX, TOP_CHANNEL_VIEW_SELECT_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_FIRST_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_PREV_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_MODAL_OPEN_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_NEXT_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX, normalizeTopView, normalizeControlsView, normalizePage } = Buttons.topChannelComponents;
 const MAX_COMPONENTS_PER_ROW = 5;
 const MAX_ROWS_PER_MESSAGE = 5;
@@ -76,6 +77,25 @@ function parseUserCustomId(rawCustomId) {
   const lookbackDays = normalizeLookbackDays(parts[3] || "14");
   const wantsEmbed = String(parts[4] || "embed").toLowerCase() !== "image";
   return { prefix, ownerId, targetUserId, lookbackDays, wantsEmbed };
+}
+
+function parseChannelCustomId(rawCustomId) {
+  const raw = String(rawCustomId || "");
+  const prefixes = [
+    CHANNEL_REFRESH_CUSTOM_ID_PREFIX,
+    CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX,
+    CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX,
+    CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX,
+  ];
+  const prefix = prefixes.find((item) => raw === item || raw.startsWith(`${item}:`));
+  if (!prefix) return null;
+  const parts = raw.split(":");
+  const hasOwner = SNOWFLAKE_RE.test(String(parts[1] || ""));
+  const ownerId = hasOwner ? String(parts[1]) : null;
+  const channelId = hasOwner ? String(parts[2] || "") : String(parts[1] || "");
+  const lookbackRaw = hasOwner ? parts[3] : parts[2];
+  const lookbackDays = normalizeChannelLookback(lookbackRaw || "14");
+  return { prefix, ownerId, channelId, lookbackDays };
 }
 
 function parseTopChannelCustomId(rawCustomId) {
@@ -194,4 +214,4 @@ function disableComponentsForLoading(components) {
   return out;
 }
 
-module.exports = { MAX_COMPONENTS_PER_ROW, MAX_ROWS_PER_MESSAGE, SNOWFLAKE_RE, denyIfNotOwner, sendControlErrorFallback, parseServerRefreshCustomId, parseMeCustomId, parseUserCustomId, parseTopChannelCustomId, parseTopChannelPageCustomId, parseTopChannelViewSelectCustomId, chunk, normalizeComponentsForDiscord, disableComponentsForLoading };
+module.exports = { MAX_COMPONENTS_PER_ROW, MAX_ROWS_PER_MESSAGE, SNOWFLAKE_RE, denyIfNotOwner, sendControlErrorFallback, parseServerRefreshCustomId, parseMeCustomId, parseUserCustomId, parseChannelCustomId, parseTopChannelCustomId, parseTopChannelPageCustomId, parseTopChannelViewSelectCustomId, chunk, normalizeComponentsForDiscord, disableComponentsForLoading };

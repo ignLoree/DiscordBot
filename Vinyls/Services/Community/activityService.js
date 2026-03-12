@@ -7,6 +7,13 @@ const TIME_ZONE = "Europe/Rome";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const BACKFILL_HOUR_SUFFIX = "T12";
 const HOURLY_BACKFILL_BATCH = 500;
+
+function shouldSkipBackfillRow(hourKey, hourSet) {
+  if (!hourKey || typeof hourKey !== "string") return false;
+  if (!hourKey.endsWith(BACKFILL_HOUR_SUFFIX)) return false;
+  const dateKey = hourKey.slice(0, -BACKFILL_HOUR_SUFFIX.length);
+  return [...hourSet].some((k) => k.startsWith(`${dateKey}T`) && k !== hourKey);
+}
 const hourlyBackfillByGuild = new Map();
 const EXCLUDED_ACTIVITY_CHANNEL_IDS = new Set(
   [IDs.channels?.ticket, IDs.channels?.ticketLogs]
@@ -498,6 +505,51 @@ function secondsInLastNDays(startedAt, days, nowMs = Date.now()) {
   return Math.max(0, Math.floor((nowMs - effectiveStartMs) / 1000));
 }
 
+function getDayBoundsForDateKey(dateKey) {
+  const match = String(dateKey || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+  const y = Number(match[1]);
+  const m = Number(match[2]) - 1;
+  const d = Number(match[3]);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+  const baseMs = Date.UTC(y, m, d, 0, 0, 0, 0);
+  const hourMs = 60 * 60 * 1000;
+  let startMs = null;
+  for (let offset = -24; offset <= 48; offset += 1) {
+    const ms = baseMs + offset * hourMs;
+    if (getDayKey(new Date(ms)) === dateKey) {
+      startMs = ms;
+      break;
+    }
+  }
+  if (startMs == null) return null;
+  let endMs = startMs + DAY_MS;
+  for (let offset = 1; offset <= 48; offset += 1) {
+    const ms = startMs + offset * hourMs;
+    if (getDayKey(new Date(ms)) !== dateKey) {
+      endMs = ms;
+      break;
+    }
+  }
+  return { startMs, endMs };
+}
+
+function secondsInDateKeys(startedAt, dateKeys, nowMs = Date.now()) {
+  const startMs = new Date(startedAt).getTime();
+  if (!Number.isFinite(startMs) || startMs >= nowMs) return 0;
+  const dateKeySet = new Set(Array.isArray(dateKeys) ? dateKeys : []);
+  if (!dateKeySet.size) return 0;
+  let total = 0;
+  for (const dateKey of dateKeySet) {
+    const bounds = getDayBoundsForDateKey(dateKey);
+    if (!bounds) continue;
+    const overlapStart = Math.max(startMs, bounds.startMs);
+    const overlapEnd = Math.min(nowMs, bounds.endMs);
+    if (overlapEnd > overlapStart) total += Math.floor((overlapEnd - overlapStart) / 1000);
+  }
+  return total;
+}
+
 async function loadLiveVoiceSessions(guildId) {
   const docs = await ActivityUser.find({ guildId, "voice.sessionStartedAt": { $ne: null }, }).select("userId voice.sessionStartedAt voice.sessionChannelId").lean().catch(() => []);
   return Array.isArray(docs) ? docs : [];
@@ -538,7 +590,9 @@ function aggregateFromHourlyRows(rows = [], hourKeys = [], topLimit = 3) {
   const contributors = new Set();
 
   for (const row of rows) {
-    if (!hourSet.has(String(row?.hourKey || ""))) continue;
+    const hourKey = String(row?.hourKey || "");
+    if (!hourSet.has(hourKey)) continue;
+    if (shouldSkipBackfillRow(hourKey, hourSet)) continue;
 
     const userId = String(row?.userId || "");
     const textCount = Number(row?.textCount || 0);
@@ -587,7 +641,9 @@ function aggregateUserHourlyRows(rows = [], hourKeys = []) {
   let voiceSeconds = 0;
 
   for (const row of rows) {
-    if (!hourSet.has(String(row?.hourKey || ""))) continue;
+    const hourKey = String(row?.hourKey || "");
+    if (!hourSet.has(hourKey)) continue;
+    if (shouldSkipBackfillRow(hourKey, hourSet)) continue;
     const rowText = Number(row?.textCount || 0);
     const rowVoice = Number(row?.voiceSeconds || 0);
     text += rowText;
@@ -614,6 +670,7 @@ function buildChartByDayFromHourlyRows(rows = [], hourKeys = []) {
   for (const row of rows) {
     const hourKey = String(row?.hourKey || "");
     if (!hourSet.has(hourKey)) continue;
+    if (shouldSkipBackfillRow(hourKey, hourSet)) continue;
     const dayKey = hourKey.split("T")[0] || "";
     if (!dayKey) continue;
     const current = byDay.get(dayKey) || { text: 0, voiceSeconds: 0 };
@@ -1090,4 +1147,124 @@ function startLiveVoiceExpLoop(client, intervalMs = 5000) {
   return client._liveVoiceExpInterval;
 }
 
-module.exports = { recordMessageActivity, handleVoiceActivity, getUserActivityStats, getServerActivityStats, getServerOverviewStats, getUserOverviewStats, getLiveVoiceOverlay, syncLiveVoiceSessionsFromGateway, runLiveVoiceExpTick, startLiveVoiceExpLoop };
+async function getChannelOverviewStats(guildId, channelId, lookbackDays = 14) {
+  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays)) ? Number(lookbackDays) : 14;
+  const channelIdStr = String(channelId || "");
+  if (!guildId || !channelIdStr) {
+    return {
+      lookbackDays: safeLookback,
+      windows: { d1: {}, d7: {}, d14: {}, d21: {}, d30: {} },
+      topUsersText: [],
+      topUsersVoice: [],
+      chart: [],
+    };
+  }
+  const dayKeys1 = getLastNDaysKeys(1);
+  const dayKeys7 = getLastNDaysKeys(7);
+  const dayKeys14 = getLastNDaysKeys(14);
+  const dayKeys21 = getLastNDaysKeys(21);
+  const dayKeys30 = getLastNDaysKeys(30);
+  const dayKeysLookback = getLastNDaysKeys(safeLookback);
+  const allKeys = Array.from(new Set([...dayKeys1, ...dayKeys7, ...dayKeys14, ...dayKeys21, ...dayKeys30, ...dayKeysLookback]));
+  const rows = await ActivityDaily.find({ guildId, dateKey: { $in: allKeys } })
+    .select("dateKey userId textChannels voiceChannels")
+    .lean()
+    .catch(() => []);
+
+  const getChannelVal = (row, key) => {
+    const map = row?.[key];
+    if (!map) return 0;
+    const v = typeof map.get === "function" ? map.get(channelIdStr) : map[channelIdStr];
+    return Math.max(0, Number(v || 0));
+  };
+
+  const byDay = new Map();
+  const userTextAll = new Map();
+  const userVoiceAll = new Map();
+  const contrib1 = new Set();
+  const contrib7 = new Set();
+  const contrib14 = new Set();
+  const contrib21 = new Set();
+  const contrib30 = new Set();
+
+  for (const row of rows) {
+    const dateKey = String(row?.dateKey || "");
+    const userId = String(row?.userId || "");
+    const textVal = getChannelVal(row, "textChannels");
+    const voiceVal = getChannelVal(row, "voiceChannels");
+    if (textVal <= 0 && voiceVal <= 0) continue;
+
+    if (dateKey) {
+      const cur = byDay.get(dateKey) || { text: 0, voiceSeconds: 0 };
+      cur.text += textVal;
+      cur.voiceSeconds += voiceVal;
+      byDay.set(dateKey, cur);
+    }
+    pushMapValue(userTextAll, userId, textVal);
+    pushMapValue(userVoiceAll, userId, voiceVal);
+    if (dayKeys1.includes(dateKey)) contrib1.add(userId);
+    if (dayKeys7.includes(dateKey)) contrib7.add(userId);
+    if (dayKeys14.includes(dateKey)) contrib14.add(userId);
+    if (dayKeys21.includes(dateKey)) contrib21.add(userId);
+    if (dayKeys30.includes(dateKey)) contrib30.add(userId);
+  }
+
+  const sumForKeys = (keys) => {
+    let text = 0;
+    let voice = 0;
+    for (const key of keys) {
+      const cur = byDay.get(key);
+      if (cur) {
+        text += cur.text;
+        voice += cur.voiceSeconds;
+      }
+    }
+    return { text, voiceSeconds: voice };
+  };
+
+  const liveOverlay = await getLiveVoiceOverlay(guildId, safeLookback);
+  const liveForChannel = Number(liveOverlay.channelVoice?.get?.(channelIdStr) || 0);
+  if (liveForChannel > 0) {
+    const lastKey = dayKeysLookback[dayKeysLookback.length - 1];
+    if (lastKey) {
+      const cur = byDay.get(lastKey) || { text: 0, voiceSeconds: 0 };
+      cur.voiceSeconds += liveForChannel;
+      byDay.set(lastKey, cur);
+    }
+  }
+
+  const lookbackWindow = sumForKeys(dayKeysLookback);
+  const d1 = sumForKeys(dayKeys1);
+  const d7 = sumForKeys(dayKeys7);
+  const d14 = sumForKeys(dayKeys14);
+  const d21 = sumForKeys(dayKeys21);
+  const d30 = sumForKeys(dayKeys30);
+  if (liveForChannel > 0) {
+    lookbackWindow.voiceSeconds += liveForChannel;
+  }
+
+  const chart = dayKeysLookback.slice().reverse().map((dayKey) => {
+    const point = byDay.get(dayKey) || { text: 0, voiceSeconds: 0 };
+    return {
+      dayKey,
+      text: Number(point.text || 0),
+      voiceSeconds: Number(point.voiceSeconds || 0),
+    };
+  });
+
+  return {
+    lookbackDays: safeLookback,
+    windows: {
+      d1: { ...d1, contributors: contrib1.size },
+      d7: { ...d7, contributors: contrib7.size },
+      d14: { ...d14, contributors: contrib14.size },
+      d21: { ...d21, contributors: contrib21.size },
+      d30: { ...d30, contributors: contrib30.size },
+    },
+    topUsersText: topNFromMap(userTextAll, 3),
+    topUsersVoice: topNFromMap(userVoiceAll, 3),
+    chart,
+  };
+}
+
+module.exports = { recordMessageActivity, handleVoiceActivity, getUserActivityStats, getServerActivityStats, getServerOverviewStats, getUserOverviewStats, getChannelOverviewStats, getLiveVoiceOverlay, loadLiveVoiceSessions, secondsInDateKeys, syncLiveVoiceSessionsFromGateway, runLiveVoiceExpTick, startLiveVoiceExpLoop };
