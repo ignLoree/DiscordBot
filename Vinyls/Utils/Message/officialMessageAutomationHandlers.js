@@ -400,6 +400,7 @@ async function handleDiscadiaBump(message, client) {
   }
   const normalized = haystacks.map((text) => String(text).toLowerCase()).map((text) => text.replace(/\s+/g, " ").trim());
   const joined = normalized.join("\n");
+  if (/already bumped recently/i.test(joined)) return false;
   const hasPattern = patterns.some((pattern) => joined.includes(pattern));
   const hasSuccessWord = /(server has been bumped|has been successfully bumped|bump(?:ed)?successfully|successfully bumped|successful bump|bump complete|bump done|thanks for bumping|you can bump again|bump effettuato|bump eseguito|bump completato|bump andato a buon fine|server bumpato con successo|bump riuscito|puoi bumpare di nuovo|potrai bumpare di nuovo)/i.test(joined,);
   const hasBumpWord = /\bbump(?:ed)?\b/i.test(joined);
