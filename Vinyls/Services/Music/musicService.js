@@ -396,9 +396,16 @@ async function resolveExternalCandidates(manager, candidates, requestedBy, origi
   for (const candidate of candidates.slice(0, 12)) {
     const exactQuery = `${candidate.title || ""} ${candidate.author || ""}`.trim();
     if (!exactQuery) continue;
-    const identifier = toYouTubeSearchIdentifier(exactQuery);
-    const result = await resolveIdentifier(manager, identifier).catch(() => null);
-    const parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: identifier, originalQuery, source: candidate.source, url: candidate.url, }).tracks;
+    let identifier = toYouTubeSearchIdentifier(exactQuery);
+    let result = await resolveIdentifier(manager, identifier).catch(() => null);
+    let parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: identifier, originalQuery, source: candidate.source, url: candidate.url, }).tracks;
+    if (parsed.length === 0) {
+      const ytmId = toYouTubeMusicSearchIdentifier(exactQuery);
+      if (ytmId) {
+        result = await resolveIdentifier(manager, ytmId).catch(() => null);
+        parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: ytmId, originalQuery, source: candidate.source, url: candidate.url, }).tracks;
+      }
+    }
     let bestTrack = null;
     let bestScore = -Infinity;
     for (const track of parsed) {
@@ -444,6 +451,7 @@ async function resolveIdentifier(manager, identifier) {
 }
 
 const YTSEARCH_PREFIX = "ytsearch:";
+const YTMSEARCH_PREFIX = "ytmsearch:";
 
 function toYouTubeSearchIdentifier(query) {
   const q = String(query || "").trim();
@@ -452,12 +460,29 @@ function toYouTubeSearchIdentifier(query) {
   return `${YTSEARCH_PREFIX}${q}`;
 }
 
+function toYouTubeMusicSearchIdentifier(query) {
+  const q = String(query || "").trim();
+  if (!q) return null;
+  if (/^ytmsearch:/i.test(q)) return q;
+  return `${YTMSEARCH_PREFIX}${q}`;
+}
+
 async function runYouTubeOnlySearch(manager, query, requestedBy) {
   const identifier = toYouTubeSearchIdentifier(query);
   if (!identifier) return [];
-  const result = await resolveIdentifier(manager, identifier).catch(() => null);
-  const parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: identifier, originalQuery: query, source: "youtube", });
-  return parsed.tracks || [];
+  let result = await resolveIdentifier(manager, identifier).catch(() => null);
+  let parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: identifier, originalQuery: query, source: "youtube", });
+  let tracks = parsed.tracks || [];
+  if (tracks.length === 0) {
+    const ytmId = toYouTubeMusicSearchIdentifier(query);
+    if (ytmId) {
+      logMusic("search_yt_fallback_ytm", { query: query.slice(0, 60) });
+      result = await resolveIdentifier(manager, ytmId).catch(() => null);
+      parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: ytmId, originalQuery: query, source: "youtube", });
+      tracks = parsed.tracks || [];
+    }
+  }
+  return tracks;
 }
 
 function tracksFromLavalinkResponse(result, requestedBy, extra = {}) {
