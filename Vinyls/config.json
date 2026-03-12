@@ -15,8 +15,14 @@
     ],
     "reward": {
       "baseExp": 100,
-      "fastGuess": { "windowMs": 300000, "multiplier": 1.5 },
-      "streak": { "bonusPercentPerWin": 10, "maxBonusPercent": 50 }
+      "fastGuess": {
+        "windowMs": 300000,
+        "multiplier": 1.5
+      },
+      "streak": {
+        "bonusPercentPerWin": 10,
+        "maxBonusPercent": 50
+      }
     }
   },
   "discadia": {
@@ -28,8 +34,14 @@
     ],
     "reward": {
       "baseExp": 100,
-      "fastGuess": { "windowMs": 900000, "multiplier": 1.5 },
-      "streak": { "bonusPercentPerWin": 10, "maxBonusPercent": 50 }
+      "fastGuess": {
+        "windowMs": 900000,
+        "multiplier": 1.5
+      },
+      "streak": {
+        "bonusPercentPerWin": 10,
+        "maxBonusPercent": 50
+      }
     }
   },
   "discadiaVoteReminder": {
@@ -38,15 +50,20 @@
     "checkIntervalMinutes": 30,
     "voteUrl": "https://discadia.com/vote/viniliecaffe/",
     "message": [
-
       "<:VC_bump:1330185435401424896> Hey! Sono passate 24 ore: puoi votare di nuovo su Discadia.",
       "<a:VC_ThankYou:1330186319673950401> **Grazie per il supporto!**",
       "<:link:1470064815899803668> Per votare su Discadia, clicca sul pulsante sottostante:"
     ],
     "reward": {
       "baseExp": 150,
-      "fastGuess": { "windowMs": 900000, "multiplier": 1.5 },
-      "streak": { "bonusPercentPerWin": 10, "maxBonusPercent": 50 }
+      "fastGuess": {
+        "windowMs": 900000,
+        "multiplier": 1.5
+      },
+      "streak": {
+        "bonusPercentPerWin": 10,
+        "maxBonusPercent": 50
+      }
     }
   },
   "autoPoll": {
@@ -242,7 +259,7 @@
       "durationMs": 180000,
       "rewardExp": 150,
       "onlyFamous": true,
-      "apiUrl": "https://www.thesportsdb.com/api/v1/json/123/searchplayers.php?p="
+      "apiUrl": "https://www.thesportsdb.com/api/v1/json/3/searchplayers.php?p="
     },
     "guessSong": {
       "durationMs": 180000,
@@ -280,7 +297,7 @@
     "guessTeam": {
       "durationMs": 180000,
       "rewardExp": 150,
-      "apiUrl": "https://www.thesportsdb.com/api/v1/json/123/search_all_teams.php?l=",
+      "apiUrl": "https://www.thesportsdb.com/api/v1/json/3/search_all_teams.php?l=",
       "leagues": [
         "Italian Serie A",
         "English Premier League",
@@ -371,7 +388,6 @@
     "minDigits": 2,
     "separator": " "
   },
-  "mainGuildId": "1329080093599076474",
   "sponsorGuildIds": [
     "1471511676019933354",
     "1471511928739201047",
