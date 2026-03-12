@@ -31,11 +31,14 @@ function check() {
 function runLoader() {
   const node = process.execPath || "node";
   const loader = path.join(__dirname, "loader.js");
+  console.log("[wait-for-lavalink] Esecuzione: " + node + " loader.js");
   const child = spawn(node, ["--disable-warning=ExperimentalWarning", loader], {
     cwd: __dirname,
-    stdio: "inherit",
+    stdio: ["inherit", "pipe", "pipe"],
     env: process.env,
   });
+  child.stdout.pipe(process.stdout);
+  child.stderr.pipe(process.stderr);
   child.on("exit", (code) => process.exit(code != null ? code : 0));
 }
 
