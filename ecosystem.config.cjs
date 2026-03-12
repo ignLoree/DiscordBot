@@ -23,9 +23,8 @@ module.exports = {
     {
       name: "bots",
       cwd: base,
-      script: "loader.js",
+      script: "wait-for-lavalink.js",
       interpreter: "node",
-      interpreter_args: "--disable-warning=ExperimentalWarning",
       instances: 1,
       autorestart: true,
       watch: false,
