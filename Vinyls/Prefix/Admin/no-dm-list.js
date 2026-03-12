@@ -32,6 +32,7 @@ module.exports = {
   aliases: ["nodmlist"],
   allowEmptyArgs: true,
   async execute(message) {
+    if (!message.guild) return;
     const guildId = message.guild.id;
     const list = await getAllNoDmPreferences(guildId);
     if (!list.length) {
@@ -47,12 +48,11 @@ module.exports = {
       return `<@${entry.userId}> — ${label}`;
     });
     const chunks = chunkLines(lines);
-
     const embed = new EmbedBuilder()
       .setColor("#6f4e37")
       .setTitle("Utenti con preferenze DM")
       .setDescription(
-        `Elenco utenti che hanno disattivato una o più categorie di DM.\n\n${chunks[0]}`,
+        `Elenco utenti che hanno disattivato una o più categorie di DM.\n\n${chunks[0] ?? ""}`,
       )
       .setFooter({
         text: "Legenda: «Tutto disattivato» = nessun DM; altrimenti solo le categorie elencate sono bloccate.",
@@ -63,6 +63,7 @@ module.exports = {
       allowedMentions: { repliedUser: false },
     });
     for (let i = 1; i < chunks.length; i += 1) {
+      /* chunks[0] è nell'embed sopra; invio il resto in messaggi separati */
       await message.channel.send({
         content: chunks[i],
         allowedMentions: { repliedUser: false },

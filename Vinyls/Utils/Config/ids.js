@@ -141,6 +141,7 @@ const ids = {
     candidatureStaff: "1442569232507473951",
     visioneModuli: "1442569278049095913",
     news: "1442569115972669541",
+    eventAnnouncements: "1481660281032675510",
     staffNews: "1442569239063167139",
     media: "1442569136067575809",
     selfieVerificati: "1470029899740873029",

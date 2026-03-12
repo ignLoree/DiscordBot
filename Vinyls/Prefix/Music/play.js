@@ -173,6 +173,7 @@ module.exports = {
     }
 
     const searchTracks=Array.isArray(search.searchResult?.tracks)?search.searchResult.tracks.filter(isSupportedPickerTrack):[];
+    /* 0 risultati: no results; 1: catalogOnly o singolo; >1: menu; playlist: usa playlist */
     if (!search.searchResult?.playlist && searchTracks.length === 0) {
       const noResultsEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("No results \u26D4");
       return safeMessageReply(message, { embeds: [noResultsEmbed] });

@@ -8,6 +8,7 @@ module.exports = {
   aliases: ["r"],
   allowEmptyArgs: true,
   async execute(message, args = []) {
+    if (!message.guild) return;
     await message.channel.sendTyping();
 
     const tokens=Array.isArray(args)?args.map((arg) => String(arg||"").trim()).filter(Boolean):[];

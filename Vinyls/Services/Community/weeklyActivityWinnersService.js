@@ -11,7 +11,7 @@ const { isChannelInTicketCategory } = require("../../Utils/Ticket/ticketCategory
 const { getClientChannelCached, getClientGuildCached, getGuildChannelCached, getGuildMemberCached, getGuildRoleCached, getUserCached } = require("../../Utils/Interaction/interactionEntityCache");
 const TIME_ZONE = "Europe/Rome";
 const TARGET_CHANNEL_ID = IDs.channels.topWeeklyUser;
-const NEWS_CHANNEL_ID = IDs.channels.news;
+const EVENT_ANNOUNCEMENT_CHANNEL_ID = IDs.channels.eventAnnouncements;
 const NEWS_STAFF_CHANNEL_ID = IDs.channels.staffNews;
 const INFO_CHANNEL_ID = IDs.channels.info;
 const TROPHY_LABELS = ["<:VC_Podio1:1469659449974329598>", "<:VC_Podio2:1469659512863592500>", "<:VC_Podio3:1469659557696504024>",];
@@ -345,6 +345,9 @@ function getEventWeeklyRewardLabel(week) {
 }
 
 async function sendEventWeekAnnouncementToNews(client, guild, eventWeek, topMessages, topVoice) {
+  if (!EVENT_ANNOUNCEMENT_CHANNEL_ID) return;
+  const eventChannel = client.channels.cache.get(EVENT_ANNOUNCEMENT_CHANNEL_ID) || (await getClientChannelCached(client, EVENT_ANNOUNCEMENT_CHANNEL_ID));
+  if (!eventChannel?.guild) return;
   const msgLines = topMessages.length ? topMessages.map((item, i) => {
     const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}> <a:VC_Arrow:1448672967721615452> **${item.messageCount}** _messaggi_`;
   })
@@ -367,7 +370,7 @@ async function sendEventWeekAnnouncementToNews(client, guild, eventWeek, topMess
     )
     .setThumbnail(guild.iconURL({ size: 256 }) || null)
     .setFooter({ text: `Settimana ${eventWeek} di ${eventWeek === 1 ? "evento" : "evento"} • Premi assegnati ai vincitori` }).setTimestamp();
-  await newsChannel.send({
+  await eventChannel.send({
     content: `<@&1442568949605597264>
 <a:VC_Winner:1448687700235256009> Ciao a tutti! Annunciamo i vincitori dell'Activity Event EXP della settimana ${eventWeek}
 <:VC_EXP:1468714279673925883> Avete ricevuto __${getEventWeeklyRewardLabel(eventWeek)}__ come ricompensa di questa settimana
@@ -375,7 +378,7 @@ async function sendEventWeekAnnouncementToNews(client, guild, eventWeek, topMess
 <a:VC_Events:1448688007438667796> Vi aspettiamo la prossima settimana, con i vincitori che vinceranno __${getEventWeeklyRewardLabel(eventWeek + 1)}__`,
     embeds: [embed],
   }).catch((err) => {
-    global.logger?.error?.("[WEEKLY ACTIVITY] Event week announcement to news failed:", err);
+    global.logger?.error?.("[WEEKLY ACTIVITY] Event week announcement failed:", err);
   });
 }
 
@@ -383,7 +386,7 @@ const EVENT_END_ANNOUNCEMENT_MESSAGE = ["<:VC_Calendar:1448670320180592724> **L'
 
 async function trySendEventEndAnnouncementToNews(client) {
   const mainGuildId = IDs.guilds?.main;
-  if (!mainGuildId || !NEWS_CHANNEL_ID) return;
+  if (!mainGuildId || !EVENT_ANNOUNCEMENT_CHANNEL_ID) return;
   const guild = client.guilds.cache.get(mainGuildId) || (await getClientGuildCached(client, mainGuildId));
   if (!guild) return;
   const doc = await GlobalSettings.findOne({ guildId: mainGuildId }).lean().catch(() => null);
@@ -404,14 +407,14 @@ async function trySendEventEndAnnouncementToNews(client) {
     .setThumbnail(guild.iconURL({ size: 256 }) || null)
     .setFooter({ text: "Evento terminato • Grazie per la partecipazione!" })
     .setTimestamp();
-  const newsChannel = client.channels.cache.get(NEWS_CHANNEL_ID) || (await getClientChannelCached(client, NEWS_CHANNEL_ID));
-  if (!newsChannel?.guild) return;
-  await newsChannel.send({
+  const eventChannel = client.channels.cache.get(EVENT_ANNOUNCEMENT_CHANNEL_ID) || (await getClientChannelCached(client, EVENT_ANNOUNCEMENT_CHANNEL_ID));
+  if (!eventChannel?.guild) return;
+  await eventChannel.send({
     content: `${EVENT_END_ANNOUNCEMENT_MESSAGE}\n\n<a:VC_Ping:1448670620412809298>︲<@&1442569012063109151>`,
     embeds: [embed],
     allowedMentions: { parse: ["everyone"] },
   }).catch((err) => {
-    global.logger?.error?.("[WEEKLY ACTIVITY] Event end announcement to news failed:", err);
+    global.logger?.error?.("[WEEKLY ACTIVITY] Event end announcement failed:", err);
     return;
   });
   await GlobalSettings.findOneAndUpdate(
@@ -556,7 +559,7 @@ async function publishWeeklyActivityWinners(client, options = {}) {
       }
     }
   }
-  if (eventWeek >= 1 && eventWeek <= 4 && NEWS_CHANNEL_ID) {
+  if (eventWeek >= 1 && eventWeek <= 4 && EVENT_ANNOUNCEMENT_CHANNEL_ID) {
     await sendEventWeekAnnouncementToNews(client, guild, eventWeek, eventTopMessages, eventTopVoice);
   }
   if (eventWeek >= 1 && eventWeek <= 4 && settings) {

@@ -5111,18 +5111,20 @@ async function startDrivingQuizGame(client, cfg) {
 
   let hintTimeout = null;
   if (row.questionType === "multiple" && Number.isFinite(row.correctIndex) && Array.isArray(row.options) && row.options.length >= 2) {
-    const correctIdx = row.correctIndex;
     const n = row.options.length;
+    const correctIdx = Math.max(0, Math.min(row.correctIndex, n - 1));
     const otherIdx = correctIdx <= 0 ? 1 : (correctIdx >= n - 1 ? n - 2 : (Math.random() < 0.5 ? correctIdx - 1 : correctIdx + 1));
     const [i1, i2] = [Math.min(correctIdx, otherIdx), Math.max(correctIdx, otherIdx)];
-    const L1 = DRIVING_QUIZ_LETTERS[i1] ?? String(i1 + 1);
-    const L2 = DRIVING_QUIZ_LETTERS[i2] ?? String(i2 + 1);
-    hintTimeout = await scheduleGenericHint(
-      client,
-      channelId,
-      durationMs,
-      `<a:VC_Flame:1473106990493335665> La risposta è tra **${L1}** e **${L2}**.`,
-    );
+    if (i1 >= 0 && i2 < n) {
+      const L1 = DRIVING_QUIZ_LETTERS[i1] ?? String(i1 + 1);
+      const L2 = DRIVING_QUIZ_LETTERS[i2] ?? String(i2 + 1);
+      hintTimeout = await scheduleGenericHint(
+        client,
+        channelId,
+        durationMs,
+        `<a:VC_Flame:1473106990493335665> La risposta è tra **${L1}** e **${L2}**.`,
+      );
+    }
   } else if (row.questionType === "trueFalse" && row.statement) {
     const thematicHint = getDrivingQuizThematicHint(row);
     if (thematicHint) {
@@ -5133,7 +5135,8 @@ async function startDrivingQuizGame(client, cfg) {
   const gameState = { type: "drivingQuiz", questionType: row.questionType ?? "trueFalse", statement: row.statement, rewardExp, startedAt: Date.now(), endsAt: Date.now() + durationMs, timeout, hintTimeout, gameMessageId: gameMessage?.id || null, };
   if (row.questionType === "multiple") {
     gameState.options = row.options;
-    gameState.correctIndex = row.correctIndex;
+    const optLen = Array.isArray(row.options) ? row.options.length : 0;
+    gameState.correctIndex = Math.max(0, Math.min(Number(row.correctIndex), optLen - 1));
   } else {
     gameState.answer = Boolean(row.answer);
   }
@@ -5235,8 +5238,7 @@ async function pickRandomFindBotChannel(guild, requiredRoleId, excludeChannelId 
   });
 
   const list = Array.from(channels.values());
-  if (list.length === 0) return null;
-  return list[randomBetween(0, list.length - 1)];
+  return pickRandomItem(list);
 }
 
 async function startFindBotGame(client, cfg) {

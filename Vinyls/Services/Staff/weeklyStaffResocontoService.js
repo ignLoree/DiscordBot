@@ -276,6 +276,7 @@ function wasPmPexedInWeek(staffDoc, weekStart) {
   });
 }
 
+/** Soglie PM: ≤5 Depex, 6-10 Richiamo, 11-14 Richiamo, ≥15 Nulla. */
 function computePmAction(weeklyPartners, pmPexedInWeek) {
   if (pmPexedInWeek) return "Nulla";
   const partners = Math.max(0, Math.floor(toSafeNumber(weeklyPartners)));

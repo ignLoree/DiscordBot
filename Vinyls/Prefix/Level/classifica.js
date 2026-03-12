@@ -14,7 +14,8 @@ const leaderboardCache = new Map();
 function getInvokedCommand(message) {
   const content = String(message?.content || "").trim();
   if (!content.startsWith("+")) return "";
-  return content.slice(1).split(/\s+/)[0].toLowerCase();
+  const tokens = content.slice(1).split(/\s+/).filter(Boolean);
+  return (tokens[0] ?? "").toLowerCase();
 }
 
 function rankLabel(index) {

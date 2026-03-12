@@ -12,7 +12,7 @@ const EVENT_DURATION_DAYS = 31;
 const EVENT_GLOBAL_MULTI = 3;
 const EVENT_ROLE_OVERRIDES = { [IDs.roles.ServerBooster]: 3, [IDs.roles.Donator]: 4, [IDs.roles.VIP]: 5, };
 const EVENT_EXTRA_MULTI_ROLE_IDS = [IDs.roles.Veterano].filter(Boolean);
-const NEWS_CHANNEL_ID = IDs.channels.news;
+const EVENT_ANNOUNCEMENT_CHANNEL_ID = IDs.channels.eventAnnouncements;
 const NEWS_STAFF_CHANNEL_ID = IDs.channels.staffNews;
 const EVENT_ANNOUNCEMENT_MESSAGES = [["<:VC_Firework:1470796227913322658> **ACTIVITY EXP EVENT**", "", "> <a:VC_HeartsPink:1468685897389052008> __Per festeggiare i 350 membri abbiamo deciso di startare un nuovo evento!__", "> <a:VC_HeartsBlue:1468686100045369404> **Non sarà il classico activity event, ma sarà incentrato tanto sull'exp e i livelli.**", "", "<a:VC_Sparkles:1468546911936974889> Ogni ruolo ottenibile **gratuitamente** avrà una __ricompensa extra__ oltre a quelle già scritte in <#1442569111119990887>:", "<:VC_DoubleReply:1468713981152727120> <@&1469040179799920801> / <@&1469040190730408018> <a:VC_Arrow:1448672967721615452> __Facendo la verifica tramite selfie otterrete anche 5 livelli__", "<:VC_DoubleReply:1468713981152727120> <@&1442568948271943721> <a:VC_Arrow:1448672967721615452> __Mettendo il nostro link nello status (discord.gg/viniliecaffe) riceverete 5 livelli__", "<:VC_DoubleReply:1468713981152727120> <@&1468266342682722679> <a:VC_Arrow:1448672967721615452> __Votando ogni giorno su [Discadia](<https://discadia.com/vote/viniliecaffe/>) ricevete 1 livello__", "<:VC_DoubleReply:1468713981152727120> <@&1469758545263198442> / <@&1474357579143577610> / <@&1474361806956007425> <a:VC_Arrow:1448672967721615452> __Per ogni soglia di inviti fatti col vostro [custom link](<https://imgur.com/a/3wpDOVj>) raggiunta riceverete rispettivamente 5 livelli, 10 livelli e 25 livelli.__", "<:VC_Reply:1468262952934314131> <@&1471955147692179497> <a:VC_Arrow:1448672967721615452> __Mettendo una nostra <#1475223034057982184> riceverete 10 livelli__",].join("\n"), ["", "<:VC_EXP:1468714279673925883> Inoltre ci sarà un __multi globale__ di **x3** per tutti. Alcuni ruoli avranno anche dei boost **maggiorati** per tutta la durata dell'evento:", "<:VC_DoubleReply:1468713981152727120> <@&1329497467481493607> <a:VC_Arrow:1448672967721615452> __`x3` invece di `x2`__", "<:VC_DoubleReply:1468713981152727120> <@&1442568916114346096> <a:VC_Arrow:1448672967721615452> __`x4` invece di `x3`__", "<:VC_DoubleReply:1468713981152727120> <@&1442568950805430312> <a:VC_Arrow:1448672967721615452> __`x5` invece di `x4`__", "<:VC_Reply:1468262952934314131> <@&1469073503025103113> <a:VC_Arrow:1448672967721615452> __Per premiare anche chi sta qui da più tempo applicheremo un boost extra di `x2`__", "> <a:VC_Exclamation:1448687427836444854> __Ricordo che questi boost si sommano a quello globale, non tra di loro.__",].join("\n"), (startDateStr, endDateStr) => ["", "<a:VC_Events:1448688007438667796> Ogni settimana i 3 utenti più attivi in vocale e in testuali riceveranno rispettivamente le seguenti ricompense:", "<:VC_DoubleReply:1468713981152727120> **1° Settimana** <a:VC_Arrow:1448672967721615452> __10 livelli__", "<:VC_DoubleReply:1468713981152727120> **2° Settimana** <a:VC_Arrow:1448672967721615452> __Un colore gradiente a scelta__", "<:VC_DoubleReply:1468713981152727120> **3° Settimana** <a:VC_Arrow:1448672967721615452> __Ruolo custom e vocale privata permanente__", "<:VC_Reply:1468262952934314131> **4° Settimana** <a:VC_Arrow:1448672967721615452> __Ruolo <@&1442568950805430312> permanente__", "> <a:VC_Exclamation:1448687427836444854> __Ricordo che inoltre i primi in top testuale e vocale riceveranno lo stesso <@&1468674837957574757> e <@&1468674787399172208> ogni settimana.__", "", "<a:VC_Boost:1448670271115497617> Alla fine dell'evento verrà stilata una classifica globale in base all'**EXP** (__non ai livelli__) ottenuta durante la durata dell'evento e i primi 3 otterranno un **__NITRO BOOST__**.", "", "> **NB: Tutti i premi vengono assegnati automaticamente dal bot, anche quelli settimanali (naturalmente non i Nitro Boost), aprite un <#1442569095068254219> solo se siete sicuri di non aver ricevuto la vostra ricompensa. Tutti i ticket inutili verranno sanzionati.**", "", `<a:VC_Calendar:1448670320180592724> __La durata dell'evento è dal \`${startDateStr}\` al \`${endDateStr}\`__`, "", "<a:VC_Ping:1448670620412809298>︲<@&1442569012063109151>",].join("\n"),];
 
@@ -402,20 +402,20 @@ module.exports = {
         allowedMentions: { repliedUser: false },
       });
 
-      if (NEWS_CHANNEL_ID) {
-        const newsChannel = message.client.channels.cache.get(NEWS_CHANNEL_ID) || (await getClientChannelCached(message.client, NEWS_CHANNEL_ID));
-        if (newsChannel) {
+      if (EVENT_ANNOUNCEMENT_CHANNEL_ID) {
+        const eventChannel = message.client.channels.cache.get(EVENT_ANNOUNCEMENT_CHANNEL_ID) || (await getClientChannelCached(message.client, EVENT_ANNOUNCEMENT_CHANNEL_ID));
+        if (eventChannel) {
           const startStr = fmtDate(result.startDate);
           const endStr = fmtDateWithTime(result.endDate);
           for (let i = 0; i < EVENT_ANNOUNCEMENT_MESSAGES.length; i++) {
             const content = typeof EVENT_ANNOUNCEMENT_MESSAGES[i] === "function" ? EVENT_ANNOUNCEMENT_MESSAGES[i](startStr, endStr) : EVENT_ANNOUNCEMENT_MESSAGES[i];
-            await newsChannel
+            await eventChannel
               .send({
                 content,
                 allowedMentions: { parse: ["everyone"] },
               })
               .catch((err) => {
-                global.logger?.error?.("[evento start] Invio annuncio in #news fallito:", err);
+                global.logger?.error?.("[evento start] Invio annuncio evento fallito:", err);
               });
           }
         }

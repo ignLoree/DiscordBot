@@ -15,12 +15,12 @@ module.exports = {
       const data=await fetchJson("https://api.dictionaryapi.dev/api/v2/entries/en/"+encodeURIComponent(query),);
       const row = Array.isArray(data) ? data[0] : null;
       const meanings = Array.isArray(row?.meanings) ? row.meanings : [];
-      const firstMeaning = meanings[0];
+      const firstMeaning = meanings[0] ?? null;
       const firstDef=String(firstMeaning?.definitions?.[0]?.definition||"Definizione non disponibile.",);
       const translatedDef = clamp(await translateToItalian(firstDef), 1500);
       const phonetic=row?.phonetic||row?.phonetics?.find((p) => p?.text)?.text||"N/D";
-      const partRaw = firstMeaning?.partOfSpeech || "N/D";
-      const partIt=PART_OF_SPEECH_IT[String(partRaw).toLowerCase()]||(await translateToItalian(partRaw));
+      const partRaw = firstMeaning?.partOfSpeech ?? "N/D";
+      const partIt=PART_OF_SPEECH_IT[String(partRaw).toLowerCase()]||(await translateToItalian(String(partRaw)));
 
       return safeMessageReply(message, {
         embeds: [
