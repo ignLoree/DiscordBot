@@ -85,7 +85,8 @@ async function buildChannelOverviewPayload(guild, channel, lookbackDays, view, o
   const channelIconUrl = channel?.isVoiceBased?.() ? guild.iconURL({ size: 256, extension: "png" }) : null;
   const createdOn = channel?.createdAt ?? new Date(0);
 
-  const isTextChannel = Boolean(channel?.isTextBased?.());
+  const isVoiceChannel = Boolean(channel?.isVoiceBased?.());
+  const isTextChannel = isVoiceChannel ? false : Boolean(channel?.isTextBased?.());
   const buffer = await renderChannelActivityCanvas({
     channelName,
     channelIconUrl,
@@ -142,7 +143,7 @@ async function resolveChannelAndLookback(message, args = []) {
   const guild = message.guild;
   const tokens = Array.isArray(args) ? args.map((a) => String(a ?? "").trim()).filter(Boolean) : [];
   let lookbackDays = 14;
-  const lookbackToken = tokens.find((t) => /^\d+d?$/i.test(t));
+  const lookbackToken = tokens.find((t) => /^(1|7|14|21|30)d?$/i.test(t));
   if (lookbackToken) {
     lookbackDays = normalizeLookbackDays(lookbackToken.replace(/d$/i, ""));
   }
@@ -150,7 +151,7 @@ async function resolveChannelAndLookback(message, args = []) {
   if (channelMention) {
     return { channel: channelMention, lookbackDays };
   }
-  const nonLookback = tokens.filter((t) => !/^\d+d?$/i.test(t));
+  const nonLookback = tokens.filter((t) => !/^(1|7|14|21|30)d?$/i.test(t));
   const first = nonLookback[0];
   if (!first && guild) {
     return { channel: message.channel, lookbackDays };
@@ -162,10 +163,13 @@ async function resolveChannelAndLookback(message, args = []) {
     if (channel) return { channel, lookbackDays };
   }
   if (first && guild) {
-    const byName = guild.channels.cache.find(
-      (c) => String(c.name).toLowerCase() === first.toLowerCase()
+    const nameLower = first.toLowerCase();
+    const allMatch = guild.channels.cache.filter(
+      (c) => String(c.name).toLowerCase() === nameLower
     );
-    if (byName) return { channel: byName, lookbackDays };
+    const voiceFirst = [...allMatch.values()].find((c) => c?.isVoiceBased?.());
+    const channel = voiceFirst || allMatch.first();
+    if (channel) return { channel, lookbackDays };
   }
   return { channel: message.channel, lookbackDays };
 }

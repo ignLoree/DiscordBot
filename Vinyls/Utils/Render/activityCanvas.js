@@ -347,6 +347,104 @@ function drawMetricPanel(ctx, title, rows, x, y, w, h) {
   }
 }
 
+function drawBigLookbackPanel(ctx, title, bigValue, subtitle, x, y, w, h) {
+  fillRoundRect(ctx, x, y, w, h, 18, "rgba(46, 55, 70, 0.94)");
+  strokeRoundRect(ctx, x, y, w, h, 18, "rgba(255,255,255,0.05)", 1);
+  drawLabel(ctx, title, x + 16, y + 24, {
+    size: 22,
+    weight: "700",
+    color: "#e2e7ef",
+    forcePrimaryFont: true,
+  });
+  drawLabel(ctx, "\u21BB", x + w - 36, y + 26, {
+    size: 20,
+    weight: "700",
+    color: "#8b95a5",
+    align: "right",
+    baseline: "middle",
+  });
+  const centerX = x + w / 2;
+  const contentY = y + h / 2 + 6;
+  drawLabel(ctx, String(bigValue), centerX, contentY - 14, {
+    size: 42,
+    weight: "800",
+    color: "#eef3fb",
+    align: "center",
+    baseline: "middle",
+    useNumericFont: true,
+  });
+  drawLabel(ctx, String(subtitle || ""), centerX, contentY + 18, {
+    size: 18,
+    weight: "600",
+    color: "#8b95a5",
+    align: "center",
+    baseline: "middle",
+  });
+}
+
+function drawMetricPanelStatbotRows(ctx, title, rows, x, y, w, h) {
+  fillRoundRect(ctx, x, y, w, h, 18, "rgba(46, 55, 70, 0.94)");
+  strokeRoundRect(ctx, x, y, w, h, 18, "rgba(255,255,255,0.05)", 1);
+  drawLabel(ctx, title, x + 16, y + 24, {
+    size: 22,
+    weight: "700",
+    color: "#e2e7ef",
+    forcePrimaryFont: true,
+  });
+  const rowHeight = 52;
+  const startY = y + 48;
+  for (let i = 0; i < rows.length; i += 1) {
+    const row = rows[i] || { period: "-", value: "-" };
+    const rowY = startY + i * rowHeight;
+    drawLabel(ctx, row.period, x + 20, rowY + rowHeight / 2, {
+      size: 22,
+      weight: "700",
+      color: "#e2e7ef",
+      useNumericFont: true,
+    });
+    drawLabel(ctx, fitText(ctx, row.value, w - 120, 20, "700"), x + w - 24, rowY + rowHeight / 2, {
+      size: 20,
+      weight: "600",
+      align: "right",
+      color: "#b8c0ce",
+      useNumericFont: true,
+    });
+  }
+}
+
+async function drawTopListCardStatbotStyle(ctx, title, rows, x, y, w, h, options = {}) {
+  const unit = String(options.unit || "");
+  fillRoundRect(ctx, x, y, w, h, 18, "rgba(46, 55, 70, 0.94)");
+  strokeRoundRect(ctx, x, y, w, h, 18, "rgba(255,255,255,0.05)", 1);
+  drawLabel(ctx, title, x + 16, y + 24, {
+    size: 22,
+    weight: "700",
+    color: "#e2e7ef",
+    forcePrimaryFont: true,
+  });
+  const rowHeight = 64;
+  const startY = y + 48;
+  for (let i = 0; i < 3; i += 1) {
+    const row = rows?.[i] || { label: "—", value: "0" };
+    const rowY = startY + i * rowHeight;
+    const valueText = unit ? `${row.value} ${unit}` : String(row.value ?? "0");
+    await drawLabelWithEmoji(
+      ctx,
+      fitText(ctx, prepareVisibleText(row.label || "—"), w - 220, 22, "700"),
+      x + 20,
+      rowY + rowHeight / 2,
+      { size: 22, weight: "700", color: "#e0e5ed", align: "left" },
+    );
+    drawLabel(ctx, valueText, x + w - 24, rowY + rowHeight / 2, {
+      size: 22,
+      weight: "700",
+      align: "right",
+      color: "#b8c0ce",
+      useNumericFont: true,
+    });
+  }
+}
+
 async function drawTopCard(ctx, title, first, second, x, y, w, h, options = {}) {
   const showRank = options.showRank !== false;
   fillRoundRect(ctx, x, y, w, h, 18, "rgba(46, 55, 70, 0.94)");
@@ -593,97 +691,107 @@ async function renderChannelActivityCanvas({ channelName, channelIconUrl, create
     color: "#eef3fb",
     forcePrimaryFont: true,
   });
-  drawLabel(ctx, "Channel Overview", 124, 88, {
-    size: 28,
+  const subtitle = isTextChannel ? "Text Channel" : "Voice Channel";
+  drawLabel(ctx, subtitle, 124, 88, {
+    size: 24,
     weight: "600",
-    color: "#bfc8d6",
+    color: "#8b95a5",
   });
-  drawDateBadge(ctx, "Created On", dateText(createdOn), 650, 24, 270, 80);
+  drawDateBadge(ctx, "Created On", dateText(createdOn), 990, 24, 270, 80);
 
   if (isTextChannel) {
-    drawMetricPanel(
+    drawBigLookbackPanel(
       ctx,
       "Server Lookback",
-      [{ label: `${safeLookback}d`, value: `${compactNumber(lookbackWindow?.text || 0)} messages` }],
+      compactNumber(lookbackWindow?.text || 0),
+      "messages",
       20,
       132,
-      400,
-      140,
+      380,
+      200,
     );
-    drawMetricPanel(
+    drawMetricPanelStatbotRows(
       ctx,
       "Messages",
       [
-        { label: "1d", value: `${compactNumber(windows?.d1?.text || 0)} messages` },
-        { label: "7d", value: `${compactNumber(windows?.d7?.text || 0)} messages` },
-        { label: "30d", value: `${compactNumber(windows?.d30?.text || 0)} messages` },
+        { period: "1d", value: `${compactNumber(windows?.d1?.text || 0)} messages` },
+        { period: "7d", value: `${compactNumber(windows?.d7?.text || 0)} messages` },
+        { period: "30d", value: `${compactNumber(windows?.d30?.text || 0)} messages` },
       ],
-      440,
+      420,
       132,
-      400,
-      220,
+      420,
+      200,
     );
-    drawMetricPanel(
+    drawMetricPanelStatbotRows(
       ctx,
       "Contributors",
       [
-        { label: "1d", value: `${Number(windows?.d1?.contributors || 0)} members` },
-        { label: "7d", value: `${Number(windows?.d7?.contributors || 0)} members` },
-        { label: "30d", value: `${Number(windows?.d30?.contributors || 0)} members` },
+        { period: "1d", value: `${Number(windows?.d1?.contributors || 0)} members` },
+        { period: "7d", value: `${Number(windows?.d7?.contributors || 0)} members` },
+        { period: "30d", value: `${Number(windows?.d30?.contributors || 0)} members` },
       ],
       860,
       132,
       400,
-      220,
+      200,
     );
     const messageRows = (topUsersText || []).slice(0, 3).map((r) => ({ label: r?.label || "-", value: compactNumber(r?.value || 0) }));
-    await drawTopListCard(ctx, "Top Message Members", messageRows, 20, 370, 600, 260, { unit: "messages" });
-    drawMessageOnlyChart(ctx, chart, 640, 370, 620, 260);
+    await drawTopListCardStatbotStyle(ctx, "Top Message Members", messageRows, 20, 352, 600, 258, { unit: "messages" });
+    drawMessageOnlyChart(ctx, chart, 640, 352, 620, 258);
   } else {
-    drawMetricPanel(
+    drawBigLookbackPanel(
       ctx,
       "Server Lookback",
-      [{ label: `${safeLookback}d`, value: `${formatHours(lookbackWindow?.voiceSeconds || 0)} hours` }],
+      formatHours(lookbackWindow?.voiceSeconds || 0),
+      "hours",
       20,
       132,
-      400,
-      140,
+      380,
+      200,
     );
-    drawMetricPanel(
+    drawMetricPanelStatbotRows(
       ctx,
       "Voice Activity",
       [
-        { label: "1d", value: `${formatHours(windows?.d1?.voiceSeconds || 0)} hours` },
-        { label: "7d", value: `${formatHours(windows?.d7?.voiceSeconds || 0)} hours` },
-        { label: "30d", value: `${formatHours(windows?.d30?.voiceSeconds || 0)} hours` },
+        { period: "1d", value: `${formatHours(windows?.d1?.voiceSeconds || 0)} hours` },
+        { period: "7d", value: `${formatHours(windows?.d7?.voiceSeconds || 0)} hours` },
+        { period: "30d", value: `${formatHours(windows?.d30?.voiceSeconds || 0)} hours` },
       ],
-      440,
+      420,
       132,
-      400,
-      220,
+      420,
+      200,
     );
-    drawMetricPanel(
+    drawMetricPanelStatbotRows(
       ctx,
       "Contributors",
       [
-        { label: "1d", value: `${Number(windows?.d1?.contributors || 0)} members` },
-        { label: "7d", value: `${Number(windows?.d7?.contributors || 0)} members` },
-        { label: "30d", value: `${Number(windows?.d30?.contributors || 0)} members` },
+        { period: "1d", value: `${Number(windows?.d1?.contributors || 0)} members` },
+        { period: "7d", value: `${Number(windows?.d7?.contributors || 0)} members` },
+        { period: "30d", value: `${Number(windows?.d30?.contributors || 0)} members` },
       ],
       860,
       132,
       400,
-      220,
+      200,
     );
     const voiceRows = (topUsersVoice || []).slice(0, 3).map((r) => ({ label: r?.label || "-", value: formatHours(r?.value || 0) }));
-    await drawTopListCard(ctx, "Top Voice Members", voiceRows, 20, 370, 600, 260, { unit: "hours" });
-    drawVoiceOnlyChart(ctx, chart, 640, 370, 620, 260);
+    await drawTopListCardStatbotStyle(ctx, "Top Voice Members", voiceRows, 20, 352, 600, 258, { unit: "hours" });
+    drawVoiceOnlyChart(ctx, chart, 640, 352, 620, 258);
   }
 
   drawLabel(ctx, `Server Lookback: Last ${safeLookback} days — Timezone: ${ROME_TIME_ZONE}`, 28, 868, {
     size: 20,
     weight: "700",
     color: "#cfd6e2",
+    forcePrimaryFont: true,
+  });
+  drawLabel(ctx, "Vinili & Caffè", 1252, 868, {
+    size: 18,
+    weight: "700",
+    color: "#3ec455",
+    align: "right",
     forcePrimaryFont: true,
   });
 
