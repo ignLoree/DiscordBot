@@ -41,7 +41,7 @@ function buildTicketClosedEmbed(data) {
     .setAuthor({ name: data?.guildName || "<:VC_Ticket:1448694637106692156> Sistema Ticket", iconURL: data?.guildIconURL || undefined, })
     .setTitle("<:VC_Ticket:1448694637106692156> Ticket Chiuso")
     .setColor("#6f4e37")
-    .addFields(fields)
+    .addFields(fields.slice(0, 25))
     .setFooter({ text: "© 2025 Vinili & Caffè. Tutti i diritti riservati." })
     .setTimestamp();
 

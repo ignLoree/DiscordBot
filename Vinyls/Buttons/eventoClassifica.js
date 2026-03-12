@@ -1,6 +1,7 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("discord.js");
 const { getGuildExpSettings } = require("../Services/Community/expService");
-const { getEventWeekTopThreeTextAndVoice } = require("../Services/Community/weeklyActivityWinnersService");
+const { getEventWeekTopNTextAndVoice } = require("../Services/Community/weeklyActivityWinnersService");
+const { getTop10ExpDuringEventExcludingStaff } = require("../Services/Community/activityEventRewardsService");
 const EVENTO_CLASSIFICA_PREFIX = "evento_classifica:";
 const MAX_WEEKS = 4;
 const TROPHY_LABELS = ["<:VC_Podio1:1469659449974329598>", "<:VC_Podio2:1469659512863592500>", "<:VC_Podio3:1469659557696504024>"];
@@ -50,26 +51,37 @@ async function execute(interaction, client) {
   }
 }
 
+function rankLabel(i) {
+  return TROPHY_LABELS[i] || `**${i + 1}.**`;
+}
+
 async function buildEventoClassificaPayload(guild, currentWeek) {
-  const { topMessages, topVoice } = await getEventWeekTopThreeTextAndVoice(guild, currentWeek);
+  const { topMessages, topVoice } = await getEventWeekTopNTextAndVoice(guild, currentWeek, 10);
+  const topExp = await getTop10ExpDuringEventExcludingStaff(guild, 10);
 
   const msgLines = topMessages.length
-    ? topMessages.map((item, i) => `${TROPHY_LABELS[i] || ""}<@${item.userId}> <a:VC_Arrow:1448672967721615452> **${item.messageCount}** _messaggi_`)
+    ? topMessages.map((item, i) => `${rankLabel(i)} <@${item.userId}> <a:VC_Arrow:1448672967721615452> **${item.messageCount}** _messaggi_`)
     : ["<:VC_Info:1460670816214585481> - Nessun dato per la classifica testuale."];
   const voiceLines = topVoice.length
-    ? topVoice.map((item, i) => `${TROPHY_LABELS[i] || ""}<@${item.userId}> <a:VC_Arrow:1448672967721615452> **${formatVoiceDuration(item.voiceSeconds)}** _in vocale_`)
+    ? topVoice.map((item, i) => `${rankLabel(i)} <@${item.userId}> <a:VC_Arrow:1448672967721615452> **${formatVoiceDuration(item.voiceSeconds)}** _in vocale_`)
     : ["<:VC_Info:1460670816214585481> - Nessun dato per la classifica vocale."];
+  const expLines = topExp.length
+    ? topExp.map((item, i) => `${rankLabel(i)} <@${item.userId}> <a:VC_Arrow:1448672967721615452> **${item.expDuringEvent}** _EXP_`)
+    : ["<:VC_Info:1460670816214585481> - Nessun dato per la classifica EXP."];
 
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle(`<:VC_Leaderboard:1469659357678669958> Evento Activity EXP — Settimana ${currentWeek}`)
     .setDescription(
       [
-        "<a:VC_HeartsPink:1468685897389052008> **Top 3 testuale**:",
+        "<a:VC_HeartsPink:1468685897389052008> **Top 10 testuale**:",
         ...msgLines,
         "",
-        "<a:VC_HeartsBlue:1468686100045369404> **Top 3 vocale**:",
+        "<a:VC_HeartsBlue:1468686100045369404> **Top 10 vocale**:",
         ...voiceLines,
+        "",
+        "<:VC_Leaderboard:1469659357678669958> **Top 10 EXP**:",
+        ...expLines,
       ].join("\n")
     )
     .setThumbnail(guild.iconURL({ size: 256 }) || null)
@@ -77,7 +89,9 @@ async function buildEventoClassificaPayload(guild, currentWeek) {
     .setTimestamp();
 
   const row = new ActionRowBuilder();
-  for (let w = 1; w <= MAX_WEEKS; w++) {
+  const startWeek = currentWeek;
+  const endWeek = Math.min(currentWeek + 1, MAX_WEEKS);
+  for (let w = startWeek; w <= endWeek; w++) {
     row.addComponents(
       new ButtonBuilder()
         .setCustomId(`${EVENTO_CLASSIFICA_PREFIX}${w}`)

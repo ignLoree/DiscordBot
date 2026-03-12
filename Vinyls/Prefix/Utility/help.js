@@ -956,7 +956,7 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
     );
   }
   pushChunkedField(fields, "Esempi di uso", snippetLines);
-  if (fields.length) embed.addFields(fields);
+  if (fields.length) embed.addFields(fields.slice(0, 25));
   return embed;
 }
 
@@ -1163,7 +1163,7 @@ function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
     "Esempi di uso",
     exampleLines.length ? exampleLines : [`- \`/${commandName}\``],
   );
-  if (fields.length) embed.addFields(fields);
+  if (fields.length) embed.addFields(fields.slice(0, 25));
   return embed;
 }
 

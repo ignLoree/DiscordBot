@@ -97,13 +97,15 @@ function buildStaffActionModLogEmbed(modCase, options = {}) {
   } else {
     fields.push({ name: "<:VC_reason:1478517122929004544> Reason", value: reasonText, inline: true });
   }
-  embed.addFields(...fields);
+  embed.addFields(...fields.slice(0, 25));
   const sanctionDate = modCase.createdAt ? new Date(modCase.createdAt) : new Date();
   embed.setTimestamp(sanctionDate.getTime());
   const footerTs = sanctionDate.toLocaleString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false, });
   embed.setFooter({ text: `ID: ${modCase.userId} • ${footerTs}` });
   if (Array.isArray(options.extraFields) && options.extraFields.length) {
-    options.extraFields.forEach((f) => embed.addFields(f));
+    const currentCount = embed.data?.fields?.length ?? 0;
+    const remaining = Math.max(0, 25 - currentCount);
+    options.extraFields.slice(0, remaining).forEach((f) => embed.addFields(f));
   }
   return embed;
 }

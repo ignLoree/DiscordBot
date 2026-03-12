@@ -381,13 +381,10 @@ async function handleRemove(message) {
       .setMinValues(1)
       .setMaxValues(1)
       .addOptions(
-        membersWithRole.map((member) => ({
-          label: member.user.username.slice(0, 100),
-          value: member.id,
-          description: (member.displayName || member.user.username).slice(
-            0,
-            100,
-          ),
+        membersWithRole.slice(0, 25).map((member) => ({
+          label: String(member.user?.username || member.id).slice(0, 100),
+          value: String(member.id).slice(0, 100),
+          description: String(member.displayName || member.user?.username || "").slice(0, 100),
         })),
       ),
   );

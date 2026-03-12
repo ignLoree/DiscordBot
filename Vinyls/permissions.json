@@ -1621,9 +1621,6 @@
         "candidature_premi_partner": [
             "roles.Member"
         ],
-        "evento_classifica:*": {
-            "ownerSegment": 1
-        },
         "info_sponsor": [
             "roles.Member"
         ],

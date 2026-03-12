@@ -155,6 +155,34 @@ async function getEventWeekTopThreeTextAndVoice(guild, eventWeekNum) {
   return { topMessages, topVoice };
 }
 
+async function getEventWeekTopNTextAndVoice(guild, eventWeekNum, limit = 10) {
+  if (!guild?.id || !Number.isFinite(eventWeekNum) || eventWeekNum < 1 || eventWeekNum > 4)
+    return { topMessages: [], topVoice: [] };
+  const settings = await getGuildExpSettings(guild.id).catch(() => null);
+  if (!settings?.eventStartedAt) return { topMessages: [], topVoice: [] };
+  const dateKeys = getEventWeekDateKeys(settings.eventStartedAt, eventWeekNum);
+  if (!dateKeys.length) return { topMessages: [], topVoice: [] };
+  const cap = Math.max(1, Math.min(25, Number(limit) || 10));
+  const rows = await loadActivityRowsFromDateKeys(guild, dateKeys);
+  const sortedMessages = [...rows].filter((r) => Number(r?.messageCount || 0) > 0).sort((a, b) => (b.messageCount || 0) - (a.messageCount || 0));
+  const sortedVoice = [...rows].filter((r) => Number(r?.voiceSeconds || 0) > 0).sort((a, b) => (b.voiceSeconds || 0) - (a.voiceSeconds || 0));
+  const topMessages = [];
+  const topVoice = [];
+  for (const row of sortedMessages) {
+    if (topMessages.length >= cap) break;
+    const member = await getGuildMemberCached(guild, row.userId);
+    if (member && !isEventStaffMember(member))
+      topMessages.push({ userId: row.userId, messageCount: row.messageCount });
+  }
+  for (const row of sortedVoice) {
+    if (topVoice.length >= cap) break;
+    const member = await getGuildMemberCached(guild, row.userId);
+    if (member && !isEventStaffMember(member))
+      topVoice.push({ userId: row.userId, voiceSeconds: row.voiceSeconds });
+  }
+  return { topMessages, topVoice };
+}
+
 function buildEmptyLine(kind) {
   return `<:VC_Info:1460670816214585481> - Nessun dato disponibile per ${kind}.`;
 }
@@ -708,4 +736,4 @@ async function getEventDiagnostics(guild) {
   };
 }
 
-module.exports = { startWeeklyActivityWinnersLoop, publishWeeklyActivityWinners, resetWeeklyActivityCounters, getEventWeekDateKeys, loadActivityRowsFromDateKeys, getEventDiagnostics, getEventWeekTopThreeTextAndVoice };
+module.exports = { startWeeklyActivityWinnersLoop, publishWeeklyActivityWinners, resetWeeklyActivityCounters, getEventWeekDateKeys, loadActivityRowsFromDateKeys, getEventDiagnostics, getEventWeekTopThreeTextAndVoice, getEventWeekTopNTextAndVoice };

@@ -356,11 +356,17 @@ async function getTop10ExpDuringEvent(guildId, limit = 10) {
 }
 
 async function getTop3ExpDuringEventExcludingStaff(guild) {
+  const list = await getTop10ExpDuringEventExcludingStaff(guild, 3);
+  return list;
+}
+
+async function getTop10ExpDuringEventExcludingStaff(guild, limit = 10) {
   if (!guild?.id) return [];
-  const list = await getTop10ExpDuringEvent(guild.id, 15);
+  const cap = Math.max(1, Math.min(50, Number(limit) || 10));
+  const list = await getTop10ExpDuringEvent(guild.id, cap + 20);
   const out = [];
   for (const item of list) {
-    if (out.length >= 3) break;
+    if (out.length >= cap) break;
     const member = await guild.members.fetch(item.userId).catch(() => null);
     if (member && !isEventStaffMember(member)) out.push(item);
   }
@@ -373,4 +379,4 @@ async function clearActivityEventRewardsForGuild(guildId) {
   return { deleted: result?.deletedCount ?? 0 };
 }
 
-module.exports = { isEventActive, grantEventLevels, grantEventRewardOnce, grantEventRewardsForExistingRoleMembers, grantEventRewardsForSameDayReviewAndVote, clearActivityEventRewardsForGuild, addEventWeekWinner, hasEventWeekWinnerGrant, getTop3ExpDuringEventExcludingStaff, getEventWeekNumber, getTop10ExpDuringEvent };
+module.exports = { isEventActive, grantEventLevels, grantEventRewardOnce, grantEventRewardsForExistingRoleMembers, grantEventRewardsForSameDayReviewAndVote, clearActivityEventRewardsForGuild, addEventWeekWinner, hasEventWeekWinnerGrant, getTop3ExpDuringEventExcludingStaff, getTop10ExpDuringEventExcludingStaff, getEventWeekNumber, getTop10ExpDuringEvent };

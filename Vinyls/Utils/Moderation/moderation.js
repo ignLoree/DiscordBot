@@ -160,7 +160,7 @@ async function logModCase({ client, guild, modCase, config }) {
   } else {
     fields.push({ name: "<:VC_reason:1478517122929004544> Motivo", value: modCase.reason || "Nessun motivo fornito", inline: true });
   }
-  embed.addFields(...fields).setTimestamp();
+  embed.addFields(...fields.slice(0, 25)).setTimestamp();
   if (modCase.context?.channelId) {
     embed.addFields({
       name: "<:channeltext:1443247596922470551> Canale",

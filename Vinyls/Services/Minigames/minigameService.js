@@ -6,6 +6,7 @@ let last403LogAt = 0;
 function warnMinigame(err) {
   const msg = err?.message || err?.response?.data || String(err);
   const status = err?.response?.status;
+  const url = err?.response?.config?.url || err?.config?.url;
   const is429 = status === 429 || (typeof msg === "string" && msg.includes("429"));
   const is403 = status === 403 || (typeof msg === "string" && msg.includes("403"));
   const now = Date.now();
@@ -13,7 +14,8 @@ function warnMinigame(err) {
   if (is429) last429LogAt = now;
   if (is403 && now - last403LogAt < MINIGAME_403_THROTTLE_MS) return;
   if (is403) last403LogAt = now;
-  const logMsg = is403 ? `${msg} (API 403 Forbidden: chiave/permessi o IP bloccato)` : msg;
+  let logMsg = is403 ? `${msg} (API 403 Forbidden: chiave/permessi o IP bloccato)` : msg;
+  if (is403 && url) logMsg += ` URL: ${typeof url === "string" ? url.replace(/\/api\/v1\/json\/[^/]+/, "/api/v1/json/***") : url}`;
   global.logger?.warn?.("[minigameService] ", logMsg);
 }
 const canvasModule = require("canvas");
