@@ -81,9 +81,10 @@ async function buildChannelOverviewPayload(guild, channel, lookbackDays, view, o
     resolveTopUserEntries(guild, stats.topUsersVoice || []),
   ]);
 
-  const channelName = channel?.name ? `# ${channel.name}` : "#channel";
+  const channelName = channel?.name ? `# ${channel.name}` : "# channel";
   const channelIconUrl = channel?.isVoiceBased?.() ? guild.iconURL({ size: 256, extension: "png" }) : null;
   const createdOn = channel?.createdAt ?? new Date(0);
+  const guildName = guild?.name || "Server";
 
   const isVoiceChannel = Boolean(channel?.isVoiceBased?.());
   const isTextChannel = isVoiceChannel ? false : Boolean(channel?.isTextBased?.());
@@ -97,6 +98,7 @@ async function buildChannelOverviewPayload(guild, channel, lookbackDays, view, o
     topUsersVoice: topUsersVoiceResolved,
     chart: stats.chart,
     isTextChannel,
+    guildName,
   });
 
   const components = buildChannelComponents(ownerId, channelId, safeLookback, view);

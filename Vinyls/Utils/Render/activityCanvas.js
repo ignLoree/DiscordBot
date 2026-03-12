@@ -63,6 +63,21 @@ function fitText(ctx, text, maxWidth, size = 16, weight = "600") {
   return `${out}${ellipsis}`;
 }
 
+function getFittedFontSize(ctx, text, maxWidth, maxSize = 52, minSize = 14, weight = "600") {
+  const value = prepareVisibleText(String(text || "").trim());
+  if (!value) return maxSize;
+  for (let s = maxSize; s >= minSize; s -= 2) {
+    if (textWidth(ctx, value, s, weight) <= maxWidth) return s;
+  }
+  return minSize;
+}
+
+function drawLabelFull(ctx, text, x, y, maxWidth, maxSize = 52, options = {}) {
+  const value = String(text || "").trim() || "—";
+  const size = getFittedFontSize(ctx, value, maxWidth, maxSize, options.minSize ?? 14, options.weight ?? "700");
+  drawLabel(ctx, value, x, y, { ...options, size });
+}
+
 function prepareVisibleText(value) {
   const raw = String(value || "");
   const protectedMap = new Map([["\u00B9", "__VC_KEEP_SUP_1__"], ["\u00B2", "__VC_KEEP_SUP_2__"], ["\u00B3", "__VC_KEEP_SUP_3__"],]);
@@ -313,7 +328,7 @@ function drawDateBadge(ctx, title, value, x, y, w = 280, h = 80) {
   });
 }
 
-function drawMetricPanel(ctx, title, rows, x, y, w, h) {
+function drawMetricPanel(ctx, title, rows, x, y, w, h, options = {}) {
   fillRoundRect(ctx, x, y, w, h, 18, "rgba(46, 55, 70, 0.94)");
   strokeRoundRect(ctx, x, y, w, h, 18, "rgba(255,255,255,0.05)", 1);
   drawLabel(ctx, title, x + 16, y + 24, {
@@ -322,6 +337,15 @@ function drawMetricPanel(ctx, title, rows, x, y, w, h) {
     color: "#e2e7ef",
     forcePrimaryFont: true,
   });
+  if (options.icon) {
+    drawLabel(ctx, options.icon, x + w - 32, y + 26, {
+      size: 20,
+      weight: "700",
+      color: "#8b95a5",
+      align: "right",
+      baseline: "middle",
+    });
+  }
 
   const rowHeight = 56;
   const startY = y + 44;
@@ -363,17 +387,24 @@ function drawBigLookbackPanel(ctx, title, bigValue, subtitle, x, y, w, h) {
     align: "right",
     baseline: "middle",
   });
+  const innerPad = 16;
+  const innerX = x + innerPad;
+  const innerY = y + 50;
+  const innerW = w - innerPad * 2;
+  const innerH = h - 50 - innerPad;
+  fillRoundRect(ctx, innerX, innerY, innerW, innerH, 14, "rgba(28, 36, 50, 0.95)");
+  strokeRoundRect(ctx, innerX, innerY, innerW, innerH, 14, "rgba(255,255,255,0.04)", 1);
   const centerX = x + w / 2;
-  const contentY = y + h / 2 + 6;
+  const contentY = y + h / 2 + 4;
   drawLabel(ctx, String(bigValue), centerX, contentY - 14, {
-    size: 42,
+    size: 44,
     weight: "800",
     color: "#eef3fb",
     align: "center",
     baseline: "middle",
     useNumericFont: true,
   });
-  drawLabel(ctx, String(subtitle || ""), centerX, contentY + 18, {
+  drawLabel(ctx, String(subtitle || ""), centerX, contentY + 20, {
     size: 18,
     weight: "600",
     color: "#8b95a5",
@@ -382,7 +413,8 @@ function drawBigLookbackPanel(ctx, title, bigValue, subtitle, x, y, w, h) {
   });
 }
 
-function drawMetricPanelStatbotRows(ctx, title, rows, x, y, w, h) {
+function drawMetricPanelStatbotRows(ctx, title, rows, x, y, w, h, options = {}) {
+  const icon = options.icon || "";
   fillRoundRect(ctx, x, y, w, h, 18, "rgba(46, 55, 70, 0.94)");
   strokeRoundRect(ctx, x, y, w, h, 18, "rgba(255,255,255,0.05)", 1);
   drawLabel(ctx, title, x + 16, y + 24, {
@@ -391,18 +423,29 @@ function drawMetricPanelStatbotRows(ctx, title, rows, x, y, w, h) {
     color: "#e2e7ef",
     forcePrimaryFont: true,
   });
-  const rowHeight = 52;
+  if (icon) {
+    drawLabel(ctx, icon, x + w - 32, y + 26, {
+      size: 18,
+      weight: "700",
+      color: "#8b95a5",
+      align: "right",
+      baseline: "middle",
+    });
+  }
+  const rowHeight = 56;
   const startY = y + 48;
   for (let i = 0; i < rows.length; i += 1) {
     const row = rows[i] || { period: "-", value: "-" };
     const rowY = startY + i * rowHeight;
-    drawLabel(ctx, row.period, x + 20, rowY + rowHeight / 2, {
+    fillRoundRect(ctx, x + 14, rowY, w - 28, 50, 12, "rgba(28, 36, 50, 0.95)");
+    strokeRoundRect(ctx, x + 14, rowY, w - 28, 50, 12, "rgba(255,255,255,0.04)", 1);
+    drawLabel(ctx, row.period, x + 20, rowY + 25, {
       size: 22,
       weight: "700",
       color: "#e2e7ef",
       useNumericFont: true,
     });
-    drawLabel(ctx, fitText(ctx, row.value, w - 120, 20, "700"), x + w - 24, rowY + rowHeight / 2, {
+    drawLabel(ctx, fitText(ctx, row.value, w - 140, 20, "700"), x + w - 24, rowY + 25, {
       size: 20,
       weight: "600",
       align: "right",
@@ -414,6 +457,7 @@ function drawMetricPanelStatbotRows(ctx, title, rows, x, y, w, h) {
 
 async function drawTopListCardStatbotStyle(ctx, title, rows, x, y, w, h, options = {}) {
   const unit = String(options.unit || "");
+  const icon = options.icon || "";
   fillRoundRect(ctx, x, y, w, h, 18, "rgba(46, 55, 70, 0.94)");
   strokeRoundRect(ctx, x, y, w, h, 18, "rgba(255,255,255,0.05)", 1);
   drawLabel(ctx, title, x + 16, y + 24, {
@@ -422,6 +466,15 @@ async function drawTopListCardStatbotStyle(ctx, title, rows, x, y, w, h, options
     color: "#e2e7ef",
     forcePrimaryFont: true,
   });
+  if (icon) {
+    drawLabel(ctx, icon, x + w - 32, y + 26, {
+      size: 18,
+      weight: "700",
+      color: "#8b95a5",
+      align: "right",
+      baseline: "middle",
+    });
+  }
   const rowHeight = 64;
   const startY = y + 48;
   for (let i = 0; i < 3; i += 1) {
@@ -455,6 +508,15 @@ async function drawTopCard(ctx, title, first, second, x, y, w, h, options = {}) 
     color: "#e2e7ef",
     forcePrimaryFont: true,
   });
+  if (options.icon) {
+    drawLabel(ctx, options.icon, x + w - 32, y + 26, {
+      size: 20,
+      weight: "700",
+      color: "#8b95a5",
+      align: "right",
+      baseline: "middle",
+    });
+  }
 
   await drawTopChip(
     ctx,
@@ -513,7 +575,7 @@ async function drawTopChip(ctx, label, value, unit, position, x, y, w, h, option
   }
 }
 
-function drawChart(ctx, chart, x, y, w, h) {
+function drawChart(ctx, chart, x, y, w, h, options = {}) {
   fillRoundRect(ctx, x, y, w, h, 18, "rgba(46, 55, 70, 0.94)");
   strokeRoundRect(ctx, x, y, w, h, 18, "rgba(255,255,255,0.05)", 1);
 
@@ -523,6 +585,15 @@ function drawChart(ctx, chart, x, y, w, h) {
     color: "#e2e7ef",
     forcePrimaryFont: true,
   });
+  if (options.icon) {
+    drawLabel(ctx, options.icon, x + w - 32, y + 26, {
+      size: 20,
+      weight: "700",
+      color: "#8b95a5",
+      align: "right",
+      baseline: "middle",
+    });
+  }
   drawLabel(ctx, "Message", x + w - 220, y + 24, {
     size: 20,
     weight: "700",
@@ -665,7 +736,7 @@ function drawMessageOnlyChart(ctx, chart, x, y, w, h) {
   ctx.stroke();
 }
 
-async function renderChannelActivityCanvas({ channelName, channelIconUrl, createdOn, lookbackDays, windows, topUsersText, topUsersVoice, chart, isTextChannel }) {
+async function renderChannelActivityCanvas({ channelName, channelIconUrl, createdOn, lookbackDays, windows, topUsersText, topUsersVoice, chart, isTextChannel, guildName }) {
   registerCanvasFonts(getCanvasModule());
   const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays)) ? Number(lookbackDays) : 14;
   const lookbackWindow = windows?.[`d${safeLookback}`] || windows?.d14 || {};
@@ -674,30 +745,44 @@ async function renderChannelActivityCanvas({ channelName, channelIconUrl, create
   const canvas = getCanvasModule().createCanvas(width, height);
   const ctx = canvas.getContext("2d");
 
+  const M = 32;
+  const GAP = 36;
+  const headerH = 100;
+  const contentTop = 20 + headerH + 24;
+  const topRowH = 248;
+  const bottomTop = contentTop + topRowH + GAP;
+  const bottomH = height - bottomTop - 72;
+  const contentW = width - M * 2;
+  const topPanelW = Math.floor((contentW - GAP * 2) / 3);
+  const topX2 = M + topPanelW + GAP;
+  const topX3 = topX2 + topPanelW + GAP;
+  const bottomPanelW = Math.floor((contentW - GAP) / 2);
+  const bottomX2 = M + bottomPanelW + GAP;
+  const headerTextMaxWidth = contentW - 124 - 278 - 24;
+
   drawBackground(ctx, width, height);
 
-  fillRoundRect(ctx, 20, 16, 1240, 96, 22, "rgba(32, 42, 57, 0.9)");
-  strokeRoundRect(ctx, 20, 16, 1240, 96, 22, "rgba(255,255,255,0.06)", 1);
+  fillRoundRect(ctx, M, 20, contentW, headerH, 22, "rgba(32, 42, 57, 0.9)");
+  strokeRoundRect(ctx, M, 20, contentW, headerH, 22, "rgba(255,255,255,0.06)", 1);
 
+  const headerIconX = M + 28;
   if (channelIconUrl && !isTextChannel) {
-    await drawAvatarCircle(ctx, channelIconUrl, 28, 24, 80);
+    await drawAvatarCircle(ctx, channelIconUrl, headerIconX, 28, 80);
   } else {
-    fillRoundRect(ctx, 28, 24, 80, 80, 40, "rgba(50, 60, 75, 0.95)");
-    drawLabel(ctx, "#", 68, 64, { size: 36, weight: "700", color: "#8b95a5", align: "center", baseline: "middle" });
+    fillRoundRect(ctx, headerIconX, 28, 80, 80, 40, "rgba(50, 60, 75, 0.95)");
+    drawLabel(ctx, "#", headerIconX + 40, 68, { size: 36, weight: "700", color: "#8b95a5", align: "center", baseline: "middle" });
   }
-  drawLabel(ctx, fitText(ctx, channelName || "#channel", 520, 56, "700"), 124, 52, {
-    size: 52,
+  drawLabelFull(ctx, channelName || "# channel", M + 124, 52, headerTextMaxWidth, 52, {
     weight: "700",
     color: "#eef3fb",
     forcePrimaryFont: true,
   });
-  const subtitle = isTextChannel ? "Text Channel" : "Voice Channel";
-  drawLabel(ctx, subtitle, 124, 88, {
-    size: 24,
+  drawLabelFull(ctx, guildName || "Server", M + 124, 88, headerTextMaxWidth, 28, {
     weight: "600",
     color: "#8b95a5",
+    minSize: 16,
   });
-  drawDateBadge(ctx, "Created On", dateText(createdOn), 990, 24, 270, 80);
+  drawDateBadge(ctx, "Created On", dateText(createdOn), width - M - 278, 28, 270, 80);
 
   if (isTextChannel) {
     drawBigLookbackPanel(
@@ -705,10 +790,10 @@ async function renderChannelActivityCanvas({ channelName, channelIconUrl, create
       "Server Lookback",
       compactNumber(lookbackWindow?.text || 0),
       "messages",
-      20,
-      132,
-      380,
-      200,
+      M,
+      contentTop,
+      topPanelW,
+      topRowH,
     );
     drawMetricPanelStatbotRows(
       ctx,
@@ -718,10 +803,11 @@ async function renderChannelActivityCanvas({ channelName, channelIconUrl, create
         { period: "7d", value: `${compactNumber(windows?.d7?.text || 0)} messages` },
         { period: "30d", value: `${compactNumber(windows?.d30?.text || 0)} messages` },
       ],
-      420,
-      132,
-      420,
-      200,
+      topX2,
+      contentTop,
+      topPanelW,
+      topRowH,
+      { icon: "#" },
     );
     drawMetricPanelStatbotRows(
       ctx,
@@ -731,24 +817,25 @@ async function renderChannelActivityCanvas({ channelName, channelIconUrl, create
         { period: "7d", value: `${Number(windows?.d7?.contributors || 0)} members` },
         { period: "30d", value: `${Number(windows?.d30?.contributors || 0)} members` },
       ],
-      860,
-      132,
-      400,
-      200,
+      topX3,
+      contentTop,
+      topPanelW,
+      topRowH,
+      { icon: "\uD83D\uDC64" },
     );
     const messageRows = (topUsersText || []).slice(0, 3).map((r) => ({ label: r?.label || "-", value: compactNumber(r?.value || 0) }));
-    await drawTopListCardStatbotStyle(ctx, "Top Message Members", messageRows, 20, 352, 600, 258, { unit: "messages" });
-    drawMessageOnlyChart(ctx, chart, 640, 352, 620, 258);
+    await drawTopListCardStatbotStyle(ctx, "Top Message Members", messageRows, M, bottomTop, bottomPanelW, bottomH, { unit: "messages", icon: "#" });
+    drawMessageOnlyChart(ctx, chart, bottomX2, bottomTop, bottomPanelW, bottomH);
   } else {
     drawBigLookbackPanel(
       ctx,
       "Server Lookback",
       formatHours(lookbackWindow?.voiceSeconds || 0),
       "hours",
-      20,
-      132,
-      380,
-      200,
+      M,
+      contentTop,
+      topPanelW,
+      topRowH,
     );
     drawMetricPanelStatbotRows(
       ctx,
@@ -758,10 +845,11 @@ async function renderChannelActivityCanvas({ channelName, channelIconUrl, create
         { period: "7d", value: `${formatHours(windows?.d7?.voiceSeconds || 0)} hours` },
         { period: "30d", value: `${formatHours(windows?.d30?.voiceSeconds || 0)} hours` },
       ],
-      420,
-      132,
-      420,
-      200,
+      topX2,
+      contentTop,
+      topPanelW,
+      topRowH,
+      { icon: "\uD83D\uDD0A" },
     );
     drawMetricPanelStatbotRows(
       ctx,
@@ -771,23 +859,24 @@ async function renderChannelActivityCanvas({ channelName, channelIconUrl, create
         { period: "7d", value: `${Number(windows?.d7?.contributors || 0)} members` },
         { period: "30d", value: `${Number(windows?.d30?.contributors || 0)} members` },
       ],
-      860,
-      132,
-      400,
-      200,
+      topX3,
+      contentTop,
+      topPanelW,
+      topRowH,
+      { icon: "\uD83D\uDC64" },
     );
     const voiceRows = (topUsersVoice || []).slice(0, 3).map((r) => ({ label: r?.label || "-", value: formatHours(r?.value || 0) }));
-    await drawTopListCardStatbotStyle(ctx, "Top Voice Members", voiceRows, 20, 352, 600, 258, { unit: "hours" });
-    drawVoiceOnlyChart(ctx, chart, 640, 352, 620, 258);
+    await drawTopListCardStatbotStyle(ctx, "Top Voice Members", voiceRows, M, bottomTop, bottomPanelW, bottomH, { unit: "hours", icon: "\uD83D\uDD0A" });
+    drawVoiceOnlyChart(ctx, chart, bottomX2, bottomTop, bottomPanelW, bottomH);
   }
 
-  drawLabel(ctx, `Server Lookback: Last ${safeLookback} days — Timezone: ${ROME_TIME_ZONE}`, 28, 868, {
+  drawLabel(ctx, `Server Lookback: Last ${safeLookback} days — Timezone: ${ROME_TIME_ZONE}`, M, height - 28, {
     size: 20,
     weight: "700",
     color: "#cfd6e2",
     forcePrimaryFont: true,
   });
-  drawLabel(ctx, "Vinili & Caffè", 1252, 868, {
+  drawLabel(ctx, "Vinili & Caffè", width - M, height - 28, {
     size: 18,
     weight: "700",
     color: "#3ec455",
@@ -808,6 +897,15 @@ async function drawTopListCard(ctx, title, rows, x, y, w, h, options = {}) {
     color: "#e2e7ef",
     forcePrimaryFont: true,
   });
+  if (options.icon) {
+    drawLabel(ctx, options.icon, x + w - 32, y + 26, {
+      size: 20,
+      weight: "700",
+      color: "#8b95a5",
+      align: "right",
+      baseline: "middle",
+    });
+  }
 
   const rowHeight = 70;
   const gap = 8;
@@ -884,20 +982,22 @@ async function renderUserActivityCanvas({ guildName, userTag, displayName, avata
   strokeRoundRect(ctx, 20, 16, 1240, 96, 22, "rgba(255,255,255,0.06)", 1);
 
   await drawAvatarCircle(ctx, avatarUrl, 28, 24, 80);
+  const displayFull = String(displayName || userTag || "").trim() || "—";
+  const displaySize = getFittedFontSize(ctx, displayFull, 560, 52, 18, "700");
   await drawLabelWithEmoji(
     ctx,
-    fitText(ctx, `${displayName || userTag}`, 560, 52, "700"),
+    displayFull,
     124,
     52,
-    { size: 52, weight: "700", color: "#eef3fb", forcePrimaryFont: true },
+    { size: displaySize, weight: "700", color: "#eef3fb", forcePrimaryFont: true },
   );
-  await drawLabelWithEmoji(
-    ctx,
-    fitText(ctx, `${guildName || "Server"} / My Activity`, 560, 28, "600"),
-    124,
-    88,
-    { size: 28, weight: "600", color: "#bfc8d6", forcePrimaryFont: true },
-  );
+  const guildLine = `${guildName || "Server"} / My Activity`;
+  drawLabelFull(ctx, guildLine, 124, 88, 560, 28, {
+    weight: "600",
+    color: "#bfc8d6",
+    minSize: 16,
+    forcePrimaryFont: true,
+  });
 
   drawDateBadge(ctx, "Created On", dateText(createdOn), 700, 24, 250, 80);
   drawDateBadge(ctx, "Joined On", dateText(joinedOn), 960, 24, 290, 80);
@@ -913,6 +1013,7 @@ async function renderUserActivityCanvas({ guildName, userTag, displayName, avata
     132,
     400,
     236,
+    { icon: "\uD83C\uDFC6" },
   );
 
   drawMetricPanel(
@@ -930,6 +1031,7 @@ async function renderUserActivityCanvas({ guildName, userTag, displayName, avata
     132,
     400,
     236,
+    { icon: "#" },
   );
 
   drawMetricPanel(
@@ -947,6 +1049,7 @@ async function renderUserActivityCanvas({ guildName, userTag, displayName, avata
     132,
     400,
     236,
+    { icon: "\uD83D\uDD0A" },
   );
 
   await drawTopCard(
@@ -966,10 +1069,10 @@ async function renderUserActivityCanvas({ guildName, userTag, displayName, avata
     392,
     610,
     242,
-    { showRank: false },
+    { showRank: false, icon: "\uD83D\uDCCA" },
   );
 
-  drawChart(ctx, chart, 650, 392, 610, 242);
+  drawChart(ctx, chart, 650, 392, 610, 242, { icon: "\uD83D\uDCCA" });
   drawLabel(ctx, `Lookback: Last ${safeLookback} days`, 24, 670, {
     size: 20,
     weight: "700",
@@ -996,13 +1099,12 @@ async function renderServerActivityCanvas({ guildName, guildIconUrl, createdOn, 
   strokeRoundRect(ctx, 20, 16, 1240, 96, 22, "rgba(255,255,255,0.06)", 1);
 
   await drawAvatarCircle(ctx, guildIconUrl, 28, 24, 80);
-  await drawLabelWithEmoji(
-    ctx,
-    fitText(ctx, guildName || "Server", 500, 60, "700"),
-    124,
-    52,
-    { size: 60, weight: "700", color: "#eef3fb" },
-  );
+  drawLabelFull(ctx, guildName || "Server", 124, 52, 500, 60, {
+    weight: "700",
+    color: "#eef3fb",
+    minSize: 20,
+    forcePrimaryFont: true,
+  });
   drawLabel(ctx, "Server Overview", 124, 88, {
     size: 28,
     weight: "600",
@@ -1035,6 +1137,7 @@ async function renderServerActivityCanvas({ guildName, guildIconUrl, createdOn, 
     132,
     400,
     220,
+    { icon: "#" },
   );
 
   drawMetricPanel(
@@ -1052,6 +1155,7 @@ async function renderServerActivityCanvas({ guildName, guildIconUrl, createdOn, 
     132,
     400,
     220,
+    { icon: "\uD83D\uDD0A" },
   );
 
   drawMetricPanel(
@@ -1075,6 +1179,7 @@ async function renderServerActivityCanvas({ guildName, guildIconUrl, createdOn, 
     132,
     400,
     220,
+    { icon: "\uD83D\uDC64" },
   );
 
   await drawTopCard(
@@ -1094,7 +1199,7 @@ async function renderServerActivityCanvas({ guildName, guildIconUrl, createdOn, 
     370,
     600,
     220,
-    { showRank: false },
+    { showRank: false, icon: "#" },
   );
 
   await drawTopCard(
@@ -1114,10 +1219,10 @@ async function renderServerActivityCanvas({ guildName, guildIconUrl, createdOn, 
     370,
     620,
     220,
-    { showRank: false },
+    { showRank: false, icon: "\uD83D\uDCCA" },
   );
 
-  drawChart(ctx, chart, 20, 610, 1240, 240);
+  drawChart(ctx, chart, 20, 610, 1240, 240, { icon: "\uD83D\uDCCA" });
   drawLabel(ctx, `Lookback: Last ${safeLookback} days`, 28, 878, {
     size: 20,
     weight: "700",
@@ -1142,13 +1247,12 @@ async function renderTopStatisticsCanvas({ guildName, guildIconUrl, lookbackDays
   strokeRoundRect(ctx, 20, 16, 1240, 96, 22, "rgba(255,255,255,0.06)", 1);
 
   await drawAvatarCircle(ctx, guildIconUrl, 28, 24, 80);
-  await drawLabelWithEmoji(
-    ctx,
-    fitText(ctx, guildName || "Server", 820, 46, "700"),
-    124,
-    52,
-    { size: 46, weight: "700", color: "#eef3fb" },
-  );
+  drawLabelFull(ctx, guildName || "Server", 124, 52, 820, 46, {
+    weight: "700",
+    color: "#eef3fb",
+    minSize: 20,
+    forcePrimaryFont: true,
+  });
   drawLabel(ctx, "Top Statistics", 124, 88, {
     size: 28,
     weight: "600",
@@ -1174,7 +1278,7 @@ async function renderTopStatisticsCanvas({ guildName, guildIconUrl, lookbackDays
     176,
     610,
     288,
-    { unit: "msg" },
+    { unit: "msg", icon: "#" },
   );
 
   await drawTopListCard(
@@ -1188,7 +1292,7 @@ async function renderTopStatisticsCanvas({ guildName, guildIconUrl, lookbackDays
     176,
     610,
     288,
-    { unit: "msg" },
+    { unit: "msg", icon: "\uD83D\uDCCA" },
   );
 
   drawLabel(ctx, "Voice Activity", 24, 510, {
@@ -1209,7 +1313,7 @@ async function renderTopStatisticsCanvas({ guildName, guildIconUrl, lookbackDays
     536,
     610,
     288,
-    { unit: "h" },
+    { unit: "h", icon: "\uD83D\uDD0A" },
   );
 
   await drawTopListCard(
@@ -1223,7 +1327,7 @@ async function renderTopStatisticsCanvas({ guildName, guildIconUrl, lookbackDays
     536,
     610,
     288,
-    { unit: "h" },
+    { unit: "h", icon: "\uD83D\uDD0A" },
   );
 
   drawLabel(
@@ -1256,13 +1360,12 @@ async function renderTopStatisticsSingleCanvas({ guildName, guildIconUrl, lookba
   strokeRoundRect(ctx, 20, 16, 1240, 96, 22, "rgba(255,255,255,0.06)", 1);
 
   await drawAvatarCircle(ctx, guildIconUrl, 28, 24, 80);
-  await drawLabelWithEmoji(
-    ctx,
-    fitText(ctx, guildName || "Server", 820, 46, "700"),
-    124,
-    52,
-    { size: 46, weight: "700", color: "#eef3fb" },
-  );
+  drawLabelFull(ctx, guildName || "Server", 124, 52, 820, 46, {
+    weight: "700",
+    color: "#eef3fb",
+    minSize: 20,
+    forcePrimaryFont: true,
+  });
   drawLabel(ctx, "Top Statistics", 124, 88, {
     size: 28,
     weight: "600",
@@ -1270,10 +1373,10 @@ async function renderTopStatisticsSingleCanvas({ guildName, guildIconUrl, lookba
     forcePrimaryFont: true,
   });
 
-  drawLabel(ctx, fitText(ctx, title, 1220, 62, "700"), 24, 172, {
-    size: 62,
+  drawLabelFull(ctx, title, 24, 172, 1220, 62, {
     weight: "700",
     color: "#e2e7ef",
+    minSize: 24,
     forcePrimaryFont: true,
   });
 
@@ -1287,7 +1390,7 @@ async function renderTopStatisticsSingleCanvas({ guildName, guildIconUrl, lookba
     240,
     1240,
     520,
-    { unit },
+    { unit, icon: mode === "voice" ? "\uD83D\uDD0A" : "#" },
   );
 
   drawLabel(
@@ -1379,13 +1482,12 @@ async function renderTopLeaderboardPageCanvas({ guildName, guildIconUrl, lookbac
   strokeRoundRect(ctx, 20, 16, 1240, 96, 22, "rgba(255,255,255,0.06)", 1);
 
   await drawAvatarCircle(ctx, guildIconUrl, 28, 24, 80);
-  await drawLabelWithEmoji(
-    ctx,
-    fitText(ctx, guildName || "Server", 820, 46, "700"),
-    124,
-    52,
-    { size: 46, weight: "700", color: "#eef3fb" },
-  );
+  drawLabelFull(ctx, guildName || "Server", 124, 52, 820, 46, {
+    weight: "700",
+    color: "#eef3fb",
+    minSize: 20,
+    forcePrimaryFont: true,
+  });
   drawLabel(ctx, "Top Statistics", 124, 88, {
     size: 28,
     weight: "600",
@@ -1393,10 +1495,10 @@ async function renderTopLeaderboardPageCanvas({ guildName, guildIconUrl, lookbac
     forcePrimaryFont: true,
   });
 
-  drawLabel(ctx, fitText(ctx, title, 1220, 56, "700"), 24, 164, {
-    size: 56,
+  drawLabelFull(ctx, title, 24, 164, 1220, 56, {
     weight: "700",
     color: "#e2e7ef",
+    minSize: 24,
     forcePrimaryFont: true,
   });
 

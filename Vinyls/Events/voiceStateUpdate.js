@@ -25,6 +25,23 @@ function toDiscordTimestamp(value = new Date(), style = "F") {
   return `<t:${Math.floor(ms / 1000)}:${style}>`;
 }
 
+function isTransientSendError(err) {
+  const msg = err?.message || String(err);
+  return /service unavailable|503|502|504|ECONNRESET|ETIMEDOUT/i.test(msg);
+}
+
+async function sendLogWithRetry(logChannel, payload, logTag) {
+  const send = () => logChannel.send(payload);
+  return send().catch(async (err) => {
+    if (isTransientSendError(err)) {
+      await sleep(1500);
+      await send().catch(() => {});
+    } else {
+      global.logger?.warn?.(logTag, err?.message || err);
+    }
+  });
+}
+
 async function resolveActivityLogChannel(guild) {
   const channelId = IDs.channels.activityLogs;
   if (!guild || !channelId) return null;
@@ -147,9 +164,7 @@ async function sendMemberDisconnectLog(oldState, newState) {
         `<:VC_right_arrow:1473441155055096081> **Count:** ${Math.max(1, Number(audit?.count || 1))}`,
       ].join("\n"));
 
-  await logChannel.send({ embeds: [embed] }).catch((err) => {
-    global.logger?.warn?.("[voiceStateUpdate] sendMemberDisconnectLog failed:", err?.message || err);
-  });
+  await sendLogWithRetry(logChannel, { embeds: [embed] }, "[voiceStateUpdate] sendMemberDisconnectLog failed:");
 }
 
 async function sendMemberMoveLog(oldState, newState) {
@@ -180,9 +195,7 @@ async function sendMemberMoveLog(oldState, newState) {
         `<:VC_right_arrow:1473441155055096081> **Count:** ${Math.max(1, Number(audit.count || 1))}`,
       ].join("\n"));
 
-  await logChannel.send({ embeds: [embed] }).catch((err) => {
-    global.logger?.warn?.("[voiceStateUpdate] sendMemberMoveLog failed:", err?.message || err);
-  });
+  await sendLogWithRetry(logChannel, { embeds: [embed] }, "[voiceStateUpdate] sendMemberMoveLog failed:");
 }
 
 function yesNo(value) {
@@ -228,9 +241,7 @@ async function sendMemberVoiceFlagsUpdateLog(oldState, newState) {
     .setTitle("Member Update")
     .setDescription(lines.join("\n"));
 
-  await logChannel.send({ embeds: [embed] }).catch((err) => {
-    global.logger?.warn?.("[voiceStateUpdate] sendMemberVoiceFlagsUpdateLog failed:", err?.message || err);
-  });
+  await sendLogWithRetry(logChannel, { embeds: [embed] }, "[voiceStateUpdate] sendMemberVoiceFlagsUpdateLog failed:");
 }
 
 module.exports = {
