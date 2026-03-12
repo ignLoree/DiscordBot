@@ -89,9 +89,7 @@ async function buildEventoClassificaPayload(guild, currentWeek) {
     .setTimestamp();
 
   const row = new ActionRowBuilder();
-  const startWeek = currentWeek;
-  const endWeek = Math.min(currentWeek + 1, MAX_WEEKS);
-  for (let w = startWeek; w <= endWeek; w++) {
+  for (let w = 1; w <= currentWeek; w++) {
     row.addComponents(
       new ButtonBuilder()
         .setCustomId(`${EVENTO_CLASSIFICA_PREFIX}${w}`)
