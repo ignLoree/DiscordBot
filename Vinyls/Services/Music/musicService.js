@@ -17,6 +17,8 @@ try {
 const queues = new Map();
 const inactivityTimers = new Map();
 const emptyVoiceTimers = new Map();
+let lastLavalinkNullLogAt = 0;
+const LAVALINK_NULL_LOG_THROTTLE_MS = 15_000;
 const DEFAULT_VOLUME = 5;
 const INACTIVITY_MS = 3 * 60 * 1000;
 const EMPTY_VOICE_MS = 3 * 60 * 1000;
@@ -488,7 +490,15 @@ async function runYouTubeOnlySearch(manager, query, requestedBy) {
 
 function tracksFromLavalinkResponse(result, requestedBy, extra = {}) {
   if (!result) {
-    logMusic("lavalink_resolve_null", { hint: "REST resolve failed or node unreachable" });
+    const now = Date.now();
+    if (now - lastLavalinkNullLogAt >= LAVALINK_NULL_LOG_THROTTLE_MS) {
+      lastLavalinkNullLogAt = now;
+      const host = String(process.env.LAVALINK_HOST || "127.0.0.1:2333").trim();
+      logMusic("lavalink_resolve_null", {
+        hint: "REST resolve failed or node unreachable. Check: Lavalink running? LAVALINK_HOST correct? Firewall?",
+        host,
+      });
+    }
     return { tracks: [], playlist: null };
   }
   const rawLoadType = result.loadType ?? result.load_type ?? result.type ?? result.resultType ?? "";

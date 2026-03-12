@@ -156,3 +156,7 @@ Vinili & Caffè Bot Test/Data/**
 # Restart
 restart_notify.json
 restart.json
+
+# Lavalink (jar binario + plugin scaricati a runtime)
+Lavalink/Lavalink.jar
+Lavalink/plugins/

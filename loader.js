@@ -129,7 +129,8 @@ function runNpmInstall(installDir, extraArgs = []) {
     return new Promise((resolveInstall) => {
         const args=['install','--legacy-peer-deps','--loglevel','error','--no-audit','--no-fund','--no-bin-links','--prefer-offline','--cache',NPM_CACHE_DIR,'--update-notifier','false',...extraArgs];
 
-        const npm=child_process.spawn('npm',args,{cwd:installDir,stdio:'inherit',env:silencedEnv});
+        const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+        const npm=child_process.spawn(npmCmd,args,{cwd:installDir,stdio:'inherit',env:silencedEnv});
 
         npm.on('exit', (code) => resolveInstall(code || 0));
     });
