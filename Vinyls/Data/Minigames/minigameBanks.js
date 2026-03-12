@@ -177,7 +177,6 @@ const PROVERB_BANK = [
   { start: "L'erba del vicino è sempre più...", end: "verde" },
   { start: "Ride bene chi ride...", end: "l'ultimo" },
   { start: "Non è tutto oro quel che...", end: "luccica" },
-  { start: "Chi la fa l'aspetti...", end: "" },
   { start: "A ogni uccello il suo nido è...", end: "bello" },
   { start: "Mal comune...", end: "mezzo gaudio" },
   { start: "Chi non risica non...", end: "rosica" },

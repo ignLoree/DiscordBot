@@ -275,7 +275,9 @@ function buildTemproleHelpRow(ownerId, currentValue = "default") {
   const hidden = String(currentValue || "default").toLowerCase();
   const options = [{ label: "add", description: "Assegna un temprole a un utente.", value: "add", }, { label: "remove", description: "Rimuove un temprole da un utente.", value: "remove", },];
   const filtered = hidden === "default" ? options : options.filter((item) => String(item.value).toLowerCase() !== hidden);
-  const menu = new StringSelectMenuBuilder().setCustomId(customId).setPlaceholder("Vedi sotto-comandi").addOptions(...filtered, { label: "Comando principale", description: "Torna all'aiuto principale", value: "default", },);
+  const defaultOpt = { label: "Comando principale", description: "Torna all'aiuto principale", value: "default", };
+  const allOpts = [...filtered.slice(0, 24), defaultOpt];
+  const menu = new StringSelectMenuBuilder().setCustomId(customId).setPlaceholder(String("Vedi sotto-comandi").slice(0, 150)).addOptions(...allOpts);
   return new ActionRowBuilder().addComponents(menu);
 }
 

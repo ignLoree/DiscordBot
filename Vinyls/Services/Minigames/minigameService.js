@@ -3611,10 +3611,11 @@ function buildTimeoutQuoteFilmEmbed(quote, answer) {
 }
 
 function buildTimeoutCompleteProverbEmbed(start, end) {
+  const full = String(end || "").trim() ? `${start} ${end}`.trim() : start;
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! Il proverbio completo: **${start} ${end}**.`,
+      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! Il proverbio completo: **${full}**.`,
     );
 }
 
@@ -5542,7 +5543,7 @@ async function startQuoteFilmGame(client, cfg) {
 async function startCompleteProverbGame(client, cfg) {
   const channelId = cfg.channelId;
   if (!channelId || activeGames.has(channelId)) return false;
-  const bank = getProverbBank();
+  const bank = (getProverbBank() || []).filter((r) => r && String(r.end || "").trim() !== "");
   const pick = pickQuestionAvoidRecent(channelId, "completeProverb", bank, (r) => r.start, 15);
   if (!pick) return false;
   const rewardExp = normalizeRewardExp(cfg?.completeProverb?.rewardExp ?? 150);
@@ -5564,7 +5565,7 @@ async function startCompleteProverbGame(client, cfg) {
     await clearActiveGame(client, cfg);
   }, durationMs);
   timeout.unref?.();
-  const hintText = `Completamento: ${buildRevealHint(pick.end)}`;
+  const hintText = `Completamento: ${buildRevealHint(pick.end) ?? "—"}`;
   const hintTimeout = await scheduleGenericHint(client, channelId, durationMs, hintText);
   const endNorm = normalizeCountryName(pick.end);
   const answers = [endNorm, pick.end, compactNoSpaces(endNorm)].filter(Boolean);
@@ -7449,7 +7450,7 @@ async function restoreActiveGames(client) {
     const start = parsed?.start || "";
     const end = parsed?.end || "";
     const timeout = setTimeout(async () => { const game = activeGames.get(cfg.channelId); if (!game) return; recordNoParticipationIfNeeded(cfg.channelId, game); activeGames.delete(cfg.channelId); if (game.hintTimeout) clearTimeout(game.hintTimeout); await channel.send({ embeds: [buildTimeoutCompleteProverbEmbed(game.start, game.end)] }).catch(() => { }); await clearActiveGame(client, cfg); }, remainingMs); timeout.unref?.();
-    const hintText = `Fine proverbio: ${buildRevealHint(end)}`;
+    const hintText = `Fine proverbio: ${buildRevealHint(end) ?? "—"}`;
     const hintTimeout = await scheduleGenericHint(client, cfg.channelId, remainingMs, hintText);
     activeGames.set(cfg.channelId, {
       type: "completeProverb",

@@ -445,7 +445,7 @@ function buildPagePickerRow(type, userId, totalSteps, currentStep) {
     buttons.push(
       new ButtonBuilder()
         .setCustomId(`${APPLY_PAGE_PREFIX}:${type}:${userId}:${page}`)
-        .setLabel(`Pagina ${page}`)
+        .setLabel(String(`Pagina ${page}`).slice(0, 80))
         .setStyle(page === safeCurrent ? ButtonStyle.Primary : ButtonStyle.Secondary)
         .setDisabled(page === safeCurrent),
     );
@@ -497,7 +497,7 @@ async function handleStartButton(interaction, type, step = 1, forceStep = false)
     if (draft?.nextStep > 1) {
       const totalSteps = splitQuestions(APPLICATIONS[type]?.questions || [], 4).length || 1;
       const row1 = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`${APPLY_START_PREFIX}:${type}:${interaction.user.id}:${draft.nextStep}`)
-        .setLabel(`Riprendi dalla pagina ${draft.nextStep}`)
+        .setLabel(String(`Riprendi dalla pagina ${draft.nextStep}`).slice(0, 80))
         .setStyle(ButtonStyle.Primary)
         .setEmoji("<:VC_Refresh:1473359252276904203>"),
       );
@@ -804,7 +804,7 @@ async function handleModalSubmit(interaction, type, stepRaw) {
     pendingApplications.set(stateKey, activeState);
     setDraftState(stateKey, activeState.answers, nextStep);
     const controls = [new ButtonBuilder().setCustomId(`${APPLY_START_PREFIX}:${type}:${interaction.user.id}:${nextStep}`)
-      .setLabel(`Continua (${nextStep}/${chunks.length})`)
+      .setLabel(String(`Continua (${nextStep}/${chunks.length})`).slice(0, 80))
       .setStyle(ButtonStyle.Primary)
       .setEmoji("<:VC_Refresh:1473359252276904203>")
     ];
@@ -812,7 +812,7 @@ async function handleModalSubmit(interaction, type, stepRaw) {
       controls.push(
         new ButtonBuilder()
           .setCustomId(`${APPLY_BACK_PREFIX}:${type}:${interaction.user.id}:${step}`)
-          .setLabel(`Indietro (${step}/${chunks.length})`)
+          .setLabel(String(`Indietro (${step}/${chunks.length})`).slice(0, 80))
           .setStyle(ButtonStyle.Secondary)
           .setEmoji("<a:vegaleftarrow:1462914743416131816>")
       );

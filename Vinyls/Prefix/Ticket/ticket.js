@@ -108,7 +108,7 @@ function buildTicketRatingRows(ticketId) {
   const stylesByScore = { 1: ButtonStyle.Danger, 2: ButtonStyle.Danger, 3: ButtonStyle.Primary, 4: ButtonStyle.Success, 5: ButtonStyle.Success, };
   const row = new ActionRowBuilder().addComponents(...[1, 2, 3, 4, 5].map((score) => new ButtonBuilder().setCustomId(`ticket_rate:${ticketId}:${score}`)
     .setStyle(stylesByScore[score] || ButtonStyle.Secondary)
-    .setLabel(String(score))
+    .setLabel(String(score).slice(0, 80))
     .setEmoji("<:VC_EXP:1468714279673925883>"),
   ),
   );

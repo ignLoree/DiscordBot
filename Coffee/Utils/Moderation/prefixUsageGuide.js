@@ -71,14 +71,14 @@ function buildSubcommandRow(command, ownerId, currentValue = "__default") {
 
   const menu = new StringSelectMenuBuilder()
     .setCustomId(`usage_guide:${command.name}:${ownerId}`)
-    .setPlaceholder("View Subcommands")
+    .setPlaceholder(String("View Subcommands").slice(0, 150))
     .addOptions(
       ...filteredSubs.slice(0, 24).map((sub) => ({
-        label: sub,
-        description: getSubDescription(command, sub).slice(0, 100),
-        value: sub,
+        label: String(sub || "").slice(0, 100),
+        description: String(getSubDescription(command, sub) || "").slice(0, 100),
+        value: String(sub || "").slice(0, 100),
       })),
-      { label: "default", description: "Torna alla guida principale del comando", value: "__default" },
+      { label: "default", description: String("Torna alla guida principale del comando").slice(0, 100), value: "__default" },
     );
   return new ActionRowBuilder().addComponents(menu);
 }

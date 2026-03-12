@@ -28,20 +28,20 @@ async function sendEventRewardLog(client, data) {
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("<:VC_EXP:1468714279673925883> Premio evento assegnato")
-    .setDescription(`**Utente:** <@${userId}>`)
-    .addFields({ name: "<:VC_Info:1460670816214585481> Tipo", value: label, inline: true });
+    .setDescription(String(`**Utente:** <@${userId}>`).slice(0, 4096))
+    .addFields({ name: String("<:VC_Info:1460670816214585481> Tipo").slice(0, 256), value: String(label || "").slice(0, 1024), inline: true });
 
   if (levels != null && levels > 0) {
-    embed.addFields({ name: "<:VC_EXP:1468714279673925883> Livelli", value: `+${levels}`, inline: true });
+    embed.addFields({ name: String("<:VC_EXP:1468714279673925883> Livelli").slice(0, 256), value: String(`+${levels}`).slice(0, 1024), inline: true });
   }
   if (roleId) {
-    embed.addFields({ name: "<:VC_Mention:1443994358201323681> Ruolo", value: `<@&${roleId}>`, inline: true });
+    embed.addFields({ name: String("<:VC_Mention:1443994358201323681> Ruolo").slice(0, 256), value: String(`<@&${roleId}>`).slice(0, 1024), inline: true });
   }
   if (week != null) {
-    embed.addFields({ name: "<a:VC_Calendar:1448670320180592724> Settimana", value: `${week}`, inline: true });
+    embed.addFields({ name: String("<a:VC_Calendar:1448670320180592724> Settimana").slice(0, 256), value: String(`${week}`).slice(0, 1024), inline: true });
   }
   if (detail) {
-    embed.addFields({ name: "<:VC_Info:1460670816214585481> Dettaglio", value: detail, inline: false });
+    embed.addFields({ name: String("<:VC_Info:1460670816214585481> Dettaglio").slice(0, 256), value: String(detail).slice(0, 1024), inline: false });
   }
   embed.setTimestamp();
 
