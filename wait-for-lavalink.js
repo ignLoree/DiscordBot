@@ -1,48 +1,64 @@
-const net = require("net");
+const http = require("http");
 const { spawn } = require("child_process");
 const path = require("path");
 
-const host = process.env.LAVALINK_HOST || "127.0.0.1:2333";
-const [h, portStr] = host.split(":");
-const port = parseInt(portStr || "2333", 10);
+const raw = (process.env.LAVALINK_HOST || "127.0.0.1:2333").trim().replace(/^https?:\/\//i, "");
+const lastColon = raw.lastIndexOf(":");
+const host = lastColon > 0 ? raw.slice(0, lastColon) : raw;
+const port = parseInt(lastColon > 0 ? raw.slice(lastColon + 1) : "2333", 10) || 2333;
 const maxWaitMs = 120000;
 const intervalMs = 2000;
 const start = Date.now();
+let attempts = 0;
 
 function check() {
   return new Promise((resolve) => {
-    const s = net.connect(port, h, () => {
-      s.destroy();
-      resolve(true);
-    });
-    s.on("error", () => resolve(false));
-    s.setTimeout(5000, () => {
-      s.destroy();
+    const req = http.get(
+      { host, port, path: "/", timeout: 5000 },
+      (res) => {
+        res.destroy();
+        resolve(true);
+      }
+    );
+    req.on("error", () => resolve(false));
+    req.on("timeout", () => {
+      req.destroy();
       resolve(false);
     });
   });
 }
 
+function runLoader() {
+  const node = process.execPath || "node";
+  const loader = path.join(__dirname, "loader.js");
+  const child = spawn(node, ["--disable-warning=ExperimentalWarning", loader], {
+    cwd: __dirname,
+    stdio: "inherit",
+    env: process.env,
+  });
+  child.on("exit", (code) => process.exit(code != null ? code : 0));
+}
+
 function wait() {
-  if (Date.now() - start > maxWaitMs) {
-    console.error("[wait-for-lavalink] Timeout: Lavalink non raggiungibile su " + host);
-    process.exit(1);
+  attempts += 1;
+  const elapsed = Date.now() - start;
+  if (elapsed > maxWaitMs) {
+    console.error("[wait-for-lavalink] Timeout dopo " + (maxWaitMs / 1000) + "s. Avvio bot senza Lavalink (musica non funzionera).");
+    runLoader();
+    return;
+  }
+  if (attempts % 5 === 1 && attempts > 1) {
+    console.log("[wait-for-lavalink] Ancora in attesa su " + host + ":" + port + " (tentativo " + attempts + ")");
   }
   check().then((ok) => {
     if (ok) {
-      const node = process.execPath || "node";
-      const loader = path.join(__dirname, "loader.js");
-      const child = spawn(node, ["--disable-warning=ExperimentalWarning", loader], {
-        cwd: __dirname,
-        stdio: "inherit",
-        env: process.env,
-      });
-      child.on("exit", (code) => process.exit(code != null ? code : 0));
+      console.log("[wait-for-lavalink] Lavalink raggiungibile, avvio bot.");
+      runLoader();
       return;
     }
     setTimeout(wait, intervalMs);
   });
 }
 
-console.log("[wait-for-lavalink] Attendo Lavalink su " + host + " ...");
+console.log("[wait-for-lavalink] Attendo Lavalink su " + host + ":" + port + " ...");
 wait();
