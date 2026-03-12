@@ -6,7 +6,7 @@ const os = require("os");
 const axios = require("axios");
 const VoiceState = require("../../Schemas/Voice/voiceStateSchema");
 const IDs = require("../../Utils/Config/ids");
-const {getClientChannelCached,getClientGuildCached,getGuildMemberCached,}= require("../../Utils/Interaction/entityCache");
+const { getClientChannelCached, getClientGuildCached, getGuildMemberCached, } = require("../../Utils/Interaction/entityCache");
 const ttsStates = new Map();
 const guildLocks = new Map();
 const lastSavedChannels = new Map();
@@ -49,12 +49,12 @@ function shouldHandleMessage(message, config, prefix) {
   const rawContent = String(message.content ?? "");
   if (prefix && rawContent.startsWith(prefix)) return false;
   if (rawContent.startsWith("-")) return false;
-  const isVoiceChannel = message.channel.isVoiceBased ?.()&& ! message.channel.isThread ?.();
-  const isVoiceChannelThread = message.channel.isThread ?.()&& message.channel.parent ?. isVoiceBased ?.();
-  const extraTextIds =[IDs.channels.noMic].filter(Boolean).map((id)=>String(id));
+  const isVoiceChannel = message.channel.isVoiceBased?.() && !message.channel.isThread?.();
+  const isVoiceChannelThread = message.channel.isThread?.() && message.channel.parent?.isVoiceBased?.();
+  const extraTextIds = [IDs.channels.noMic].filter(Boolean).map((id) => String(id));
   const channelIdStr = String(message.channel?.id ?? "");
-  const parentIdStr = message.channel ?. parentId ? String(message.channel.parentId):"";
-  const isExtraText = extraTextIds.some((id)=>id === channelIdStr || id === parentIdStr,);
+  const parentIdStr = message.channel?.parentId ? String(message.channel.parentId) : "";
+  const isExtraText = extraTextIds.some((id) => id === channelIdStr || id === parentIdStr,);
   return isVoiceChannel || isVoiceChannelThread || isExtraText;
 }
 
@@ -102,20 +102,130 @@ function normalizeCaseForTts(text) {
 
 const TTS_ABBREVIATIONS_IT = {
   tvb: "ti voglio bene", nn: "non", xk: "perché", xke: "perché", xché: "perché",
-  cmq: "comunque", qnd: "quando", cn: "con", sn: "sono", pk: "perché", cm: "come",
-  ke: "che", tt: "tutto", tb: "tanto bene", gg: "buon gioco", wp: "well played",
-  dm: "messaggio privato",
+  xò: "però", xo: "però", cmq: "comunque", qnd: "quando", cn: "con", sn: "sono",
+  pk: "perché", cm: "come", ke: "che", tt: "tutto", tb: "tanto bene", gg: "buon gioco",
+  wp: "well played", dm: "messaggio privato", dv: "dove", qlk: "qualcosa", qlc: "qualcosa",
+  fra: "fratello", cvd: "come volevasi dimostrare", aka: "noto anche come",
+  asap: "il prima possibile", lol: "ride forte", lmao: "sto morendo dal ridere",
+  omg: "oh mio dio", fyi: "per tua informazione", ez: "facile", gl: "buona fortuna",
+  hf: "divertiti", msg: "messaggio", pic: "foto", vid: "video", bday: "compleanno",
+  gn: "buonanotte", gm: "buongiorno", cya: "ci vediamo", brb: "torno subito",
+  gtg: "devo andare", g2g: "devo andare", atm: "al momento", rn: "adesso",
+  irl: "nella vita reale", idc: "non mi interessa", smh: "scuotendo la testa",
+  imho: "a mio modesto parere", tbf: "a dire il vero", afaik: "per quanto ne so",
+  bbl: "torno più tardi", bbs: "torno tra poco", tc: "stammi bene",
+  rofl: "mi rotolo dal ridere", wtf: "che diavolo", wth: "che cavolo", ngl: "senza mentire",
+  lowkey: "in segreto", highkey: "davvero", bet: "scommetto", yeet: "via", vibe: "vibrazione",
+  sus: "sospetto", based: "basato", cringe: "imbarazzante", stan: "fan ossessionato",
+  simp: "simp", drip: "stile", flex: "flex", salty: "incazzato", tilted: "tilting",
+  istg: "giuro", tmi: "troppe informazioni", jk: "scherzo", sry: "scusa", mb: "colpa mia",
+  fwiw: "per quel che vale", tldr: "in sintesi", iirc: "se ricordo bene", amirite: "ho ragione",
+  tfw: "quella sensazione quando", mfw: "la mia faccia quando", mrw: "la mia reazione quando",
+  op: "autore del post", oc: "contenuto originale", obv: "ovviamente", prob: "probabilmente",
+  def: "decisamente", legit: "davvero", totes: "totalmente", srsly: "seriamente", rly: "davvero",
+  probs: "probabilmente", kinda: "un po", sorta: "un po", gotta: "devo", wanna: "voglio",
+  gonna: "sto per", dunno: "non so", lemme: "lasciami", gimme: "dammi", outta: "fuori da",
+  lotta: "un sacco di", whatcha: "cosa stai", gotcha: "capito", wyd: "cosa fai", wbu: "e tu",
+  hbu: "e tu", nbd: "niente di grave", tgif: "grazie a dio è venerdì", diy: "fai da te",
+  faq: "domande frequenti", ama: "chiedimi qualsiasi cosa", eli5: "spiega in parole semplici",
+  til: "oggi ho imparato", nah: "no", ikr: "lo so vero", eta: "orario previsto", psa: "avviso",
+  tba: "da annunciare", tbd: "da decidere", nsfw: "non sicuro per il lavoro", sfw: "sicuro",
+  iykyk: "se sai sai", icymi: "se te lo sei perso", ftr: "per la cronaca", jic: "per sicurezza",
+  wdym: "cosa intendi", wym: "cosa intendi", idgaf: "non me ne importa", wth: "che cavolo",
+  ig: "credo", hmu: "scrivimi", lmk: "fammi sapere", ttyl: "ci sentiamo dopo", ttys: "a presto",
+  ttfn: "ciao per ora", otw: "in arrivo", brt: "arrivo subito", etc: "e così via",
+  vs: "contro", approx: "circa", afk: "lontano dalla tastiera", vc: "canale vocale",
+  ggwp: "bella partita ben giocata", ggez: "bella partita facile", nt: "bel tentativo",
+  ns: "bel colpo", glhf: "buona fortuna divertiti", rip: "riposa in pace", oof: "oof",
+  yolo: "si vive una volta sola", fomo: "paura di perdersi qualcosa", bae: "tesoro",
+  bestie: "migliore amica", bff: "migliori amici per sempre", goat: "il migliore di tutti",
+  mvp: "giocatore più prezioso", pog: "fantastico", poggers: "fantastico", kek: "lol",
+  rekt: "distrutto", noob: "principiante", pro: "professionista", op: "troppo forte",
+  nerf: "indebolire", dlc: "contenuto scaricabile", f2p: "free to play",
+  p2w: "pay to win", grind: "grindare", loot: "bottino", rng: "caso", dps: "danno al secondo",
+  main: "main", smurf: "smurf", carry: "portare", tilt: "tilt",
+  toxic: "tossico", ff: "forfeit", inv: "invita", mod: "moderatore",
+  ratio: "ratio", copium: "copium", periodt: "punto", slay: "stai stupenda", tea: "pettegolezzo",
 };
 const TTS_ABBREVIATIONS_EN = {
   tbh: "to be honest", btw: "by the way", imo: "in my opinion", idk: "I don't know",
   ik: "I know", omw: "on my way", np: "no problem", nvm: "never mind", ty: "thank you",
   thx: "thanks", pls: "please", ur: "your", bc: "because", ppl: "people",
-  gg: "good game", wp: "well played",
+  gg: "good game", wp: "well played", brb: "be right back", gtg: "got to go",
+  g2g: "got to go", atm: "at the moment", rn: "right now", irl: "in real life",
+  idc: "I don't care", smh: "shaking my head", imho: "in my humble opinion",
+  tbf: "to be fair", afaik: "as far as I know", fyi: "for your information",
+  lol: "laugh out loud", lmao: "laughing my ass off", omg: "oh my god", ez: "easy",
+  gl: "good luck", hf: "have fun", bbl: "be back later", bbs: "be back soon",
+  cya: "see you", gn: "good night", gm: "good morning", tc: "take care",
+  bday: "birthday", msg: "message", pic: "picture", vid: "video", aka: "also known as",
+  asap: "as soon as possible", fr: "for real",
+  rofl: "rolling on the floor laughing", roflmao: "rolling on the floor laughing my ass off",
+  lmfao: "laughing my freaking ass off", wtf: "what the heck", wth: "what the hell",
+  omfg: "oh my god", ngl: "not gonna lie", lowkey: "kind of", highkey: "really",
+  bet: "bet", "no-cap": "no cap", cap: "lie", slay: "slay", bussin: "really good",
+  yeet: "yeet", vibe: "vibe", vibes: "vibes", sus: "suspicious", based: "based",
+  cringe: "cringe", stan: "stalker fan", simp: "simp", drip: "style", flex: "flex",
+  salty: "salty", tilted: "tilted", af: "as heck", asf: "as heck", istg: "I swear to god",
+  tmi: "too much information", jk: "just kidding", jks: "just kidding", sry: "sorry",
+  soz: "sorry", mb: "my bad", fwiw: "for what it's worth", tldr: "too long didn't read",
+  imao: "in my arrogant opinion", iirc: "if I remember correctly", amirite: "am I right",
+  tfw: "that feeling when", mfw: "my face when", mrw: "my reaction when",
+  op: "original poster", oc: "original content", obv: "obviously", obvs: "obviously",
+  prob: "probably", probs: "probably", def: "definitely", legit: "legitimately",
+  totes: "totally", srsly: "seriously", rly: "really", kinda: "kind of", sorta: "sort of",
+  coulda: "could have", woulda: "would have", shoulda: "should have", gotta: "got to",
+  wanna: "want to", gonna: "going to", dunno: "don't know", lemme: "let me", gimme: "give me",
+  outta: "out of", lotta: "lot of", lotsa: "lots of", whatcha: "what are you", gotcha: "got you",
+  betcha: "bet you", sup: "what's up", wyd: "what you doing", wbu: "what about you",
+  hbu: "how about you", nbd: "no big deal", tgif: "thank god it's friday", diy: "do it yourself",
+  faq: "frequently asked questions", ama: "ask me anything", eli5: "explain like I'm five",
+  til: "today I learned", nah: "no", ikr: "I know right", eta: "estimated time of arrival",
+  psa: "public service announcement", tba: "to be announced", tbd: "to be determined",
+  nsfw: "not safe for work", sfw: "safe for work", iykyk: "if you know you know",
+  icymi: "in case you missed it", ftr: "for the record", jic: "just in case",
+  wdym: "what do you mean", wym: "what you mean", idgaf: "I don't give a heck",
+  stfu: "be quiet", ig: "I guess", hmu: "hit me up", lmk: "let me know", ttyl: "talk to you later",
+  ttys: "talk to you soon", ttfn: "ta ta for now", bfn: "bye for now", otw: "on the way",
+  brt: "be right there", etc: "et cetera", vs: "versus", approx: "approximately",
+  afk: "away from keyboard", vc: "voice chat", ggwp: "good game well played",
+  ggez: "good game easy", nt: "nice try", ns: "nice shot", glhf: "good luck have fun",
+  rip: "rest in peace", oof: "oof", yolo: "you only live once", fomo: "fear of missing out",
+  bae: "babe", bestie: "bestie", bff: "best friends forever", poggers: "poggers", kek: "kek",
+  rekt: "wrecked", pwnd: "owned", noob: "newbie", newb: "newbie", pro: "professional",
+  op: "overpowered", nerf: "nerf", buff: "buff",
+  f2p: "free to play", p2w: "pay to win", grind: "grind", loot: "loot", rng: "random",
+  dps: "damage per second", main: "main", alt: "alt", smurf: "smurf", carry: "carry",
+  tilt: "tilt", tilted: "tilted", toxic: "toxic", ff: "forfeit", inv: "invite",
+  dc: "disconnect", mod: "moderator", ratio: "ratio", copium: "copium", periodt: "period",
+  slay: "slay", tea: "tea", hc: "headcanon", fic: "fanfiction", fanfic: "fanfiction",
+  collab: "collaboration", colab: "collaboration", promo: "promotion", hmu: "hit me up",
+  o7: "salute", re: "regarding", fwd: "forward", cc: "carbon copy", nm: "never mind",
+  qt: "cutie", bby: "baby", bruh: "bruh", fam: "family", homie: "homie", dawg: "dawg",
+  peeps: "people", squad: "squad", crew: "crew", lit: "lit", fire: "fire", slaps: "slaps",
+  banger: "banger", vibing: "vibing", chill: "chill", chilling: "chilling", deadass: "dead serious",
+  ong: "on god", "no-cap": "no cap", capping: "lying", period: "period", facts: "facts",
+  iconic: "iconic", legend: "legend", legendary: "legendary", king: "king", queen: "queen",
+  ship: "ship", shipping: "shipping", otp: "one true pairing", au: "alternate universe",
+  cosplay: "cosplay", cos: "cosplay", merch: "merchandise", sponsored: "sponsored",
+  wfh: "work from home", f2f: "face to face", ping: "ping", fps: "frames per second",
+  rpg: "role playing game", mmo: "massively multiplayer online", pvp: "player versus player",
+  pve: "player versus environment", npc: "non player character", mob: "mob", boss: "boss",
+  tryhard: "tryhard", sweat: "sweat", sweaty: "sweaty", patch: "patch", update: "update",
+  ea: "early access", farm: "farm", farming: "farming", drop: "drop", crit: "critical",
+  tank: "tank", healer: "healer", support: "support", boost: "boost", fed: "fed",
+  report: "report", int: "intentional", surrender: "surrender", remake: "remake",
+  queue: "queue", mute: "mute", block: "block", ban: "ban", banned: "banned",
+  hack: "hack", hacker: "hacker", bug: "bug", glitch: "glitch", exploit: "exploit",
+  meme: "meme", wholesome: "wholesome", cursed: "cursed", savage: "savage", roast: "roast",
+  fandom: "fandom", ratioed: "ratioed",
 };
 function expandAbbreviationsForTts(text, lang) {
   if (!text || typeof text !== "string") return text;
   const langBase = String(lang || "it").split("-")[0].toLowerCase();
-  const map = langBase === "en" ? TTS_ABBREVIATIONS_EN : TTS_ABBREVIATIONS_IT;
+  const primary = langBase === "en" ? TTS_ABBREVIATIONS_EN : TTS_ABBREVIATIONS_IT;
+  const secondary = langBase === "en" ? TTS_ABBREVIATIONS_IT : TTS_ABBREVIATIONS_EN;
+  const map = { ...secondary, ...primary };
   let out = text;
   for (const [abbr, expansion] of Object.entries(map)) {
     const re = new RegExp(`\\b${abbr.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "gi");
@@ -201,7 +311,7 @@ function buildGoogleTtsUrl(
   return `${baseHost}/translate_tts?ie=UTF-8&client=tw-ob&tl=${tl}&q=${q}`;
 }
 
-const TTS_HEADERS ={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",Accept:"audio/mpeg,audio/*;q=0.9,*/*;q=0.8",Referer:"https://translate.google.com/",};
+const TTS_HEADERS = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36", Accept: "audio/mpeg,audio/*;q=0.9,*/*;q=0.8", Referer: "https://translate.google.com/", };
 
 function looksLikeMpegAudio(buffer) {
   if (!Buffer.isBuffer(buffer) || buffer.length < 4) return false;
@@ -244,23 +354,23 @@ async function fetchTtsAudio(url, provider = "TTS", attempt = 1) {
   return data;
 }
 
-const LANG_TO_VOICERSS ={it:"it-it",en:"en-gb",es:"es-es",fr:"fr-fr",de:"de-de",pt:"pt-pt",ru:"ru-ru",pl:"pl-pl",nl:"nl-nl",tr:"tr-tr",ja:"ja-jp",zh:"zh-cn",};
+const LANG_TO_VOICERSS = { it: "it-it", en: "en-gb", es: "es-es", fr: "fr-fr", de: "de-de", pt: "pt-pt", ru: "ru-ru", pl: "pl-pl", nl: "nl-nl", tr: "tr-tr", ja: "ja-jp", zh: "zh-cn", };
 
 async function createTtsStream(text, lang) {
-  const textStr = String(text || "").slice(0,300).trim();
+  const textStr = String(text || "").slice(0, 300).trim();
   if (!textStr) throw new Error("TTS: testo vuoto");
   const rawLang = String(lang || "it").trim();
   const langLocale = rawLang.replace("_", "-");
   const langBase = langLocale.split("-")[0].toLowerCase();
-  const googleLangCandidates = Array.from(new Set([langLocale,langBase].filter(Boolean)),);
+  const googleLangCandidates = Array.from(new Set([langLocale, langBase].filter(Boolean)),);
   let lastErr = null;
 
-  const hosts =["https://translate.google.com.vn","https://translate.google.com",];
+  const hosts = ["https://translate.google.com.vn", "https://translate.google.com",];
   for (const baseHost of hosts) {
     for (const googleLang of googleLangCandidates) {
       try {
         const url = buildGoogleTtsUrl(textStr, googleLang, baseHost);
-        const data = await fetchTtsAudio(url,`GoogleTTS:${baseHost}:${googleLang}`,);
+        const data = await fetchTtsAudio(url, `GoogleTTS:${baseHost}:${googleLang}`,);
         if (data) return Readable.from(Buffer.from(data));
       } catch (err) {
         lastErr = err;
@@ -355,7 +465,7 @@ async function ensureConnection(state, voiceChannel) {
       global.logger?.warn?.("[TTS] connection destroy:", err?.message || err);
     }
   }
-  const connection = joinVoiceChannel({channelId:voiceChannel.id,guildId:voiceChannel.guild.id,adapterCreator:voiceChannel.guild.voiceAdapterCreator,selfDeaf:false,});
+  const connection = joinVoiceChannel({ channelId: voiceChannel.id, guildId: voiceChannel.guild.id, adapterCreator: voiceChannel.guild.voiceAdapterCreator, selfDeaf: false, });
   state.connection = connection;
   state.guildId = voiceChannel.guild.id;
   state.channelId = voiceChannel.id;
@@ -372,7 +482,7 @@ async function playNext(state) {
   }
   const item = state.queue.shift();
   state.playing = true;
-  const tmpPath = path.resolve(os.tmpdir(),`tts_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`,);
+  const tmpPath = path.resolve(os.tmpdir(), `tts_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`,);
   state.currentTtsFile = tmpPath;
   try {
     const connection = await ensureConnection(state, item.voiceChannel);
@@ -438,19 +548,9 @@ async function handleTtsMessage(message, client, prefix) {
   } else {
     voiceChannel = message.member?.voice?.channel;
   }
-  if (!voiceChannel) {
-    const warn = await message.reply("<:vegax:1443934876440068179> Devi essere in un canale vocale per usare il TTS.",);
-    const timer=setTimeout(() => warn.delete().catch(() => {}), 5000);
-    timer.unref?.();
-    return;
-  }
+  if (!voiceChannel) return;
   const authorVoiceId = message.member?.voice?.channelId ?? null;
-  if (!authorVoiceId || String(authorVoiceId) !== String(voiceChannel.id)) {
-    const warn = await message.reply("<:vegax:1443934876440068179> Devi essere nel canale vocale per usare il TTS.",);
-    const timer = setTimeout(() => warn.delete().catch(() => {}), 5000);
-    if (typeof timer?.unref === "function") timer.unref();
-    return;
-  }
+  if (!authorVoiceId || String(authorVoiceId) !== String(voiceChannel.id)) return;
   if (!voiceChannel.joinable) return;
   const lockedChannelId = getLockedChannelId(voiceChannel.guild.id);
   if (lockedChannelId && lockedChannelId !== voiceChannel.id) {
@@ -461,16 +561,16 @@ async function handleTtsMessage(message, client, prefix) {
     return;
   }
   const state = getState(voiceChannel);
-  const connection = await ensureConnection(state,voiceChannel).catch(()=>null,);
+  const connection = await ensureConnection(state, voiceChannel).catch(() => null,);
   if (!connection) return;
   const maxChars = config?.tts?.maxChars || 200;
-  const includeUsername = booleanFromConfig(config ?. tts ?. includeUsername,false,);
+  const includeUsername = booleanFromConfig(config?.tts?.includeUsername, false,);
   const lang = getUserTtsLang(message.author?.id) || config?.tts?.lang || "it";
   const rawMessageText = message.cleanContent ?? message.content ?? "";
-  let baseText = sanitizeText(typeof rawMessageText === "string" ? rawMessageText:String(rawMessageText),);
+  let baseText = sanitizeText(typeof rawMessageText === "string" ? rawMessageText : String(rawMessageText),);
   if (!baseText || !baseText.trim()) return;
   baseText = expandAbbreviationsForTts(baseText, lang);
-  const name = message.member ?. displayName || message.member ?. user ?. username || message.author ?. username || "Utente";
+  const name = message.member?.displayName || message.member?.user?.username || message.author?.username || "Utente";
   let text = includeUsername ? `${name}: ${baseText}` : baseText;
   text = normalizeCaseForTts(text);
   text = normalizePausesForTts(text);
@@ -506,13 +606,13 @@ async function leaveTtsGuild(guildId, client) {
   if (!lockedChannelId && client) {
     const guild = await getClientGuildCached(client, guildId, { ttlMs: 30_000 });
     if (guild) {
-      const me = guild.members ?. me ??(await guild.members ?. fetch(client.user ?. id).catch(()=>null));
+      const me = guild.members?.me ?? (await guild.members?.fetch(client.user?.id).catch(() => null));
       const channelId = me?.voice?.channelId;
       if (channelId) {
         try {
-          const channel =(await getClientChannelCached(client,channelId,{ttlMs:30_000}));
+          const channel = (await getClientChannelCached(client, channelId, { ttlMs: 30_000 }));
           if (channel?.isVoiceBased?.()) {
-            const conn = joinVoiceChannel({channelId:channel.id,guildId:guild.id,adapterCreator:guild.voiceAdapterCreator,selfDeaf:false,});
+            const conn = joinVoiceChannel({ channelId: channel.id, guildId: guild.id, adapterCreator: guild.voiceAdapterCreator, selfDeaf: false, });
             conn.destroy();
           }
         } catch (err) {
@@ -585,14 +685,14 @@ async function clearVoiceState(guildId) {
 
 async function restoreTtsConnections(client) {
   try {
-    const autojoinEnabled = booleanFromConfig(client ?. config ?. tts ?. autojoin,false,);
+    const autojoinEnabled = booleanFromConfig(client?.config?.tts?.autojoin, false,);
     if (!autojoinEnabled) {
       await VoiceState.deleteMany({}).catch(() => null);
       return;
     }
     const states = await VoiceState.find({});
     for (const entry of states) {
-      const channel = await getClientChannelCached(client,entry.channelId,{ttlMs:30_000,});
+      const channel = await getClientChannelCached(client, entry.channelId, { ttlMs: 30_000, });
       if (!channel || !channel.isVoiceBased?.()) continue;
       await joinTtsChannel(channel);
     }
