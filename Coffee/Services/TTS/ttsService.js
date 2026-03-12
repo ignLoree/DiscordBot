@@ -90,6 +90,85 @@ function sanitizeText(text) {
   cleaned = cleaned.replace(/\s+/g, " ").trim();
   return cleaned;
 }
+
+function normalizeCaseForTts(text) {
+  if (!text || typeof text !== "string") return text;
+  const letters = text.replace(/\P{L}/gu, "");
+  if (letters.length < 2) return text;
+  const upper = text.replace(/\P{L}/gu, "").replace(/\P{Lu}/gu, "");
+  if (upper.length / letters.length >= 0.8) return text.toLocaleLowerCase();
+  return text;
+}
+
+const TTS_ABBREVIATIONS_IT = {
+  tvb: "ti voglio bene", nn: "non", xk: "perché", xke: "perché", xché: "perché",
+  cmq: "comunque", qnd: "quando", cn: "con", sn: "sono", pk: "perché", cm: "come",
+  ke: "che", tt: "tutto", tb: "tanto bene", gg: "buon gioco", wp: "well played",
+  dm: "messaggio privato",
+};
+const TTS_ABBREVIATIONS_EN = {
+  tbh: "to be honest", btw: "by the way", imo: "in my opinion", idk: "I don't know",
+  ik: "I know", omw: "on my way", np: "no problem", nvm: "never mind", ty: "thank you",
+  thx: "thanks", pls: "please", ur: "your", bc: "because", ppl: "people",
+  gg: "good game", wp: "well played",
+};
+function expandAbbreviationsForTts(text, lang) {
+  if (!text || typeof text !== "string") return text;
+  const langBase = String(lang || "it").split("-")[0].toLowerCase();
+  const map = langBase === "en" ? TTS_ABBREVIATIONS_EN : TTS_ABBREVIATIONS_IT;
+  let out = text;
+  for (const [abbr, expansion] of Object.entries(map)) {
+    const re = new RegExp(`\\b${abbr.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "gi");
+    out = out.replace(re, expansion);
+  }
+  return out;
+}
+function normalizePausesForTts(text) {
+  if (!text || typeof text !== "string") return text;
+  return text
+    .replace(/\s*\.{2,}\s*/g, ", ")
+    .replace(/\s*\u2026+\s*/gu, ", ")
+    .replace(/\s*,\s*,\s*/g, ", ")
+    .replace(/\s+,/g, ",")
+    .trim();
+}
+const NUMBERS_IT_0_19 = "zero uno due tre quattro cinque sei sette otto nove dieci undici dodici tredici quattordici quindici sedici diciassette diciotto diciannove".split(" ");
+const NUMBERS_IT_TENS = " zero dieci venti trenta quaranta cinquanta sessanta settanta ottanta novanta".split(" ");
+function numberToWordsItalian(n) {
+  const num = Math.floor(Number(n));
+  if (!Number.isFinite(num) || num < 0 || num > 999999) return String(n);
+  if (num <= 19) return NUMBERS_IT_0_19[num];
+  if (num < 100) {
+    const tens = Math.floor(num / 10);
+    const ones = num % 10;
+    if (ones === 0) return NUMBERS_IT_TENS[tens];
+    if (ones === 1) return NUMBERS_IT_TENS[tens].slice(0, -1) + "uno";
+    if (ones === 8) return NUMBERS_IT_TENS[tens].slice(0, -1) + "otto";
+    return NUMBERS_IT_TENS[tens].slice(0, -1) + NUMBERS_IT_0_19[ones];
+  }
+  if (num < 200) return num === 100 ? "cento" : "cento" + numberToWordsItalian(num - 100);
+  if (num < 1000) {
+    const h = Math.floor(num / 100);
+    const rest = num % 100;
+    const name = h === 1 ? "cento" : NUMBERS_IT_0_19[h] + "cento";
+    return rest === 0 ? name : name + numberToWordsItalian(rest);
+  }
+  if (num < 2000) return num === 1000 ? "mille" : "mille" + numberToWordsItalian(num - 1000);
+  if (num < 1000000) {
+    const k = Math.floor(num / 1000);
+    const rest = num % 1000;
+    const thousands = k === 1 ? "mille" : numberToWordsItalian(k) + "mila";
+    return rest === 0 ? thousands : thousands + numberToWordsItalian(rest);
+  }
+  return String(n);
+}
+function numbersToWordsForTts(text, lang) {
+  if (!text || typeof text !== "string") return text;
+  const langBase = String(lang || "it").split("-")[0].toLowerCase();
+  if (langBase !== "it") return text;
+  return text.replace(/\b(\d{1,6})\b/g, (_, digits) => numberToWordsItalian(parseInt(digits, 10)));
+}
+
 function setUserTtsLang(userId, lang) {
   if (!userId) return;
   if (!lang) {
@@ -135,14 +214,26 @@ function readTtsErrorPreview(buffer) {
   return buffer.subarray(0, 240).toString("utf8").replace(/\s+/g, " ").trim();
 }
 
-async function fetchTtsAudio(url, provider = "TTS") {
-  const res = await axios.get(url,{responseType:"arraybuffer",timeout:15000,headers:TTS_HEADERS,validateStatus:(status)=>status >=200&& status <300,});
-  const data = Buffer.isBuffer(res ?. data)? res.data:Buffer.from(res ?. data ||[]);
-  if (data.length === 0) {
-    return null;
+async function fetchTtsAudio(url, provider = "TTS", attempt = 1) {
+  const maxAttempts = 2;
+  const res = await axios.get(url, {
+    responseType: "arraybuffer",
+    timeout: 15000,
+    headers: TTS_HEADERS,
+    validateStatus: () => true,
+  });
+  const status = res?.status ?? 0;
+  if (status >= 500 && status < 600 && attempt < maxAttempts) {
+    await new Promise((r) => setTimeout(r, 2000));
+    return fetchTtsAudio(url, provider, attempt + 1);
   }
-  const contentType = String(res ?. headers ?.["content-type"]|| "",).toLowerCase();
-  const isTextLike = contentType.includes("text/")|| contentType.includes("json")|| contentType.includes("xml");
+  if (status < 200 || status >= 300) {
+    throw new Error(`${provider}: HTTP ${status}`);
+  }
+  const data = Buffer.isBuffer(res?.data) ? res.data : Buffer.from(res?.data || []);
+  if (data.length === 0) return null;
+  const contentType = String(res?.headers?.["content-type"] || "").toLowerCase();
+  const isTextLike = contentType.includes("text/") || contentType.includes("json") || contentType.includes("xml");
   const isAudio = contentType.includes("audio/") || looksLikeMpegAudio(data);
   if (!isAudio || isTextLike) {
     const preview = readTtsErrorPreview(data);
@@ -376,10 +467,14 @@ async function handleTtsMessage(message, client, prefix) {
   const includeUsername = booleanFromConfig(config ?. tts ?. includeUsername,false,);
   const lang = getUserTtsLang(message.author?.id) || config?.tts?.lang || "it";
   const rawMessageText = message.cleanContent ?? message.content ?? "";
-  const baseText = sanitizeText(typeof rawMessageText === "string" ? rawMessageText:String(rawMessageText),);
+  let baseText = sanitizeText(typeof rawMessageText === "string" ? rawMessageText:String(rawMessageText),);
   if (!baseText || !baseText.trim()) return;
+  baseText = expandAbbreviationsForTts(baseText, lang);
   const name = message.member ?. displayName || message.member ?. user ?. username || message.author ?. username || "Utente";
-  const text = includeUsername ? `${name}: ${baseText}` : baseText;
+  let text = includeUsername ? `${name}: ${baseText}` : baseText;
+  text = normalizeCaseForTts(text);
+  text = normalizePausesForTts(text);
+  text = numbersToWordsForTts(text, lang);
   const clipped = text.slice(0, maxChars);
   enqueue(state, { voiceChannel, text: clipped, lang });
 }
