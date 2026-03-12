@@ -199,7 +199,7 @@ module.exports = {
         return;
       }
       const currentWeek = Math.max(1, Math.min(4, Number(getEventWeekNumber(settings) || 1)));
-      const payload = await buildEventoClassificaPayload(message.guild, currentWeek);
+      const payload = await buildEventoClassificaPayload(message.guild, currentWeek, currentWeek);
       await safeMessageReply(message, {
         ...payload,
         allowedMentions: { repliedUser: false },

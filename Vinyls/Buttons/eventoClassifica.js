@@ -1,7 +1,7 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("discord.js");
 const { getGuildExpSettings } = require("../Services/Community/expService");
 const { getEventWeekTopNTextAndVoice } = require("../Services/Community/weeklyActivityWinnersService");
-const { getTop10ExpDuringEventExcludingStaff } = require("../Services/Community/activityEventRewardsService");
+const { getTop10ExpDuringEventExcludingStaff, getEventWeekNumber } = require("../Services/Community/activityEventRewardsService");
 const EVENTO_CLASSIFICA_PREFIX = "evento_classifica:";
 const MAX_WEEKS = 4;
 const TROPHY_LABELS = ["<:VC_Podio1:1469659449974329598>", "<:VC_Podio2:1469659512863592500>", "<:VC_Podio3:1469659557696504024>"];
@@ -35,7 +35,8 @@ async function execute(interaction, client) {
   }
 
   try {
-    const payload = await buildEventoClassificaPayload(guild, week);
+    const currentEventWeek = Math.max(1, Math.min(MAX_WEEKS, Number(getEventWeekNumber(settings) || 1)));
+    const payload = await buildEventoClassificaPayload(guild, week, currentEventWeek);
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply(payload).catch(() => interaction.followUp(payload).catch(() => { }));
     } else {
@@ -55,8 +56,10 @@ function rankLabel(i) {
   return TROPHY_LABELS[i] || `**${i + 1}.**`;
 }
 
-async function buildEventoClassificaPayload(guild, currentWeek) {
-  const { topMessages, topVoice } = await getEventWeekTopNTextAndVoice(guild, currentWeek, 10);
+async function buildEventoClassificaPayload(guild, selectedWeek, currentEventWeek) {
+  const week = selectedWeek ?? 1;
+  const maxWeek = currentEventWeek ?? week;
+  const { topMessages, topVoice } = await getEventWeekTopNTextAndVoice(guild, week, 10);
   const topExp = await getTop10ExpDuringEventExcludingStaff(guild, 10);
 
   const msgLines = topMessages.length
@@ -71,7 +74,7 @@ async function buildEventoClassificaPayload(guild, currentWeek) {
 
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle(`<:VC_Leaderboard:1469659357678669958> Evento Activity EXP — Settimana ${currentWeek}`)
+    .setTitle(`<:VC_Leaderboard:1469659357678669958> Evento Activity EXP — Settimana ${week}`)
     .setDescription(
       [
         "<a:VC_HeartsPink:1468685897389052008> **Top 10 testuale**:",
@@ -85,16 +88,16 @@ async function buildEventoClassificaPayload(guild, currentWeek) {
       ].join("\n")
     )
     .setThumbnail(guild.iconURL({ size: 256 }) || null)
-    .setFooter({ text: `Settimana ${currentWeek} di evento • Classifica settimanale` })
+    .setFooter({ text: `Settimana ${week} di evento • Classifica settimanale` })
     .setTimestamp();
 
   const row = new ActionRowBuilder();
-  for (let w = 1; w <= currentWeek; w++) {
+  for (let w = 1; w <= maxWeek; w++) {
     row.addComponents(
       new ButtonBuilder()
         .setCustomId(`${EVENTO_CLASSIFICA_PREFIX}${w}`)
         .setEmoji(`<a:VC_Calendar:1448670320180592724>`)
-        .setStyle(w === currentWeek ? ButtonStyle.Primary : ButtonStyle.Secondary)
+        .setStyle(w === week ? ButtonStyle.Primary : ButtonStyle.Secondary)
     );
   }
 
