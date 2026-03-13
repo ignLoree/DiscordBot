@@ -57,6 +57,23 @@ chmod 600 /opt/bot/deploy/.env.mongo
 
 ---
 
+## Windows — dump Atlas senza romperti (Docker + root)
+
+Dalla root del repo, **PowerShell** (Connection string completa da Atlas, tra virgolette):
+
+```powershell
+cd "C:\percorso\DiscordBot-1"
+.\scripts\mongodump-atlas-docker.ps1 -Uri "mongodb+srv://USER:PASSWORD@cluster.mongodb.net/"
+```
+
+Esce tutto in **`deploy/atlas-dump/`** (gitignored). Poi zip o scp di **`atlas-dump`** sulla VPS e:
+
+```bash
+/opt/bot/deploy/restore-mongo.sh /percorso/atlas-dump
+```
+
+---
+
 ## Dump da Atlas → VPS (stessi dati di prima)
 
 **Sul PC** (o sulla VPS se hai `mongodump` + rete verso Atlas):
