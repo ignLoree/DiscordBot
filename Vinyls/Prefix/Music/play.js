@@ -3,7 +3,7 @@ const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const{playRequest,touchMusicOutputChannel,searchPlayable,}=require("../../Services/Music/musicService");
 const { pickFromPagedMenu } = require("../../Services/Music/pagedPickerService");
 
-const SOURCE_EMOJIS={spotify:"<:VC_Spotify:1462941253803970571>",apple:"<:VC_AppleMusic:1466061111781752872>",youtube:"<:VC_YouTube:1476933074301485259>",soundcloud:"<:VC_SoundCloud:1476933157906419866>",deezer:"<:VC_Deezer:1476933250835288167>",};
+const SOURCE_EMOJIS={spotify:"<:VC_Spotify:1462941253803970571>",deezer:"<:VC_Deezer:1476933250835288167>",};
 
 function getTrackSourceKey(track) {
   const source = String(track?.source || track?.queryType || track?.extractor?.identifier || "").toLowerCase();
@@ -18,7 +18,7 @@ function getTrackSourceKey(track) {
 }
 
 function isSupportedPickerTrack(track) {
-  return ["spotify", "apple", "deezer"].includes(getTrackSourceKey(track));
+  return getTrackSourceKey(track) === "spotify" || Boolean(track?.encoded && track?.resolverInput);
 }
 
 function isConcretePlayableTrack(track) {
@@ -76,26 +76,11 @@ function formatDurationMs(ms) {
 }
 
 function getTrackSourceEmoji(track) {
+  if (track?.deezerCatalogUrl) return SOURCE_EMOJIS.deezer;
   const source = String(track?.source || track?.queryType || "").toLowerCase();
   const url = String(track?.url || "").toLowerCase();
-
-  if (source.includes("spotify") || /spotify\.com/.test(url)) {
-    return SOURCE_EMOJIS.spotify;
-  }
-  if (source.includes("apple") || /music\.apple\.com|itunes\.apple\.com/.test(url)) {
-    return SOURCE_EMOJIS.apple;
-  }
-  if (source.includes("soundcloud") || /soundcloud\.com/.test(url)) {
-    return SOURCE_EMOJIS.soundcloud;
-  }
-  if (source.includes("deezer") || /deezer\.com/.test(url)) {
-    return SOURCE_EMOJIS.deezer;
-  }
-  if (source.includes("youtube") || /youtu\.be|youtube\.com/.test(url)) {
-    return SOURCE_EMOJIS.youtube;
-  }
-
-  return "";
+  if (source.includes("spotify") || /spotify\.com/.test(url)) return SOURCE_EMOJIS.spotify;
+  return SOURCE_EMOJIS.spotify;
 }
 
 function buildSessionInUseEmbed(channel) {
@@ -114,6 +99,7 @@ module.exports = {
   examples: [
     "+play Tanti auguri a te",
     "+play https://open.spotify.com/track/...",
+    "+play https://www.deezer.com/track/...",
   ],
   async execute(message, args = []) {
     await message.channel.sendTyping();
@@ -153,12 +139,17 @@ module.exports = {
     const search=await searchPlayable({client:message.client,input,requestedBy:message.member,}).catch((error) => ({ok:false,reason:"internal_error",error}));
 
     if (!search?.ok) {
-      if (search?.reason === "blocked_source" && search?.source === "soundcloud") {
-        const blockedSourceEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("SoundCloud tracks are not supported");
+      if (search?.reason === "blocked_source") {
+        const msg = search?.source === "apple"
+          ? "Apple Music non è supportato: usa **Deezer** o **Spotify**."
+          : search?.source === "unsupported_url"
+            ? "Solo link **Spotify** o **Deezer** (Deezer → riproduzione via Spotify)."
+            : "Sorgente non supportata (usa Deezer o Spotify).";
+        const blockedSourceEmbed=new EmbedBuilder().setColor("#ED4245").setDescription(msg);
         return safeMessageReply(message, { embeds: [blockedSourceEmbed] });
       }
       if (search?.reason === "youtube_not_supported") {
-        const unsupportedYoutubeEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("YouTube videos are not supported");
+        const unsupportedYoutubeEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("YouTube non è supportato. Ricerca = catalogo **Deezer**, audio = **Spotify** (link open.spotify.com).");
         return safeMessageReply(message, { embeds: [unsupportedYoutubeEmbed] });
       }
       if (search?.reason === "not_found") {
@@ -226,7 +217,7 @@ module.exports = {
         return safeMessageReply(message, { embeds: [blockedSourceEmbed] });
       }
       if (result?.reason === "youtube_not_supported") {
-        const unsupportedYoutubeEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("YouTube videos are not supported");
+        const unsupportedYoutubeEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("YouTube non è supportato. Ricerca = catalogo **Deezer**, audio = **Spotify** (link open.spotify.com).");
         return safeMessageReply(message, { embeds: [unsupportedYoutubeEmbed] });
       }
       if (result?.reason === "not_found") {

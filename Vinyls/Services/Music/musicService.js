@@ -22,9 +22,9 @@ const LAVALINK_NULL_LOG_THROTTLE_MS = 15_000;
 const DEFAULT_VOLUME = 5;
 const INACTIVITY_MS = 3 * 60 * 1000;
 const EMPTY_VOICE_MS = 3 * 60 * 1000;
-const SEARCH_PREFIXES = [{ prefix: "spsearch:", source: "spotify", bias: 16 }, { prefix: "amsearch:", source: "apple", bias: 14 }, { prefix: "dzsearch:", source: "deezer", bias: 15 },];
-const PLAYABLE_SOURCE_KEYS = new Set(["spotify", "apple", "deezer", "radio"]);
-const DIRECT_URL_SOURCE_BY_MATCHER = [{ fn: isSpotifyUrl, source: "spotify" }, { fn: isAppleMusicUrl, source: "apple" }, { fn: isDeezerUrl, source: "deezer" },];
+const SEARCH_PREFIXES = [{ prefix: "spsearch:", source: "spotify", bias: 18 },];
+const PLAYABLE_SOURCE_KEYS = new Set(["spotify"]);
+const DIRECT_URL_SOURCE_BY_MATCHER = [{ fn: isSpotifyUrl, source: "spotify" },];
 
 function logMusic(event, payload = {}) {
   if (["0", "false", "off"].includes(String(process.env.MUSIC_LOGS || "").toLowerCase())) return;
@@ -159,9 +159,7 @@ function scoreTrackCandidate(track, query) {
     score -= 15;
   }
 
-  if (track.source === "spotify") score += 12;
-  if (track.source === "apple") score += 10;
-  if (track.source === "deezer") score += 11;
+  if (track.source === "spotify") score += 14;
   return score;
 }
 
@@ -217,26 +215,6 @@ function waitForNodeReady(manager, timeoutMs = 20000) {
   });
 }
 
-async function fetchYouTubeOEmbed(url) {
-  const response = await axios.get("https://www.youtube.com/oembed", { params: { url, format: "json" }, timeout: 12000, }).catch(() => null);
-  const data = response?.data;
-  if (!data?.title) return null;
-  return {
-    title: String(data.title || "").trim(),
-    author: String(data.author_name || "").trim(),
-  };
-}
-
-async function fetchSoundCloudOEmbed(url) {
-  const response = await axios.get("https://soundcloud.com/oembed", { params: { url, format: "json" }, timeout: 12000, }).catch(() => null);
-  const data = response?.data;
-  if (!data?.title) return null;
-  return {
-    title: String(data.title || "").trim(),
-    author: String(data.author_name || "").trim(),
-  };
-}
-
 function cleanExternalTitle(title) {
   return String(title || "")
     .replace(/\[[^\]]*(official|video|audio|lyrics?|visualizer)[^\]]*\]/gi, " ")
@@ -246,14 +224,6 @@ function cleanExternalTitle(title) {
 }
 
 let spotifyTokenCache = { accessToken: "", expiresAt: 0 };
-
-function extractAppleSongId(url) {
-  const str = String(url || "");
-  const songMatch = str.match(/\/song\/[^/]+\/(\d+)/i);
-  if (songMatch) return songMatch[1];
-  const idMatch = str.match(/[?&]i=(\d+)/i) || str.match(/\/id(\d+)/i);
-  return idMatch?.[1] || "";
-}
 
 function extractDeezerUrlParts(url) {
   const match = String(url || "").match(/deezer\.com\/(?:[a-z]+\/)?(track|album|playlist)\/(\d+)/i);
@@ -333,18 +303,6 @@ async function fetchSpotifyMetadataFromUrl(url) {
   };
 }
 
-async function fetchAppleMetadataFromUrl(url) {
-  const songId = extractAppleSongId(url);
-  if (!songId) return null;
-  const response = await axios.get("https://itunes.apple.com/lookup", { timeout: 12_000, params: { id: songId, entity: "song", country: "IT" }, }).catch(() => null);
-  const item = Array.isArray(response?.data?.results) ? response.data.results.find((row) => row?.wrapperType === "track") : null;
-  if (!item?.trackName) return null;
-  return {
-    query: `${item.trackName || ""} ${item.artistName || ""}`.trim(),
-    source: "apple",
-  };
-}
-
 async function fetchDeezerMetadataFromUrl(url) {
   const parts = extractDeezerUrlParts(url);
   if (!parts?.id) return null;
@@ -398,72 +356,46 @@ async function fetchDeezerCatalogSearch(query) {
   })).filter((item) => item.title && item.url);
 }
 
-async function fetchAppleTracksForQuery(query) {
-  const response = await axios.get("https://itunes.apple.com/search", { timeout: 12_000, params: { term: query, entity: "song", country: "IT", limit: 10 }, }).catch(() => null);
-  const items = Array.isArray(response?.data?.results) ? response.data.results : [];
-  return items.map((item) => ({
-    title: String(item?.trackName || "").trim(),
-    author: String(item?.artistName || "").trim(),
-    url: String(item?.trackViewUrl || item?.collectionViewUrl || "").trim(),
-    thumbnail: item?.artworkUrl100 || item?.artworkUrl60 || null,
-    durationMS: Number(item?.trackTimeMillis || 0),
-    source: "apple",
-  })).filter((item) => item.title && item.url);
+async function resolveSpotifyFromDeezerRow(manager, candidate, requestedBy, originalQuery, nodeExtra) {
+  const line = `${candidate.title || ""} ${candidate.author || ""}`.trim();
+  if (!line) return null;
+  const spId = `spsearch:${line}`;
+  const result = await resolveIdentifier(manager, spId).catch(() => null);
+  const parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: spId, originalQuery, source: "spotify", ...nodeExtra });
+  const track = parsed.tracks?.[0];
+  if (!track || isLikelyPodcast(track)) return null;
+  track.source = "spotify";
+  track.deezerCatalogUrl = String(candidate.url || "").trim() || null;
+  track.score = scoreTrackCandidate(candidate, originalQuery) + scoreTrackCandidate(track, originalQuery);
+  return track;
 }
 
-async function resolveExternalCandidates(manager, candidates, requestedBy, originalQuery) {
+async function runDeezerSearchSpotifyPlayback(manager, query, requestedBy) {
   const node = getConnectedNode(manager);
   const nodeExtra = { nodeName: node?.name, nodeState: node?.state };
+  const q = String(query || "").trim();
+  const apiList = await fetchDeezerCatalogSearch(q);
   const resolved = [];
-  for (const candidate of candidates.slice(0, 12)) {
-    const exactQuery = `${candidate.title || ""} ${candidate.author || ""}`.trim();
-    if (!exactQuery) continue;
-    let identifier = toYouTubeSearchIdentifier(exactQuery);
-    let result = await resolveIdentifier(manager, identifier).catch(() => null);
-    let parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: identifier, originalQuery, source: candidate.source, url: candidate.url, ...nodeExtra }).tracks;
-    if (parsed.length === 0) {
-      const ytmId = toYouTubeMusicSearchIdentifier(exactQuery);
-      if (ytmId) {
-        result = await resolveIdentifier(manager, ytmId).catch(() => null);
-        parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: ytmId, originalQuery, source: candidate.source, url: candidate.url, ...nodeExtra }).tracks;
-      }
-    }
-    let bestTrack = null;
-    let bestScore = -Infinity;
-    for (const track of parsed) {
-      if (isLikelyPodcast(track)) continue;
-      const score = scoreTrackCandidate(track, originalQuery) + scoreTrackCandidate(track, exactQuery) + scoreTrackCandidate(candidate, originalQuery);
-      if (score > bestScore) {
-        bestScore = score;
-        bestTrack = track;
-      }
-    }
-    if (!bestTrack) continue;
-    bestTrack.score = bestScore;
-    bestTrack.source = candidate.source;
-    bestTrack.url = candidate.url;
-    resolved.push(bestTrack);
+  for (const c of apiList.slice(0, 12)) {
+    const t = await resolveSpotifyFromDeezerRow(manager, c, requestedBy, q, nodeExtra);
+    if (t) resolved.push(t);
   }
-  return dedupeTracks(resolved).sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
-}
-
-async function runExternalCatalogSearch(manager, query, requestedBy) {
-  const [deezerTracks, appleTracks, spotifyTracks] = await Promise.all([fetchDeezerCatalogSearch(query), fetchAppleTracksForQuery(query), fetchSpotifyTracksForQuery(query),]);
-  const candidates = dedupeTracks([...deezerTracks, ...appleTracks, ...spotifyTracks].filter((track) => !isLikelyPodcast(track)).map((track) => ({ ...track, score: scoreTrackCandidate(track, query) })),).sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
-  if (!candidates.length) return [];
-  const resolved = await resolveExternalCandidates(manager, candidates, requestedBy, query);
-  logMusic("search_external_catalog", {
-    query,
-    candidateCount: candidates.length,
-    resolvedCount: resolved.length,
-    top: resolved.slice(0, 5).map((item) => ({
-      title: item.title,
-      author: item.author,
-      source: item.source,
-      score: item.score,
-    })),
-  });
-  return resolved;
+  if (resolved.length > 0) {
+    const out = dedupeTracks(resolved).sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
+    logMusic("search_deezer_api_spotify_playback", { query: q, resolvedCount: out.length });
+    return out;
+  }
+  const spId = `spsearch:${q}`;
+  const spResult = await resolveIdentifier(manager, spId).catch(() => null);
+  const spParsed = tracksFromLavalinkResponse(spResult, requestedBy, { resolverInput: spId, originalQuery: q, source: "spotify", ...nodeExtra });
+  const spTracks = (spParsed.tracks || []).map((t) => {
+    t.source = "spotify";
+    t.score = scoreTrackCandidate(t, q);
+    return t;
+  }).filter((t) => !isLikelyPodcast(t));
+  const out = dedupeTracks(spTracks).sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
+  logMusic("search_spotify_only_fallback", { query: q, resolvedCount: out.length });
+  return out;
 }
 
 async function resolveIdentifier(manager, identifier) {
@@ -475,42 +407,6 @@ async function resolveIdentifier(manager, identifier) {
   }
   if (!node) throw new Error("No Lavalink node available");
   return node.rest.resolve(identifier);
-}
-
-const YTSEARCH_PREFIX = "ytsearch:";
-const YTMSEARCH_PREFIX = "ytmsearch:";
-
-function toYouTubeSearchIdentifier(query) {
-  const q = String(query || "").trim();
-  if (!q) return null;
-  if (/^ytsearch:/i.test(q)) return q;
-  return `${YTSEARCH_PREFIX}${q}`;
-}
-
-function toYouTubeMusicSearchIdentifier(query) {
-  const q = String(query || "").trim();
-  if (!q) return null;
-  if (/^ytmsearch:/i.test(q)) return q;
-  return `${YTMSEARCH_PREFIX}${q}`;
-}
-
-async function runYouTubeOnlySearch(manager, query, requestedBy) {
-  const identifier = toYouTubeSearchIdentifier(query);
-  if (!identifier) return [];
-  const node = getConnectedNode(manager);
-  let result = await resolveIdentifier(manager, identifier).catch(() => null);
-  let parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: identifier, originalQuery: query, source: "youtube", nodeName: node?.name, nodeState: node?.state });
-  let tracks = parsed.tracks || [];
-  if (tracks.length === 0) {
-    const ytmId = toYouTubeMusicSearchIdentifier(query);
-    if (ytmId) {
-      logMusic("search_yt_fallback_ytm", { query: query.slice(0, 60) });
-      result = await resolveIdentifier(manager, ytmId).catch(() => null);
-      parsed = tracksFromLavalinkResponse(result, requestedBy, { resolverInput: ytmId, originalQuery: query, source: "youtube", nodeName: node?.name, nodeState: node?.state });
-      tracks = parsed.tracks || [];
-    }
-  }
-  return tracks;
 }
 
 function tracksFromLavalinkResponse(result, requestedBy, extra = {}) {
@@ -572,33 +468,8 @@ function tracksFromLavalinkResponse(result, requestedBy, extra = {}) {
   return { tracks: [], playlist: null };
 }
 
-async function convertUnsupportedUrlToQuery(input) {
-  if (isYouTubeVideoUrl(input)) {
-    const meta = await fetchYouTubeOEmbed(input);
-    if (!meta?.title) return null;
-    return {
-      convertedQuery: cleanExternalTitle(`${meta.title} ${meta.author || ""}`),
-      source: "youtube",
-    };
-  }
-  if (isSoundCloudUrl(input)) {
-    const meta = await fetchSoundCloudOEmbed(input);
-    if (!meta?.title) return null;
-    return {
-      convertedQuery: cleanExternalTitle(`${meta.title} ${meta.author || ""}`),
-      source: "soundcloud",
-    };
-  }
-  return null;
-}
-
 async function runCatalogSearch(manager, query, requestedBy) {
-  const ytTracks = await runYouTubeOnlySearch(manager, query, requestedBy);
-  if (ytTracks.length > 0) {
-    ytTracks.forEach((t) => { t.score = scoreTrackCandidate(t, query); });
-    return dedupeTracks(ytTracks).sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
-  }
-  return runExternalCatalogSearch(manager, query, requestedBy);
+  return runDeezerSearchSpotifyPlayback(manager, query, requestedBy);
 }
 
 function parseLyricsPayload(item) {
@@ -866,81 +737,85 @@ async function searchPlayable({ client, input, requestedBy }) {
   let query = cleanQuery(input);
   if (!query) return { ok: false, reason: "empty_query" };
 
-  if (isYouTubeVideoUrl(query) || isSoundCloudUrl(query)) {
-    const converted = await convertUnsupportedUrlToQuery(query);
-    if (!converted?.convertedQuery) {
-      return {
-        ok: false,
-        reason: isSoundCloudUrl(query) ? "blocked_source" : "youtube_not_supported",
-        source: isSoundCloudUrl(query) ? "soundcloud" : "youtube",
-      };
-    }
-    query = converted.convertedQuery;
-    const tracks = await runCatalogSearch(manager, query, requestedBy);
-    if (!tracks.length) {
-      return {
-        ok: false,
-        reason: converted.source === "soundcloud" ? "blocked_source" : "youtube_not_supported",
-        source: converted.source,
-      };
-    }
-    return {
-      ok: true,
-      player,
-      resolved: { query, translated: true, youtubeConvertible: converted.source === "youtube" },
-      searchResult: { tracks, playlist: null },
-    };
+  if (isYouTubeVideoUrl(query)) {
+    return { ok: false, reason: "youtube_not_supported", source: "youtube" };
+  }
+  if (isSoundCloudUrl(query)) {
+    return { ok: false, reason: "blocked_source", source: "soundcloud" };
+  }
+  if (isAppleMusicUrl(query)) {
+    return { ok: false, reason: "blocked_source", source: "apple" };
+  }
+  if (/^https?:\/\//i.test(query) && !isSpotifyUrl(query) && !isDeezerUrl(query)) {
+    return { ok: false, reason: "blocked_source", source: "unsupported_url" };
   }
 
-  if (isSpotifyUrl(query) || isAppleMusicUrl(query) || isDeezerUrl(query) || /^https?:\/\//i.test(query)) {
-    const isRadio = /^https?:\/\//i.test(query) && !isSpotifyUrl(query) && !isAppleMusicUrl(query) && !isDeezerUrl(query);
-    if (!isRadio) {
-      const direct = await resolveIdentifier(manager, query).catch(() => null);
-      const parsed = tracksFromLavalinkResponse(direct, requestedBy, { resolverInput: query, originalQuery: input, });
-      const filtered = parsed.playlist ? parsed.tracks.filter((track) => PLAYABLE_SOURCE_KEYS.has(track.source) || track.source === "radio") : parsed.tracks.filter((track) => PLAYABLE_SOURCE_KEYS.has(track.source) || track.source === "radio");
-      const expectedSource = buildDirectUrlExpectedSource(query);
-      const playableTracks = expectedSource ? filtered.filter((track) => track.source === expectedSource) : filtered;
-      if (playableTracks.length > 0) {
-        return {
-          ok: true,
-          player,
-          resolved: { query, translated: false, youtubeConvertible: false },
-          searchResult: { tracks: playableTracks, playlist: parsed.playlist },
-        };
-      }
+  if (isSpotifyUrl(query)) {
+    const direct = await resolveIdentifier(manager, query).catch(() => null);
+    const parsed = tracksFromLavalinkResponse(direct, requestedBy, { resolverInput: query, originalQuery: input });
+    const filtered = parsed.playlist
+      ? parsed.tracks.filter((track) => PLAYABLE_SOURCE_KEYS.has(track.source))
+      : parsed.tracks.filter((track) => PLAYABLE_SOURCE_KEYS.has(track.source));
+    const playableTracks = filtered.filter((track) => track.source === "spotify");
+    if (playableTracks.length > 0) {
+      return {
+        ok: true,
+        player,
+        resolved: { query, translated: false, youtubeConvertible: false },
+        searchResult: { tracks: playableTracks, playlist: parsed.playlist },
+      };
     }
-    const directFallbackMeta = isSpotifyUrl(query) ? await fetchSpotifyMetadataFromUrl(query) : isAppleMusicUrl(query) ? await fetchAppleMetadataFromUrl(query) : isDeezerUrl(query) ? await fetchDeezerMetadataFromUrl(query) : null;
-    if (directFallbackMeta?.query) {
-      const fallbackTracks = await runYouTubeOnlySearch(manager, directFallbackMeta.query, requestedBy);
+    const meta = await fetchSpotifyMetadataFromUrl(query);
+    if (meta?.query) {
+      const fallbackTracks = await runDeezerSearchSpotifyPlayback(manager, meta.query, requestedBy);
       if (fallbackTracks.length > 0) {
-        fallbackTracks.forEach((t) => { t.source = directFallbackMeta.source; });
         return {
           ok: true,
           player,
-          resolved: { query: directFallbackMeta.query, translated: true, youtubeConvertible: true },
+          resolved: { query: meta.query, translated: true, youtubeConvertible: false },
           searchResult: { tracks: fallbackTracks, playlist: null },
-        };
-      }
-    }
-    if (isRadio) {
-      const parsed = tracksFromLavalinkResponse(await resolveIdentifier(manager, query).catch(() => null), requestedBy, { resolverInput: query, originalQuery: input, source: "radio", url: query, });
-      const radioTracks = parsed.tracks.filter((t) => t.source === "radio" || t.url);
-      if (radioTracks.length > 0) {
-        return {
-          ok: true,
-          player,
-          resolved: { query, translated: false, youtubeConvertible: false },
-          searchResult: { tracks: radioTracks, playlist: null },
         };
       }
     }
     return { ok: false, reason: "not_found" };
   }
 
-  let tracks = await runCatalogSearch(manager, query, requestedBy);
-  if (!tracks.length) {
-    tracks = await runExternalCatalogSearch(manager, query, requestedBy);
+  if (isDeezerUrl(query)) {
+    const meta = await fetchDeezerMetadataFromUrl(query);
+    if (!meta?.query) return { ok: false, reason: "not_found" };
+    const node = getConnectedNode(manager);
+    const nodeExtra = { nodeName: node?.name, nodeState: node?.state };
+    if (meta.playlistQueries?.length) {
+      const tracks = [];
+      for (const line of meta.playlistQueries.slice(0, 25)) {
+        const spId = `spsearch:${line}`;
+        const r = await resolveIdentifier(manager, spId).catch(() => null);
+        const p = tracksFromLavalinkResponse(r, requestedBy, { resolverInput: spId, originalQuery: input, source: "spotify", ...nodeExtra });
+        const t = p.tracks?.[0];
+        if (t && !isLikelyPodcast(t)) {
+          t.source = "spotify";
+          tracks.push(t);
+        }
+      }
+      if (tracks.length) {
+        return { ok: true, player, resolved: { query: meta.query, translated: true, youtubeConvertible: false }, searchResult: { tracks, playlist: null } };
+      }
+    }
+    const spId = `spsearch:${meta.query}`;
+    const r = await resolveIdentifier(manager, spId).catch(() => null);
+    const p = tracksFromLavalinkResponse(r, requestedBy, { resolverInput: spId, originalQuery: input, source: "spotify", ...nodeExtra });
+    const t = p.tracks?.[0];
+    if (t && !isLikelyPodcast(t)) {
+      t.source = "spotify";
+      t.deezerCatalogUrl = query;
+      return { ok: true, player, resolved: { query: meta.query, translated: true, youtubeConvertible: false }, searchResult: { tracks: [t], playlist: null } };
+    }
+    const list = await runDeezerSearchSpotifyPlayback(manager, meta.query, requestedBy);
+    if (list.length) return { ok: true, player, resolved: { query: meta.query, translated: true, youtubeConvertible: false }, searchResult: { tracks: list, playlist: null } };
+    return { ok: false, reason: "not_found" };
   }
+
+  const tracks = await runCatalogSearch(manager, query, requestedBy);
   if (!tracks.length) return { ok: false, reason: "not_found" };
   return {
     ok: true,

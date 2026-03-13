@@ -18,7 +18,10 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: "768M",
-      env: {},
+      env: {
+        SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID || "",
+        SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET || "",
+      },
     },
     {
       name: "bots",
