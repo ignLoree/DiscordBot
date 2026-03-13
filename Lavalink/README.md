@@ -1,6 +1,6 @@
 # Lavalink — **YouTube** + stream HTTP (radio)
 
-- Plugin **youtube-plugin** (`ytsearch:`, link YouTube). Niente Spotify/LavaSrc.
-- **Radio**: URL diretti risolti dal bot (`resolvePlayableRadioUrl`) poi load su Lavalink.
-- Password default: `youshallnotpass` — allinea `LAVALINK_PASSWORD` nel `.env` del bot.
-- Riavvia Lavalink dopo modifiche a `application.yml`.
+- Plugin **youtube-plugin** (in `application.yml`: tienilo **aggiornato**). Se in log vedi `SignatureCipherManager` / `No match found` in playback, YouTube ha cambiato script → alza la versione del plugin (ultima: [youtube-source releases](https://github.com/lavalink-devs/youtube-source/releases)).
+- **Radio**: URL diretti risolti dal bot poi load su Lavalink.
+- Password: `youshallnotpass` — `LAVALINK_PASSWORD` nel `.env` del bot.
+- Dopo ogni cambio a `application.yml`: **riavvia Lavalink** (PM2 scarica il nuovo jar al boot).

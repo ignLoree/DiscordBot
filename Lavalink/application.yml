@@ -18,5 +18,5 @@ lavalink:
     sources:
       youtube: false
   plugins:
-    - dependency: "dev.lavalink.youtube:youtube-plugin:1.13.0"
+    - dependency: "dev.lavalink.youtube:youtube-plugin:1.18.0"
       repository: "https://maven.lavalink.dev/releases"
