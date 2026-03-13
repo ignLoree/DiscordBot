@@ -108,6 +108,20 @@ Copia **tutta** `dump-atlas` sulla VPS (scp/rsync), poi:
 
 ---
 
+## Auth fallisce ancora — reset HARD (solo docker run)
+
+Compose a volte passa variabili **vuote** (altro `.env` nella cartella). Questo **non** usa compose:
+
+```bash
+cd /opt/bot/deploy
+chmod +x reset-mongo-hard.sh
+sudo ./reset-mongo-hard.sh TUOUSER TUOPASS
+```
+
+Se ancora FAIL, lo script stampa `MONGO_*` visti da Docker e i log. Dopo **non** usare `start-mongo.sh` (usa solo `docker start vc-mongodb` se serve).
+
+---
+
 ## Reset root senza file (se auth fallisce sempre)
 
 **Un comando solo.** Sostituisci `USER` e `PASS` con quelli che vuoi (anche i vecchi, se li vuoi identici):
