@@ -97,7 +97,14 @@ module.exports = {
     const defaultPrefix = String(resolvedClient?.config?.prefix || "+");
     let automodProcessed = false;
 
-    const runAutomodOnce=async() => {if(automodProcessed)return{blocked:false,skipped:true};automodProcessed=true;if(isAutomatedMessage)return{blocked:false,skipped:true};return runAutoModMessage(message);};
+    const runAutomodOnce = async () => {
+      if (automodProcessed) return { blocked: false, skipped: true };
+      automodProcessed = true;
+      if (message.system) return { blocked: false, skipped: true };
+      if (message.webhookId) return runAutoModMessage(message);
+      if (message.author?.bot || message.applicationId) return { blocked: false, skipped: true };
+      return runAutoModMessage(message);
+    };
 
     if (!isEditedPrefixExecution && message?.guild) {
       try {

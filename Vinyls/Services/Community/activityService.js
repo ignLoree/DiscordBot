@@ -598,9 +598,11 @@ function aggregateFromHourlyRows(rows = [], hourKeys = [], topLimit = 3) {
     const textCount = Number(row?.textCount || 0);
     const voiceSeconds = Number(row?.voiceSeconds || 0);
 
-    if (textCount > 0 || voiceSeconds > 0) contributors.add(userId);
-    pushMapValue(userText, userId, textCount);
-    pushMapValue(userVoice, userId, voiceSeconds);
+    if (userId && (textCount > 0 || voiceSeconds > 0)) contributors.add(userId);
+    if (userId) {
+      pushMapValue(userText, userId, textCount);
+      pushMapValue(userVoice, userId, voiceSeconds);
+    }
 
     const textChannels = row?.textChannels || {};
     for (const [channelId, value] of Object.entries(textChannels)) {
@@ -870,7 +872,21 @@ async function getServerOverviewStats(guildId, lookbackDays = 14, topLimit = 3) 
       pushMapValue(userVoice, id, voiceTotal);
     }
 
-    const fallbackWindows = { d1: { text: 0, voiceSeconds: 0, contributors: 0 }, d7: { text: totalText7, voiceSeconds: totalVoice7, contributors: 0 }, d14: { text: totalText14, voiceSeconds: totalVoice14, contributors: 0 }, d21: { text: totalText21, voiceSeconds: totalVoice21, contributors: 0 }, d30: { text: totalText30, voiceSeconds: totalVoice30, contributors: 0 }, };
+    const live1 = await getLiveVoiceOverlay(guildId, 1);
+    const liveContrib1 = new Set(
+      [...(live1.userVoice?.keys?.() || [])].map(String).filter(Boolean),
+    );
+    const fallbackWindows = {
+      d1: {
+        text: 0,
+        voiceSeconds: Number(live1.totalVoiceSeconds || 0),
+        contributors: liveContrib1.size,
+      },
+      d7: { text: totalText7, voiceSeconds: totalVoice7, contributors: 0 },
+      d14: { text: totalText14, voiceSeconds: totalVoice14, contributors: 0 },
+      d21: { text: totalText21, voiceSeconds: totalVoice21, contributors: 0 },
+      d30: { text: totalText30, voiceSeconds: totalVoice30, contributors: 0 },
+    };
 
     return {
       approximate: true,

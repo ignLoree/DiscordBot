@@ -3,7 +3,8 @@ const Staff = require("../Schemas/Staff/staffSchema");
 const Ticket = require("../Schemas/Ticket/ticketSchema");
 const SponsorMainLeave = require("../Schemas/Tags/tagsSchema");
 const { createTranscript, createTranscriptHtml, saveTranscriptHtml, } = require("../Utils/Ticket/transcriptUtils");
-const { buildTicketClosedEmbed } = require("../Utils/Ticket/ticketCloseRuntime");
+const { buildTicketClosedEmbed, sendTranscriptWithBrowserLink } = require("../Utils/Ticket/ticketCloseRuntime");
+const { getNextTicketId } = require("../Utils/Ticket/ticketIdUtils");
 const { InviteTrack, ExpUser, ActivityUser, LevelHistory, } = require("../Schemas/Community/communitySchemas");
 const { MinigameUser } = require("../Schemas/Minigames/minigameSchema");
 const IDs = require("../Utils/Config/ids");
@@ -118,77 +119,75 @@ async function markInviteInactive(member) {
 async function closeOpenTicketsForMember(member) {
   const guild = member.guild;
   const client = member.client;
-  const openTickets = await Ticket.find({ userId: member.id, open: true, }).catch(() => []);
+  const openTickets = await Ticket.find({ userId: member.id, open: true, guildId: guild.id }).catch(() => []);
   if (!openTickets.length) return;
 
   const centralTicketLogChannelId = IDs.channels.ticketLogs || "1442569290682208296";
   const mainGuildId = IDs.guilds?.main || null;
   const mainGuild = mainGuildId ? client.guilds.cache.get(mainGuildId) || (await client.guilds.fetch(mainGuildId).catch(() => null)) : null;
-  const logChannel = mainGuild ? mainGuild.channels.cache.get(centralTicketLogChannelId) || (await mainGuild.channels.fetch(centralTicketLogChannelId).catch(() => null)) : null;
+  let logChannel = mainGuild ? mainGuild.channels.cache.get(centralTicketLogChannelId) || (await mainGuild.channels.fetch(centralTicketLogChannelId).catch(() => null)) : null;
+  if (!logChannel?.isTextBased?.() && guild.channels.cache.get(centralTicketLogChannelId)) {
+    logChannel = guild.channels.cache.get(centralTicketLogChannelId) || (await guild.channels.fetch(centralTicketLogChannelId).catch(() => null));
+  }
 
   for (const ticket of openTickets) {
-    const channel = guild.channels.cache.get(ticket.channelId) || (await guild.channels.fetch(ticket.channelId).catch(() => null));
+    const ticketGuild = String(ticket.guildId || "") === String(guild.id) ? guild : await client.guilds.fetch(ticket.guildId).catch(() => null);
+    const channel = ticketGuild ? ticketGuild.channels.cache.get(ticket.channelId) || (await ticketGuild.channels.fetch(ticket.channelId).catch(() => null)) : null;
 
-    if (!channel) {
-      await Ticket.updateOne(
-        { _id: ticket._id },
-        {
-          $set: {
-            open: false,
-            closeReason: "Utente uscito dal server",
-            closedAt: new Date(),
-            closedBy: member.client.user?.id || null,
-          },
-        },
-      ).catch(() => { });
-      continue;
+    let transcriptTXT = "";
+    let transcriptHtmlPath = null;
+    if (channel) {
+      transcriptTXT = await createTranscript(channel).catch(() => "");
+      const transcriptHTML = await createTranscriptHtml(channel).catch(() => "");
+      transcriptHtmlPath = transcriptHTML ? await saveTranscriptHtml(channel, transcriptHTML).catch(() => null) : null;
     }
 
-    const transcriptTXT = await createTranscript(channel).catch(() => "");
-    const transcriptHTML = await createTranscriptHtml(channel).catch(() => "");
-    const transcriptHtmlPath = transcriptHTML ? await saveTranscriptHtml(channel, transcriptHTML).catch(() => null) : null;
-    ticket.open = false;
-    ticket.transcript = transcriptTXT;
-    ticket.transcriptHtmlPath = transcriptHtmlPath || null;
-    ticket.closeReason = "Utente uscito dal server";
-    ticket.closedAt = new Date();
-    ticket.closedBy = member.client.user?.id || null;
-    await ticket.save().catch(() => { });
+    let ticketNumber = Number(ticket.ticketNumber || 0);
+    if (!ticketNumber) ticketNumber = await getNextTicketId();
 
+    await Ticket.updateOne(
+      { _id: ticket._id },
+      {
+        $set: {
+          open: false,
+          ticketNumber,
+          transcript: transcriptTXT,
+          transcriptHtmlPath: transcriptHtmlPath || null,
+          closeReason: "Utente uscito dal server",
+          closedAt: new Date(),
+          closedBy: member.client.user?.id || null,
+        },
+      },
+    ).catch(() => { });
+
+    const ticketAfter = await Ticket.findById(ticket._id).lean().catch(() => null);
     if (logChannel?.isTextBased?.()) {
       const closeEmbedData = {
-        ...ticket.toObject(),
-        ticketNumber: ticket.ticketNumber || null,
+        ...(ticketAfter || ticket.toObject?.() || {}),
+        ticketNumber,
         closeReason: "Utente uscito dal server",
         closedBy: member.client.user?.id || null,
-        closedAt: ticket.closedAt || new Date(),
-        guildName: guild?.name || "Ticket System",
-        guildIconURL: guild?.iconURL?.({ size: 128 }) || null,
+        closedAt: new Date(),
+        guildName: ticketGuild?.name || guild?.name || "Ticket System",
+        guildIconURL: ticketGuild?.iconURL?.({ size: 128 }) || guild?.iconURL?.({ size: 128 }) || null,
       };
       const closeEmbed = buildTicketClosedEmbed(closeEmbedData);
       const transcriptRows = transcriptHtmlPath
         ? [new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`ticket_transcript:${ticket._id}`).setLabel("Visualizza Trascrizione").setStyle(ButtonStyle.Secondary).setEmoji("<:VC_file:1478515880722698300>"))]
         : [];
-
-      const logSentMessage = await logChannel
-        .send({ embeds: [closeEmbed], components: transcriptRows })
-        .catch(() => null);
-
+      const logSentMessage = await sendTranscriptWithBrowserLink(logChannel, { embeds: [closeEmbed] }, false, transcriptRows).catch(() => null);
       if (logSentMessage?.id && logChannel?.id) {
         await Ticket.updateOne(
           { _id: ticket._id },
-          {
-            $set: {
-              closeLogChannelId: logChannel.id,
-              closeLogMessageId: logSentMessage.id,
-            },
-          },
+          { $set: { closeLogChannelId: logChannel.id, closeLogMessageId: logSentMessage.id } },
         ).catch(() => { });
       }
     }
 
-    const channelDeleteTimer = setTimeout(() => channel.delete().catch(() => { }), 1000);
-    channelDeleteTimer.unref?.();
+    if (channel) {
+      const channelDeleteTimer = setTimeout(() => channel.delete().catch(() => { }), 1500);
+      channelDeleteTimer.unref?.();
+    }
   }
 }
 

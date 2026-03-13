@@ -317,7 +317,9 @@ async function sendBotAddLog(member) {
 
   let executor = null;
   const entry = await fetchRecentBotAddEntry(guild, member.user.id);
-  if (entry?.executor) executor = entry.executor;
+  if (entry && !entry.__noAuditPermission && !entry.__auditNotFound && entry.executor) {
+    executor = entry.executor;
+  }
 
   const responsible = formatActor(executor);
   const createdTs = Math.floor(new Date(member.user.createdAt).getTime() / 1000);
@@ -347,8 +349,16 @@ async function handleBotJoin(member, joinGateConfig) {
   await sendJoinGateNoAvatarLog(member).catch(() => {});
 
   const botAddEntry = await fetchRecentBotAddEntry(member.guild, member.user.id);
-  const executorId = botAddEntry?.executorId || botAddEntry?.executor?.id || null;
-  const executorText=botAddEntry?.executor?formatActor(botAddEntry.executor):"sconosciuto";
+  const noAuditPerm = Boolean(botAddEntry?.__noAuditPermission);
+  const auditNotFound = Boolean(botAddEntry?.__auditNotFound);
+  const executorId =
+    !noAuditPerm && !auditNotFound
+      ? botAddEntry?.executorId || botAddEntry?.executor?.id || null
+      : null;
+  const executorText =
+    botAddEntry?.executor && !noAuditPerm && !auditNotFound
+      ? formatActor(botAddEntry.executor)
+      : "sconosciuto";
   const verifiedBot = await isVerifiedBot(member.user);
 
   if (
@@ -364,11 +374,25 @@ async function handleBotJoin(member, joinGateConfig) {
   }
 
   if (joinGateConfig?.enabled && joinGateConfig?.botAdditions?.enabled) {
-    if (!executorId) {
+    if (noAuditPerm) {
       global.logger?.warn?.(
-        `[JoinGate] botAdditions skipped (audit unavailable) target=${member.user?.id || "unknown"}`,
+        `[JoinGate] botAdditions skipped (no ViewAuditLog) target=${member.user?.id || "unknown"}`,
       );
-    } else {
+    } else if (!executorId && auditNotFound) {
+      global.logger?.warn?.(
+        `[JoinGate] botAdditions: no BotAdd row after retries — fail-closed kick target=${member.user?.id || "unknown"}`,
+      );
+      const result = await kickForJoinGate(
+        member,
+        "Bot added by unauthorized member (no audit match — fail-closed).",
+        [
+          `${ARROW} **Rule:** Bot Additions`,
+          `${ARROW} **Responsible:** unknown`,
+        ],
+        joinGateConfig?.botAdditions?.action || "kick",
+      );
+      if (result?.blocked) return;
+    } else if (executorId) {
       const authorized = await isAuthorizedBotAdder(member.guild, executorId);
       if (!authorized) {
         const result = await kickForJoinGate(member, "Bot added by unauthorized member.", [
@@ -683,23 +707,32 @@ async function fetchRecentBotAddEntry(guild, botId) {
   if (
     !guild?.members?.me?.permissions?.has?.(PermissionsBitField.Flags.ViewAuditLog)
   ) {
-    return null;
+    return { __noAuditPermission: true };
   }
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const logs=await guild.fetchAuditLogs({type:AuditLogEvent.BotAdd,limit:AUDIT_FETCH_LIMIT}).catch(() => null);
-    if (logs?.entries?.size) {
-      const now = Date.now();
-      const found=logs.entries.find((entry) => {const createdTs=Number(entry?.createdTimestamp||0);return(createdTs>0&&now-createdTs<=AUDIT_LOOKBACK_MS&&String(entry?.target?.id||"")===String(botId||""));})||null;
-      if (found) return found;
-    }
-    if (attempt < 2) {
+  const delays = [0, 450, 900, 1400, 2200];
+  for (let attempt = 0; attempt < delays.length; attempt += 1) {
+    if (attempt > 0) {
       await new Promise((resolve) => {
-        const timer = setTimeout(resolve, 700);
+        const timer = setTimeout(resolve, delays[attempt] - delays[attempt - 1]);
         timer.unref?.();
       });
     }
+    const logs = await guild.fetchAuditLogs({ type: AuditLogEvent.BotAdd, limit: AUDIT_FETCH_LIMIT }).catch(() => null);
+    if (logs?.entries?.size) {
+      const now = Date.now();
+      const found =
+        logs.entries.find((entry) => {
+          const createdTs = Number(entry?.createdTimestamp || 0);
+          return (
+            createdTs > 0 &&
+            now - createdTs <= AUDIT_LOOKBACK_MS &&
+            String(entry?.target?.id || "") === String(botId || "")
+          );
+        }) || null;
+      if (found) return found;
+    }
   }
-  return null;
+  return { __auditNotFound: true };
 }
 
 async function isVerifiedBot(user) {
@@ -1072,6 +1105,9 @@ async function maybeSendInviteNearRewardReminder(member, info) {
 
 module.exports = {
   name: "guildMemberAdd",
+  kickForJoinGate,
+  matchUsernameFilters,
+  getJoinGateNameCandidate,
   async execute(member) {
     try {
       if (!member?.guild || !member?.user) return;
@@ -1173,9 +1209,13 @@ module.exports = {
             action: joinGateConfig?.suspiciousAccount?.action || "log",
           };
         }
-        await processJoinRaidForMember(member, { joinGateFeedOnly: !!joinGateMatch }).catch((err) => {
+        let joinRaidOutcome = { blocked: false };
+        try {
+          joinRaidOutcome = (await processJoinRaidForMember(member, { joinGateFeedOnly: !!joinGateMatch })) || { blocked: false };
+        } catch (err) {
           global.logger?.warn?.("[guildMemberAdd] Join Raid failed:", member.guild.id, member.id, err?.message || err);
-        });
+        }
+        if (joinRaidOutcome?.blocked) return;
         if (joinGateMatch) {
           if (joinGateMatch.rule === "tooYoung") {
             await handleTooYoungAccount(member, joinGateConfig);

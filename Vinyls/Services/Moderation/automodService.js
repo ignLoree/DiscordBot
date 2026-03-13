@@ -465,9 +465,27 @@ function applyAutomodRuntime() {
       : DEFAULT_AUTOMOD_RUNTIME.heatFilters.linkBlacklist;
 
   const p = automodRuntimeConfig?.panic || {};
-  Object.assign(PANIC_MODE, p);
+  const d = DEFAULT_AUTOMOD_RUNTIME.panic;
+  PANIC_MODE.enabled = typeof p.enabled === "boolean" ? p.enabled : d.enabled;
+  PANIC_MODE.considerActivityHistory = typeof p.considerActivityHistory === "boolean" ? p.considerActivityHistory : d.considerActivityHistory;
+  PANIC_MODE.useGlobalBadUsersDb = typeof p.useGlobalBadUsersDb === "boolean" ? p.useGlobalBadUsersDb : d.useGlobalBadUsersDb;
+  PANIC_MODE.triggerCount = clampNumber(p.triggerCount, 1, 30, d.triggerCount);
+  PANIC_MODE.triggerWindowMs = clampNumber(p.triggerWindowMs, 10_000, 24 * 60 * 60_000, d.triggerWindowMs);
+  PANIC_MODE.durationMs = clampNumber(p.durationMs, 30_000, 24 * 60 * 60_000, d.durationMs);
+  PANIC_MODE.raidWindowMs = clampNumber(p.raidWindowMs, 10_000, 60 * 60_000, d.raidWindowMs);
+  PANIC_MODE.raidUserThreshold = clampNumber(p.raidUserThreshold, 1, 100, d.raidUserThreshold);
+  PANIC_MODE.raidYoungThreshold = clampNumber(p.raidYoungThreshold, 1, 100, d.raidYoungThreshold);
 }
 applyAutomodRuntime();
+
+function clearAutoModPanicState(guildId) {
+  const key = String(guildId || "").trim();
+  if (key) GUILD_PANIC_STATE.delete(key);
+  try {
+    const { invalidateSecurityLockCache } = require("./securityOrchestratorService");
+    invalidateSecurityLockCache(key);
+  } catch (_) {}
+}
 
 const WICK_EQUIV = { textClusterMultiplier: 1.1875, upperCharMultiplier: 9.90575, lowerCharMultiplier: 14.866, };
 
@@ -864,6 +882,12 @@ function registerPanicTrigger(guildId, userId, options = {}, at = nowMs()) {
     state.activeUntil = Math.max(state.activeUntil, at + PANIC_MODE.durationMs);
   }
   const nowActive = state.activeUntil > at;
+  if (!alreadyActive && nowActive) {
+    try {
+      const { invalidateSecurityLockCache } = require("./securityOrchestratorService");
+      invalidateSecurityLockCache(guildId);
+    } catch (_) {}
+  }
   return { activated: !alreadyActive && nowActive, active: nowActive, count };
 }
 
@@ -2665,4 +2689,4 @@ function updateAutoModConfig(pathExpr, value) {
   return { ok: true, config: getAutoModConfigSnapshot() };
 }
 
-module.exports = { runAutoModMessage, getAutoModMemberSnapshot, isAutoModRoleExemptMember, getAutoModConfigSnapshot, getAutoModRulesSnapshot, updateAutoModConfig, isPanicModeActiveForGuild: isPanicModeActive, getAutoModPanicSnapshot, triggerAutoModPanicExternal, __test: { isLikelyCommandMessage, buildAutoModDecisionExplain } };
+module.exports = { runAutoModMessage, getAutoModMemberSnapshot, isAutoModRoleExemptMember, getAutoModConfigSnapshot, getAutoModRulesSnapshot, updateAutoModConfig, isPanicModeActiveForGuild: isPanicModeActive, getAutoModPanicSnapshot, triggerAutoModPanicExternal, clearAutoModPanicState, __test: { isLikelyCommandMessage, buildAutoModDecisionExplain } };

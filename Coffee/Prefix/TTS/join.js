@@ -28,7 +28,12 @@ module.exports = {
     }
 
     const result = await joinTtsChannel(voiceChannel);
-    if (!result.ok && result.reason === "locked") return;
+    if (!result.ok && result.reason === "locked") {
+      return safeMessageReply(
+        message,
+        "<:vegax:1443934876440068179> Il TTS è già in un altro canale. Usa leave poi join qui.",
+      );
+    }
 
     return safeMessageReply(
       message,

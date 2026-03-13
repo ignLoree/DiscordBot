@@ -44,7 +44,16 @@ module.exports = {
     }
 
     const ttsResult = await joinTtsChannel(voiceChannel);
-    if (!ttsResult.ok && ttsResult.reason === "locked") return;
+    if (!ttsResult.ok && ttsResult.reason === "locked") {
+      const lockedEmbed = new EmbedBuilder()
+        .setColor("#ED4245")
+        .setDescription(
+          "Il TTS è già attivo in un altro canale vocale. Usa `+leave` lì o nel canale attuale, poi `+join` qui.",
+        );
+      const w = await safeMessageReply(message, { embeds: [lockedEmbed] });
+      if (w) scheduleMessageDeletion(w, EPHEMERAL_TTL_SHORT_MS);
+      return;
+    }
     setVoiceSession(message.guild?.id, {
       mode: "tts",
       channelId: voiceChannel.id,

@@ -25,9 +25,7 @@ module.exports = {
       return;
     }
     const payload = await userButton.buildUserOverviewPayload(message.guild, targetId, lookbackDays, "main");
-    if (Array.isArray(payload.components) && payload.components.length) {
-      payload.components = userButton.buildUserComponents(message.author.id, targetId, lookbackDays, "main");
-    }
+    payload.components = userButton.buildUserComponents(message.author.id, targetId, lookbackDays, "main");
     await safeMessageReply(message, { ...payload, allowedMentions: { repliedUser: false } });
   },
 };

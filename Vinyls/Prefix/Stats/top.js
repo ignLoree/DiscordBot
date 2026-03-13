@@ -109,6 +109,40 @@ async function resolveTopUserEntries(guild, entries = []) {
   return out;
 }
 
+async function resolveTopUserEntriesForCanvas(guild, entries = []) {
+  const out = [];
+  for (const item of entries) {
+    const userId = String(item?.id || "").trim();
+    if (!userId) continue;
+    let raw = "";
+    const cachedMember = guild.members.cache.get(userId);
+    const fetchedMember =
+      cachedMember || (await getGuildMemberCached(guild, userId).catch(() => null));
+    if (fetchedMember) {
+      raw =
+        fetchedMember.displayName ||
+        fetchedMember.user?.globalName ||
+        fetchedMember.user?.username ||
+        "";
+    }
+    if (!raw && guild.client?.users?.fetch) {
+      try {
+        const u = await guild.client.users.fetch(userId);
+        raw = u?.globalName || u?.username || "";
+      } catch (_) {
+        raw = "";
+      }
+    }
+    const label = normalizeCanvasLabel(raw, `utente_${userId.slice(-6)}`);
+    out.push({
+      id: userId,
+      label,
+      value: Number(item?.value || 0),
+    });
+  }
+  return out;
+}
+
 async function resolveTopInviteEntries(
   guild,
   guildId,
@@ -334,9 +368,9 @@ async function getTopSource(guild, lookbackDays) {
   const snapshotMap = await getChannelSnapshotMap(guild.id, channelIds);
 
   const [topUsersText, topChannelsText, topUsersVoice, topUsersInvites, topChannelsVoice, topUsersExp, topUsersLevel] = await Promise.all([
-    resolveTopUserEntries(guild, stats.topUsersText || []),
+    resolveTopUserEntriesForCanvas(guild, stats.topUsersText || []),
     resolveTopTextChannelEntries(guild, stats.topChannelsText || [], snapshotMap),
-    resolveTopUserEntries(guild, stats.topUsersVoice || []),
+    resolveTopUserEntriesForCanvas(guild, stats.topUsersVoice || []),
     resolveTopInviteEntries(guild, guild.id, TOP_PAGE_DATA_LIMIT),
     resolveTopChannelEntries(guild, stats.topChannelsVoice || [], snapshotMap),
     resolveTopExpEntries(guild, guild.id, safeLookback, TOP_PAGE_DATA_LIMIT),
@@ -566,6 +600,7 @@ module.exports = {
   TOP_CHANNEL_PAGE_MODAL_INPUT_CUSTOM_ID,
   resolveTopChannelEntries,
   resolveTopUserEntries,
+  resolveTopUserEntriesForCanvas,
   buildTopChannelPayload,
   buildTopChannelComponents,
   buildTopPageJumpModal,

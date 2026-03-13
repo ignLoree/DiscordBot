@@ -324,37 +324,45 @@ function scheduleJoinRaidReport(guild) {
   RAID_REPORT_TIMERS.set(guildId, timer);
 }
 
+async function doFinalizeJoinRaidReportLocked(guild, reason = "elapsed") {
+  const at = nowMs();
+  const state = getGuildState(guild.id);
+  pruneState(state, at);
+  const isStillActive = Number(state.raidUntil || 0) > at;
+  if (reason !== "force" && isStillActive) return;
+  const code = String(state.raidCaseCode || "").trim();
+  if (!code) return;
+  const caughtCount = new Set(
+    (Array.isArray(state.raidCaughtUserIds) ? state.raidCaughtUserIds : [])
+      .map((x) => String(x || ""))
+      .filter(Boolean),
+  ).size;
+
+  await sendJoinRaidLog(
+    guild,
+    "<a:VC_Alert:1448670089670037675> **Join Raid Report!**",
+    [
+      `<:VC_Mention:1443994358201323681> **${caughtCount} utenti** sono stati catturati dalla protezione raid.`,
+      `<:VC_reason:1478517122929004544> **Codice:** \`${code}\``,
+      `<:VC_Clock:1473359204189474886> **Durata:** ${Math.round(Number(JOIN_RAID_CONFIG.raidDurationMs || 0) / 60_000)} minuti`,
+    ],
+    "#57F287",
+  );
+
+  state.raidUntil = 0;
+  state.raidCaseCode = "";
+  state.raidStartedAt = 0;
+  state.raidInitialFlaggedUserIds = [];
+  state.raidCaughtUserIds = [];
+  scheduleStateSave(guild.id);
+}
+
 async function finalizeJoinRaidAndReport(guild, reason = "elapsed") {
   if (!guild?.id) return;
   if (CLEARED_GUILDS.has(String(guild.id))) return;
   await loadGuildState(guild.id);
   await withGuildLock(guild.id, async () => {
-    const at = nowMs();
-    const state = getGuildState(guild.id);
-    pruneState(state, at);
-    const isStillActive = Number(state.raidUntil || 0) > at;
-    if (reason !== "force" && isStillActive) return;
-    const code = String(state.raidCaseCode || "").trim();
-    if (!code) return;
-    const caughtCount = new Set((Array.isArray(state.raidCaughtUserIds) ? state.raidCaughtUserIds : []).map((x) => String(x || "")).filter(Boolean),).size;
-
-    await sendJoinRaidLog(
-      guild,
-      "<a:VC_Alert:1448670089670037675> **Join Raid Report!**",
-      [
-        `<:VC_Mention:1443994358201323681> **${caughtCount} utenti** sono stati catturati dalla protezione raid.`,
-        `<:VC_reason:1478517122929004544> **Codice:** \`${code}\``,
-        `<:VC_Clock:1473359204189474886> **Durata:** ${Math.round(Number(JOIN_RAID_CONFIG.raidDurationMs || 0) / 60_000)} minuti`,
-      ],
-      "#57F287",
-    );
-
-    state.raidUntil = 0;
-    state.raidCaseCode = "";
-    state.raidStartedAt = 0;
-    state.raidInitialFlaggedUserIds = [];
-    state.raidCaughtUserIds = [];
-    scheduleStateSave(guild.id);
+    await doFinalizeJoinRaidReportLocked(guild, reason);
   });
 }
 
@@ -541,15 +549,20 @@ async function sendPunishDm(member, action, reasons) {
   }
 }
 
+function joinRaidBanShortToken(guildId, userId) {
+  return `[jr:${String(guildId || "").trim()}:${String(userId || "").trim()}:`;
+}
+
 function makeJoinRaidBanMarker(guildId, userId, unbanAt) {
   return `[JR:${String(guildId || "")}:${String(userId || "")}:${Number(unbanAt || 0)}]`;
 }
 
-function buildJoinRaidBanReason(marker = "") {
+function buildJoinRaidBanReason(marker = "", guildId = "", userId = "") {
+  const head = guildId && userId ? `${joinRaidBanShortToken(guildId, userId)} ` : "";
   const suffix = String(marker || "").trim();
   return suffix
-    ? `<a:VC_Alert:1448670089670037675> **Join Raid: flagged account during raid window ${suffix}**`
-    : "<a:VC_Alert:1448670089670037675> **Join Raid: flagged account during raid window**";
+    ? `${head}<a:VC_Alert:1448670089670037675> **Join Raid: flagged during raid ${suffix}**`
+    : `${head}<a:VC_Alert:1448670089670037675> **Join Raid: flagged during raid**`;
 }
 
 async function scheduleTempUnban(guild, userId, reason, marker = "") {
@@ -569,13 +582,23 @@ async function scheduleTempUnban(guild, userId, reason, marker = "") {
   TEMP_BAN_TIMERS.set(key, timer);
 }
 
+function joinRaidBanShortToken(guildId, userId) {
+  return `[jr:${String(guildId || "").trim()}:${String(userId || "").trim()}:`;
+}
+
 async function shouldUnbanJoinRaidBan(guild, userId, marker = "") {
   if (!guild?.id || !userId) return false;
   const ban = await guild.bans.fetch(String(userId)).catch(() => null);
   if (!ban) return false;
   const reason = String(ban?.reason || "").toLowerCase();
+  const short = joinRaidBanShortToken(guild.id, userId);
+  if (reason.includes(short)) return true;
   const token = String(marker || "").trim().toLowerCase();
-  if (token) return reason.includes(token);
+  if (token) {
+    if (reason.includes(token)) return true;
+    const m = token.match(/\[jr:([^:]+):([^:]+):/i);
+    if (m) return reason.includes(joinRaidBanShortToken(m[1], m[2]));
+  }
   if (!reason) return false;
   return reason.includes("join raid:");
 }
@@ -650,7 +673,7 @@ async function applyPunishment(member, reasons) {
       punished = await guild.members
         .ban(member.id, {
           deleteMessageSeconds: 604800,
-          reason: buildJoinRaidBanReason(marker),
+          reason: buildJoinRaidBanReason(marker, guild.id, member.id),
         })
         .then(() => true)
         .catch((err) => {
@@ -778,7 +801,7 @@ async function processJoinRaidForMember(member, options = {}) {
     }
     pruneState(state, at);
     if (Number(state.raidUntil || 0) > 0 && Number(state.raidUntil || 0) <= at) {
-      await finalizeJoinRaidAndReport(member.guild, "elapsed");
+      await doFinalizeJoinRaidReportLocked(member.guild, "elapsed");
       pruneState(state, at);
     }
 
@@ -944,14 +967,25 @@ async function activateJoinRaidWindow(
       "#ED4245",
     );
     scheduleJoinRaidReport(guild);
+    try {
+      const { invalidateSecurityLockCache } = require("./securityOrchestratorService");
+      invalidateSecurityLockCache(guild.id);
+    } catch (_) {}
     return { ok: true, activated: !wasActive, raidUntil: state.raidUntil };
   });
 }
 
 async function registerJoinRaidSecuritySignal(member, options = {}) {
   if (!member?.guild?.id || !member?.id) return { ok: false, reason: "missing_member" };
-  void options;
-  return { ok: true, panic: { activated: false, active: false, count: 0 } };
+  if (!JOIN_RAID_CONFIG.enabled) return { ok: true, raid: { activated: false } };
+  const reason = String(options?.reason || "Join Gate / security signal");
+  const minMs = Math.max(0, Number(options?.minRaidDurationMs || options?.raidBoost || 0) * 60_000);
+  const raid = await activateJoinRaidWindow(member.guild, reason, minMs || 0);
+  try {
+    const { invalidateSecurityLockCache } = require("./securityOrchestratorService");
+    invalidateSecurityLockCache(member.guild.id);
+  } catch (_) {}
+  return { ok: true, raid };
 }
 
 function applyJoinRaidPreset(name = "balanced") {
@@ -1028,6 +1062,7 @@ async function getJoinRaidStatusSnapshot(guildId) {
         .filter(Boolean),
     ).size,
     config: {
+      enabled: Boolean(JOIN_RAID_CONFIG.enabled),
       lockCommands: Boolean(JOIN_RAID_CONFIG.lockCommands),
       triggerAction: JOIN_RAID_CONFIG.triggerAction,
       triggerType: JOIN_RAID_CONFIG.triggerType,
@@ -1049,6 +1084,29 @@ async function getJoinRaidStatusSnapshot(guildId) {
       },
     },
   };
+}
+
+function stopJoinRaidWindowForGuild(guildId) {
+  const key = String(guildId || "").trim();
+  if (!key || CLEARED_GUILDS.has(key)) return;
+  const reportTimer = RAID_REPORT_TIMERS.get(key);
+  if (reportTimer) {
+    clearTimeout(reportTimer);
+    RAID_REPORT_TIMERS.delete(key);
+  }
+  const state = getGuildState(key);
+  state.raidUntil = 0;
+  state.raidCaseCode = "";
+  state.raidStartedAt = 0;
+  state.raidInitialFlaggedUserIds = [];
+  state.raidCaughtUserIds = [];
+  if (LOAD_SUCCEEDED_GUILDS.has(key) && isDbReady()) {
+    scheduleStateSave(key);
+  }
+  try {
+    const { invalidateSecurityLockCache } = require("./securityOrchestratorService");
+    invalidateSecurityLockCache(key);
+  } catch (_) {}
 }
 
 function clearGuildState(guildId) {
@@ -1083,4 +1141,4 @@ function clearGuildState(guildId) {
   }
 }
 
-module.exports = { JOIN_RAID_CONFIG, JOIN_RAID_PRESETS, getJoinRaidConfigSnapshot, setJoinRaidConfigSnapshot, processJoinRaidForMember, activateJoinRaidWindow, registerJoinRaidSecuritySignal, restoreTempBans, applyJoinRaidPreset, getJoinRaidStatusSnapshot, clearGuildState };
+module.exports = { JOIN_RAID_CONFIG, JOIN_RAID_PRESETS, getJoinRaidConfigSnapshot, setJoinRaidConfigSnapshot, processJoinRaidForMember, activateJoinRaidWindow, registerJoinRaidSecuritySignal, restoreTempBans, applyJoinRaidPreset, getJoinRaidStatusSnapshot, clearGuildState, stopJoinRaidWindowForGuild };

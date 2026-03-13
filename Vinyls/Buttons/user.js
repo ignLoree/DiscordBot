@@ -85,7 +85,7 @@ async function buildUserOverviewPayload(guild, targetId, lookbackDays, view, cli
   ]);
   const buffer = await renderUserActivityCanvas({ guildName: guild.name || "Server", userTag, displayName, avatarUrl, createdOn, joinedOn, lookbackDays: safeLookback, windows: stats.windows, ranks: stats.ranks, topChannelsText, topChannelsVoice, chart: stats.chart });
   const file = new AttachmentBuilder(buffer, { name: "user-activity.png" });
-  return { files: [file], components: buildUserComponents(null, targetId, safeLookback, view) };
+  return { files: [file], components: [] };
 }
 
 function buildUserComponents(ownerId, targetUserId, lookbackDays, view) {

@@ -78,9 +78,10 @@ function collectEditAnswers(interaction, pollMessage) {
 
 function hasAnswerGap(answers) {
   let foundEmpty = false;
-  for (let i = 2; i < answers.length; i += 1) {
-    if (!answers[i]) foundEmpty = true;
-    if (foundEmpty && answers[i]) return i + 1;
+  for (let i = 0; i < answers.length; i += 1) {
+    const filled = answers[i] != null && String(answers[i]).trim() !== "";
+    if (!filled) foundEmpty = true;
+    else if (foundEmpty) return i + 1;
   }
   return null;
 }
@@ -112,7 +113,11 @@ ${answersText}
 async function applyPollReactions(pollMessage, reactionEmojis) {
   for (const reaction of reactionEmojis) {
     const emojiId = reaction.match(/:(\d+)>$/)?.[1];
-    if (emojiId) await pollMessage.react(emojiId);
+    if (emojiId) {
+      await pollMessage.react(emojiId).catch((err) => {
+        global.logger?.warn?.("[poll] react:", emojiId, err?.message || err);
+      });
+    }
   }
 }
 
@@ -121,7 +126,9 @@ async function findPollById(guildId, pollId) {
 }
 
 async function findLastPoll(guildId) {
-  return Poll.findOne(buildGuildPollFilter(guildId)).sort({ pollcount: -1 });
+  return Poll.findOne(buildGuildPollFilter(guildId))
+    .sort({ pollcount: -1, createdAt: -1 })
+    .catch(() => null);
 }
 
 async function syncPollCounter(guildId, highestPollCountOverride = null) {
@@ -192,11 +199,25 @@ async function createPollForGuild(guild, payload = {}) {
 
   const { text: answersText, validEmojis } = buildAnswersSection(answers);
 
-  const counter = await Poll.findOneAndUpdate({ guildId, domanda: COUNTER_FILTER_QUESTION }, { $inc: { pollcount: 1 }, $setOnInsert: { guildId, domanda: COUNTER_FILTER_QUESTION }, }, { new: true, upsert: true, setDefaultsOnInsert: true },);
+  const counter = await Poll.findOneAndUpdate(
+    { guildId, domanda: COUNTER_FILTER_QUESTION },
+    {
+      $inc: { pollcount: 1 },
+      $setOnInsert: { guildId, domanda: COUNTER_FILTER_QUESTION },
+    },
+    { new: true, upsert: true, setDefaultsOnInsert: true },
+  );
 
   const pollNumber = Number(counter?.pollcount || 1);
-  const pollMessage = await channel.send({ content: buildPollMessageContent(pollNumber, question, answersText), }).catch(() => null);
+  const pollMessage = await channel
+    .send({ content: buildPollMessageContent(pollNumber, question, answersText) })
+    .catch(() => null);
   if (!pollMessage) {
+    await Poll.findOneAndUpdate(
+      { guildId, domanda: COUNTER_FILTER_QUESTION },
+      { $inc: { pollcount: -1 } },
+    ).catch(() => {});
+    await syncPollCounter(guildId);
     return {
       ok: false,
       error: "<:vegax:1443934876440068179> Impossibile inviare il poll nel canale.",
@@ -205,14 +226,28 @@ async function createPollForGuild(guild, payload = {}) {
 
   await applyPollReactions(pollMessage, validEmojis);
 
-  await Poll.create({
-    guildId,
-    pollcount: pollNumber,
-    domanda: question,
-    ...buildPollAnswersUpdate(answers),
-    messageId: pollMessage.id,
-    source,
-  });
+  try {
+    await Poll.create({
+      guildId,
+      pollcount: pollNumber,
+      domanda: question,
+      ...buildPollAnswersUpdate(answers),
+      messageId: pollMessage.id,
+      source,
+    });
+  } catch (err) {
+    global.logger?.error?.("[poll] Poll.create failed:", err?.message || err);
+    await pollMessage.delete().catch(() => {});
+    await Poll.findOneAndUpdate(
+      { guildId, domanda: COUNTER_FILTER_QUESTION },
+      { $inc: { pollcount: -1 } },
+    ).catch(() => {});
+    await syncPollCounter(guildId);
+    return {
+      ok: false,
+      error: "<:vegax:1443934876440068179> Salvataggio poll fallito; messaggio annullato.",
+    };
+  }
 
   return { ok: true, pollNumber, messageId: pollMessage.id };
 }

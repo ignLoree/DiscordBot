@@ -657,7 +657,7 @@ function getPanicState(guildId) {
   const key = String(guildId || "");
   const existing = ANTINUKE_PANIC_STATE.get(key);
   if (existing) return existing;
-  const initial = { heat: 0, lastAt: Date.now(), panicStartedAt: 0, activeUntil: 0, lockedRoles: new Map(), lockedChannels: new Map(), createdRoleIds: new Set(), createdChannelIds: new Set(), createdWebhookIds: new Set(), deletedRoleSnapshots: new Map(), deletedChannelSnapshots: new Map(), unlockTimer: null, restoreRetryTimer: null, restoreRetryCount: 0, panicCaseId: "", panicReport: null, };
+  const initial = { heat: 0, panicTriggerHeat: 0, lastAt: Date.now(), panicStartedAt: 0, activeUntil: 0, lockedRoles: new Map(), lockedChannels: new Map(), createdRoleIds: new Set(), createdChannelIds: new Set(), createdWebhookIds: new Set(), deletedRoleSnapshots: new Map(), deletedChannelSnapshots: new Map(), unlockTimer: null, restoreRetryTimer: null, restoreRetryCount: 0, panicCaseId: "", panicReport: null, };
   ANTINUKE_PANIC_STATE.set(key, initial);
   return initial;
 }
@@ -1234,7 +1234,7 @@ async function runAutoBackupSyncAfterPanic(guild, state) {
   };
 }
 
-async function enableAntiNukePanic(guild, reason, addedHeat = 0) {
+async function enableAntiNukePanic(guild, reason, addedHeat = 0, options = {}) {
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.panicMode.enabled || !guild) {
     return { activated: false, active: false };
   }
@@ -1249,9 +1249,14 @@ async function enableAntiNukePanic(guild, reason, addedHeat = 0) {
     decayPanicHeat(state, now);
   }
   state.heat += percentToHeat(addedHeat || 0);
+  const threshold = Number(ANTINUKE_CONFIG.panicMode.thresholdHeat || 100);
+  const forceTrigger = Boolean(options?.force);
+  if (forceTrigger && Number(state.activeUntil || 0) <= now) {
+    state.heat = Math.max(state.heat, threshold);
+  }
 
   const wasActive = Number(state.activeUntil || 0) > now;
-  if (state.heat < Number(ANTINUKE_CONFIG.panicMode.thresholdHeat || 100) && !wasActive) {
+  if (state.heat < threshold && !wasActive && !forceTrigger) {
     return { activated: false, active: false };
   }
 
@@ -1267,7 +1272,13 @@ async function enableAntiNukePanic(guild, reason, addedHeat = 0) {
   if (state.activeUntil > hardCapUntil) {
     state.activeUntil = hardCapUntil;
   }
+  state.panicTriggerHeat = Math.max(Number(state.heat || 0), threshold);
   state.heat = 0;
+  try {
+    const { invalidateSecurityLockCache } = require("./securityOrchestratorService");
+    invalidateSecurityLockCache(guild.id);
+  } catch (_) {}
+  COMMAND_LOCK_CACHE.delete(String(guild.id));
 
   if (!wasActive) {
     resetPanicReport(state);
@@ -1281,6 +1292,11 @@ async function enableAntiNukePanic(guild, reason, addedHeat = 0) {
     current.unlockTimer = null;
     if (Number(current.activeUntil || 0) > Date.now()) return;
     current.panicStartedAt = 0;
+    current.panicTriggerHeat = 0;
+    try {
+      const { invalidateSecurityLockCache } = require("./securityOrchestratorService");
+      invalidateSecurityLockCache(guild.id);
+    } catch (_) {}
     const roleResult = await unlockDangerousRolesAfterPanic(guild, current);
     const channelResult = await unlockGuildChannelsAfterPanic(guild, current);
     const backupSummary = await runAutoBackupSyncAfterPanic(guild, current);
@@ -1320,9 +1336,16 @@ async function triggerAntiNukePanicExternal(
   guild,
   reason = "External security signal",
   addedHeat = 100,
+  options = {},
 ) {
   if (!guild?.id) return { ok: false, reason: "missing_guild" };
-  const panic = await enableAntiNukePanic(guild, String(reason || "External security signal"), Number(addedHeat || 0));
+  const force = Boolean(options?.force !== false);
+  const panic = await enableAntiNukePanic(
+    guild,
+    String(reason || "External security signal"),
+    Number(addedHeat || 0),
+    { force },
+  );
   return { ok: true, ...panic };
 }
 
@@ -1394,7 +1417,9 @@ async function quarantineExecutor(guild, executorId, reason) {
   }
   const panicActive = isAntiNukePanicActive(guild.id);
   const panicState = getPanicState(guild.id);
-  const highConfidenceHeat = Number(panicState?.heat || 0) >= Number(ANTINUKE_CONFIG.panicMode.thresholdHeat || 100) + 40;
+  const thresholdH = Number(ANTINUKE_CONFIG.panicMode.thresholdHeat || 100);
+  const heatForBan = Math.max(Number(panicState?.panicTriggerHeat || 0), Number(panicState?.heat || 0));
+  const highConfidenceHeat = heatForBan >= thresholdH;
   if (
     panicActive &&
     highConfidenceHeat &&
@@ -1617,6 +1642,7 @@ async function applyBurstPanicGuard(guild, actorId, actionLabel, addedHeatPercen
     guild,
     `<a:VC_Alert:1448670089670037675> Coordinated burst detected (${actionLabel || "unknown"})`,
     Math.max(70, Number(addedHeatPercent || 0)),
+    { force: true },
   );
   await sendAntiNukeLog(
     guild,
@@ -2911,6 +2937,12 @@ async function stopAntiNukePanic(guild, reason = "manual stop", stoppedById = ""
   state.activeUntil = 0;
   state.panicStartedAt = 0;
   state.heat = 0;
+  state.panicTriggerHeat = 0;
+  try {
+    const { invalidateSecurityLockCache } = require("./securityOrchestratorService");
+    invalidateSecurityLockCache(guild.id);
+  } catch (_) {}
+  COMMAND_LOCK_CACHE.delete(String(guild.id));
   state.lastAt = Date.now();
   if (state.unlockTimer) {
     clearTimeout(state.unlockTimer);

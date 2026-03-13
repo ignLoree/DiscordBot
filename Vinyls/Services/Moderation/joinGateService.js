@@ -78,10 +78,8 @@ function sanitizeJoinGateConfig(rawConfig) {
   return out;
 }
 
-let joinGateConfig = sanitizeJoinGateConfig(
-  readJsonSafe(JOIN_GATE_CONFIG_PATH, DEFAULT_JOIN_GATE_CONFIG),
-);
-writeJsonSafe(JOIN_GATE_CONFIG_PATH, joinGateConfig);
+const rawJoinGateOnLoad = readJsonSafe(JOIN_GATE_CONFIG_PATH, DEFAULT_JOIN_GATE_CONFIG);
+let joinGateConfig = sanitizeJoinGateConfig(rawJoinGateOnLoad);
 
 function getJoinGateConfigSnapshot() {
   return JSON.parse(JSON.stringify(joinGateConfig));

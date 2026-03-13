@@ -43,7 +43,9 @@ async function handleSuggestionVote(interaction) {
     const isSuggestionControl = ["upv", "downv", STAFF_ACCEPT_BUTTON_ID, STAFF_REJECT_BUTTON_ID,].includes(customId);
     if (!isSuggestionControl) return false;
 
-    const data = await suggestion.findOne({ GuildID: interaction.guild.id, Msg: interaction.message.id, });
+    const data = await suggestion
+      .findOne({ GuildID: interaction.guild.id, Msg: interaction.message.id })
+      .catch(() => null);
     if (!data) {
       await interaction
         .reply({
@@ -165,7 +167,7 @@ async function handleSuggestionVote(interaction) {
             .catch(() => { });
           return true;
         }
-        if (data.Upmembers.includes(interaction.user.id)) {
+        if (Array.isArray(data.Upmembers) && data.Upmembers.includes(interaction.user.id)) {
           await interaction
             .reply({
               embeds: [
@@ -181,31 +183,50 @@ async function handleSuggestionVote(interaction) {
           return true;
         }
 
-        let downvotes = data.downvotes;
-        if (data.Downmembers.includes(interaction.user.id)) {
-          downvotes -= 1;
-          data.downvotes -= 1;
+        let downvotes = Math.max(0, Number(data.downvotes || 0));
+        if (Array.isArray(data.Downmembers) && data.Downmembers.includes(interaction.user.id)) {
+          downvotes = Math.max(0, downvotes - 1);
+          data.downvotes = downvotes;
+          data.Downmembers.pull(interaction.user.id);
         }
-
+        if (!Array.isArray(data.Upmembers)) data.Upmembers = [];
         data.Upmembers.push(interaction.user.id);
-        data.Downmembers.pull(interaction.user.id);
+        data.upvotes = Math.max(0, Number(data.upvotes || 0)) + 1;
 
-        const newEmbed = EmbedBuilder.from(message.embeds[0]).setImage(DIVIDER_URL,).setFields({
-          name: "<:thumbsup:1471292172145004768>", value: `**${data.upvotes + 1}**`,
-          inline: true,
-        },
-          {
-            name: "<:thumbsdown:1471292163957457013>",
-            value: `**${downvotes}**`,
-            inline: true,
-          },
-        );
+        const newEmbed = EmbedBuilder.from(message.embeds[0])
+          .setImage(DIVIDER_URL)
+          .setFields(
+            {
+              name: "<:thumbsup:1471292172145004768>",
+              value: `**${data.upvotes}**`,
+              inline: true,
+            },
+            {
+              name: "<:thumbsdown:1471292163957457013>",
+              value: `**${downvotes}**`,
+              inline: true,
+            },
+          );
 
+        const saved = await data.save().catch(() => null);
+        if (!saved) {
+          await interaction
+            .reply({
+              embeds: [
+                new EmbedBuilder()
+                  .setColor("Red")
+                  .setDescription(
+                    "<a:VC_Alert:1448670089670037675> Impossibile salvare il voto. Riprova.",
+                  ),
+              ],
+              flags: 1 << 6,
+            })
+            .catch(() => {});
+          return true;
+        }
         await interaction
           .update({ embeds: [newEmbed], components: buildSuggestionRows() })
-          .catch(() => { });
-        data.upvotes += 1;
-        await data.save().catch(() => { });
+          .catch(() => {});
         return true;
       } finally {
         suggestionVoteLocks.delete(voteLockKey);
@@ -246,7 +267,7 @@ async function handleSuggestionVote(interaction) {
             .catch(() => { });
           return true;
         }
-        if (data.Downmembers.includes(interaction.user.id)) {
+        if (Array.isArray(data.Downmembers) && data.Downmembers.includes(interaction.user.id)) {
           await interaction
             .reply({
               embeds: [
@@ -262,31 +283,50 @@ async function handleSuggestionVote(interaction) {
           return true;
         }
 
-        let upvotes = data.upvotes;
-        if (data.Upmembers.includes(interaction.user.id)) {
-          upvotes -= 1;
-          data.upvotes -= 1;
+        let upvotes = Math.max(0, Number(data.upvotes || 0));
+        if (Array.isArray(data.Upmembers) && data.Upmembers.includes(interaction.user.id)) {
+          upvotes = Math.max(0, upvotes - 1);
+          data.upvotes = upvotes;
+          data.Upmembers.pull(interaction.user.id);
         }
-
+        if (!Array.isArray(data.Downmembers)) data.Downmembers = [];
         data.Downmembers.push(interaction.user.id);
-        data.Upmembers.pull(interaction.user.id);
+        data.downvotes = Math.max(0, Number(data.downvotes || 0)) + 1;
 
-        const newEmbed = EmbedBuilder.from(message.embeds[0]).setImage(DIVIDER_URL,).setFields({
-          name: "<:thumbsup:1471292172145004768>", value: `**${upvotes}**`,
-          inline: true,
-        },
-          {
-            name: "<:thumbsdown:1471292163957457013>",
-            value: `**${data.downvotes + 1}**`,
-            inline: true,
-          },
-        );
+        const newEmbed = EmbedBuilder.from(message.embeds[0])
+          .setImage(DIVIDER_URL)
+          .setFields(
+            {
+              name: "<:thumbsup:1471292172145004768>",
+              value: `**${upvotes}**`,
+              inline: true,
+            },
+            {
+              name: "<:thumbsdown:1471292163957457013>",
+              value: `**${data.downvotes}**`,
+              inline: true,
+            },
+          );
 
+        const saved = await data.save().catch(() => null);
+        if (!saved) {
+          await interaction
+            .reply({
+              embeds: [
+                new EmbedBuilder()
+                  .setColor("Red")
+                  .setDescription(
+                    "<a:VC_Alert:1448670089670037675> Impossibile salvare il voto. Riprova.",
+                  ),
+              ],
+              flags: 1 << 6,
+            })
+            .catch(() => {});
+          return true;
+        }
         await interaction
           .update({ embeds: [newEmbed], components: buildSuggestionRows() })
-          .catch(() => { });
-        data.downvotes += 1;
-        await data.save().catch(() => { });
+          .catch(() => {});
         return true;
       } finally {
         suggestionVoteLocks.delete(voteLockKey);
@@ -513,6 +553,8 @@ async function handleSuggestionVote(interaction) {
           .catch(() => { });
       }
 
+      await suggestion.deleteOne({ _id: suggestionData._id }).catch(() => {});
+
       await interaction
         .reply({
           embeds: [
@@ -526,7 +568,7 @@ async function handleSuggestionVote(interaction) {
           ],
           flags: 1 << 6,
         })
-        .catch(() => { });
+        .catch(() => {});
 
       return true;
     } finally {

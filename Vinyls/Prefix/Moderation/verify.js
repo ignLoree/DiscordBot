@@ -270,6 +270,21 @@ module.exports = {
                 .setThumbnail(user.displayAvatarURL({ dynamic: true }));
               await logChannel.send({ embeds: [resultEmbed] }).catch(() => {});
             }
+          } else if (validVerifyRoleIds.every((id) => cache.has(id))) {
+            success.push(displayName);
+            try {
+              const record = await upsertVerifiedMember(
+                guildId,
+                targetMember.id,
+                new Date(),
+              );
+              await applyTenureForMember(targetMember, record);
+            } catch (dbErr) {
+              global.logger?.warn?.(
+                "[+verify] upsertVerifiedMember:",
+                dbErr?.message || dbErr,
+              );
+            }
           } else {
             fail.push(displayName);
           }

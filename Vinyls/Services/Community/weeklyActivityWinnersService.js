@@ -2,7 +2,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require(
 const cron = require("node-cron");
 const { ActivityUser, ActivityDaily, ExpUser, GlobalSettings, } = require("../../Schemas/Community/communitySchemas");
 const { VOICE_EXP_PER_MINUTE, getGuildExpSettings } = require("./expService");
-const { getEventWeekNumber, grantEventLevels, addEventWeekWinner, getTop3ExpDuringEventExcludingStaff } = require("./activityEventRewardsService");
+const { getEventWeekNumber, getEventWeekRomeDateKeys, getCompletedEventWeekForSundayPayout, grantEventLevels, addEventWeekWinner, getTop3ExpDuringEventExcludingStaff } = require("./activityEventRewardsService");
 const { giveWeekly20PointsIfEligible, getStaffEventLeaderboard, isStaffButNotHighStaff } = require("./staffEventService");
 const { sendEventRewardLog, sendEventRewardDm } = require("./eventRewardLogService");
 const { isEventStaffMember } = require("./expService");
@@ -83,18 +83,9 @@ function getDateKeysForWeekKey(weekKey) {
   return out;
 }
 
-function getEventWeekDateKeys(eventStartedAt, weekNum) {
-  const start = new Date(eventStartedAt).getTime();
-  if (!Number.isFinite(start) || !Number.isFinite(weekNum) || weekNum < 1)
-    return [];
-  const dayMs = 24 * 60 * 60 * 1000;
-  const out = [];
-  for (let i = 0; i < 7; i += 1) {
-    const date = new Date(start + ((weekNum - 1) * 7 + i) * dayMs);
-    const parts = getTimeParts(date);
-    out.push(`${parts.year}-${pad2(parts.month)}-${pad2(parts.day)}`);
-  }
-  return out;
+function getEventWeekDateKeys(settings, weekNum) {
+  if (!settings?.eventStartedAt || !settings?.eventExpiresAt) return [];
+  return getEventWeekRomeDateKeys(settings, weekNum);
 }
 
 async function loadActivityRowsFromDateKeys(guild, dateKeys) {
@@ -134,7 +125,7 @@ async function getEventWeekTopThreeTextAndVoice(guild, eventWeekNum) {
     return { topMessages: [], topVoice: [] };
   const settings = await getGuildExpSettings(guild.id).catch(() => null);
   if (!settings?.eventStartedAt) return { topMessages: [], topVoice: [] };
-  const dateKeys = getEventWeekDateKeys(settings.eventStartedAt, eventWeekNum);
+  const dateKeys = getEventWeekDateKeys(settings, eventWeekNum);
   if (!dateKeys.length) return { topMessages: [], topVoice: [] };
   const rows = await loadActivityRowsFromDateKeys(guild, dateKeys);
   const eligible = await getEligibleChannelSets(guild);
@@ -176,7 +167,7 @@ async function getEventWeekTopNTextAndVoice(guild, eventWeekNum, limit = 10) {
     return { topMessages: [], topVoice: [] };
   const settings = await getGuildExpSettings(guild.id).catch(() => null);
   if (!settings?.eventStartedAt) return { topMessages: [], topVoice: [] };
-  const dateKeys = getEventWeekDateKeys(settings.eventStartedAt, eventWeekNum);
+  const dateKeys = getEventWeekDateKeys(settings, eventWeekNum);
   if (!dateKeys.length) return { topMessages: [], topVoice: [] };
   const cap = Math.max(1, Math.min(25, Number(limit) || 10));
   const rows = await loadActivityRowsFromDateKeys(guild, dateKeys);
@@ -517,11 +508,11 @@ async function publishWeeklyActivityWinners(client, options = {}) {
   const currentWeekKey = options.weekKey != null ? options.weekKey : getWeekKey(now);
 
   const settings = await getGuildExpSettings(guild.id).catch(() => null);
-  const eventWeek = settings ? getEventWeekNumber(settings) : 0;
+  const eventPayoutWeek = settings ? getCompletedEventWeekForSundayPayout(settings) : 0;
   let eventTopMessages = [];
   let eventTopVoice = [];
-  if (eventWeek >= 1 && eventWeek <= 4) {
-    const eventTop = await getEventWeekTopThreeTextAndVoice(guild, eventWeek);
+  if (eventPayoutWeek >= 1 && eventPayoutWeek <= 4) {
+    const eventTop = await getEventWeekTopThreeTextAndVoice(guild, eventPayoutWeek);
     eventTopMessages = eventTop.topMessages || [];
     eventTopVoice = eventTop.topVoice || [];
   }
@@ -555,14 +546,14 @@ async function publishWeeklyActivityWinners(client, options = {}) {
   for (const item of eventTopVoice) {
     if (item?.userId) topSixUserIds.add(item.userId);
   }
-  if (eventWeek >= 1 && eventWeek <= 4 && topSixUserIds.size > 0) {
+  if (eventPayoutWeek >= 1 && eventPayoutWeek <= 4 && topSixUserIds.size > 0) {
     const VIP_ID = IDs.roles.VIP;
     const me = guild.members.me;
     for (const userId of topSixUserIds) {
       try {
         const member = await getGuildMemberCached(guild, userId);
         if (member && isEventStaffMember(member)) continue;
-        if (eventWeek === 1) {
+        if (eventPayoutWeek === 1) {
           await grantEventLevels(
             guild.id,
             userId,
@@ -571,7 +562,7 @@ async function publishWeeklyActivityWinners(client, options = {}) {
             member,
             client,
           );
-        } else if (eventWeek === 2) {
+        } else if (eventPayoutWeek === 2) {
           await addEventWeekWinner(guild.id, userId, 2);
           await sendEventRewardLog(client, {
             userId,
@@ -584,7 +575,7 @@ async function publishWeeklyActivityWinners(client, options = {}) {
             label: "Top settimana 2 — colore gradiente a scelta",
             week: 2,
           }).catch(() => { });
-        } else if (eventWeek === 3) {
+        } else if (eventPayoutWeek === 3) {
           await addEventWeekWinner(guild.id, userId, 3);
           await sendEventRewardLog(client, {
             userId,
@@ -597,7 +588,7 @@ async function publishWeeklyActivityWinners(client, options = {}) {
             label: "Top settimana 3 — ruolo custom e vocale privata permanente",
             week: 3,
           }).catch(() => { });
-        } else if (eventWeek === 4 && VIP_ID && me?.permissions?.has("ManageRoles")) {
+        } else if (eventPayoutWeek === 4 && VIP_ID && me?.permissions?.has("ManageRoles")) {
           await assignRoleToUser(guild, userId, VIP_ID);
           await sendEventRewardLog(client, {
             userId,
@@ -747,7 +738,7 @@ async function getEventDiagnostics(guild) {
   let dateKeys = [];
   let activityDailyCount = 0;
   if (eventWeek >= 1 && eventWeek <= 4 && settings?.eventStartedAt) {
-    dateKeys = getEventWeekDateKeys(settings.eventStartedAt, eventWeek);
+    dateKeys = getEventWeekDateKeys(settings, eventWeek);
     if (dateKeys.length) {
       activityDailyCount = await ActivityDaily.countDocuments({
         guildId: guild.id,

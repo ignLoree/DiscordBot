@@ -343,6 +343,58 @@ function getEventWeekNumber(settings) {
   return week;
 }
 
+function pad2Event(n) {
+  return String(Math.floor(Number(n) || 0)).padStart(2, "0");
+}
+
+/**
+ * Date keys (Europe/Rome calendar days) per settimana evento, allineate a getEventWeekNumber
+ * (confini domenica 21:00 Roma), non a blocchi fissi di 7×24h dall'inizio.
+ */
+function getEventWeekRomeDateKeys(settings, weekNum) {
+  if (!settings?.eventStartedAt || !settings?.eventExpiresAt) return [];
+  if (weekNum < 1 || weekNum > 4) return [];
+  const startMs = new Date(settings.eventStartedAt).getTime();
+  const endMs = new Date(settings.eventExpiresAt).getTime();
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || startMs >= endMs) return [];
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  const w1End = getFirstSunday21BoundaryAtOrAfter(startMs);
+  const weekStart = weekNum === 1 ? startMs : w1End + (weekNum - 2) * weekMs;
+  const weekEnd = Math.min(endMs, weekNum === 4 ? endMs : w1End + (weekNum - 1) * weekMs);
+  if (weekStart >= weekEnd) return [];
+  const seen = new Set();
+  const keys = [];
+  const step = 6 * 60 * 60 * 1000;
+  for (let t = weekStart; t < weekEnd; t += step) {
+    const fmt = new Intl.DateTimeFormat("en-CA", {
+      timeZone: TIME_ZONE_ROME,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const parts = fmt.formatToParts(new Date(t)).reduce((acc, p) => {
+      if (p.type !== "literal") acc[p.type] = p.value;
+      return acc;
+    }, {});
+    const key = `${parts.year}-${pad2Event(parts.month)}-${pad2Event(parts.day)}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      keys.push(key);
+    }
+  }
+  return keys;
+}
+
+/**
+ * Domenica 21:00 Roma: getEventWeekNumber passa subito alla settimana successiva.
+ * I premi vanno alla settimana appena conclusa = rolling - 1 (mai erogare se rolling < 2).
+ */
+function getCompletedEventWeekForSundayPayout(settings) {
+  const rolling = getEventWeekNumber(settings);
+  if (rolling < 2) return 0;
+  return Math.min(4, rolling - 1);
+}
+
 async function getTop10ExpDuringEvent(guildId, limit = 10) {
   if (!guildId) return [];
   const cap = Math.max(1, Math.min(100, Number(limit) || 10));
@@ -379,4 +431,4 @@ async function clearActivityEventRewardsForGuild(guildId) {
   return { deleted: result?.deletedCount ?? 0 };
 }
 
-module.exports = { isEventActive, grantEventLevels, grantEventRewardOnce, grantEventRewardsForExistingRoleMembers, grantEventRewardsForSameDayReviewAndVote, clearActivityEventRewardsForGuild, addEventWeekWinner, hasEventWeekWinnerGrant, getTop3ExpDuringEventExcludingStaff, getTop10ExpDuringEventExcludingStaff, getEventWeekNumber, getTop10ExpDuringEvent };
+module.exports = { isEventActive, grantEventLevels, grantEventRewardOnce, grantEventRewardsForExistingRoleMembers, grantEventRewardsForSameDayReviewAndVote, clearActivityEventRewardsForGuild, addEventWeekWinner, hasEventWeekWinnerGrant, getTop3ExpDuringEventExcludingStaff, getTop10ExpDuringEventExcludingStaff, getEventWeekNumber, getEventWeekRomeDateKeys, getCompletedEventWeekForSundayPayout, getTop10ExpDuringEvent };

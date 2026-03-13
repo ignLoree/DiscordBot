@@ -1,7 +1,7 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require("discord.js");
 const { getServerOverviewStats } = require("../Services/Community/activityService");
 const { renderServerActivityCanvas } = require("../Utils/Render/activityCanvas");
-const { resolveTopChannelEntries } = require("../Prefix/Stats/top");
+const { resolveTopChannelEntries, resolveTopUserEntriesForCanvas } = require("../Prefix/Stats/top");
 const SERVER_REFRESH_CUSTOM_ID_PREFIX = "server_refresh";
 const ALLOWED_LOOKBACK = [7, 14, 21, 30];
 
@@ -55,11 +55,13 @@ async function buildServerOverviewPayload(guild, lookbackDays, authorId) {
   const me = guild.members?.me;
   const invitedBotOn = (me?.joinedAt && me.joinedAt instanceof Date) ? me.joinedAt : (me?.joinedTimestamp ? new Date(me.joinedTimestamp) : createdOn);
   const emptySnapshot = new Map();
-  const [topChannelsText, topChannelsVoice] = await Promise.all([
+  const [topUsersText, topUsersVoice, topChannelsText, topChannelsVoice] = await Promise.all([
+    resolveTopUserEntriesForCanvas(guild, stats.topUsersText || []),
+    resolveTopUserEntriesForCanvas(guild, stats.topUsersVoice || []),
     resolveTopChannelEntries(guild, stats.topChannelsText || [], emptySnapshot),
     resolveTopChannelEntries(guild, stats.topChannelsVoice || [], emptySnapshot),
   ]);
-  const buffer = await renderServerActivityCanvas({ guildName, guildIconUrl, createdOn, invitedBotOn, lookbackDays: safeLookback, windows: stats.windows, topUsersText: stats.topUsersText, topUsersVoice: stats.topUsersVoice, topChannelsText, topChannelsVoice, chart: stats.chart });
+  const buffer = await renderServerActivityCanvas({ guildName, guildIconUrl, createdOn, invitedBotOn, lookbackDays: safeLookback, windows: stats.windows, topUsersText, topUsersVoice, topChannelsText, topChannelsVoice, chart: stats.chart });
   const customId = authorId ? `${SERVER_REFRESH_CUSTOM_ID_PREFIX}:${authorId}:${safeLookback}:embed` : `${SERVER_REFRESH_CUSTOM_ID_PREFIX}:${safeLookback}:embed`;
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()

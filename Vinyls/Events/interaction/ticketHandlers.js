@@ -1,7 +1,6 @@
 const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits, } = require("discord.js");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
 const fs = require("fs");
-const { getNextTicketId } = require("../../Utils/Ticket/ticketIdUtils");
 const { safeReply: safeReplyHelper, safeEditReply: safeEditReplyHelper, } = require("../../../shared/discord/replyRuntime");
 const IDs = require("../../Utils/Config/ids");
 const { buildTicketChannelName } = require("../../Utils/Ticket/ticketNamingRuntime");
@@ -365,9 +364,7 @@ async function handleTicketInteraction(interaction) {
           }
           let ticketCreated = false;
           try {
-            const ticketNumber = await getNextTicketId();
             await Ticket.create({
-              ticketNumber,
               guildId: interaction.guild.id,
               userId: interaction.user.id,
               channelId: channel.id,

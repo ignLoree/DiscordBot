@@ -74,6 +74,13 @@ function createBumpReminderService(options) {
     const cooldownMs = getCooldownMs(client);
     const now = Date.now();
     const lastBumpTime = new Date(lastBumpAt).getTime();
+    if (!Number.isFinite(lastBumpTime)) {
+      bumpTimers.delete(guildId);
+      global.logger?.warn?.(
+        `${errorTag} scheduleReminder invalid lastBumpAt guild=${guildId}`,
+      );
+      return;
+    }
     const targetTime = lastBumpTime + cooldownMs;
     const remaining = targetTime - now;
 

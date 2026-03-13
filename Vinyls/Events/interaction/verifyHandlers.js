@@ -49,7 +49,7 @@ async function finalizeVerification(interaction, member) {
           ),
       ],
       flags: 1 << 6,
-    });
+    }).catch(() => {});
     return true;
   }
 
@@ -286,6 +286,20 @@ async function handleVerifyInteraction(interaction) {
     interaction.isModalSubmit() &&
     String(interaction.customId || "").startsWith("verify_code:")
   ) {
+    const modalUserId = String(interaction.customId || "").split(":")[1] || "";
+    if (modalUserId && modalUserId !== String(interaction.user?.id || "")) {
+      await safeReply(interaction, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor("Red")
+            .setDescription(
+              "<:vegax:1443934876440068179> Sessione non valida. Usa di nuovo **Verifica**.",
+            ),
+        ],
+        flags: 1 << 6,
+      }).catch(() => {});
+      return true;
+    }
     const stateKey = getVerifyStateKey(interaction.user?.id, interaction.guild?.id);
     const state = verifyState.get(stateKey);
     if (!state || Date.now() > state.expiresAt) {

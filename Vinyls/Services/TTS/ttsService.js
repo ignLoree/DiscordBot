@@ -1,4 +1,4 @@
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, entersState, VoiceConnectionStatus, StreamType, } = require("@discordjs/voice");
+const { joinVoiceChannel, getVoiceConnection, createAudioPlayer, createAudioResource, AudioPlayerStatus, entersState, VoiceConnectionStatus, StreamType, } = require("@discordjs/voice");
 const { Readable } = require("stream");
 const fs = require("fs");
 const path = require("path");
@@ -672,6 +672,39 @@ function findLockedChannelIdByGuild(guildId) {
   return null;
 }
 
+function cleanupAllTtsStateForGuild(guildId) {
+  if (guildId == null) return;
+  const gid = String(guildId);
+  for (const [channelId, state] of [...ttsStates.entries()]) {
+    if (!state || String(state.guildId) !== gid) continue;
+    state.queue = [];
+    state.playing = false;
+    if (state.currentTtsFile) {
+      try {
+        fs.unlinkSync(state.currentTtsFile);
+      } catch (err) {
+        global.logger?.warn?.("[TTS] unlink temp file:", err?.message || err);
+      }
+      state.currentTtsFile = null;
+    }
+    try {
+      state.player.stop();
+    } catch (err) {
+      global.logger?.warn?.("[TTS] player stop:", err?.message || err);
+    }
+    if (state.connection) {
+      try {
+        state.connection.destroy();
+      } catch (err) {
+        global.logger?.warn?.("[TTS] connection destroy:", err?.message || err);
+      }
+      state.connection = null;
+    }
+    ttsStates.delete(channelId);
+  }
+  guildLocks.delete(gid);
+}
+
 async function leaveTtsGuild(guildId, client) {
   let lockedChannelId = getLockedChannelId(guildId);
   if (!lockedChannelId) {
@@ -680,20 +713,19 @@ async function leaveTtsGuild(guildId, client) {
   }
   if (!lockedChannelId && client) {
     const guild = client.guilds?.cache?.get(guildId) || (await client.guilds?.fetch(guildId).catch(() => null));
-    if (guild) {
-      const me = guild.members?.me ?? (await guild.members?.fetch(client.user?.id).catch(() => null));
-      const channelId = me?.voice?.channelId;
-      if (channelId) {
-        try {
-          const channel = client.channels?.cache?.get(channelId) || (await client.channels?.fetch(channelId).catch(() => null));
-          if (channel?.isVoiceBased?.()) {
-            const conn = joinVoiceChannel({ channelId: channel.id, guildId: guild.id, adapterCreator: guild.voiceAdapterCreator, selfDeaf: false, });
-            conn.destroy();
-          }
-        } catch (err) {
-          global.logger?.warn?.("[TTS] disconnect cleanup:", err?.message || err);
+    const me = guild?.members?.me ?? (await guild?.members?.fetch(client.user?.id).catch(() => null));
+    if (me?.voice?.channelId) {
+      try {
+        const existing = getVoiceConnection(String(guildId));
+        if (existing) {
+          existing.destroy();
+        } else {
+          cleanupAllTtsStateForGuild(guildId);
         }
+      } catch (err) {
+        global.logger?.warn?.("[TTS] disconnect cleanup:", err?.message || err);
       }
+      cleanupAllTtsStateForGuild(guildId);
     }
     await clearVoiceState(guildId);
     return { ok: true };
@@ -728,6 +760,7 @@ async function leaveTtsGuild(guildId, client) {
     ttsStates.delete(lockedChannelId);
   } else {
     clearLockedChannel(guildId, lockedChannelId);
+    cleanupAllTtsStateForGuild(guildId);
   }
   await clearVoiceState(guildId);
   return { ok: true };
@@ -762,7 +795,9 @@ async function restoreTtsConnections(client) {
   try {
     const autojoinEnabled = booleanFromConfig(client?.config?.tts?.autojoin, false,);
     if (!autojoinEnabled) {
-      await VoiceState.deleteMany({}).catch(() => null);
+      const guildIds = [...(client?.guilds?.cache?.keys?.() || [])];
+      if (guildIds.length)
+        await VoiceState.deleteMany({ guildId: { $in: guildIds } }).catch(() => null);
       return;
     }
     const states = await VoiceState.find({});

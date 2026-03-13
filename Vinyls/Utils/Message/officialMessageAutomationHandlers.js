@@ -494,20 +494,40 @@ async function handleSuggestionChannelMessage(message) {
   const voteRow = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("upv").setEmoji("<:thumbsup:1471292172145004768>").setStyle(ButtonStyle.Secondary), new ButtonBuilder().setCustomId("downv").setEmoji("<:thumbsdown:1471292163957457013>").setStyle(ButtonStyle.Secondary),);
   const staffRow = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("suggestion_staff_accept").setLabel("Accetta").setEmoji("<:success:1461731530333229226>").setStyle(ButtonStyle.Success), new ButtonBuilder().setCustomId("suggestion_staff_reject").setLabel("Rifiuta").setEmoji("<:cancel:1461730653677551691>").setStyle(ButtonStyle.Danger),);
 
-  const posted = await message.channel.send({ content: "<@&1442568894349840435>", embeds: [suggestionEmbed], components: [voteRow, staffRow], }).catch(() => null);
-  if (!posted) return false;
+  const posted = await message.channel
+    .send({
+      content: "<@&1442568894349840435>",
+      embeds: [suggestionEmbed],
+      components: [voteRow, staffRow],
+    })
+    .catch(() => null);
+  if (!posted) {
+    await SuggestionCount.findOneAndUpdate(counterFilter, {
+      $inc: { count: -1 },
+    }).catch(() => {});
+    return false;
+  }
 
-  await SuggestionCount.create({
-    GuildID: message.guild.id,
-    ChannelID: message.channel.id,
-    Msg: posted.id,
-    AuthorID: message.author.id,
-    upvotes: 0,
-    downvotes: 0,
-    Upmembers: [],
-    Downmembers: [],
-    sID: suggestionId,
-  }).catch(() => { });
+  try {
+    await SuggestionCount.create({
+      GuildID: message.guild.id,
+      ChannelID: message.channel.id,
+      Msg: posted.id,
+      AuthorID: message.author.id,
+      upvotes: 0,
+      downvotes: 0,
+      Upmembers: [],
+      Downmembers: [],
+      sID: suggestionId,
+    });
+  } catch (err) {
+    global.logger?.error?.("[suggestion] create doc failed:", err?.message || err);
+    await posted.delete().catch(() => {});
+    await SuggestionCount.findOneAndUpdate(counterFilter, {
+      $inc: { count: -1 },
+    }).catch(() => {});
+    return false;
+  }
 
   const thread = await posted.startThread({
     name: `Thread per il suggerimento ${suggestionId}`,

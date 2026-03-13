@@ -26,7 +26,7 @@ function hasPartnerManagerAndStaff(member) {
 
 async function isStaffEventActive(guildId) {
   const settings = await getStaffEventSettings(guildId);
-  return settings.active;
+  return Boolean(settings?.active);
 }
 
 async function addStaffEventPoints(guildId, userId, points, note = null) {

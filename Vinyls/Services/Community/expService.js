@@ -206,7 +206,15 @@ async function getGuildExpSettings(guildId) {
     try {
       doc = await GlobalSettings.findOneAndUpdate(
         { guildId },
-        { $set: { expEventMultiplier: 1 } },
+        {
+          $set: {
+            expEventMultiplier: 1,
+            expEventMultiplierExpiresAt: null,
+            expEventRoleOverrides: null,
+            expEventExtraMultiplierRoleIds: [],
+            expEventStartedAt: null,
+          },
+        },
         { new: true },
       );
     } catch (err) {
@@ -355,23 +363,69 @@ async function recordLevelHistory(guildId, userId, actorId = null, action = "upd
 async function addExp(guildId, userId, amount, applyMultiplier = false, weeklyAmountOverride = null) {
   if (!guildId || !userId || !Number.isFinite(amount)) return null;
   const now = new Date();
-  let doc = await ExpUser.findOne({ guildId, userId });
-  if (!doc) {
-    doc = new ExpUser({ guildId, userId });
-  }
-  ensureWeekly(doc, now);
+  const weekKey = getIsoWeekKey(now);
   const multiplier = applyMultiplier ? await getGlobalMultiplier(guildId) : 1;
-  const effective = Math.max(0, Math.floor(amount)) * multiplier;
-  const weeklyEffective = weeklyAmountOverride !== null ? Math.max(0, Math.floor(Number(weeklyAmountOverride))) : effective;
-  if (effective === 0 && weeklyEffective === 0) return doc;
-  const beforeExp = Number(doc.totalExp || 0);
+  const effective = Math.max(0, Math.floor(Number(amount))) * multiplier;
+  const weeklyEffective =
+    weeklyAmountOverride !== null
+      ? Math.max(0, Math.floor(Number(weeklyAmountOverride)))
+      : effective;
+  if (effective === 0 && weeklyEffective === 0) return null;
+  const beforeRow = await ExpUser.findOne({ guildId, userId })
+    .select("totalExp")
+    .lean()
+    .catch(() => null);
+  const beforeExp = Math.max(0, Math.floor(Number(beforeRow?.totalExp || 0)));
   const prevLevel = getLevelInfo(beforeExp).level;
-  doc.totalExp = Number(doc.totalExp || 0) + effective;
-  doc.weeklyExp = Number(doc.weeklyExp || 0) + weeklyEffective;
-  const levelInfo = getLevelInfo(doc.totalExp);
-  doc.level = levelInfo.level;
-  await doc.save();
-  const afterExp = Number(doc.totalExp || 0);
+  const gid = String(guildId);
+  const uid = String(userId);
+  const eff = Math.floor(effective);
+  const wk = Math.floor(weeklyEffective);
+  let doc = null;
+  try {
+    doc = await ExpUser.findOneAndUpdate(
+      { guildId: gid, userId: uid },
+      [
+        {
+          $set: {
+            guildId: { $ifNull: ["$guildId", gid] },
+            userId: { $ifNull: ["$userId", uid] },
+            totalExp: { $add: [{ $ifNull: ["$totalExp", 0] }, eff] },
+            weeklyKey: weekKey,
+            weeklyExp: {
+              $cond: [
+                { $eq: [{ $ifNull: ["$weeklyKey", ""] }, weekKey] },
+                { $add: [{ $ifNull: ["$weeklyExp", 0] }, wk] },
+                wk,
+              ],
+            },
+          },
+        },
+      ],
+      { upsert: true, new: true, setDefaultsOnInsert: true },
+    );
+  } catch (err) {
+    global.logger?.warn?.("[expService] addExp atomic failed, fallback:", err?.message || err);
+    let fallback = await ExpUser.findOne({ guildId: gid, userId: uid });
+    if (!fallback) fallback = new ExpUser({ guildId: gid, userId: uid });
+    ensureWeekly(fallback, now);
+    fallback.totalExp = Number(fallback.totalExp || 0) + eff;
+    fallback.weeklyExp = Number(fallback.weeklyExp || 0) + wk;
+    const li = getLevelInfo(fallback.totalExp);
+    fallback.level = li.level;
+    await fallback.save();
+    doc = fallback;
+  }
+  if (!doc) return null;
+  const afterExp = Math.max(0, Math.floor(Number(doc.totalExp || 0)));
+  const levelInfo = getLevelInfo(afterExp);
+  if (levelInfo.level !== Number(doc.level || 0)) {
+    doc.level = levelInfo.level;
+    await ExpUser.updateOne(
+      { guildId: gid, userId: uid },
+      { $set: { level: levelInfo.level } },
+    ).catch(() => null);
+  }
   recordLevelHistory(guildId, userId, null, "update", beforeExp, afterExp, null).catch(() => null);
   return {
     doc,
@@ -769,16 +823,22 @@ async function isChannelEligibleForMemberExp(guild, channelId) {
 
 async function shouldIgnoreExpForMember({ guildId, member, channelId = null }) {
   const settings = await getGuildExpSettings(guildId);
-  if (channelId && settings.lockedChannelIds.includes(channelId)) return true;
+  const chId = channelId != null ? String(channelId) : "";
+  if (chId) {
+    const locked = new Set(
+      (settings.lockedChannelIds || []).map((id) => String(id)),
+    );
+    if (locked.has(chId)) return true;
+  }
   if (channelId && EXP_EXCLUDED_CATEGORY_IDS.size > 0) {
     const guild = member?.guild || null;
     const channel = guild?.channels?.cache?.get(channelId) || (await guild?.channels?.fetch?.(channelId).catch(() => null));
     const parentId = String(channel?.parentId || "");
     if (parentId && EXP_EXCLUDED_CATEGORY_IDS.has(parentId)) return true;
   }
-  if (channelId) {
+  if (chId) {
     const guild = member?.guild || null;
-    const allowed = await isChannelEligibleForMemberExp(guild, channelId);
+    const allowed = await isChannelEligibleForMemberExp(guild, chId);
     if (!allowed) return true;
   }
   if (member?.roles?.cache && settings.ignoredRoleIds.length > 0) {

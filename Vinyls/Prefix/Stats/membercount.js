@@ -7,6 +7,13 @@ module.exports = {
   async execute(message) {
     await message.channel.sendTyping();
     const guild = message.guild;
+    if (!guild) {
+      await safeMessageReply(message, {
+        content: "<:vegax:1443934876440068179> Solo in server.",
+        allowedMentions: { repliedUser: false },
+      });
+      return;
+    }
     const totalMembers = guild.memberCount;
 
     const embed = new EmbedBuilder()

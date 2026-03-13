@@ -4,10 +4,10 @@ const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const{getAntiNukeStatusSnapshot,stopAntiNukePanic,triggerAntiNukePanicExternal,setAntiNukeConfigSnapshot,}=require("../../Services/Moderation/antiNukeService");
 const{getSecurityStaticsSnapshot,getSecurityProfilesSnapshot,setQuarantineRole,addMainRole,removeMainRole,setLoggingChannel,setModLoggingChannel,setMainChannel,setVerificationChannel,addPartneringChannel,removePartneringChannel,addTrustedAdmin,removeTrustedAdmin,addExtraOwner,removeExtraOwner,}=require("../../Services/Moderation/securityProfilesService");
 const{getGuildChannelCached,getGuildRoleCached,getUserCached,}=require("../../Utils/Interaction/interactionEntityCache");
-const{getJoinRaidStatusSnapshot,setJoinRaidConfigSnapshot,}=require("../../Services/Moderation/joinRaidService");
+const{getJoinRaidStatusSnapshot,setJoinRaidConfigSnapshot,stopJoinRaidWindowForGuild,}=require("../../Services/Moderation/joinRaidService");
 const{getJoinGateConfigSnapshot,updateJoinGateConfig,}=require("../../Services/Moderation/joinGateService");
-const{getAutoModConfigSnapshot,getAutoModRulesSnapshot,getAutoModPanicSnapshot,triggerAutoModPanicExternal,updateAutoModConfig,}=require("../../Services/Moderation/automodService");
-const { getSecurityLockState } = require("../../Services/Moderation/securityOrchestratorService");
+const{getAutoModConfigSnapshot,getAutoModRulesSnapshot,getAutoModPanicSnapshot,triggerAutoModPanicExternal,updateAutoModConfig,clearAutoModPanicState,}=require("../../Services/Moderation/automodService");
+const { getSecurityLockState, invalidateSecurityLockCache } = require("../../Services/Moderation/securityOrchestratorService");
 const { sendSecurityAuditLog } = require("../../Utils/Logging/securityAuditLog");
 
 const STAFF_ROLE_IDS=[IDs.roles.Founder,IDs.roles.CoFounder,IDs.roles.Manager,IDs.roles.Admin,IDs.roles.HighStaff,IDs.roles.Supervisor,IDs.roles.Coordinator,IDs.roles.Mod,IDs.roles.Helper,IDs.roles.Staff,].filter(Boolean);
@@ -886,6 +886,7 @@ async function disableAutoMod(guildId) {
   const r2 = updateAutoModConfig("panic.enabled", false);
   const r3 = updateAutoModConfig("autoLockdown.enabled", false);
   const ok = Boolean(r1?.ok && r2?.ok && r3?.ok);
+  if (ok) clearAutoModPanicState(guildId);
   return {
     ok,
     changed: true,
@@ -913,10 +914,11 @@ async function disableJoinRaid(guildId) {
 
   const next={...(raid?.config||{}),enabled:false,lockCommands:false,};
   const updated = setJoinRaidConfigSnapshot(next);
+  if (updated?.ok) stopJoinRaidWindowForGuild(guildId);
   return {
     ok: Boolean(updated?.ok),
     changed: true,
-    note: updated?.ok ? "JoinRaid disabilitato (lockCommands OFF)." : "Errore disabilitazione JoinRaid.",
+    note: updated?.ok ? "JoinRaid disabilitato (lockCommands OFF, finestra raid chiusa)." : "Errore disabilitazione JoinRaid.",
   };
 }
 
@@ -968,7 +970,7 @@ async function enableAutoMod(guildId, actorId) {
   const rules = getAutoModRulesSnapshot();
   const panic = getAutoModPanicSnapshot(guildId);
   const wasActive = Boolean(rules?.status?.enabled && cfg?.panic?.enabled && panic?.active);
-  if (wasActive) return { ok: true, changed: false, note: "AutoMod panic già attiva." };
+  if (wasActive) return { ok: true, changed: false, note: "AutoMod già attivo con panic in corso." };
 
   const r1 = updateAutoModConfig("enabled", true);
   const r2 = updateAutoModConfig("panic.enabled", true);
@@ -1000,7 +1002,7 @@ async function enableJoinGate() {
 async function enableJoinRaid(guildId) {
   const raid = await getJoinRaidStatusSnapshot(guildId);
   if (raid?.enabled) return { ok: true, changed: false, note: "JoinRaid già attivo." };
-  const updated=setJoinRaidConfigSnapshot({...(raid?.config||{}),enabled:true,});
+  const updated=setJoinRaidConfigSnapshot({...(raid?.config||{}),enabled:true,lockCommands:Boolean(raid?.config?.lockCommands),});
   return {
     ok: Boolean(updated?.ok),
     changed: true,
@@ -1049,6 +1051,7 @@ async function runSecurityAction(action, target, guild, actorId) {
     if (target === "lockcommands" || target === "all") {
       results.push({ system: "LockCommands", ...(await disableLockCommands(guildId)) });
     }
+    invalidateSecurityLockCache(guildId);
     return results;
   }
 
@@ -1067,6 +1070,7 @@ async function runSecurityAction(action, target, guild, actorId) {
   if (target === "lockcommands" || target === "all") {
     results.push({ system: "LockCommands", ...(await enableLockCommands(guildId)) });
   }
+  invalidateSecurityLockCache(guildId);
   return results;
 }
 

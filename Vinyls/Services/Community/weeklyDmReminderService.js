@@ -12,6 +12,7 @@ const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const MIN_RETRY_DELAY_MS = 6 * 60 * 60 * 1000;
 const STARTUP_BLAST_DM_DELAY_MS = 450;
 const EXTERNAL_STARTUP_DM_DELAY_MS = 600;
+const BLAST_STALE_LOCK_MS = 45 * 60 * 1000;
 const DM_FOOTER = "Se non vuoi ricevere questi avvisi in DM usa +dm-disable nel server.";
 const DEFAULT_TZ = "Europe/Rome";
 const STAFF_ROLE_IDS = [IDs.roles.Staff, IDs.roles.PartnerManager, IDs.roles.HighStaff, IDs.roles.Admin, IDs.roles.Manager, IDs.roles.Coordinator, IDs.roles.Supervisor, IDs.roles.Mod, IDs.roles.Helper, IDs.roles.Founder, IDs.roles.CoFounder,].map((id) => String(id || "").trim()).filter(Boolean);
@@ -342,6 +343,7 @@ let loopHandle = null;
 let state = null;
 let tickInFlight = null;
 let stateWriteTimer = null;
+const weeklyPlanLocks = new Set();
 const MEMBER_LIST_REFRESH_TTL_MS = 10 * 60 * 1000;
 const memberListRefreshedAt = new Map();
 
@@ -512,9 +514,11 @@ function getGuildEntry(guildId) {
       startupBlastDone: false,
       startupBlastRunning: false,
       startupBlastAt: 0,
+      startupBlastLockAt: 0,
       externalStartupBlastDone: false,
       externalStartupBlastRunning: false,
       externalStartupBlastAt: 0,
+      externalStartupBlastLockAt: 0,
       externalReminderHistory: {},
     };
   }
@@ -531,6 +535,16 @@ function getGuildEntry(guildId) {
   if (!Number.isFinite(Number(root[key].startupBlastAt || 0))) {
     root[key].startupBlastAt = 0;
   }
+  if (!Number.isFinite(Number(root[key].startupBlastLockAt || 0))) {
+    root[key].startupBlastLockAt = 0;
+  }
+  if (
+    root[key].startupBlastRunning &&
+    Date.now() - Number(root[key].startupBlastLockAt || 0) > BLAST_STALE_LOCK_MS
+  ) {
+    root[key].startupBlastRunning = false;
+    saveState();
+  }
   if (typeof root[key].externalStartupBlastDone !== "boolean") {
     root[key].externalStartupBlastDone = false;
   }
@@ -539,6 +553,16 @@ function getGuildEntry(guildId) {
   }
   if (!Number.isFinite(Number(root[key].externalStartupBlastAt || 0))) {
     root[key].externalStartupBlastAt = 0;
+  }
+  if (!Number.isFinite(Number(root[key].externalStartupBlastLockAt || 0))) {
+    root[key].externalStartupBlastLockAt = 0;
+  }
+  if (
+    root[key].externalStartupBlastRunning &&
+    Date.now() - Number(root[key].externalStartupBlastLockAt || 0) > BLAST_STALE_LOCK_MS
+  ) {
+    root[key].externalStartupBlastRunning = false;
+    saveState();
   }
   if (
     !root[key].externalReminderHistory ||
@@ -899,8 +923,15 @@ async function maybePlanWeeklyBatch(client, guild) {
   const hasPending = entry.jobs.some((job) => !job?.sentAt && !job?.skipped && Number(job?.sendAt || 0) >= now,);
   if (hasPending && now - Number(entry.plannedAt || 0) < WEEK_MS) return;
   if (now - Number(entry.plannedAt || 0) < WEEK_MS) return;
-
-  const jobs = await buildWeeklyJobs(client, guild);
+  const lockKey = String(guild.id || "");
+  if (weeklyPlanLocks.has(lockKey)) return;
+  weeklyPlanLocks.add(lockKey);
+  let jobs;
+  try {
+    jobs = await buildWeeklyJobs(client, guild);
+  } finally {
+    weeklyPlanLocks.delete(lockKey);
+  }
   entry.plannedAt = now;
   entry.jobs = jobs;
   saveState();
@@ -912,9 +943,15 @@ async function maybePlanWeeklyBatch(client, guild) {
 async function runStartupBlastOnce(client, guild) {
   const entry = getGuildEntry(guild.id);
   if (!entry) return;
-  if (entry.startupBlastDone || entry.startupBlastRunning) return;
+  if (entry.startupBlastDone) return;
+  if (
+    entry.startupBlastRunning &&
+    Date.now() - Number(entry.startupBlastLockAt || 0) <= BLAST_STALE_LOCK_MS
+  )
+    return;
 
   entry.startupBlastRunning = true;
+  entry.startupBlastLockAt = Date.now();
   saveState();
   try {
     await refreshGuildMembersIfNeeded(guild);
@@ -1009,9 +1046,15 @@ async function runStartupBlastOnce(client, guild) {
 async function runExternalStartupBlastOnce(client, guild) {
   const entry = getGuildEntry(guild.id);
   if (!entry) return;
-  if (entry.externalStartupBlastDone || entry.externalStartupBlastRunning) return;
+  if (entry.externalStartupBlastDone) return;
+  if (
+    entry.externalStartupBlastRunning &&
+    Date.now() - Number(entry.externalStartupBlastLockAt || 0) <= BLAST_STALE_LOCK_MS
+  )
+    return;
 
   entry.externalStartupBlastRunning = true;
+  entry.externalStartupBlastLockAt = Date.now();
   saveState();
   try {
     await refreshGuildMembersIfNeeded(guild);

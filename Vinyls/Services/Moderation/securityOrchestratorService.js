@@ -4,13 +4,22 @@ const { getJoinRaidStatusSnapshot } = require("./joinRaidService");
 const SECURITY_LOCK_CACHE_TTL_MS = 3000;
 const securityLockCache = new Map();
 
+function invalidateSecurityLockCache(guildId) {
+  if (guildId == null) {
+    securityLockCache.clear();
+    return;
+  }
+  securityLockCache.delete(String(guildId));
+}
+
 function buildSecurityLockDecision({ antiNukePanic = false, autoModPanic = false, joinRaid = false, lockAllCommands = false, joinRaidLockCommands = false } = {}) {
-  const joinLockActive = Boolean(antiNukePanic || joinRaid);
+  const joinLockActive = Boolean(antiNukePanic || joinRaid || autoModPanic);
   const commandLockByPanic = Boolean(lockAllCommands && antiNukePanic);
   const commandLockByJoinRaid = Boolean(joinRaid && joinRaidLockCommands);
   const commandLockActive = Boolean(commandLockByPanic || commandLockByJoinRaid);
   const sources = [];
   if (antiNukePanic) sources.push("AntiNuke panic");
+  if (autoModPanic) sources.push("AutoMod panic");
   if (joinRaid) sources.push("Join Raid");
   const commandSources = [];
   if (commandLockByPanic) {
@@ -81,4 +90,4 @@ async function shouldBlockIncomingJoins(guild) {
   return Boolean((await getSecurityLockState(guild)).joinLockActive);
 }
 
-module.exports = { buildSecurityLockDecision, getSecurityLockState, shouldBlockIncomingJoins };
+module.exports = { buildSecurityLockDecision, getSecurityLockState, shouldBlockIncomingJoins, invalidateSecurityLockCache };

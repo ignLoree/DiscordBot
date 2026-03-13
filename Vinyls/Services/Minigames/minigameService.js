@@ -5986,14 +5986,13 @@ async function handleMinigameMessage(message, client) {
     }
     const targetNorm = normalizeCountryName(game.target || "");
     const targetCompact = targetNorm ? compactNoSpaces(targetNorm) : "";
-    const match =
-      guessCandidates.includes(game.target) ||
-      guessCandidates.some(
-        (c) => {
-          const cNorm = normalizeCountryName(c);
-          return cNorm === targetNorm || (targetCompact && cNorm && compactNoSpaces(cNorm) === targetCompact);
-        },
+    const match = guessCandidates.some((c) => {
+      const cNorm = normalizeCountryName(c);
+      return (
+        cNorm === targetNorm ||
+        (targetCompact && cNorm && compactNoSpaces(cNorm) === targetCompact)
       );
+    });
     if (match) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
@@ -6665,8 +6664,32 @@ ${game.previewUrl}`,
   }
 
   const game = activeGames.get(cfg.channelId);
-  if (!game || game.type !== "findBot") return false;
-  if (interaction.customId !== game.customId) return false;
+  const isFindBotButton =
+    String(interaction.customId || "").startsWith("minigame_findbot:");
+  if (!game || game.type !== "findBot") {
+    if (isFindBotButton) {
+      await interaction
+        .reply({
+          content: "<:cancel:1461730653677551691> Partita già conclusa o non attiva.",
+          flags: 1 << 6,
+        })
+        .catch(() => {});
+      return true;
+    }
+    return false;
+  }
+  if (interaction.customId !== game.customId) {
+    if (isFindBotButton) {
+      await interaction
+        .reply({
+          content: "<:cancel:1461730653677551691> Questo pulsante non è più valido.",
+          flags: 1 << 6,
+        })
+        .catch(() => {});
+      return true;
+    }
+    return false;
+  }
 
   clearNoParticipationDelay(cfg.channelId);
   clearTimeout(game.timeout);
@@ -6706,10 +6729,20 @@ ${game.previewUrl}`,
     { guildId: interaction.guild.id, userId: { $ne: interaction.user.id } },
     { $set: { currentStreak: 0 } },
   ).catch((err) => warnMinigame(err));
-  try {
-    await addExpWithLevel(interaction.guild, interaction.user.id, effectiveExp, false, false);
-  } catch (err) {
-    warnMinigame(err);
+  const member =
+    interaction.member ||
+    (await interaction.guild.members.fetch(interaction.user.id).catch(() => null));
+  const ignoreExp = await shouldIgnoreExpForMember({
+    guildId: interaction.guild.id,
+    member,
+    channelId: cfg.channelId || null,
+  });
+  if (!ignoreExp) {
+    try {
+      await addExpWithLevel(interaction.guild, interaction.user.id, effectiveExp, false, false);
+    } catch (err) {
+      warnMinigame(err);
+    }
   }
 
   const details = (fastBonus > 0 || streakBonus > 0) ? { baseExp, fastBonus, streakBonus, newStreak, bestStreak } : null;
@@ -6721,7 +6754,6 @@ ${game.previewUrl}`,
   await interaction
     .reply({ content: "<a:VC_Events:1448688007438667796> Hai vinto!", flags: 1 << 6 })
     .catch(() => { });
-  const member = interaction.member || (await interaction.guild.members.fetch(interaction.user.id).catch(() => null));
   if (member) {
     await handleExpReward(interaction.client, member, nextTotal);
   }
@@ -7541,11 +7573,31 @@ function clearGameForChannel(channelId, client = null, guildId = null) {
   if (game) {
     if (game.timeout) clearTimeout(game.timeout);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
+    if (Array.isArray(game.censorRevealTimeouts))
+      game.censorRevealTimeouts.forEach((t) => clearTimeout(t));
   }
   activeGames.delete(id);
+  pendingGames.delete(id);
+  startingChannels.delete(id);
+  for (const [mainChId, g] of [...activeGames.entries()]) {
+    if (g?.type === "findBot" && String(g.channelId || "") === id) {
+      if (g.timeout) clearTimeout(g.timeout);
+      if (g.hintTimeout) clearTimeout(g.hintTimeout);
+      activeGames.delete(mainChId);
+      pendingGames.delete(mainChId);
+      startingChannels.delete(mainChId);
+      const gid = guildId || g.guildId || null;
+      if (gid)
+        MinigameState.deleteOne({ guildId: String(gid), channelId: mainChId }).catch(() => {});
+      break;
+    }
+  }
   if (guildId) {
     MinigameState.deleteOne({ guildId, channelId: id }).catch(() => { });
     MinigameRotation.deleteOne({ guildId, channelId: id }).catch(() => { });
+  } else {
+    MinigameState.deleteMany({ channelId: id }).catch(() => { });
+    MinigameRotation.deleteMany({ channelId: id }).catch(() => { });
   }
 }
 

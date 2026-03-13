@@ -1,6 +1,5 @@
 const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits, ChannelType, } = require("discord.js");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
-const { getNextTicketId } = require("./ticketIdUtils");
 const { TICKETS_CATEGORY_NAME, isTicketCategoryName, } = require("./ticketCategoryUtils");
 const { safeEditReply: safeEditReplyHelper } = require("../../../shared/discord/replyRuntime");
 const IDs = require("../Config/ids");
@@ -78,7 +77,6 @@ async function handleSponsorTicketOpen(interaction) {
     const emoji = config.emoji || "🎫";
     const tagName = config.tagName || "Supporto";
 
-    const ticketNumber = await getNextTicketId();
     const overwrites = [{ id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] }, { id: userId, allow: TICKET_PERMISSIONS_SPONSOR }];
     if (staffRoleId) overwrites.push({ id: staffRoleId, allow: TICKET_PERMISSIONS_SPONSOR });
 
@@ -117,7 +115,6 @@ async function handleSponsorTicketOpen(interaction) {
 
     try {
       await Ticket.create({
-        ticketNumber,
         guildId: guild.id,
         userId,
         channelId: channel.id,
