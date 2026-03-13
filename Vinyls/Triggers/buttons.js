@@ -442,8 +442,8 @@ module.exports = {
         return interaction.reply({
           content:
             values.length > 1
-              ? `Notifiche aggiornate: **${values.length}** ruoli. (Solo tu vedi questo messaggio.)`
-              : `Aggiornato: **${label}** — resta salvato fino al prossimo cambio. (Solo tu vedi questo messaggio.)`,
+              ? `Notifiche aggiornate: **${values.length}** ruoli.`
+              : `Aggiornato: **${label}**`,
           flags: 1 << 6,
         });
       } catch {
