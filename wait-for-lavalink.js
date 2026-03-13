@@ -8,6 +8,7 @@ const host = lastColon > 0 ? raw.slice(0, lastColon) : raw;
 const port = parseInt(lastColon > 0 ? raw.slice(lastColon + 1) : "2333", 10) || 2333;
 const maxWaitMs = 120000;
 const intervalMs = 2000;
+const settleMs = 4000;
 const start = Date.now();
 let attempts = 0;
 
@@ -54,12 +55,22 @@ function wait() {
     console.log("[wait-for-lavalink] Ancora in attesa su " + host + ":" + port + " (tentativo " + attempts + ")");
   }
   check().then((ok) => {
-    if (ok) {
-      console.log("[wait-for-lavalink] Lavalink raggiungibile, avvio bot.");
-      runLoader();
+    if (!ok) {
+      setTimeout(wait, intervalMs);
       return;
     }
-    setTimeout(wait, intervalMs);
+    console.log("[wait-for-lavalink] Lavalink raggiungibile, attendo " + settleMs / 1000 + "s (avvio JVM)...");
+    setTimeout(() => {
+      check().then((stillOk) => {
+        if (!stillOk) {
+          console.warn("[wait-for-lavalink] Lavalink non piu raggiungibile, continuo ad attendere.");
+          setTimeout(wait, intervalMs);
+          return;
+        }
+        console.log("[wait-for-lavalink] Avvio bot.");
+        runLoader();
+      });
+    }, settleMs);
   });
 }
 

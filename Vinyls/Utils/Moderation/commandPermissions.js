@@ -34,10 +34,13 @@ function isAllowedGuildUfficiale(guildId) {
   return !guildId || ALLOWED_GUILD_IDS.has(String(guildId));
 }
 function isAllowedGuildForComponents(guildId) {
-  if (!guildId) return true;
-  const s = String(guildId);
-  if (MAIN_GUILD_ID && s === String(MAIN_GUILD_ID)) return true;
-  return ALLOWED_GUILD_IDS.has(s) || sponsorIdsForComponents.has(s);
+  if (process.env.RESTRICT_COMPONENT_GUILDS === "1" || process.env.RESTRICT_COMPONENT_GUILDS === "true") {
+    if (!guildId) return true;
+    const s = String(guildId);
+    if (MAIN_GUILD_ID && s === String(MAIN_GUILD_ID)) return true;
+    return ALLOWED_GUILD_IDS.has(s) || sponsorIdsForComponents.has(s);
+  }
+  return true;
 }
 function isMainGuild(guildId) {
   return Boolean(MAIN_GUILD_ID) && String(guildId || "") === String(MAIN_GUILD_ID);
