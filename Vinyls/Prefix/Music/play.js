@@ -18,7 +18,9 @@ function getTrackSourceKey(track) {
 }
 
 function isSupportedPickerTrack(track) {
-  return getTrackSourceKey(track) === "spotify" || Boolean(track?.encoded && track?.resolverInput);
+  const k = getTrackSourceKey(track);
+  if (k === "youtube" || k === "radio") return true;
+  return Boolean(track?.encoded && track?.resolverInput);
 }
 
 function isConcretePlayableTrack(track) {
@@ -98,8 +100,8 @@ module.exports = {
   usage: "+play <link o ricerca>",
   examples: [
     "+play Tanti auguri a te",
-    "+play https://open.spotify.com/track/...",
-    "+play https://www.deezer.com/track/...",
+    "+play https://www.youtube.com/watch?v=...",
+    "+play https://open.spotify.com/track/... (cerca su YouTube)",
   ],
   async execute(message, args = []) {
     await message.channel.sendTyping();
@@ -141,16 +143,10 @@ module.exports = {
     if (!search?.ok) {
       if (search?.reason === "blocked_source") {
         const msg = search?.source === "apple"
-          ? "Apple Music non è supportato: usa **Deezer** o **Spotify**."
-          : search?.source === "unsupported_url"
-            ? "Solo link **Spotify** o **Deezer** (Deezer → riproduzione via Spotify)."
-            : "Sorgente non supportata (usa Deezer o Spotify).";
+          ? "Apple Music non è supportato: usa **YouTube**, testo o URL stream (radio)."
+          : "Sorgente non supportata (usa **YouTube** o link radio/stream).";
         const blockedSourceEmbed=new EmbedBuilder().setColor("#ED4245").setDescription(msg);
         return safeMessageReply(message, { embeds: [blockedSourceEmbed] });
-      }
-      if (search?.reason === "youtube_not_supported") {
-        const unsupportedYoutubeEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("YouTube non è supportato. Ricerca = catalogo **Deezer**, audio = **Spotify** (link open.spotify.com).");
-        return safeMessageReply(message, { embeds: [unsupportedYoutubeEmbed] });
       }
       if (search?.reason === "not_found") {
         const noResultsEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("No results \u26D4");

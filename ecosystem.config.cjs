@@ -12,16 +12,11 @@ try {
       if (eq < 1) continue;
       const key = t.slice(0, eq).trim();
       let val = t.slice(eq + 1).trim();
-      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-        val = val.slice(1, -1);
-      }
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) val = val.slice(1, -1);
       if (key) process.env[key] = val;
     }
   }
 } catch (_) {}
-
-const spotifyId = String(process.env.SPOTIFY_CLIENT_ID || "").trim();
-const spotifySecret = String(process.env.SPOTIFY_CLIENT_SECRET || "").trim();
 
 module.exports = {
   apps: [
@@ -35,10 +30,7 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: "768M",
-      env: {
-        SPOTIFY_CLIENT_ID: spotifyId,
-        SPOTIFY_CLIENT_SECRET: spotifySecret,
-      },
+      env: {},
     },
     {
       name: "bots",
