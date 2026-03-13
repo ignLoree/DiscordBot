@@ -915,7 +915,7 @@ const activeTicketInChannel = effectiveChannelId ? await Ticket.findOne({ channe
     }
 
     if (subcommand === "claim") {
-      const ticketDoc = await Ticket.findOne({ channelId: effectiveChannelId });
+      const ticketDoc = await Ticket.findOne({ channelId: effectiveChannelId, open: true });
       if (!ticketDoc) {
         await safeMessageReply(message, {
           embeds: [
@@ -1019,7 +1019,7 @@ const activeTicketInChannel = effectiveChannelId ? await Ticket.findOne({ channe
     }
 
     if (subcommand === "unclaim") {
-      const ticketDoc = await Ticket.findOne({ channelId: effectiveChannelId });
+      const ticketDoc = await Ticket.findOne({ channelId: effectiveChannelId, open: true });
       if (!ticketDoc) {
         await safeMessageReply(message, {
           embeds: [

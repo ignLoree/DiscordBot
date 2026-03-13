@@ -656,10 +656,6 @@ async function handleBoostUpdate(oldMember, newMember) {
   const boostKey = `${guildId}:${newMember.id}`;
 
   const{currentCount,countIncreased,boostDelta}=computeBoostDelta(oldMember,newMember,guildId,);
-  // oldMember spesso senza premiumSince in cache: oldBoostTs=0 anche se e gia booster →
-  // (newBoostTs !== oldBoostTs) scattava a ogni guildMemberUpdate. Annuncia solo se:
-  // - il server ha davvero piu boost, oppure
-  // - premiumSince e cambiato ma sapevamo gia che boostava (timestamp spostato / re-boost).
   const alreadyBoostingBefore = oldBoostTs > 0;
   const premiumSinceChanged =
     alreadyBoostingBefore && newBoostTs > 0 && newBoostTs !== oldBoostTs;

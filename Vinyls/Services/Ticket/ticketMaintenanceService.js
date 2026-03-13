@@ -110,7 +110,13 @@ function startTicketAutoClosePromptLoop(client) {
 }
 
 function walkTranscriptFiles(dir, out = []) {
-  const items = fs.readdirSync(dir, { withFileTypes: true });
+  if (!dir || !fs.existsSync(dir)) return out;
+  let items;
+  try {
+    items = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return out;
+  }
   for (const item of items) {
     const full = path.join(dir, item.name);
     if (item.isDirectory()) {

@@ -651,9 +651,10 @@ async function handleTicketInteraction(interaction) {
           }
           let claimedTicket = await Ticket.findOneAndUpdate(
             isHighStaffActor()
-              ? { channelId: interaction.channel.id }
+              ? { channelId: interaction.channel.id, open: true }
               : {
                 channelId: interaction.channel.id,
+                open: true,
                 $or: [
                   { claimedBy: null },
                   { claimedBy: { $exists: false } },
@@ -664,7 +665,7 @@ async function handleTicketInteraction(interaction) {
             { new: true },
           ).catch(() => null);
           if (!claimedTicket) {
-            claimedTicket = await runtimeFindTicketByChannel(interaction.channel.id);
+            claimedTicket = await Ticket.findOne({ channelId: interaction.channel.id, open: true }).catch(() => null);
             if (!claimedTicket) {
               await safeReply(interaction, {
                 embeds: [
@@ -898,7 +899,9 @@ async function handleTicketInteraction(interaction) {
             });
             return true;
           }
-          const unclaimQuery = isHighStaffActor() ? { channelId: interaction.channel.id } : { channelId: interaction.channel.id, claimedBy: interaction.user.id };
+          const unclaimQuery = isHighStaffActor()
+            ? { channelId: interaction.channel.id, open: true }
+            : { channelId: interaction.channel.id, open: true, claimedBy: interaction.user.id };
           const unclaimedTicket = await Ticket.findOneAndUpdate(unclaimQuery, { $set: { claimedBy: null } }, { new: true },).catch(() => null);
           if (!unclaimedTicket) {
             await safeReply(interaction, {
