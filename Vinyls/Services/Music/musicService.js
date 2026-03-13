@@ -537,6 +537,17 @@ async function ensureQueue(client, guild, channel, voiceChannel) {
   const guildId = String(guild?.id || "");
   let queue = queues.get(guildId) || null;
   const manager = client.musicPlayer?.manager || (await getPlayer(client)).manager;
+  const targetVcId = String(voiceChannel?.id || "");
+  const botVc = guild?.members?.me?.voice?.channel;
+  const botVcId = botVc?.id ? String(botVc.id) : "";
+  if (
+    queue &&
+    targetVcId &&
+    (String(queue.voiceChannelId) !== targetVcId || !botVcId || botVcId !== targetVcId)
+  ) {
+    await destroyQueue(guildId, { manual: true });
+    queue = null;
+  }
   if (!queue) {
     const isIpDiscoveryError = (err) => {
       const msg = String(err?.message || "").toLowerCase();
@@ -776,36 +787,45 @@ async function touchMusicOutputChannel(client, guildId, channel) {
 }
 
 async function playRadioStation({ client, guild, channel, voiceChannel, station }) {
-  const player = await getPlayer(client);
-  const manager = player.manager;
-  const playableUrl = await resolvePlayableRadioUrl(station.streamUrl).catch(() => "");
-  const targetUrl = playableUrl || String(station.streamUrl || "").trim();
-  logMusic("radio_resolve", {
-    station: station?.name,
-    originalUrl: station?.streamUrl,
-    playableUrl,
-    targetUrl,
-  });
-  const result = await resolveIdentifier(manager, targetUrl).catch(() => null);
-  logMusic("radio_result", {
-    station: station?.name,
-    targetUrl,
-    loadType: result?.loadType || "none",
-  });
-  const parsed = tracksFromLavalinkResponse(result, null, { resolverInput: targetUrl, originalQuery: station.name, source: "radio", station, url: targetUrl, });
-  const track = parsed.tracks[0] || null;
-  if (!track) return { ok: false, reason: "not_found" };
+  try {
+    const player = await getPlayer(client);
+    const manager = player.manager;
+    const playableUrl = await resolvePlayableRadioUrl(station.streamUrl).catch(() => "");
+    const targetUrl = playableUrl || String(station.streamUrl || "").trim();
+    logMusic("radio_resolve", {
+      station: station?.name,
+      originalUrl: station?.streamUrl,
+      playableUrl,
+      targetUrl,
+    });
+    const result = await resolveIdentifier(manager, targetUrl).catch(() => null);
+    logMusic("radio_result", {
+      station: station?.name,
+      targetUrl,
+      loadType: result?.loadType || result?.load_type || "none",
+    });
+    const parsed = tracksFromLavalinkResponse(result, null, { resolverInput: targetUrl, originalQuery: station.name, source: "radio", station, url: targetUrl, });
+    const track = parsed.tracks[0] || null;
+    if (!track?.encoded) {
+      logMusic("radio_no_encoded", { station: station?.name, hasTrack: Boolean(track) });
+      return { ok: false, reason: "not_found" };
+    }
 
-  const currentSession = getVoiceSession(guild?.id);
-  if (currentSession?.mode === "tts") {
-    await leaveTtsGuild(guild?.id, client).catch(() => null);
+    const currentSession = getVoiceSession(guild?.id);
+    if (currentSession?.mode === "tts") {
+      await leaveTtsGuild(guild?.id, client).catch(() => null);
+    }
+
+    const queue = await ensureQueue(client, guild, channel, voiceChannel);
+    queue.tracks = [];
+    setVoiceSession(guild?.id, { mode: "music", channelId: voiceChannel?.id });
+    await playTrack(queue, track);
+    return { ok: true, track, queue };
+  } catch (err) {
+    logMusic("radio_error", { station: station?.name, message: err?.message || String(err) });
+    global.logger?.error?.("[MUSIC] playRadioStation:", err?.message || err);
+    return { ok: false, reason: "internal_error", error: err };
   }
-
-  const queue = await ensureQueue(client, guild, channel, voiceChannel);
-  queue.tracks = [];
-  setVoiceSession(guild?.id, { mode: "music", channelId: voiceChannel?.id });
-  await playTrack(queue, track);
-  return { ok: true, track, queue };
 }
 
 function getQueue(guildId) {

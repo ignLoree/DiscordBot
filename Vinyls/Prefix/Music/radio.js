@@ -1,4 +1,4 @@
-const{EmbedBuilder,ActionRowBuilder,StringSelectMenuBuilder,ButtonBuilder,ButtonStyle,ComponentType,}=require("discord.js");
+const{EmbedBuilder,ActionRowBuilder,StringSelectMenuBuilder,ButtonBuilder,ButtonStyle,ComponentType,MessageFlags,}=require("discord.js");
 const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const{playRadioStation,touchMusicOutputChannel,}=require("../../Services/Music/musicService");
 const { getItalianStations } = require("../../Services/Music/radioService");
@@ -140,7 +140,7 @@ module.exports = {
 
     buttonCollector.on("collect", async (interaction) => {
       if (interaction.user.id !== message.author.id) {
-        await interaction.reply({ content: "Solo chi ha avviato il comando può usare il pannello.", ephemeral: true }).catch(() => {});
+        await interaction.reply({ content: "Solo chi ha avviato il comando può usare il pannello.", flags: MessageFlags.Ephemeral }).catch(() => {});
         return;
       }
 
@@ -161,29 +161,40 @@ module.exports = {
 
     selectCollector.on("collect", async (interaction) => {
       if (interaction.user.id !== message.author.id) {
-        await interaction.reply({ content: "Solo chi ha avviato il comando può usare il pannello.", ephemeral: true }).catch(() => {});
+        await interaction.reply({ content: "Solo chi ha avviato il comando può usare il pannello.", flags: MessageFlags.Ephemeral }).catch(() => {});
         return;
       }
 
       const pickedIndex = Number(interaction.values?.[0] || -1);
       const station = Number.isFinite(pickedIndex) ? stations[pickedIndex] : null;
       if (!station) {
-        await interaction.reply({ content: "Stazione non valida.", ephemeral: true }).catch(() => {});
+        await interaction.reply({ content: "Stazione non valida.", flags: MessageFlags.Ephemeral }).catch(() => {});
         return;
       }
 
       const currentBotVoiceChannel = message.guild?.members?.me?.voice?.channel || null;
       if (currentBotVoiceChannel && currentBotVoiceChannel.id !== voiceChannel.id) {
-        await interaction.reply({ embeds: [buildSessionInUseEmbed(currentBotVoiceChannel)], ephemeral: true }).catch(() => {});
+        await interaction.reply({ embeds: [buildSessionInUseEmbed(currentBotVoiceChannel)], flags: MessageFlags.Ephemeral }).catch(() => {});
         return;
       }
 
-      const result=await playRadioStation({client:message.client,guild:message.guild,channel:message.channel,voiceChannel,station,}).catch((error) => ({ok:false,reason:"internal_error",error}));
+      await interaction.deferUpdate().catch(() => {});
+
+      const result = await playRadioStation({
+        client: message.client,
+        guild: message.guild,
+        channel: message.channel,
+        voiceChannel,
+        station,
+      });
 
       if (!result?.ok) {
-        await interaction.reply({
-          content: "Questa stazione non ha risposto correttamente allo stream. Prova un'altra emittente.",
-          ephemeral: true,
+        await interaction.followUp({
+          content:
+            result?.reason === "internal_error"
+              ? "Errore avvio radio (voce/Lavalink). Rientra in vocale e riprova."
+              : "Questa stazione non ha risposto allo stream. Prova un'altra emittente.",
+          flags: MessageFlags.Ephemeral,
         }).catch(() => {});
         return;
       }
@@ -193,8 +204,8 @@ module.exports = {
       await interaction.message.delete().catch(() => {});
 
       const startedEmbed = new EmbedBuilder()
-      .setColor("#1f2328")
-      .setDescription(`Started playing **${station.name}**`);
+        .setColor("#1f2328")
+        .setDescription(`Started playing **${station.name}**`);
       await message.channel.send({ embeds: [startedEmbed] }).catch(() => {});
     });
 
