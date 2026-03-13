@@ -7,5 +7,6 @@ if [[ ! -f "$ENV" ]]; then
   exit 1
 fi
 cd "$DIR"
+mkdir -p "$DIR/backups"
 docker compose --env-file "$ENV" -f docker-mongodb-compose.yml up -d
 docker compose -f docker-mongodb-compose.yml ps

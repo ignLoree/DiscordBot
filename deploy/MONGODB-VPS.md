@@ -1,5 +1,15 @@
 # MongoDB sulla VPS (Docker)
 
+## Se vedi `lstat .../backups: no such file`
+
+La cartella **non è su git**. Creala una volta:
+
+```bash
+mkdir -p /opt/bot/deploy/backups
+```
+
+Da ora **`start-mongo.sh`** crea anche `backups/` da solo.
+
 ## Una tantum sulla VPS (fa quasi tutto)
 
 ```bash
