@@ -495,7 +495,11 @@ function attachPlayerEvents(queue) {
     clearTimer(emptyVoiceTimers, queue.guildId);
     logMusic("player_start", { guildId: queue.guildId, track: queue.currentTrack?.title, source: queue.currentTrack?.source });
   });
+  queue._lastPositionWrite = 0;
   queue.player.on("update", (data) => {
+    const now = Date.now();
+    if (now - (queue._lastPositionWrite || 0) < 1500) return;
+    queue._lastPositionWrite = now;
     queue.positionMs = Number(data?.state?.position || 0);
   });
   queue.player.on("end", async (data) => {
@@ -541,7 +545,7 @@ async function ensureQueue(client, guild, channel, voiceChannel) {
     let player = null;
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        player = await manager.joinVoiceChannel({ guildId, channelId: String(voiceChannel.id), shardId: Number(guild?.shardId || 0), deaf: true, mute: false, });
+        player = await manager.joinVoiceChannel({ guildId, channelId: String(voiceChannel.id), shardId: Number(guild?.shardId || 0), deaf: false, mute: false, });
         break;
       } catch (err) {
         if (isIpDiscoveryError(err) && attempt === 1) {

@@ -1,0 +1,15 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: vc-mongodb
+    restart: unless-stopped
+    env_file:
+      - .env.mongo
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    command: ["mongod", "--bind_ip_all"]
+
+volumes:
+  mongodb_data:

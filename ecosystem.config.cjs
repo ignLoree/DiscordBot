@@ -25,11 +25,11 @@ module.exports = {
       cwd: path.join(base, "Lavalink"),
       script: path.join(base, "Lavalink", "Lavalink.jar"),
       interpreter: "java",
-      interpreter_args: "-jar",
+      interpreter_args: "-Xms256m -Xmx768m -XX:+UseG1GC -XX:+ParallelRefProcEnabled -jar",
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "768M",
+      max_memory_restart: "1200M",
       env: {},
     },
     {
