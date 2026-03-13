@@ -22,6 +22,22 @@ docker compose --env-file /opt/bot/deploy/.env.mongo -f /opt/bot/deploy/docker-m
 
 ## File `.env.mongo` (due righe)
 
+Dentro **`/opt/bot/deploy`**:
+
+```bash
+git pull
+ls -la .env.mongo.example
+```
+
+Se **`cp .env.mongo.example .env.mongo`** dice *No such file* → non hai ancora l’ultimo repo sul server. **`git pull`** nella cartella del bot, poi riprova. Se ancora manca, crea il file a mano (stesso identico effetto):
+
+```bash
+printf '%s\n' 'MONGO_INITDB_ROOT_USERNAME=vinili' 'MONGO_INITDB_ROOT_PASSWORD=LA_TUA_PASSWORD' > /opt/bot/deploy/.env.mongo
+chmod 600 /opt/bot/deploy/.env.mongo
+```
+
+Template (copiabile):
+
 ```
 MONGO_INITDB_ROOT_USERNAME=vinili
 MONGO_INITDB_ROOT_PASSWORD=password_sicura
