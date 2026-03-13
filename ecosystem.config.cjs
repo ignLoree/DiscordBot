@@ -1,10 +1,27 @@
-/**
- * PM2: avvia Lavalink e poi i bot.
- * Sul VPS: pm2 start ecosystem.config.cjs
- * Comandi: pm2 status | pm2 logs | pm2 restart all
- */
+const fs = require("fs");
 const path = require("path");
 const base = path.resolve(__dirname);
+const envPath = path.join(base, ".env");
+try {
+  if (fs.existsSync(envPath)) {
+    const text = fs.readFileSync(envPath, "utf8");
+    for (const line of text.split(/\n/)) {
+      const t = line.trim();
+      if (!t || t.startsWith("#")) continue;
+      const eq = t.indexOf("=");
+      if (eq < 1) continue;
+      const key = t.slice(0, eq).trim();
+      let val = t.slice(eq + 1).trim();
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.slice(1, -1);
+      }
+      if (key) process.env[key] = val;
+    }
+  }
+} catch (_) {}
+
+const spotifyId = String(process.env.SPOTIFY_CLIENT_ID || "").trim();
+const spotifySecret = String(process.env.SPOTIFY_CLIENT_SECRET || "").trim();
 
 module.exports = {
   apps: [
@@ -19,8 +36,8 @@ module.exports = {
       watch: false,
       max_memory_restart: "768M",
       env: {
-        SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID || "",
-        SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET || "",
+        SPOTIFY_CLIENT_ID: spotifyId,
+        SPOTIFY_CLIENT_SECRET: spotifySecret,
       },
     },
     {
