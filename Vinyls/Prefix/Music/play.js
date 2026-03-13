@@ -114,6 +114,11 @@ module.exports = {
     }
 
     const botVoiceChannel = message.guild?.members?.me?.voice?.channel || null;
+    const { destroyQueue } = require("../../Services/Music/musicService");
+    const { getVoiceSession } = require("../../Services/Voice/voiceSessionService");
+    if (getVoiceSession(message.guild?.id)?.mode === "music" && !botVoiceChannel) {
+      await destroyQueue(message.guild.id, { manual: true }).catch(() => null);
+    }
     if (botVoiceChannel && botVoiceChannel.id !== voiceChannel.id) {
       return safeMessageReply(message, {
         embeds: [buildSessionInUseEmbed(botVoiceChannel)],

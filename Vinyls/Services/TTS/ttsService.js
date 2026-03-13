@@ -213,7 +213,7 @@ const TTS_ABBREVIATIONS_EN = {
   ong: "on god", "no-cap": "no cap", capping: "lying", period: "period", facts: "facts",
   iconic: "iconic", legend: "legend", legendary: "legendary", king: "king", queen: "queen",
   ship: "ship", shipping: "shipping", otp: "one true pairing", au: "alternate universe",
-  cosplay: "cosplay", cos: "cosplay", merch: "merchandise", sponsored: "sponsored",
+  cosplay: "cosplay", merch: "merchandise", sponsored: "sponsored",
   wfh: "work from home", f2f: "face to face", ping: "ping", fps: "frames per second",
   rpg: "role playing game", mmo: "massively multiplayer online", pvp: "player versus player",
   pve: "player versus environment", npc: "non player character", mob: "mob", boss: "boss",
@@ -617,10 +617,17 @@ function enqueue(state, item) {
 async function handleTtsMessage(message, client, prefix) {
   const config = client?.config;
   if (message?.author?.bot) return;
-  const voiceSession = getVoiceSession(message.guild?.id);
+  const guildId = message.guild?.id;
+  const botVc = message.guild?.members?.me?.voice?.channel;
+  let voiceSession = getVoiceSession(guildId);
+  if (voiceSession?.mode === "music" && !botVc) {
+    const { destroyQueue } = require("../Music/musicService");
+    await destroyQueue(guildId, { manual: true }).catch(() => null);
+    voiceSession = getVoiceSession(guildId);
+  }
   if (voiceSession?.mode === "music") return;
-  const musicQueue = client?.musicPlayer?.nodes?.get?.(message.guild?.id);
-  if (musicQueue?.connection) return;
+  const { getQueue } = require("../Music/musicService");
+  if (getQueue(guildId) && botVc) return;
   if (!shouldHandleMessage(message, config, prefix)) return;
   if (!message.member && message.guild?.members?.fetch) {
     try {
@@ -855,5 +862,9 @@ function setTtsLockedChannel(guildId, channelId) {
   if (!guildId || !channelId) return;
   setLockedChannel(guildId, channelId);
 }
+function clearGuildTtsLock(guildId) {
+  if (guildId == null) return;
+  guildLocks.delete(String(guildId));
+}
 
-module.exports = { handleTtsMessage, armTtsChannel, joinTtsChannel, leaveTtsGuild, setTtsLockedChannel, setUserTtsLang, getUserTtsLang, restoreTtsConnections };
+module.exports = { handleTtsMessage, armTtsChannel, joinTtsChannel, leaveTtsGuild, setTtsLockedChannel, clearGuildTtsLock, setUserTtsLang, getUserTtsLang, restoreTtsConnections };

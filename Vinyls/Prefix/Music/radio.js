@@ -1,6 +1,6 @@
 const{EmbedBuilder,ActionRowBuilder,StringSelectMenuBuilder,ButtonBuilder,ButtonStyle,ComponentType,MessageFlags,}=require("discord.js");
 const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
-const{playRadioStation,touchMusicOutputChannel,}=require("../../Services/Music/musicService");
+const{playRadioStation,touchMusicOutputChannel,destroyQueue,getVoiceSession,}=require("../../Services/Music/musicService");
 const { getItalianStations } = require("../../Services/Music/radioService");
 
 const PAGE_SIZE = 10;
@@ -99,6 +99,9 @@ module.exports = {
     }
 
     const botVoiceChannel = message.guild?.members?.me?.voice?.channel || null;
+    if (getVoiceSession(message.guild?.id)?.mode === "music" && !botVoiceChannel) {
+      await destroyQueue(message.guild.id, { manual: true }).catch(() => null);
+    }
     if (botVoiceChannel && botVoiceChannel.id !== voiceChannel.id) {
       return safeMessageReply(message, { embeds: [buildSessionInUseEmbed(botVoiceChannel)] });
     }

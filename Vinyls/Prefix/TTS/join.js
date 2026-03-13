@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { joinTtsChannel } = require("../../Services/TTS/ttsService");
+const { destroyQueue } = require("../../Services/Music/musicService");
 const { setVoiceSession, getVoiceSession } = require("../../Services/Voice/voiceSessionService");
 const { EPHEMERAL_TTL_SHORT_MS, scheduleMessageDeletion } = require("../../Utils/Config/ephemeralMessageTtl");
 
@@ -32,6 +33,9 @@ module.exports = {
 
     const activeSession = getVoiceSession(message.guild?.id);
     const botVoiceChannel = message.guild?.members?.me?.voice?.channel || null;
+    if (activeSession?.mode === "music" && !botVoiceChannel) {
+      await destroyQueue(message.guild.id, { manual: true }).catch(() => null);
+    }
     if (
       activeSession?.mode === "music" &&
       botVoiceChannel &&

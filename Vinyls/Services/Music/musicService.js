@@ -1,6 +1,6 @@
 const axios = require("axios");
 const { EmbedBuilder } = require("discord.js");
-const { leaveTtsGuild, setTtsLockedChannel } = require("../TTS/ttsService");
+const { leaveTtsGuild, clearGuildTtsLock } = require("../TTS/ttsService");
 const { resolvePlayableRadioUrl } = require("./radioService");
 const { getVoiceSession, setVoiceSession, clearVoiceSession, } = require("../Voice/voiceSessionService");
 
@@ -612,7 +612,34 @@ async function destroyQueue(guildId, { manual = false } = {}) {
   queue.tracks = [];
   queue.currentTrack = null;
   await queue.player.destroy().catch(() => { });
-  if (voiceChannelId) setTtsLockedChannel(key, voiceChannelId);
+  clearGuildTtsLock(key);
+  return true;
+}
+
+async function forceDisconnectGuildVoice(client, guildId) {
+  const key = String(guildId || "");
+  if (!key || !client) return false;
+  clearTimer(inactivityTimers, key);
+  clearTimer(emptyVoiceTimers, key);
+  clearVoiceSession(key);
+  const queue = queues.get(key);
+  if (queue) {
+    queues.delete(key);
+    queue.manualDisconnect = true;
+    queue.tracks = [];
+    queue.currentTrack = null;
+    await queue.player.destroy().catch(() => { });
+  } else if (Shoukaku && client.musicPlayer?.manager?.players) {
+    const player = client.musicPlayer.manager.players.get(key);
+    if (player) await player.destroy().catch(() => { });
+  } else {
+    try {
+      await getPlayer(client);
+      const player = client.musicPlayer?.manager?.players?.get(key);
+      if (player) await player.destroy().catch(() => { });
+    } catch (_) {}
+  }
+  clearGuildTtsLock(key);
   return true;
 }
 
@@ -837,6 +864,19 @@ async function handleMusicVoiceStateUpdate(oldState, newState, client) {
   if (!guild?.id || !client?.user?.id) return;
   const queue = queues.get(String(guild.id));
   if (!queue) return;
+  const botId = String(client.user.id);
+  const isBot = String(oldState?.id || newState?.id || "") === botId;
+  if (isBot) {
+    const wasInQueueVc =
+      oldState?.channelId && String(oldState.channelId) === String(queue.voiceChannelId);
+    const nowInQueueVc =
+      newState?.channelId && String(newState.channelId) === String(queue.voiceChannelId);
+    if (wasInQueueVc && !nowInQueueVc) {
+      logMusic("bot_voice_disconnect", { guildId: guild.id, reason: "kicked_or_left" });
+      await destroyQueue(String(guild.id), { manual: false });
+      return;
+    }
+  }
   const botMember = guild.members?.me || guild.members?.cache?.get(client.user.id);
   const botChannel = botMember?.voice?.channel;
   if (!botChannel || String(botChannel.id) !== String(queue.voiceChannelId)) return;
@@ -857,5 +897,6 @@ module.exports = {
   playRadioStation,
   touchMusicOutputChannel,
   destroyQueue,
+  forceDisconnectGuildVoice,
   handleMusicVoiceStateUpdate,
 };
