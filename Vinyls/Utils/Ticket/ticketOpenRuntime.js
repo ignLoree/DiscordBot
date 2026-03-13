@@ -1,4 +1,4 @@
-const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits, ChannelType, } = require("discord.js");
+const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits, ChannelType, MessageFlags, } = require("discord.js");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
 const { TICKETS_CATEGORY_NAME, isTicketCategoryName, } = require("./ticketCategoryUtils");
 const { safeEditReply: safeEditReplyHelper } = require("../../../shared/discord/replyRuntime");
@@ -10,7 +10,13 @@ const TICKET_PERMISSIONS_SPONSOR = [PermissionFlagsBits.ViewChannel, PermissionF
 async function handleSponsorTicketOpen(interaction) {
   const guild = interaction.guild;
   const userId = interaction.user.id;
-  await interaction.deferReply({ ephemeral: true }).catch(() => null);
+  if (!interaction.deferred && !interaction.replied) {
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral }).catch(() => null);
+  }
+  if (!interaction.deferred) {
+    await interaction.reply({ content: "<:vegax:1443934876440068179> Riprova tra un attimo.", flags: MessageFlags.Ephemeral }).catch(() => null);
+    return true;
+  }
 
   if (!interaction.client.ticketOpenLocks) interaction.client.ticketOpenLocks = new Set();
 

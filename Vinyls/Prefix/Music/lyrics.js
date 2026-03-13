@@ -1,4 +1,4 @@
-const{EmbedBuilder,ActionRowBuilder,ButtonBuilder,ButtonStyle,ComponentType,}=require("discord.js");
+const{EmbedBuilder,ActionRowBuilder,ButtonBuilder,ButtonStyle,ComponentType,MessageFlags,}=require("discord.js");
 const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const{getQueue,searchLyrics,touchMusicOutputChannel,}=require("../../Services/Music/musicService");
 const { pickFromPagedMenu } = require("../../Services/Music/pagedPickerService");
@@ -119,7 +119,7 @@ module.exports = {
       if (interaction.user.id !== message.author.id) {
         await interaction.reply({
           content: "Solo chi ha richiesto i lyrics può cambiare pagina.",
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         }).catch(() => {});
         return;
       }

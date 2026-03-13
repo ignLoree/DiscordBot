@@ -344,6 +344,7 @@ async function resolveMentionLabel(interaction, userId) {
 }
 
 async function sendPrivacyViewsLeaderboard(interaction, Model, title) {
+  await interaction.deferReply({ flags: PRIVATE_FLAG }).catch(() => null);
   const guildId = interaction.guild.id;
   const top = await Model.find({ guildId }).sort({ views: -1 }).limit(10).lean().catch(() => []);
 
@@ -366,7 +367,8 @@ async function sendPrivacyViewsLeaderboard(interaction, Model, title) {
 
   const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setTitle(title).setDescription(description).setFooter({ text: footerText, iconURL: interaction.user.displayAvatarURL(), });
 
-  return interaction.reply({ embeds: [embed], flags: PRIVATE_FLAG });
+  if (interaction.deferred) return interaction.editReply({ embeds: [embed] }).catch(() => null);
+  return interaction.reply({ embeds: [embed], flags: PRIVATE_FLAG }).catch(() => null);
 }
 
 module.exports = {
@@ -390,30 +392,34 @@ module.exports = {
       const member = interaction.member;
       if (!member) return;
 
+      await interaction.deferReply({ flags: PRIVATE_FLAG }).catch(() => null);
+      if (!interaction.deferred) {
+        return interaction.reply({ content: "<:vegax:1443934876440068179> Riprova tra un attimo.", flags: PRIVATE_FLAG }).catch(() => null);
+      }
+
+      const replyOrEdit = (payload) => interaction.editReply(payload).catch(() => null);
+
       try {
         if (!values.length || values.includes("remove")) {
           await removeMemberRolesSequential(member, roleIds);
           const refreshedMember = await interaction.guild?.members?.fetch?.(interaction.user.id).catch(() => null);
           const stillHasManagedRole = Array.isArray(roleIds) && roleIds.some((roleId) => refreshedMember?.roles?.cache?.has?.(roleId));
           if (stillHasManagedRole) {
-            return interaction.reply({
+            return replyOrEdit({
               content: "<:vegax:1443934876440068179> Impossibile aggiornare il ruolo. Verifica che il ruolo del bot sia **sopra** i ruoli del pannello Personalità (Impostazioni server → Ruoli).",
-              flags: 1 << 6,
             });
           }
-          return interaction.reply({
+          return replyOrEdit({
             content: "Ruoli rimossi correttamente.",
-            flags: 1 << 6,
           });
         }
         if (menuId === "personality_colors_plus") {
           const hasEventWeek2 = interaction.guildId && interaction.user?.id && (await require("../Services/Community/activityEventRewardsService").hasEventWeekWinnerGrant(interaction.guildId, interaction.user.id, 2).catch(() => false));
           const allowed = member.roles.cache.has(IDs.roles.ServerBooster) || member.roles.cache.has(IDs.roles.Level50) || hasEventWeek2;
           if (!allowed) {
-            return interaction.reply({
+            return replyOrEdit({
               content:
                 "<:vegax:1443934876440068179> Non puoi selezionare i Colori PLUS. Servono i ruoli richiesti.",
-              flags: 1 << 6,
             });
           }
         }
@@ -424,33 +430,29 @@ module.exports = {
         const appliedAll = values.every((roleId) => m?.roles?.cache?.has?.(roleId));
         const stillOld = roleIds.some((rid) => values.every((v) => String(v) !== String(rid)) && m?.roles?.cache?.has?.(rid));
         if (menuId === "personality_dm" && stillOld) {
-          return interaction.reply({
+          return replyOrEdit({
             content: "<:vegax:1443934876440068179> Non sono riuscito a togliere il vecchio stato DM. Metti il **ruolo del bot** sopra i ruoli DMs Opened / Closed / Ask (Server → Ruoli → trascina il bot sopra).",
-            flags: 1 << 6,
           });
         }
         if (!appliedAll) {
-          return interaction.reply({
+          return replyOrEdit({
             content: "<:vegax:1443934876440068179> Impossibile aggiornare il ruolo.",
-            flags: 1 << 6,
           });
         }
         const primary = values[0];
         const label =
           findStringSelectOptionLabel(interaction.message, menuId, primary) ||
           (values.length > 1 ? `${values.length} notifiche` : primary);
-        return interaction.reply({
+        return replyOrEdit({
           content:
             values.length > 1
               ? `Notifiche aggiornate: **${values.length}** ruoli.`
               : `Aggiornato: **${label}**`,
-          flags: 1 << 6,
         });
       } catch {
-        return interaction.reply({
+        return replyOrEdit({
           content:
             "<:vegax:1443934876440068179> Impossibile aggiornare il ruolo.",
-          flags: 1 << 6,
         });
       }
     }

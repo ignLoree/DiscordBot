@@ -1,4 +1,4 @@
-const { EmbedBuilder, PermissionsBitField, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ComponentType, } = require("discord.js");
+const { EmbedBuilder, PermissionsBitField, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ComponentType, MessageFlags, } = require("discord.js");
 const IDs = require("../Config/ids");
 const { ModCase } = require("../../Schemas/Moderation/moderationSchemas");
 const { appendCaseEdit, closeCase, createModCase, getModConfig, logModCase, parseDuration, formatDuration } = require("./moderation");
@@ -294,7 +294,7 @@ async function sendTemproleHelpWithMenu(message) {
       await interaction
         .reply({
           content: "<:VC_Lock:1468544444113617063> Puoi usare questo menu solo sul tuo comando.",
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         })
         .catch(() => { });
       return;

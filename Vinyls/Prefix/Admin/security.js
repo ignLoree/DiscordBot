@@ -1,4 +1,4 @@
-const{EmbedBuilder,PermissionsBitField,ActionRowBuilder,ButtonBuilder,ButtonStyle,}=require("discord.js");
+const{EmbedBuilder,PermissionsBitField,ActionRowBuilder,ButtonBuilder,ButtonStyle,MessageFlags,}=require("discord.js");
 const IDs = require("../../Utils/Config/ids");
 const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const{getAntiNukeStatusSnapshot,stopAntiNukePanic,triggerAntiNukePanicExternal,setAntiNukeConfigSnapshot,}=require("../../Services/Moderation/antiNukeService");
@@ -227,7 +227,7 @@ async function openSecurityStaticsPanel(message) {
       if (interaction.user.id !== message.author.id) {
         await interaction.reply({
           content: "<:vegax:1443934876440068179> Solo chi ha aperto il pannello può usarlo.",
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         }).catch(() => null);
         return;
       }

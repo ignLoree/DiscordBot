@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ComponentType } = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ComponentType, MessageFlags } = require("discord.js");
 
 const GUIDE_COLOR = "#3498DB";
 const GUIDE_LIFETIME_MS = 10 * 60 * 1000;
@@ -110,7 +110,7 @@ async function showPrefixUsageGuide({ message, command, prefix = "-", deleteComm
   collector.on("collect", async (interaction) => {
     if (interaction.user.id !== message.author.id) {
       await interaction
-        .reply({ content: "Questo menu non è tuo.", ephemeral: true })
+        .reply({ content: "Questo menu non è tuo.", flags: MessageFlags.Ephemeral })
         .catch(() => {});
       return;
     }

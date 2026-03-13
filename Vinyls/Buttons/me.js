@@ -1,4 +1,4 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, MessageFlags } = require("discord.js");
 const { getUserOverviewStats } = require("../Services/Community/activityService");
 const { resolveTopChannelEntries } = require("../Prefix/Stats/top");
 const { renderUserActivityCanvas } = require("../Utils/Render/activityCanvas");
@@ -49,7 +49,7 @@ async function execute(interaction, client) {
       await interaction.editReply(payload).catch(() => interaction.followUp(payload).catch(() => { }));
     } else {
       await interaction.update(payload).catch(async () => {
-        await interaction.reply({ ...payload, ephemeral: true }).catch(() => { });
+        await interaction.reply({ ...payload, flags: MessageFlags.Ephemeral }).catch(() => { });
       });
     }
     return true;

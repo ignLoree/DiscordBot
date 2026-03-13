@@ -1,4 +1,4 @@
-const{EmbedBuilder,ActionRowBuilder,StringSelectMenuBuilder,ButtonBuilder,ButtonStyle,ComponentType,}=require("discord.js");
+const{EmbedBuilder,ActionRowBuilder,StringSelectMenuBuilder,ButtonBuilder,ButtonStyle,ComponentType,MessageFlags,}=require("discord.js");
 const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -100,7 +100,7 @@ async function pickFromPagedMenu({
     if (interaction.user.id !== message.author.id) {
       await interaction.reply({
         content: "Solo chi ha avviato il comando può usare il pannello.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       }).catch(() => {});
       return;
     }
@@ -134,13 +134,13 @@ async function pickFromPagedMenu({
     if (interaction.user.id !== message.author.id) {
       await interaction.reply({
         content: "Solo chi ha avviato il comando può usare il pannello.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       }).catch(() => {});
       return;
     }
     const picked = Number(interaction.values?.[0] || -1);
     if (!Number.isFinite(picked) || picked < 0 || picked >= items.length) {
-      await interaction.reply({ content: "Selezione non valida.", ephemeral: true }).catch(() => {});
+      await interaction.reply({ content: "Selezione non valida.", flags: MessageFlags.Ephemeral }).catch(() => {});
       return;
     }
     resolved = items[picked];

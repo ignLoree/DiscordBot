@@ -122,7 +122,7 @@ async function finalizeVerification(interaction, member) {
       return null;
     });
     if (pingMsg) {
-      const t = setTimeout(() => pingMsg.delete().catch(() => {}), 1);
+      const t = setTimeout(() => pingMsg.delete().catch(() => {}), 2);
       if (t?.unref) t.unref();
     }
   }

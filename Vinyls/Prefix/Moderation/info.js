@@ -1,4 +1,4 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, PermissionsBitField, UserFlagsBitField, } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, PermissionsBitField, UserFlagsBitField, MessageFlags, } = require("discord.js");
 const IDs = require("../../Utils/Config/ids");
 const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const { getAutoModMemberSnapshot, isAutoModRoleExemptMember, } = require("../../Services/Moderation/automodService");
@@ -224,7 +224,7 @@ module.exports = {
           await interaction
             .reply({
               content: "Solo chi ha usato il comando può usare questi pulsanti.",
-              ephemeral: true,
+              flags: MessageFlags.Ephemeral,
             })
             .catch(() => {});
           return;

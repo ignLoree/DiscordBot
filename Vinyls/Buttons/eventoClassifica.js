@@ -1,4 +1,4 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, MessageFlags } = require("discord.js");
 const { getGuildExpSettings } = require("../Services/Community/expService");
 const { getEventWeekTopNTextAndVoice } = require("../Services/Community/weeklyActivityWinnersService");
 const { getTop10ExpDuringEventExcludingStaff, getEventWeekNumber } = require("../Services/Community/activityEventRewardsService");
@@ -41,7 +41,7 @@ async function execute(interaction, client) {
       await interaction.editReply(payload).catch(() => interaction.followUp(payload).catch(() => { }));
     } else {
       await interaction.update(payload).catch(async () => {
-        await interaction.reply({ ...payload, ephemeral: true }).catch(() => { });
+        await interaction.reply({ ...payload, flags: MessageFlags.Ephemeral }).catch(() => { });
       });
     }
     return true;

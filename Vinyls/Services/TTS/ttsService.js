@@ -477,13 +477,39 @@ function clearLockedChannel(guildId, channelId) {
     guildLocks.delete(String(guildId));
   }
 }
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+async function destroyGuildVoiceConnection(guildId) {
+  const gid = String(guildId || "");
+  if (!gid) return;
+  const existing = getVoiceConnection(gid);
+  if (existing) {
+    try {
+      existing.destroy();
+    } catch (err) {
+      global.logger?.warn?.("[TTS] destroy existing voice connection:", err?.message || err);
+    }
+  }
+  await sleep(600);
+}
 async function ensureConnection(state, voiceChannel) {
   const lockedChannelId = getLockedChannelId(voiceChannel.guild.id);
   if (lockedChannelId && lockedChannelId !== voiceChannel.id) {
     return null;
   }
   if (state.connection?.joinConfig?.channelId === voiceChannel.id) {
-    return state.connection;
+    try {
+      await entersState(state.connection, VoiceConnectionStatus.Ready, 5_000);
+      return state.connection;
+    } catch {
+      try {
+        state.connection.destroy();
+      } catch (err) {
+        global.logger?.warn?.("[TTS] connection destroy:", err?.message || err);
+      }
+      state.connection = null;
+    }
   }
   if (state.connection) {
     try {
@@ -491,20 +517,28 @@ async function ensureConnection(state, voiceChannel) {
     } catch (err) {
       global.logger?.warn?.("[TTS] connection destroy:", err?.message || err);
     }
+    state.connection = null;
   }
+  await destroyGuildVoiceConnection(voiceChannel.guild.id);
   const isIpDiscoveryError = (err) => {
     const msg = String(err?.message || "").toLowerCase();
-    return msg.includes("ip discovery") || msg.includes("socket closed");
+    return msg.includes("ip discovery") || msg.includes("socket closed") || msg.includes("aborted") || msg.includes("signalling");
   };
-  for (let attempt = 1; attempt <= 2; attempt++) {
+  const maxAttempts = 5;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     let connection = null;
     try {
-      connection = joinVoiceChannel({ channelId: voiceChannel.id, guildId: voiceChannel.guild.id, adapterCreator: voiceChannel.guild.voiceAdapterCreator, selfDeaf: false, });
+      connection = joinVoiceChannel({
+        channelId: voiceChannel.id,
+        guildId: voiceChannel.guild.id,
+        adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+        selfDeaf: false,
+      });
       state.connection = connection;
       state.guildId = voiceChannel.guild.id;
       state.channelId = voiceChannel.id;
       connection.subscribe(state.player);
-      await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
+      await entersState(connection, VoiceConnectionStatus.Ready, 25_000);
       setLockedChannel(voiceChannel.guild.id, voiceChannel.id);
       await saveVoiceState(voiceChannel.guild.id, voiceChannel.id);
       return connection;
@@ -517,9 +551,11 @@ async function ensureConnection(state, voiceChannel) {
         }
         state.connection = null;
       }
-      if (isIpDiscoveryError(err) && attempt === 1) {
-        global.logger?.warn?.("[TTS] IP discovery / socket closed, retry in 2s:", err?.message || err);
-        await new Promise((r) => setTimeout(r, 2000));
+      await destroyGuildVoiceConnection(voiceChannel.guild.id);
+      if (isIpDiscoveryError(err) && attempt < maxAttempts) {
+        const waitMs = Math.min(1500 * attempt, 8000);
+        global.logger?.warn?.("[TTS] IP discovery / socket closed, retry in " + waitMs + "ms:", err?.message || err);
+        await sleep(waitMs);
         continue;
       }
       global.logger?.warn?.("[TTS] voice join failed:", err?.message || err);
@@ -800,11 +836,15 @@ async function restoreTtsConnections(client) {
         await VoiceState.deleteMany({ guildId: { $in: guildIds } }).catch(() => null);
       return;
     }
+    await sleep(4500);
     const states = await VoiceState.find({});
     for (const entry of states) {
       const channel = await getClientChannelCached(client, entry.channelId);
       if (!channel || !channel.isVoiceBased?.()) continue;
-      await joinTtsChannel(channel);
+      await joinTtsChannel(channel).catch((e) =>
+        global.logger?.warn?.("[TTS] restore join skipped:", e?.message || e),
+      );
+      await sleep(1200);
     }
   } catch (error) {
     global.logger?.error?.("[TTS] Failed to restore voice connections", error);
