@@ -1,6 +1,6 @@
 const axios = require("axios");
 const { EmbedBuilder } = require("discord.js");
-const { leaveTtsGuild } = require("../TTS/ttsService");
+const { leaveTtsGuild, setTtsLockedChannel } = require("../TTS/ttsService");
 const { resolvePlayableRadioUrl } = require("./radioService");
 const { getVoiceSession, setVoiceSession, clearVoiceSession, } = require("../Voice/voiceSessionService");
 
@@ -27,6 +27,7 @@ const PLAYABLE_SOURCE_KEYS = new Set(["spotify", "apple", "deezer", "radio"]);
 const DIRECT_URL_SOURCE_BY_MATCHER = [{ fn: isSpotifyUrl, source: "spotify" }, { fn: isAppleMusicUrl, source: "apple" }, { fn: isDeezerUrl, source: "deezer" },];
 
 function logMusic(event, payload = {}) {
+  if (["0", "false", "off"].includes(String(process.env.MUSIC_LOGS || "").toLowerCase())) return;
   const logger = global.logger;
   if (!logger?.info && !logger?.warn && !logger?.error) return;
   const parts = Object.entries(payload).filter(([, value]) => value !== undefined && value !== null && value !== "").map(([key, value]) => `${key}=${typeof value === "string" ? value : JSON.stringify(value)}`);
@@ -766,7 +767,25 @@ async function ensureQueue(client, guild, channel, voiceChannel) {
   let queue = queues.get(guildId) || null;
   const manager = client.musicPlayer?.manager || (await getPlayer(client)).manager;
   if (!queue) {
-    const player = await manager.joinVoiceChannel({ guildId, channelId: String(voiceChannel.id), shardId: Number(guild?.shardId || 0), deaf: true, mute: false, });
+    const isIpDiscoveryError = (err) => {
+      const msg = String(err?.message || "").toLowerCase();
+      return msg.includes("ip discovery") || msg.includes("socket closed");
+    };
+    let player = null;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        player = await manager.joinVoiceChannel({ guildId, channelId: String(voiceChannel.id), shardId: Number(guild?.shardId || 0), deaf: true, mute: false, });
+        break;
+      } catch (err) {
+        if (isIpDiscoveryError(err) && attempt === 1) {
+          global.logger?.warn?.("[MUSIC] IP discovery / socket closed, retry in 2s:", err?.message || err);
+          await new Promise((r) => setTimeout(r, 2000));
+          continue;
+        }
+        throw err;
+      }
+    }
+    if (!player) throw new Error("Impossibile entrare nel canale vocale (IP discovery fallita). Controlla firewall/UDP porte 45000-60000.");
     queue = {
       guildId,
       guild,
@@ -805,11 +824,13 @@ async function destroyQueue(guildId, { manual = false } = {}) {
   clearTimer(emptyVoiceTimers, key);
   clearVoiceSession(key);
   if (!queue) return false;
+  const voiceChannelId = queue.voiceChannelId || null;
   queues.delete(key);
   queue.manualDisconnect = Boolean(manual);
   queue.tracks = [];
   queue.currentTrack = null;
   await queue.player.destroy().catch(() => { });
+  if (voiceChannelId) setTtsLockedChannel(key, voiceChannelId);
   return true;
 }
 

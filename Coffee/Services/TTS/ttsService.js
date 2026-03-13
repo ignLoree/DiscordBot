@@ -322,14 +322,31 @@ function readTtsErrorPreview(buffer) {
   return buffer.subarray(0, 240).toString("utf8").replace(/\s+/g, " ").trim();
 }
 
+function isAbortOrTimeoutError(err) {
+  if (!err) return false;
+  const name = String(err?.name || "").toLowerCase();
+  const code = String(err?.code || "").toLowerCase();
+  const msg = String(err?.message || "").toLowerCase();
+  return name === "aborterror" || code === "econnaborted" || msg.includes("abort") || msg.includes("timeout");
+}
+
 async function fetchTtsAudio(url, provider = "TTS", attempt = 1) {
   const maxAttempts = 2;
-  const res = await axios.get(url, {
-    responseType: "arraybuffer",
-    timeout: 15000,
-    headers: TTS_HEADERS,
-    validateStatus: () => true,
-  });
+  let res;
+  try {
+    res = await axios.get(url, {
+      responseType: "arraybuffer",
+      timeout: 15000,
+      headers: TTS_HEADERS,
+      validateStatus: () => true,
+    });
+  } catch (err) {
+    if (isAbortOrTimeoutError(err) && attempt < maxAttempts) {
+      await new Promise((r) => setTimeout(r, 2000));
+      return fetchTtsAudio(url, provider, attempt + 1);
+    }
+    throw new Error(err?.message && !isAbortOrTimeoutError(err) ? err.message : `${provider}: richiesta annullata o timeout`);
+  }
   const status = res?.status ?? 0;
   if (status >= 500 && status < 600 && attempt < maxAttempts) {
     await new Promise((r) => setTimeout(r, 2000));
@@ -463,15 +480,41 @@ async function ensureConnection(state, voiceChannel) {
       global.logger?.warn?.("[TTS] connection destroy:", err?.message || err);
     }
   }
-  const connection = joinVoiceChannel({ channelId: voiceChannel.id, guildId: voiceChannel.guild.id, adapterCreator: voiceChannel.guild.voiceAdapterCreator, selfDeaf: false, });
-  state.connection = connection;
-  state.guildId = voiceChannel.guild.id;
-  state.channelId = voiceChannel.id;
-  connection.subscribe(state.player);
-  await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
-  setLockedChannel(voiceChannel.guild.id, voiceChannel.id);
-  await saveVoiceState(voiceChannel.guild.id, voiceChannel.id);
-  return connection;
+  const isIpDiscoveryError = (err) => {
+    const msg = String(err?.message || "").toLowerCase();
+    return msg.includes("ip discovery") || msg.includes("socket closed");
+  };
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    let connection = null;
+    try {
+      connection = joinVoiceChannel({ channelId: voiceChannel.id, guildId: voiceChannel.guild.id, adapterCreator: voiceChannel.guild.voiceAdapterCreator, selfDeaf: false, });
+      state.connection = connection;
+      state.guildId = voiceChannel.guild.id;
+      state.channelId = voiceChannel.id;
+      connection.subscribe(state.player);
+      await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
+      setLockedChannel(voiceChannel.guild.id, voiceChannel.id);
+      await saveVoiceState(voiceChannel.guild.id, voiceChannel.id);
+      return connection;
+    } catch (err) {
+      if (connection) {
+        try {
+          connection.destroy();
+        } catch (e) {
+          global.logger?.warn?.("[TTS] connection destroy after error:", e?.message || e);
+        }
+        state.connection = null;
+      }
+      if (isIpDiscoveryError(err) && attempt === 1) {
+        global.logger?.warn?.("[TTS] IP discovery / socket closed, retry in 2s:", err?.message || err);
+        await new Promise((r) => setTimeout(r, 2000));
+        continue;
+      }
+      global.logger?.warn?.("[TTS] voice join failed:", err?.message || err);
+      throw err;
+    }
+  }
+  return null;
 }
 async function playNext(state) {
   if (state.queue.length === 0) {

@@ -2,9 +2,19 @@ server:
   port: 2333
   address: 0.0.0.0
 
+logging:
+  level:
+    root: ERROR
+  request:
+    enabled: false
+
 lavalink:
   server:
     password: "youshallnotpass"
+    bufferDurationMs: 600
+    frameBufferDurationMs: 8000
+    trackStuckThresholdMs: 15000
+    playerUpdateInterval: 5
     sources:
       youtube: false
   plugins:

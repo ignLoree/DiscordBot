@@ -3,6 +3,20 @@ const IDs = require("../Config/ids");
 const { getGuildMemberCached } = require("../Interaction/entityCache");
 const { EMPTY_PERMISSIONS, loadPermissions } = require("./permissionsStore");
 
+const TEST_MAIN_GUILD_ID = IDs?.guilds?.test || null;
+const OFFICIAL_MAIN_GUILD_ID = IDs?.guilds?.main || null;
+const TEST_SCOPE_GUILD_IDS = new Set(
+  [TEST_MAIN_GUILD_ID, OFFICIAL_MAIN_GUILD_ID].filter(Boolean).map(String),
+);
+
+function isTestMainScopeGuild(guildId) {
+  return guildId != null && TEST_SCOPE_GUILD_IDS.has(String(guildId));
+}
+
+function isOfficialMainGuild(guildId) {
+  return OFFICIAL_MAIN_GUILD_ID != null && String(guildId || "") === String(OFFICIAL_MAIN_GUILD_ID);
+}
+
 function resolveRoleReference(value) {
   if (value == null) return null;
   const raw = String(value).trim();
