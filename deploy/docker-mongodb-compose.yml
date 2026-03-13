@@ -1,10 +1,13 @@
+# Niente env_file: Docker a volte cerca .env.mongo nella directory SBAGLIATA se lanci
+# compose da /opt/bot con -f deploy/... → "file not found". User e password arrivano da --env-file.
 services:
   mongodb:
     image: mongo:7
     container_name: vc-mongodb
     restart: unless-stopped
-    env_file:
-      - .env.mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     ports:
       - "127.0.0.1:27017:27017"
     volumes:

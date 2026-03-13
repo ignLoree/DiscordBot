@@ -1,46 +1,41 @@
 # MongoDB sulla VPS (Docker)
 
-## Perché 127.0.0.1
-La porta **27017** è pubblicata solo su **localhost**: dalla rete Internet nessuno si collega; solo processi sulla stessa VPS (bot, `mongosh`) usano Mongo.
+## Perché prima diceva "env file not found"
+Se lanci `docker compose -f deploy/docker-mongodb-compose.yml` **da `/opt/bot`**, Docker cercava `.env.mongo` in **`/opt/bot/`**, non in **`deploy/`** — anche se il file c’è in `deploy/`. Non è colpa del `.gitignore`.
 
-## Avvio (sulla VPS)
+## Avvio (sempre così)
 
-1. Installa Docker + Compose se mancano.
-2. Nella cartella `deploy`:
-   - `cp .env.mongo.example .env.mongo`
-   - modifica **user** e **password** in `.env.mongo`
-3. `docker compose -f docker-mongodb-compose.yml up -d`
-4. Verifica: `docker compose -f docker-mongodb-compose.yml ps`
-
-## Stringa nel `.env` del bot (root)
-
-```
-MONGO_URL=mongodb://vinili:LA_TUA_PASSWORD@127.0.0.1:27017/nomedb?authSource=admin
+```bash
+chmod +x /opt/bot/deploy/start-mongo.sh
+/opt/bot/deploy/start-mongo.sh
 ```
 
-Sostituisci `vinili`, password e `nomedb` (es. stesso nome che usavi su Atlas). `authSource=admin` serve perché l’utente root è sul DB `admin`.
+Lo script usa il path **assoluto** di `.env.mongo` e `--env-file`, così Docker non può sbagliare cartella.
 
-## Da Atlas → VPS (dump / restore)
+Oppure a mano:
 
-Sulla macchina dove hai i tool (o sulla VPS con `mongodump`/`mongorestore` installati):
+```bash
+docker compose --env-file /opt/bot/deploy/.env.mongo -f /opt/bot/deploy/docker-mongodb-compose.yml up -d
+```
+
+(Sostituisci `/opt/bot` se il bot sta altrove.)
+
+## File `.env.mongo` (due righe)
+
+```
+MONGO_INITDB_ROOT_USERNAME=vinili
+MONGO_INITDB_ROOT_PASSWORD=password_sicura
+```
+
+## Stringa nel `.env` del bot
+
+```
+MONGO_URL=mongodb://vinili:PASSWORD@127.0.0.1:27017/nomedb?authSource=admin
+```
+
+## Dump da Atlas → VPS
 
 ```bash
 mongodump --uri="mongodb+srv://..." --out=./dump
 mongorestore --uri="mongodb://vinili:PASS@127.0.0.1:27017/?authSource=admin" ./dump
 ```
-
-Poi nel bot aggiorni solo `MONGO_URL` e riavvii PM2.
-
-## Backup periodico (consigliato)
-
-Cron sulla VPS, es. ogni notte:
-
-```bash
-docker exec vc-mongodb mongodump --username vinili --password 'PASS' --authenticationDatabase admin --out=/tmp/dump
-docker cp vc-mongodb:/tmp/dump ./backup-mongo-$(date +%F)
-```
-
-O volume + snapshot VPS.
-
-## Tornare ad Atlas
-Ripristini `MONGO_URL` vecchio e riavvii il bot; il container Mongo puoi fermarlo con `docker compose ... down` (i dati restano nel volume finché non fai `down -v`).
