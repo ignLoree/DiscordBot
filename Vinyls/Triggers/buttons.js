@@ -11,6 +11,29 @@ const DIVIDER_URL = "https://cdn.discordapp.com/attachments/1467927329140641936/
 const PRIVATE_FLAG = 1 << 6;
 const MONO_GUILD_DENIED_TEXT = "Questo bot è utilizzabile solo sul server principale di Vinili & Caffè.";
 
+function findStringSelectOptionLabel(message, customId, value) {
+  const rows = message?.components || [];
+  for (const row of rows) {
+    for (const c of row.components || []) {
+      if (c.customId === customId && Array.isArray(c.options)) {
+        const opt = c.options.find((o) => String(o.value) === String(value));
+        if (opt?.label) return opt.label;
+      }
+    }
+  }
+  return null;
+}
+
+async function removeMemberRolesSequential(member, roleIds) {
+  if (!member?.guild || !Array.isArray(roleIds)) return;
+  let m = await member.guild.members.fetch(member.id).catch(() => member);
+  for (const rid of roleIds) {
+    if (!rid) continue;
+    await m.roles.remove(rid).catch(() => {});
+    m = await member.guild.members.fetch(member.id).catch(() => m);
+  }
+}
+
 async function handleStaffButtons(interaction) {
   if (!interaction.isButton()) return false;
 
@@ -360,7 +383,7 @@ module.exports = {
     if (interaction.isStringSelectMenu()) {
       const menuId = interaction.customId;
       const values = Array.isArray(interaction.values) ? interaction.values : [];
-      const categories = { personality_pronouns: ["1442568997848743997", "1442568999043989565", "1442569000063074498", "1442569001367769210", "1442569002932109434",], personality_age: ["1442568993197265021", "1442568994581381170", "1442568995348807691", "1442568996774871194",], personality_region: ["1442569021861007443", "1442569023303974922", "1442569024486506498", "1442569025790939167",], personality_dm: ["1442569004215697438", "1442569005071077417", "1442569006543274126",], personality_relationship: ["1442569028173299732", "1442569029263818906",], personality_mentions: [IDs.roles.Events, IDs.roles.News, IDs.roles.Polls, IDs.roles.Bump, IDs.roles.Minigames, IDs.roles.Forum,], personality_colors_1: ["1442568958656905318", "1442568956832645212", "1442568961077153994", "1442568960016121998", "1442568963836874886", "1442568965040636019", "1442568967045648412", "1442568962167541760", "1442568968371048449", "1442568969528541225", "1442568970497687717", "1442568971357388912", "1442568972745838667", "1442568975966797926",], personality_colors_2: ["1442568976944201828", "1442568974486208634", "1442568977896439960", "1442568979473371258", "1442568980626673685", "1442568981792948304", "1442568982769959002", "1442568983898357954", "1442568985278156971", "1442568986720993350", "1442568987887276133", "1442568988961013821", "1442568989866725468", "1442568991150309578",], personality_colors_plus: [IDs.roles.redPlus, IDs.roles.orangePlus, IDs.roles.yellowPlus, IDs.roles.greenPlus, IDs.roles.bluePlus, IDs.roles.purplePlus, IDs.roles.pinkPlus, IDs.roles.blackPlus, IDs.roles.grayPlus, IDs.roles.whitePlus, IDs.roles.YinYangPlus,], };
+      const categories = { personality_pronouns: ["1442568997848743997", "1442568999043989565", "1442569000063074498", "1442569001367769210", "1442569002932109434",], personality_age: ["1442568993197265021", "1442568994581381170", "1442568995348807691", "1442568996774871194",], personality_region: ["1442569021861007443", "1442569023303974922", "1442569024486506498", "1442569025790939167",], personality_dm: ["1442569004215697438", "1442569005071077417", "1442569006543274126",], personality_relationship: ["1442569028173299732", "1442569029263818906",], personality_mentions: [IDs.roles.ReviveChat, IDs.roles.Events, IDs.roles.News, IDs.roles.Polls, IDs.roles.Bump, IDs.roles.Minigames, IDs.roles.Forum,], personality_colors_1: ["1442568958656905318", "1442568956832645212", "1442568961077153994", "1442568960016121998", "1442568963836874886", "1442568965040636019", "1442568967045648412", "1442568962167541760", "1442568968371048449", "1442568969528541225", "1442568970497687717", "1442568971357388912", "1442568972745838667", "1442568975966797926",], personality_colors_2: ["1442568976944201828", "1442568974486208634", "1442568977896439960", "1442568979473371258", "1442568980626673685", "1442568981792948304", "1442568982769959002", "1442568983898357954", "1442568985278156971", "1442568986720993350", "1442568987887276133", "1442568988961013821", "1442568989866725468", "1442568991150309578",], personality_colors_plus: [IDs.roles.redPlus, IDs.roles.orangePlus, IDs.roles.yellowPlus, IDs.roles.greenPlus, IDs.roles.bluePlus, IDs.roles.purplePlus, IDs.roles.pinkPlus, IDs.roles.blackPlus, IDs.roles.grayPlus, IDs.roles.whitePlus, IDs.roles.YinYangPlus,], };
 
       const roleIds = categories[menuId];
       if (!roleIds) return;
@@ -369,12 +392,12 @@ module.exports = {
 
       try {
         if (!values.length || values.includes("remove")) {
-          await member.roles.remove(roleIds).catch(() => { });
+          await removeMemberRolesSequential(member, roleIds);
           const refreshedMember = await interaction.guild?.members?.fetch?.(interaction.user.id).catch(() => null);
           const stillHasManagedRole = Array.isArray(roleIds) && roleIds.some((roleId) => refreshedMember?.roles?.cache?.has?.(roleId));
           if (stillHasManagedRole) {
             return interaction.reply({
-              content: "<:vegax:1443934876440068179> Impossibile aggiornare il ruolo.",
+              content: "<:vegax:1443934876440068179> Impossibile aggiornare il ruolo. Verifica che il ruolo del bot sia **sopra** i ruoli del pannello Personalità (Impostazioni server → Ruoli).",
               flags: 1 << 6,
             });
           }
@@ -394,18 +417,33 @@ module.exports = {
             });
           }
         }
-        await member.roles.remove(roleIds).catch(() => { });
-        await member.roles.add(values).catch(() => { });
-        const refreshedMember = await interaction.guild?.members?.fetch?.(interaction.user.id).catch(() => null);
-        const appliedAll = values.every((roleId) => refreshedMember?.roles?.cache?.has?.(roleId));
+        await removeMemberRolesSequential(member, roleIds);
+        let m = await interaction.guild.members.fetch(interaction.user.id).catch(() => member);
+        await m.roles.add(values).catch(() => {});
+        m = await interaction.guild.members.fetch(interaction.user.id).catch(() => m);
+        const appliedAll = values.every((roleId) => m?.roles?.cache?.has?.(roleId));
+        const stillOld = roleIds.some((rid) => values.every((v) => String(v) !== String(rid)) && m?.roles?.cache?.has?.(rid));
+        if (menuId === "personality_dm" && stillOld) {
+          return interaction.reply({
+            content: "<:vegax:1443934876440068179> Non sono riuscito a togliere il vecchio stato DM. Metti il **ruolo del bot** sopra i ruoli DMs Opened / Closed / Ask (Server → Ruoli → trascina il bot sopra).",
+            flags: 1 << 6,
+          });
+        }
         if (!appliedAll) {
           return interaction.reply({
             content: "<:vegax:1443934876440068179> Impossibile aggiornare il ruolo.",
             flags: 1 << 6,
           });
         }
+        const primary = values[0];
+        const label =
+          findStringSelectOptionLabel(interaction.message, menuId, primary) ||
+          (values.length > 1 ? `${values.length} notifiche` : primary);
         return interaction.reply({
-          content: "Ruolo aggiornato correttamente.",
+          content:
+            values.length > 1
+              ? `Notifiche aggiornate: **${values.length}** ruoli. (Solo tu vedi questo messaggio.)`
+              : `Aggiornato: **${label}** — resta salvato fino al prossimo cambio. (Solo tu vedi questo messaggio.)`,
           flags: 1 << 6,
         });
       } catch {

@@ -3,11 +3,13 @@ const IDs = require("../../Utils/Config/ids");
 const TIME_ZONE = "Europe/Rome";
 const BULK_DELETE_LIMIT = 100;
 const DELETE_ONE_DELAY_MS = 500;
+const MAX_BATCHES = 200;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** Istante (ms) dell'ultima mezzanotte Europe/Rome (inizio del giorno corrente lì). */
 function getRomeMidnightTodayUtc() {
   const now = new Date();
   const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit" });
@@ -26,6 +28,10 @@ function getRomeMidnightTodayUtc() {
   return utcMidnightSameDay - offsetMs;
 }
 
+/**
+ * A mezzanotte si devono eliminare i messaggi del bot *prima* di quella mezzanotte (giorno appena finito e precedenti).
+ * La versione precedente teneva solo msg >= dayStartMs → subito dopo le 00:00 non c'era quasi nulla da cancellare.
+ */
 async function runPartnershipChannelCleanup(client) {
   const channelId = IDs.channels?.partnersChat;
   if (!channelId) {
@@ -46,8 +52,10 @@ async function runPartnershipChannelCleanup(client) {
   try {
     let lastId = null;
     let hasMore = true;
+    let batches = 0;
 
-    while (hasMore) {
+    while (hasMore && batches < MAX_BATCHES) {
+      batches++;
       const options = { limit: BULK_DELETE_LIMIT };
       if (lastId) options.before = lastId;
 
@@ -58,16 +66,13 @@ async function runPartnershipChannelCleanup(client) {
       }
 
       const toDelete = [];
-      let pastMidnight = false;
+      let oldestInBatch = Infinity;
       for (const [, msg] of messages) {
-        if (msg.createdTimestamp < dayStartMs) {
-          pastMidnight = true;
-          break;
-        }
+        oldestInBatch = Math.min(oldestInBatch, msg.createdTimestamp);
+        if (msg.createdTimestamp >= dayStartMs) continue;
         if (msg.author?.id !== botId) continue;
         toDelete.push(msg);
       }
-      if (pastMidnight || messages.size < BULK_DELETE_LIMIT) hasMore = false;
 
       const bulkable = toDelete.filter((m) => m.createdTimestamp > Date.now() - 14 * 24 * 60 * 60 * 1000);
       const single = toDelete.filter((m) => m.createdTimestamp <= Date.now() - 14 * 24 * 60 * 60 * 1000);
@@ -84,12 +89,12 @@ async function runPartnershipChannelCleanup(client) {
         await sleep(DELETE_ONE_DELAY_MS);
       }
 
-      if (hasMore) lastId = messages.last()?.id ?? null;
-      if (!lastId) hasMore = false;
+      lastId = messages.last()?.id ?? null;
+      hasMore = Boolean(lastId) && messages.size >= BULK_DELETE_LIMIT;
     }
 
     if (totalDeleted > 0) {
-      global.logger?.info?.("[PARTNERS CLEANUP] #partners: eliminati", totalDeleted, "messaggi comando (solo oggi).");
+      global.logger?.info?.("[PARTNERS CLEANUP] #partners: eliminati", totalDeleted, "messaggi bot (prima di mezzanotte Roma).");
     }
   } catch (err) {
     global.logger?.error?.("[PARTNERS CLEANUP] Errore:", err);
