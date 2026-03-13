@@ -157,8 +157,8 @@ async function sendDeleteLog(message) {
   const lines=[`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
     "",
     "**Previous Settings**",
-    `<:VC_right_arrow:1473441155055096081>**Channel:**${message.channel||"#sconosciuto"}`,
-    `<:VC_right_arrow:1473441155055096081>**Id:**\`${message.id||"sconosciuto"}\``,];
+    `<:VC_right_arrow:1473441155055096081> **Channel:** ${message.channel||"#sconosciuto"}`,
+    `<:VC_right_arrow:1473441155055096081> **Id:** \`${message.id||"sconosciuto"}\``,];
 
   lines.push("<:VC_right_arrow:1473441155055096081> **Content:**");
   lines.push("```diff");

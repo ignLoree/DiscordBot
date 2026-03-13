@@ -79,16 +79,16 @@ module.exports = {
       .setColor("#6f4e37")
       .setTitle("Comando level")
       .setDescription([
-        "`+level set <@utente|id> <exp|level> <valore>`",
-        "`+level add <@utente|id> <livelli>`",
-        "`+level remove <@utente|id> <livelli>`",
-        "`+level reset <@utente|id>`",
-        "`+level lock <#canale|id>`",
-        "`+level unlock <#canale|id>`",
+        "`+level set <@utente | id> <exp | level> <valore>`",
+        "`+level add <@utente | id> <livelli>`",
+        "`+level remove <@utente | id> <livelli>`",
+        "`+level reset <@utente | id>`",
+        "`+level lock <#canale | id>`",
+        "`+level unlock <#canale | id>`",
         "`+level multiplier <valore> [minuti]`",
         "`+level gmulti <valore>`",
-        "`+level ignore <@ruolo|id>`",
-        "`+level unignore <@ruolo|id>`",
+        "`+level ignore <@ruolo | id>`",
+        "`+level unignore <@ruolo | id>`",
         "`+level config`",
       ].join("\n"));
       await safeMessageReply(message, {
@@ -127,7 +127,7 @@ module.exports = {
       if (!/^\d{16,20}$/.test(channelId)) {
         await safeMessageReply(message, {
           content:
-            "<:vegax:1443934876440068179> Usa: `+level lock <#canale|id>`",
+            "<:vegax:1443934876440068179> Usa: `+level lock <#canale | id>`",
           allowedMentions: { repliedUser: false },
         });
         return;
@@ -151,7 +151,7 @@ module.exports = {
       if (!role) {
         await safeMessageReply(message, {
           content:
-            "<:vegax:1443934876440068179> Usa: `+level ignore <@ruolo|id>`",
+            "<:vegax:1443934876440068179> Usa: `+level ignore <@ruolo | id>`",
           allowedMentions: { repliedUser: false },
         });
         return;
@@ -251,7 +251,7 @@ module.exports = {
       ) {
         await safeMessageReply(message, {
           content:
-            "<:vegax:1443934876440068179> Usa: `+level set <@utente|id> <exp|level> <valore>`",
+            "<:vegax:1443934876440068179> Usa: `+level set <@utente | id> <exp | level> <valore>`",
           allowedMentions: { repliedUser: false },
         });
         return;
@@ -262,7 +262,7 @@ module.exports = {
       if (!Number.isFinite(delta) || delta <= 0) {
         await safeMessageReply(message, {
           content:
-            "<:vegax:1443934876440068179> Usa: `+level add <@utente|id> <livelli>`",
+            "<:vegax:1443934876440068179> Usa: `+level add <@utente | id> <livelli>`",
           allowedMentions: { repliedUser: false },
         });
         return;
@@ -273,7 +273,7 @@ module.exports = {
       if (!Number.isFinite(delta) || delta <= 0) {
         await safeMessageReply(message, {
           content:
-            "<:vegax:1443934876440068179> Usa: `+level remove <@utente|id> <livelli>`",
+            "<:vegax:1443934876440068179> Usa: `+level remove <@utente | id> <livelli>`",
           allowedMentions: { repliedUser: false },
         });
         return;

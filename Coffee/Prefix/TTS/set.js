@@ -5,22 +5,22 @@ const { normalizeTtsLanguageInput } = require("../../Services/TTS/ttsLanguages")
 module.exports = {
   name: "set",
   allowEmptyArgs: false,
-  usage: "-set <voice|autojoin> <valore>",
+  usage: "-set <voice | autojoin> <valore>",
   subcommands: ["voice", "autojoin"],
   subcommandDescriptions: {
     voice: "Imposta la lingua/voce TTS personale (o resetta).",
     autojoin: "Attiva o disattiva l'autojoin TTS del bot.",
   },
   subcommandUsages: {
-    voice: "-set voice <codice|reset>",
-    autojoin: "-set autojoin <on|off>",
+    voice: "-set voice <codice | reset>",
+    autojoin: "-set autojoin <on | off>",
   },
   async execute(message, args = []) {
     const sub = String(args[0] || "").toLowerCase();
     if (!sub || !["voice", "autojoin"].includes(sub)) {
       return safeMessageReply(
         message,
-        "<:vegax:1443934876440068179> Uso: `-set voice <codice|reset>` oppure `-set autojoin <on|off>`.",
+        "<:vegax:1443934876440068179> Uso: `-set voice <codice | reset>` oppure `-set autojoin <on | off>`.",
       );
     }
 

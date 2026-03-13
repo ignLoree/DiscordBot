@@ -464,8 +464,8 @@ function matchUsernameFilters(candidate, rules) {
 }
 
 async function sendJoinGatePostJoinDm(member, reason, extraLines = []) {
-  const embed=new EmbedBuilder().setColor("#ED4245").setTitle("Join Gate").setDescription([`${ARROW}**Azione applicata dopo il join**`,
-        `${ARROW}**Motivo:**${reason}`,
+  const embed=new EmbedBuilder().setColor("#ED4245").setTitle("Join Gate").setDescription([`${ARROW} **Azione applicata dopo il join**`,
+        `${ARROW} **Motivo:** ${reason}`,
         ...extraLines.filter(Boolean),
       ].join("\n"),
     );
@@ -570,21 +570,21 @@ async function enforceJoinGatePostJoinUsername(oldMember, newMember) {
   const logChannel = modLogId ? (newMember.guild.channels.cache.get(modLogId) || (await getGuildChannelCached(newMember.guild, modLogId))) : null;
   if (!logChannel?.isTextBased?.()) return;
 
-  const embed=punished?new EmbedBuilder().setColor("#A97142").setTitle(`${newMember.user.username}has been ${String(appliedAction||"kick").toLowerCase()==="timeout"?"timed out":String(appliedAction||"kick").toLowerCase()==="ban"?"banned":"kicked"}!!`,
+  const embed=punished?new EmbedBuilder().setColor("#A97142").setTitle(`${newMember.user.username} has been ${String(appliedAction||"kick").toLowerCase()==="timeout"?"timed out":String(appliedAction||"kick").toLowerCase()==="ban"?"banned":"kicked"}!!`,
         )
         .setDescription(
           [
-            `${ARROW}**Member:**${newMember.user.username}[\`${newMember.user.id}\`]`,`${ARROW}**Reason:**Username matches blocked pattern(post-join filter).`,
-            `${ARROW}**Rule:**Username Filter(Post Join)`,
-            `${ARROW}**Action:**${String(appliedAction||"log").toUpperCase()}`,
-            `${ARROW}**Match Type:**${match.type}`,
-            `${ARROW}**Match:**${match.value}`,
-            `${ARROW}**Old Name:**${oldCandidate||"N/A"}`,
-            `${ARROW}**New Name:**${newCandidate||"N/A"}`,
+            `${ARROW} **Member:** ${newMember.user.username} [\`${newMember.user.id}\`]`,`${ARROW} **Reason:** Username matches blocked pattern (post-join filter).`,
+            `${ARROW} **Rule:** Username Filter (Post Join)`,
+            `${ARROW} **Action:** ${String(appliedAction||"log").toUpperCase()}`,
+            `${ARROW} **Match Type:** ${match.type}`,
+            `${ARROW} **Match:** ${match.value}`,
+            `${ARROW} **Old Name:** ${oldCandidate||"N/A"}`,
+            `${ARROW} **New Name:** ${newCandidate||"N/A"}`,
             "",
             "**More Details:**",
-            `${ARROW}**Member Direct Messaged?**${dmSent?"Yes":"No"}`,
-            `${ARROW}**Member Punished?**${punished?"Yes":"No"}`,
+            `${ARROW} **Member Direct Messaged?** ${dmSent?"Yes":"No"}`,
+            `${ARROW} **Member Punished?** ${punished?"Yes":"No"}`,
           ].join("\n"),
         )
         .setThumbnail(newMember.user.displayAvatarURL({ size: 256 }))

@@ -38,14 +38,14 @@ module.exports = {
       if (logChannel?.isTextBased?.()) {
         const responsible = formatAuditActor(audit.executor);
 
-        const lines=[`${ARROW}**Responsible:**${responsible}`,
-          `${ARROW}**Target:**${role}\`${role.id}\``,`${ARROW}${toDiscordTimestamp(new Date(),"F")}`,
+        const lines=[`${ARROW} **Responsible:** ${responsible}`,
+          `${ARROW} **Target:** ${role} \`${role.id}\``,`${ARROW} ${toDiscordTimestamp(new Date(),"F")}`,
           "",
           "**Settings**",
-          `${ARROW}**Name:**${role.name||"sconosciuto"}`,
-          `${ARROW}**Color:**${role.hexColor||"#000000"}`,
-          `${ARROW}**Hoist:**${yesNo(Boolean(role.hoist))}`,
-          `${ARROW}**Mentionable:**${yesNo(Boolean(role.mentionable))}`,
+          `${ARROW} **Name:** ${role.name||"sconosciuto"}`,
+          `${ARROW} **Color:** ${role.hexColor||"#000000"}`,
+          `${ARROW} **Hoist:** ${yesNo(Boolean(role.hoist))}`,
+          `${ARROW} **Mentionable:** ${yesNo(Boolean(role.mentionable))}`,
         ];
         lines.push(...buildAuditExtraLines(audit.entry, ["name", "color", "hoist", "mentionable"]));
 

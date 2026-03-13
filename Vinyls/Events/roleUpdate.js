@@ -24,8 +24,8 @@ module.exports = {
 
         const logChannel = await resolveChannelRolesLogChannel(newRole.guild);
         if (logChannel?.isTextBased?.()) {
-          const lines=[`${ARROW}**Responsible:**${responsible}`,
-            `${ARROW}**Target:**${newRole}\`${newRole.id}\``,`${ARROW}${toDiscordTimestamp(new Date(),"F")}`,
+          const lines=[`${ARROW} **Responsible:** ${responsible}`,
+            `${ARROW} **Target:** ${newRole} \`${newRole.id}\``,`${ARROW} ${toDiscordTimestamp(new Date(),"F")}`,
             "",
             "**Changes**",
           ];

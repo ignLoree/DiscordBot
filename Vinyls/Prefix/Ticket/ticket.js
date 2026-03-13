@@ -421,7 +421,7 @@ const activeTicketInChannel = effectiveChannelId ? await Ticket.findOne({ channe
           new EmbedBuilder()
             .setColor("Red")
             .setDescription(
-              "<:vegax:1443934876440068179> Uso corretto: `+ticket <add|remove|closerequest|close|claim|unclaim|switchpanel|rename|reopen>`",
+              "<:vegax:1443934876440068179> Uso corretto: `+ticket <add | remove | closerequest | close | claim | unclaim | switchpanel | rename | reopen>`",
             ),
         ],
         allowedMentions: { repliedUser: false },

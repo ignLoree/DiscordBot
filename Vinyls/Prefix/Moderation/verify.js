@@ -22,7 +22,7 @@ function formatUserList(list) {
   if (!Array.isArray(list) || list.length === 0) return "Nessuno";
   const maxVisible = 5;
   const shown = list.slice(0, maxVisible);
-  const lines=shown.map((entry,index) => index===0?`**${entry}**` : `<:space:1461733157840621608>**${entry}**`,
+  const lines=shown.map((entry,index) => index===0?`**${entry}**` : `<:space:1461733157840621608> **${entry}**`,
   );
   const remaining = list.length - shown.length;
   if (remaining > 0) {

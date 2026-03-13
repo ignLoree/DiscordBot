@@ -3099,7 +3099,7 @@ function buildDrivingQuizEmbed(row, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const statement = row?.statement ?? "";
   const isMultiple = row?.questionType === "multiple" && Array.isArray(row.options) && row.options.length >= 2;
-  const lines = [`<:VC_EXP:1468714279673925883> **${isMultiple ? "Domanda" : "Affermazione"}:**${statement}`,
+  const lines = [`<:VC_EXP:1468714279673925883> **${isMultiple ? "Domanda" : "Affermazione"}:** ${statement}`,
   ];
   if (isMultiple) {
     row.options.forEach((opt, i) => {

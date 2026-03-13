@@ -57,7 +57,7 @@ function ensurePrefixUsageMetadata(command, prefix = "-") {
 
   const subs = Array.isArray(command ?. subcommands)? command.subcommands.map((sub)=>String(sub || "").trim().toLowerCase(),).filter(Boolean):[];
 
-  const usage = String(command ?. usage || "").trim()||(subs.length ? Boolean(command ?. allowEmptyArgs)?`${prefix}${name} [${subs.slice(0,8).join("|")}]`:`${prefix}${name} <${subs.slice(0,8).join("|")}>`:Boolean(command ?. args)?`${prefix}${name} <opzioni>`:`${prefix}${name}`);
+  const usage = String(command ?. usage || "").trim()||(subs.length ? Boolean(command ?. allowEmptyArgs)?`${prefix}${name} [${subs.slice(0,8).join(" | ")}]`:`${prefix}${name} <${subs.slice(0,8).join(" | ")}>`:Boolean(command ?. args)?`${prefix}${name} <opzioni>`:`${prefix}${name}`);
   command.usage = usage;
 
   const examples = Array.isArray(command ?. examples)&& command.examples.some((item)=>String(item || "").trim())? command.examples:subs.length >=2?[`${prefix}${name} ${subs[0]}`,`${prefix}${name} ${subs[1]}`]:subs.length ===1?[`${prefix}${name} ${subs[0]}`,`${prefix}${name}`]:Boolean(command ?. args)?[`${prefix}${name} esempio`]:[`${prefix}${name}`];

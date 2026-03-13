@@ -42,16 +42,16 @@ module.exports = {
   subcommandAliases: {
     list: "list",
   },
-  usage: "+pause list [@staffer|id|username]",
+  usage: "+pause list [@staffer | id | username]",
   subcommandUsages: {
-    list: "+pause list [@staffer|id|username]",
+    list: "+pause list [@staffer | id | username]",
   },
   async execute(message, args = []) {
     if (!message.guild || !message.member) return;
     const subcommand = String(args[0] || "").trim().toLowerCase();
     if (subcommand !== "list") {
       await safeMessageReply(message, {
-        content: "<:vegax:1443934876440068179> Uso corretto: `+pause list [@staffer|id|username]`",
+        content: "<:vegax:1443934876440068179> Uso corretto: `+pause list [@staffer | id | username]`",
         allowedMentions: { repliedUser: false },
       });
       return;

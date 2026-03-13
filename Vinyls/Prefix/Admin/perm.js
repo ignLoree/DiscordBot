@@ -9,10 +9,10 @@ function buildUsageEmbed() {
     .setTitle("Permessi")
     .setDescription(
       [
-        "`+perms grant <@utente|id> <durata|permanent> <comando1,comando2,...>`",
-        "`+perms revoke <@utente|id> <comando1,comando2,...>`",
-        "`+perms list <@utente|id>`",
-        "`+perms clear <@utente|id>`",
+        "`+perms grant <@utente | id> <durata | permanent> <comando1,comando2,...>`",
+        "`+perms revoke <@utente | id> <comando1,comando2,...>`",
+        "`+perms list <@utente | id>`",
+        "`+perms clear <@utente | id>`",
         "",
         "Durate: `30m`, `2h`, `3d` oppure `permanent` per permesso non temporaneo.",
         "Formato comando: `partnership`, `slash:partnership`, `prefix:level.add`",

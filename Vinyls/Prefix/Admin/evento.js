@@ -79,7 +79,7 @@ module.exports = {
       const usage = new EmbedBuilder()
         .setColor("#6f4e37")
         .setTitle("Comando evento")
-        .setDescription(["`+evento start` – Avvia l’evento Activity EXP.", "`+evento stop` – Termina l’evento e ripristina i moltiplicatori.", "`+evento info` – Mostra stato e configurazione evento.", "`+evento assegna-ruoli` – Assegna i livelli a chi ha già Supporter/Verificato/Guilded/Promoter/Propulsor/Catalyst (evento attivo).", "`+evento reset-premi` – Cancella i premi già registrati e riassegna a tutti (senza annuncio).", "`+evento classifica` – Classifica per settimana.", "`+evento classifica staff` – Classifica punti evento staff.", "`+evento staff start|stop|addpoints` – Gestione evento staff.",
+        .setDescription(["`+evento start` – Avvia l’evento Activity EXP.", "`+evento stop` – Termina l’evento e ripristina i moltiplicatori.", "`+evento info` – Mostra stato e configurazione evento.", "`+evento assegna-ruoli` – Assegna i livelli a chi ha già Supporter/Verificato/Guilded/Promoter/Propulsor/Catalyst (evento attivo).", "`+evento reset-premi` – Cancella i premi già registrati e riassegna a tutti (senza annuncio).", "`+evento classifica` – Classifica per settimana.", "`+evento classifica staff` – Classifica punti evento staff.", "`+evento staff start | stop | addpoints` – Gestione evento staff.",
         ].join("\n"));
       await safeMessageReply(message, {
         embeds: [usage],
@@ -215,7 +215,7 @@ module.exports = {
             "**Evento staff**:",
             "`+evento staff start` – Avvia evento staff.",
             "`+evento staff stop` – Termina evento staff.",
-            "`+evento staff addpoints <@user|id> <punti>` – Aggiunge punti manualmente a uno staffer.",
+            "`+evento staff addpoints <@user | id> <punti>` – Aggiunge punti manualmente a uno staffer.",
           ].join("\n"),
           allowedMentions: { repliedUser: false },
         });
@@ -274,7 +274,7 @@ module.exports = {
         const points = Math.floor(Number(pointsArg));
         if (!target || !Number.isFinite(points) || points <= 0) {
           await safeMessageReply(message, {
-            content: "Uso: `+evento staff addpoints <@user|id> <punti>` (punti intero positivo).",
+            content: "Uso: `+evento staff addpoints <@user | id> <punti>` (punti intero positivo).",
             allowedMentions: { repliedUser: false },
           });
           return;

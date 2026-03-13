@@ -9,7 +9,7 @@ module.exports = {
   allowEmptyArgs: true,
   async execute(message, args) {
     const choice = MAP[String(args?.[0] || "").toLowerCase()];
-    if (!choice) return replyError(message, "Uso: +rps <sasso|carta|forbici>");
+    if (!choice) return replyError(message, "Uso: +rps <sasso | carta | forbici>");
 
     const options = ["sasso", "carta", "forbici"];
     const bot = options[Math.floor(Math.random() * options.length)];

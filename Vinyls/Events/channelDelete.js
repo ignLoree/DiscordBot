@@ -52,8 +52,8 @@ module.exports = {
       if (logChannel?.isTextBased?.()) {
         const responsible = formatAuditActor(audit?.executor || null);
 
-        const lines = [`${ARROW}**Responsible:**${responsible}`,
-        `${ARROW}${toDiscordTimestamp(new Date(), "F")}`,
+        const lines = [`${ARROW} **Responsible:** ${responsible}`,
+        `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
         ];
 
         if (audit.reason) lines.push(`${ARROW} **Reason:** ${audit.reason}`);

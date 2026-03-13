@@ -2150,18 +2150,18 @@ async function sendAutomodLog(message, action, violations, heatValue, context = 
     .setTitle(actionHeadline)
     .setDescription([
       `<:VC_Alert:1448670089670037675> **Automod Filter:** ${primaryFilter}`,
-      `<:channeltext:1443247596922470551> **Channel:**${message.channel}[\`${message.channelId}\`]`, preview ? `<:VC_Chat:1448694742237053061> **Message:** ${preview}`
+      `<:channeltext:1443247596922470551> **Channel:** ${message.channel} [\`${message.channelId}\`]`, preview ? `<:VC_Chat:1448694742237053061> **Message:** ${preview}`
         : null,
       "",
       shouldShowFullMessage ? `*${fullMessage}*` : null,
       "",
-      `<:member_role_icon:1330530086792728618> **Member:**${message.author}[\`${message.author.id}\`]`, `<a:VC_Alarm:1448670164173328398> **Heat:** ${Number(heatValue || 0).toFixed(1)}`,
+      `<:member_role_icon:1330530086792728618> **Member:** ${message.author} [\`${message.author.id}\`]`, `<a:VC_Alarm:1448670164173328398> **Heat:** ${Number(heatValue || 0).toFixed(1)}`,
       context.timeoutMs
-        ? `<:VC_Clock:1473359204189474886> **Timeout:**${formatDurationShort(context.timeoutMs,)}`
+        ? `<:VC_Clock:1473359204189474886> **Timeout:** ${formatDurationShort(context.timeoutMs,)}`
         : null,
-      `<:VC_BanHammer:1443933132645732362> **Decision:**${buildAutoModDecisionExplain(action, heatValue, violations, context,)}`,
+      `<:VC_BanHammer:1443933132645732362> **Decision:** ${buildAutoModDecisionExplain(action, heatValue, violations, context,)}`,
       violations?.length
-        ? `<:VC_reason:1478517122929004544> **Rules:**${violations.map((v) => `\`${v.key}\`${v.info ? ` (${v.info})` : ""}`).join(", ")}`
+        ? `<:VC_reason:1478517122929004544> **Rules:** ${violations.map((v) => `\`${v.key}\`${v.info ? ` (${v.info})` : ""}`).join(", ")}`
         : null,
     ]
       .filter(Boolean)
@@ -2182,12 +2182,12 @@ async function sendPanicModeLog(message, event, count, activeUntil) {
     .setTitle(event === "panic_enabled" ? "AutoMod Panic Mode enabled!" : "AutoMod Panic Mode update",)
     .setDescription([
       `<:VC_Alert:1448670089670037675> **Automod Filter:** Panic Mode`, `<:channeltext:1443247596922470551> **Channel:** ${message.channel}[\`${message.channelId}\`]`, `<:member_role_icon:1330530086792728618> **Member:** ${message.author}[\`${message.author.id}\`]`, `<:VC_Alert:1448670089670037675> **Event:** ${event}`,
-      `<:VC_Alert:1448670089670037675> **Trigger Accounts:**${count}/${PANIC_MODE.triggerCount}`,
+      `<:VC_Alert:1448670089670037675> **Trigger Accounts:** ${count}/${PANIC_MODE.triggerCount}`,
       triggerAccountIds.length
-        ? `<:VC_Alert:1448670089670037675> **Trigger IDs:**${triggerAccountIds.map((id) => `\`${id}\``).join(", ")}`
+        ? `<:VC_Alert:1448670089670037675> **Trigger IDs:** ${triggerAccountIds.map((id) => `\`${id}\``).join(", ")}`
         : null,
-      `<:VC_Alert:1448670089670037675> **Duration:**${Math.round(PANIC_MODE.durationMs / 60_000)}minutes`,
-      `<:VC_Alert:1448670089670037675> **Active Until:**<t:${when}:F>`,
+      `<:VC_Alert:1448670089670037675> **Duration:** ${Math.round(PANIC_MODE.durationMs / 60_000)} minuti`,
+      `<:VC_Alert:1448670089670037675> **Active Until:** <t:${when}:F>`,
     ].join("\n"),
     )
     .setTimestamp();

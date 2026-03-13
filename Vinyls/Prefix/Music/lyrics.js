@@ -67,9 +67,9 @@ module.exports = {
 
     let first = results[0];
     if (results.length > 1) {
-      const picked=await pickFromPagedMenu({message,items:results.slice(0,100),pageSize:10,deleteOnSelect:true,lineBuilder:(item,index) => `${index+1}.**${item?.trackName||"Unknown"}**by ${item?.artistName||"Unknown"}`,
+      const picked=await pickFromPagedMenu({message,items:results.slice(0,100),pageSize:10,deleteOnSelect:true,lineBuilder:(item,index) => `${index + 1}. **${item?.trackName||"Unknown"}** — ${item?.artistName||"Unknown"}`,
         optionBuilder: (item, index) => ({
-          label: `${index+1}.${String(item?.trackName||"Unknown")}`.slice(0, 100),
+          label: `${index + 1}. ${String(item?.trackName||"Unknown")}`.slice(0, 100),
           description: String(`by ${item?.artistName||"Unknown"}`).slice(0, 100),
         }),
       });

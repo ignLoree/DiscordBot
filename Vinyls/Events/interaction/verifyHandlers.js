@@ -97,7 +97,7 @@ async function finalizeVerification(interaction, member) {
     const logEmbed = new EmbedBuilder()
       .setColor("#6f4e37")
       .setTitle(`**${safeUsername}'s Verification Result**`)
-      .setDescription(`<:profile:1461732907508039834> **Member**: ${safeUsername}**[${interaction.user.id}]**\n` + `<:creation:1461732905016492220> Creation: ${createdAtText}\n` +
+      .setDescription(`<:profile:1461732907508039834> **Member**: ${safeUsername} **[${interaction.user.id}]**\n` + `<:creation:1461732905016492220> Creation: ${createdAtText}\n` +
       `<:info:1466070288554004604> **Server**: ${sanitizeEmbedText(serverName)}\n\n` +
       `<:info:1466070288554004604> Status:\n` +
       `<:space:1461733157840621608><:success:1461731530333229226>\`${safeUsername}\` has passed verification successfully.\n` + "<:space:1461733157840621608><:space:1461733157840621608><:rightSort:1461726104422453298> Auto roles have been assigned as well.",)

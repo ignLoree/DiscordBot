@@ -107,8 +107,8 @@ function ensurePrefixUsageMetadata(command) {
 
   const subs=Array.isArray(command?.subcommands)?command.subcommands.map((sub) => String(sub||"").trim().toLowerCase(),).filter(Boolean):[];
 
-  const usage=String(command?.usage||"").trim()||(subs.length?Boolean(command?.allowEmptyArgs)?`${prefix}${name}[${subs.slice(0,8).join("|")}]`
-        : `${prefix}${name}<${subs.slice(0,8).join("|")}>`
+  const usage=String(command?.usage||"").trim()||(subs.length?Boolean(command?.allowEmptyArgs)?`${prefix}${name} [${subs.slice(0,8).join(" | ")}]`
+        : `${prefix}${name} <${subs.slice(0,8).join(" | ")}>`
       : Boolean(command?.args)
         ? `${prefix}${name}<opzioni>`
         : `${prefix}${name}`);

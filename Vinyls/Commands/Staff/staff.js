@@ -501,7 +501,7 @@ module.exports = {
           .setThumbnail(targetUser.displayAvatarURL())
           .setDescription(`<:staff:1443651912179388548> <a:VC_Arrow:1448672967721615452> ${targetUser} 
             <:VC_reason:1478517122929004544> __${reason}__ 
-            <:VC_id:1478517313618575419> **ID Valutazione:**__\`${staffDoc.idCount}\`__`,)
+            <:VC_id:1478517313618575419> **ID Valutazione:** __\`${staffDoc.idCount}\`__`,)
           .setColor(SUCCESS_COLOR);
 
         if (warnChannel) {

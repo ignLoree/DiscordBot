@@ -60,7 +60,7 @@ module.exports = {
     if (!target) {
       const help = new EmbedBuilder()
         .setColor("Red")
-        .setDescription("<:vegax:1443934876440068179> Uso corretto: `+recensione <@utente|id>`");
+        .setDescription("<:vegax:1443934876440068179> Uso corretto: `+recensione <@utente | id>`");
       await safeMessageReply(message, {
         embeds: [help],
         allowedMentions: { repliedUser: false },

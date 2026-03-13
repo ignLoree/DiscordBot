@@ -657,13 +657,13 @@ async function runNamed(name, message, args, client) {
       const targetLabel = targetUser ? `${targetUser}` : `\`${target.userId}\``;
       const responsibleLabel = message.author?.bot ? `${message.author} [BOT] \`${message.author.id}\`` : `${message.author} \`${message.author.id}\``;
       const warnRemovedEmbed = new EmbedBuilder().setColor("#57F287").setTitle("Warning Removed").setDescription([
-        `<:VC_BanHammer:1443933132645732362> **Warning for** ${targetLabel}**has been removed**`,
-        `<:staff:1443651912179388548> **Responsible:**${responsibleLabel}`,
+        `<:VC_BanHammer:1443933132645732362> **Warning for** ${targetLabel} **has been removed**`,
+        `<:staff:1443651912179388548> **Responsible:** ${responsibleLabel}`,
         `<:VC_Clock:1473359204189474886> <t:${Math.floor(Date.now() / 1000)}:F>`,
-        `<:VC_reason:1478517122929004544> **Warning text:**${(warningText || "").slice(0, 200)}${(warningText || "").length > 200 ? "…" : ""}`,
+        `<:VC_reason:1478517122929004544> **Warning text:** ${(warningText || "").slice(0, 200)}${(warningText || "").length > 200 ? "…" : ""}`,
       ].join("\n"),
       )
-        .setFooter({ text: `ID:${target.userId}` })
+        .setFooter({ text: `ID: ${target.userId}` })
         .setTimestamp();
       await modLogChannel.send({ embeds: [warnRemovedEmbed] }).catch(() => null);
     }
@@ -720,12 +720,12 @@ async function runNamed(name, message, args, client) {
       const targetLabel = targetUser ? `${targetUser}` : `\`${target.userId}\``;
       const responsibleLabel = message.author?.bot ? `${message.author} [BOT] \`${message.author.id}\`` : `${message.author} \`${message.author.id}\``;
       const clearWarnEmbed = new EmbedBuilder().setColor("#57F287").setTitle("Warning Cleared").setDescription([
-        `<a:VC_Alert:1448670089670037675> **Tutti i warning per** ${targetLabel}**sono stati rimossi**(${rows.length}${rows.length === 1 ? "avviso" : "avvisi"})`,
-        `<:staff:1443651912179388548> **Responsabile:**${responsibleLabel}`,
+        `<a:VC_Alert:1448670089670037675> **Tutti i warning per** ${targetLabel} **sono stati rimossi** (${rows.length} ${rows.length === 1 ? "avviso" : "avvisi"})`,
+        `<:staff:1443651912179388548> **Responsabile:** ${responsibleLabel}`,
         `<:VC_Clock:1473359204189474886> <t:${Math.floor(Date.now() / 1000)}:F>`,
       ].join("\n"),
       )
-        .setFooter({ text: `ID:${target.userId}` })
+        .setFooter({ text: `ID: ${target.userId}` })
         .setTimestamp();
       await modLogChannel.send({ embeds: [clearWarnEmbed] }).catch(() => null);
     }
@@ -772,14 +772,14 @@ async function runNamed(name, message, args, client) {
       const modUser = await message.client.users.fetch(String(row.modId || "")).catch(() => null);
       const action = String(row.action || "Sconosciuto").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
       const hh = new Date(row.createdAt || Date.now()).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit", hour12: false, });
-      const caseEmbed = new EmbedBuilder().setColor("#FEE75C").setTitle(`Case ${caseId}|${action}|${targetUser?.username || row.userId}`)
+      const caseEmbed = new EmbedBuilder().setColor("#FEE75C").setTitle(`Case ${caseId} · ${action} · ${targetUser?.username || row.userId}`)
         .addFields(
           { name: "<:member_role_icon:1330530086792728618> Utente", value: targetUser?.username || String(row.userId || "Sconosciuto"), inline: true },
           { name: "<:staff:1443651912179388548> Moderatore", value: modUser ? `<@${modUser.id}>` : String(row.modId || "Sconosciuto"), inline: true },
           { name: "<:VC_reason:1478517122929004544> Motivo", value: row.reason || "Nessun motivo fornito", inline: true },
         )
         .setFooter({
-          text: `ID:${row.userId} • Oggi alle ${hh}${Array.isArray(row.edits) && row.edits.length ? ` | Modificato ${row.edits.length} volta/e` : ""}`,
+          text: `ID: ${row.userId} • Oggi alle ${hh}${Array.isArray(row.edits) && row.edits.length ? ` | Modificato ${row.edits.length} volta/e` : ""}`,
         });
       return message.channel.send({ embeds: [caseEmbed] }).catch(() => null);
     }
@@ -955,9 +955,9 @@ async function runNamed(name, message, args, client) {
       const length = formatDurationWords(row.durationMs);
       const blockLines = [
         `<:VC_id:1478517313618575419> **Case ${row.caseId}**`,
-        `<:VC_Info:1460670816214585481> **Tipo:**${type}`,
-        `<:member_role_icon:1330530086792728618> **Utente:**(${target.userId})${targetUser?.username || "Sconosciuto"}`,
-        `<:staff:1443651912179388548> **Moderatore:**${modUser?.username || row.modId || "Sconosciuto"}`,
+        `<:VC_Info:1460670816214585481> **Tipo:** ${type}`,
+        `<:member_role_icon:1330530086792728618> **Utente:** \`${target.userId}\` · ${targetUser?.username || "Sconosciuto"}`,
+        `<:staff:1443651912179388548> **Moderatore:** ${modUser?.username || row.modId || "Sconosciuto"}`,
       ];
       if (length) blockLines.push(`<:VC_Clock:1473359204189474886> **Durata:** ${length}`);
       blockLines.push(`<:VC_reason:1478517122929004544> **Motivo:** ${row.reason || "Nessun motivo fornito."} - ${createdAt}`);
@@ -999,21 +999,21 @@ async function runNamed(name, message, args, client) {
     }
     const hh = new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit", hour12: false, });
     const statsEmbed = new EmbedBuilder().setColor("#3498DB").setTitle("Moderation Statistics").setThumbnail(modUser?.displayAvatarURL({ size: 256 }) || null).setAuthor({ name: modUser?.username || String(modId), iconURL: modUser?.displayAvatarURL({ size: 128 }) || null, }).addFields({
-      name: "Last 7 days", value: `Mutes: ${m7}\nBans:${b7}\nKicks:${k7}\nWarns:${w7}\n**Total:${t7}**`,
+      name: "Last 7 days", value: `Mutes: ${m7}\nBans: ${b7}\nKicks: ${k7}\nWarns: ${w7}\n**Total: ${t7}**`,
       inline: true,
     },
       {
         name: "Last 30 days",
-        value: `Mutes:${m30}\nBans:${b30}\nKicks:${k30}\nWarns:${w30}\n**Total:${t30}**`,
+        value: `Mutes: ${m30}\nBans: ${b30}\nKicks: ${k30}\nWarns: ${w30}\n**Total: ${t30}**`,
         inline: true,
       },
       {
         name: "All time",
-        value: `Mutes:${mall}\nBans:${ball}\nKicks:${kall}\nWarns:${wall}\n**Total:${tall}**`,
+        value: `Mutes: ${mall}\nBans: ${ball}\nKicks: ${kall}\nWarns: ${wall}\n**Total: ${tall}**`,
         inline: true,
       },
     )
-      .setFooter({ text: `ID:${modId} • Oggi alle ${hh}` })
+      .setFooter({ text: `ID: ${modId} • Oggi alle ${hh}` })
       .setTimestamp();
     return message.channel.send({ embeds: [statsEmbed] }).catch(() => null);
   }

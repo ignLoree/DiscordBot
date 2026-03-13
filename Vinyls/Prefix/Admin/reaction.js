@@ -194,7 +194,7 @@ async function handleAutoResponders(message, args) {
 
     const lines=docs.slice(0,20).map((doc,idx) => {const trigger=String(doc?.trigger||"").trim()||"-";const response=String(doc?.response||"").trim();const reacts=Array.isArray(doc?.reactions)?doc.reactions:[];const reactionLabel=reacts.length?reacts.map(toDisplay).join(" "):"nessuna";const responseLabel=response?`risposta: ${response.slice(0,80)}${response.length>80?"...":""}`
         : "risposta: nessuna";
-      return `\`${idx+1}.\` **${trigger}**->${responseLabel}|reaction:${reactionLabel}`;
+      return `\`${idx+1}.\` **${trigger}** → ${responseLabel} · reaction: ${reactionLabel}`;
     });
     const hiddenCount = docs.length - lines.length;
     if (hiddenCount > 0) lines.push(`...e altre ${hiddenCount} regole`);

@@ -73,7 +73,7 @@ module.exports = {
       if (!target) {
         await _reply(message, {
           content:
-            "<:vegax:1443934876440068179> Usa: `+desc user <@utente|id>`",
+            "<:vegax:1443934876440068179> Usa: `+desc user <@utente | id>`",
           allowedMentions: { repliedUser: false },
         });
         return;

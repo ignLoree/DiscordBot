@@ -488,7 +488,7 @@ async function handleSuggestionChannelMessage(message) {
       )
       .setTimestamp()
       .setFooter({
-        text: `User ID:${message.author.id}|sID:${suggestionId}`,
+        text: `User ID: ${message.author.id} · sID: ${suggestionId}`,
       });
 
   const voteRow = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("upv").setEmoji("<:thumbsup:1471292172145004768>").setStyle(ButtonStyle.Secondary), new ButtonBuilder().setCustomId("downv").setEmoji("<:thumbsdown:1471292163957457013>").setStyle(ButtonStyle.Secondary),);

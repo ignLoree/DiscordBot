@@ -107,7 +107,7 @@ async function handlePauseButton(interaction) {
     const { yearStart, yearEnd } = getCurrentYearBoundsUtc();
     const year = yearStart.getUTCFullYear();
 
-    const rows=pauses.map((pause) => {const start=parseItalianDate(pause?.dataRichiesta);const end=parseItalianDate(pause?.dataRitorno);if(!start||!end)return null;if(countOverlapDays(start,end,yearStart,yearEnd)<=0)return null;const scaledDays=computePauseScaledDaysThisYear(pause,todayUtc,yearStart,yearEnd,);const statusLabel=getPauseStatusLabel(pause,todayUtc);return`- \`${pause.dataRichiesta}\` -> \`${pause.dataRitorno}\` | **${statusLabel}**| Giorni scalati: \`${scaledDays}\``;}).filter(Boolean);const memberLabel = interaction.guild?.members?.cache?.get(userId)?.displayName || interaction.client?.users?.cache?.get(userId)?.username || ` User ID: ${userId}`;
+    const rows=pauses.map((pause) => {const start=parseItalianDate(pause?.dataRichiesta);const end=parseItalianDate(pause?.dataRitorno);if(!start||!end)return null;if(countOverlapDays(start,end,yearStart,yearEnd)<=0)return null;const scaledDays=computePauseScaledDaysThisYear(pause,todayUtc,yearStart,yearEnd,);const statusLabel=getPauseStatusLabel(pause,todayUtc);return`- \`${pause.dataRichiesta}\` -> \`${pause.dataRitorno}\` | **${statusLabel}** · Giorni scalati: \`${scaledDays}\``;}).filter(Boolean);const memberLabel = interaction.guild?.members?.cache?.get(userId)?.displayName || interaction.client?.users?.cache?.get(userId)?.username || ` User ID: ${userId}`;
 
     const payload = rows.length === 0
       ? { content: `<:staff:1443651912179388548> Staffer: <@${userId}>\n<:attentionfromvega:1443651874032062505> Nessuna pausa trovata nell'anno **${year}**.`, flags: 1 << 6 }

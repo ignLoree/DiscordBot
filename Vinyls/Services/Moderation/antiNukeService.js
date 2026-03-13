@@ -596,13 +596,13 @@ async function sendAntiNukeLog(guild, title, lines, color = "#ED4245") {
 
   const embed = new EmbedBuilder().setColor(color).setTitle(antiNukeHeadline(title, lines)).setDescription([`<:VC_reason:1478517122929004544> **AntiNuke Filter:** ${filterName}`,
   channel
-    ? `<:channeltext:1443247596922470551> **Channel:**${channel}`
+    ? `<:channeltext:1443247596922470551> **Channel:** ${channel}`
     : null,
   target
-    ? `<:VC_Mention:1443994358201323681> **Target:**${target}`
+    ? `<:VC_Mention:1443994358201323681> **Target:** ${target}`
     : null,
   executor
-    ? `<:VC_Mention:1443994358201323681> **Member:**${executor}`
+    ? `<:VC_Mention:1443994358201323681> **Member:** ${executor}`
     : null,
     "",
   ...details.map(
@@ -766,22 +766,22 @@ async function sendPanicModeDetailedReport(
     "",
     `<a:VC_Alert:1448670089670037675> **Panic Mode Report**`,
     `<a:VC_Alert:1448670089670037675> **CASE:**\`${caseId}\``,
-    `<a:VC_reason:1478517122929004544> **Reason:**${String(reason || "panic_end")}`,
-    `<:member_role_icon:1330530086792728618> **Members Quarantined:**${quarantinedCount}`,
+    `<a:VC_reason:1478517122929004544> **Reason:** ${String(reason || "panic_end")}`,
+    `<:member_role_icon:1330530086792728618> **Members Quarantined:** ${quarantinedCount}`,
     "",
     `<a:VC_Alert:1448670089670037675> **Backup System Report**`,
     `<:VC_reason:1478517122929004544>${backupLabel}`,
     "",
-    `<:VC_Mention:1443994358201323681>**Roles**`,
-    `<:cancel:1461730653677551691> Deleted:${Number(report.roles.deleted || 0)}|<:success:1461731530333229226> Recovered:${Number(report.roles.recovered || 0)}|Edited:${Number(report.roles.edited || 0)}`,
+    `<:VC_Mention:1443994358201323681> **Roles**`,
+    `<:cancel:1461730653677551691> Deleted: ${Number(report.roles.deleted || 0)} | <:success:1461731530333229226> Recovered: ${Number(report.roles.recovered || 0)} | Edited: ${Number(report.roles.edited || 0)}`,
     `<:channeltext:1443247596922470551> **Channels**`,
-    `<:cancel:1461730653677551691> Deleted:${Number(report.channels.deleted || 0)}|<:success:1461731530333229226> Recovered:${Number(report.channels.recovered || 0)}|<:VC_right_arrow:1473441155055096081> Edited:${Number(report.channels.edited || 0)}`,
+    `<:cancel:1461730653677551691> Deleted: ${Number(report.channels.deleted || 0)} | <:success:1461731530333229226> Recovered: ${Number(report.channels.recovered || 0)} | <:VC_right_arrow:1473441155055096081> Edited: ${Number(report.channels.edited || 0)}`,
     `<:VC_category:1478836096669581505> **Categories**`,
-    `<:cancel:1461730653677551691> Deleted:${Number(report.categories.deleted || 0)}|<:success:1461731530333229226> Recovered:${Number(report.categories.recovered || 0)}|<:VC_right_arrow:1473441155055096081> Edited:${Number(report.categories.edited || 0)}`,
+    `<:cancel:1461730653677551691> Deleted: ${Number(report.categories.deleted || 0)} | <:success:1461731530333229226> Recovered: ${Number(report.categories.recovered || 0)} | <:VC_right_arrow:1473441155055096081> Edited: ${Number(report.categories.edited || 0)}`,
     `<:VC_webhooks:1478515450769047704> **Webhooks**`,
-    `<:cancel:1461730653677551691> Deleted:${Number(report.webhooks.deleted || 0)}`,
+    `<:cancel:1461730653677551691> Deleted: ${Number(report.webhooks.deleted || 0)}`,
     `<:VC_tools:1478862265305272364> **Settings**`,
-    `<:VC_tools:1478862265305272364> Server:${report.settings.server ? "ON" : "OFF"}|Bot:${report.settings.wick ? "ON" : "OFF"}`,
+    `<:VC_tools:1478862265305272364> Server: ${report.settings.server ? "ON" : "OFF"} | Bot: ${report.settings.wick ? "ON" : "OFF"}`,
   ];
 
   await sendAntiNukeLog(guild, "<a:VC_Alert:1448670089670037675> AntiNuke Panic Mode Report", lines, "#57F287");

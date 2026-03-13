@@ -191,7 +191,7 @@ async function handleDmBroadcastModal(interaction, client) {
       }
     }
     if (skippedNoDm.length) {
-      lines.push("\n<:vegax:1443934876440068179>**Esclusi (no-dm):**");
+      lines.push("\n<:vegax:1443934876440068179> **Esclusi (no-dm):**");
       for (const id of skippedNoDm) {
         lines.push(`<@${id}> (no-dm)`);
       }

@@ -81,7 +81,7 @@ function buildStaffActionModLogEmbed(modCase, options = {}) {
   const actionLabel = options.actionLabel || String(modCase.action || "Unknown").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
   const moderatorId = options.moderatorId != null ? options.moderatorId : modCase.modId;
   const reasonText = options.reasonOverride !== undefined ? (options.reasonOverride && String(options.reasonOverride).slice(0, 1024)) || "No reason given." : (modCase.reason && String(modCase.reason).slice(0, 1024)) || "No reason given.";
-  const embed = new EmbedBuilder().setColor("#57F287").setTitle(`Case ${modCase.caseId}|${actionLabel}|${options.targetUsername != null ? options.targetUsername : modCase.userId}`,
+  const embed = new EmbedBuilder().setColor("#57F287").setTitle(`Case ${modCase.caseId} · ${actionLabel} · ${options.targetUsername != null ? options.targetUsername : modCase.userId}`,
   );
   const hasDuration = Number.isFinite(modCase.durationMs) && modCase.durationMs > 0;
   const fields = [{ name: "<:member_role_icon:1330530086792728618> User", value: `<@${modCase.userId}>`, inline: true },
