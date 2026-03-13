@@ -59,12 +59,29 @@ chmod 600 /opt/bot/deploy/.env.mongo
 
 ## Dump da Atlas → VPS (stessi dati di prima)
 
+**Sul PC** (o sulla VPS se hai `mongodump` + rete verso Atlas):
+
 ```bash
-mongodump --uri="mongodb+srv://USER:PASS@cluster.../..." --out=./dump-atlas
-/opt/bot/deploy/restore-mongo.sh ./dump-atlas
+mongodump --uri="mongodb+srv://USER:PASS@purplemoon.xxx.mongodb.net/" --out=./dump-atlas
 ```
 
-(Se `mongodump` non c’è sul host: installa `mongodb-database-tools` o usa temporaneamente `docker run --rm -v "$PWD:/d" mongo:7 mongodump ...`.)
+La cartella `dump-atlas` deve contenere **sottocartelle con file `.bson`** (es. `dump-atlas/nomedb/*.bson`). Se pesa pochi KB e non ci sono `.bson`, il dump non e andato bene.
+
+Copia **tutta** `dump-atlas` sulla VPS (scp/rsync), poi:
+
+```bash
+/opt/bot/deploy/restore-mongo.sh /percorso/dump-atlas
+```
+
+**Mai** passare solo `backups/` se dentro non c e un dump Atlas: spesso c e solo `cron.log` → **0 documenti**.
+
+(Se `mongodump` non c’è: pacchetto **mongodb-database-tools**, oppure  
+`docker run --rm -v "$PWD:/out" mongo:7 mongodump --uri="mongodb+srv://..." -o /out/dump-atlas`)
+
+### Perche prima vedevi "0 documenti"
+
+- Argomento sbagliato (cartella senza `.bson`).
+- Oppure dump fatto su DB vuoto / URI senza auth.
 
 ---
 
