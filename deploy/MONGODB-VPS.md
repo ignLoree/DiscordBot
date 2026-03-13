@@ -108,6 +108,53 @@ Copia **tutta** `dump-atlas` sulla VPS (scp/rsync), poi:
 
 ---
 
+## Reset root senza file (se auth fallisce sempre)
+
+**Un comando solo.** Sostituisci `USER` e `PASS` con quelli che vuoi (anche i vecchi, se li vuoi identici):
+
+```bash
+cd /opt/bot/deploy
+sudo chmod +x reset-mongo-root.sh
+sudo ./reset-mongo-root.sh USER PASS
+```
+
+Lo script fa `down -v`, esporta user/pass **in shell** (zero CRLF, zero compose che legge file sbagliato), `up -d`, testa il ping, riscrive `.env.mongo` in LF. Poi **restore** del dump se ti servono i dati.
+
+---
+
+## Authentication failed anche con password giusta
+
+Spesso **CRLF** nel file `.env.mongo` (creato su Windows): la password nel container ha un `\r` in coda.
+
+```bash
+cat -A /opt/bot/deploy/.env.mongo   # se vedi ^M = CRLF
+sudo apt install -y dos2unix && sudo dos2unix /opt/bot/deploy/.env.mongo
+```
+
+Poi **sempre** `docker compose down -v` e `up -d` (altrimenti il vecchio root resta).
+
+Oppure: `./fix-env-mongo-crlf.sh` in deploy.
+
+---
+
+## Compass dal PC (tunnel SSH)
+
+Sulla VPS Mongo deve essere su (start-mongo.sh). Sul PC, PowerShell:
+
+```powershell
+.\deploy\compass-tunnel.ps1 -VpsHost IP_O_DOMINIO
+```
+
+Oppure: `ssh -N -L 27018:127.0.0.1:27017 vinili@VPS`
+
+Compass URI (stessi user/password di `.env.mongo`):
+
+```text
+mongodb://USER:PASS@127.0.0.1:27018/?authSource=admin
+```
+
+---
+
 ## Stringa nel `.env` del bot
 
 ```
