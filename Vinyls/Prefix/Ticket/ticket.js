@@ -1188,7 +1188,7 @@ const activeTicketInChannel = effectiveChannelId ? await Ticket.findOne({ channe
 
       message.client.ticketSwitchLocks.add(switchKey);
       try {
-        const ticketDoc = activeTicketInChannel;
+        const ticketDoc = await Ticket.findOne({ channelId: targetChannel.id, open: true }).catch(() => null);
         if (!ticketDoc) {
           await safeMessageReply(message, {
             embeds: [
