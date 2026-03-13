@@ -65,5 +65,5 @@ module.exports = {
   entries: { categories, channels, roles, bots, emojis },
   maps: { categories: toLastValueMap(categories), channels: toLastValueMap(channels), roles: toLastValueMap(roles), bots: toLastValueMap(bots), emojis: toLastValueMap(emojis) },
   multi: { categories: toMultiValueMap(categories), channels: toMultiValueMap(channels), roles: toMultiValueMap(roles), bots: toMultiValueMap(bots), emojis: toMultiValueMap(emojis) },
-  meta: { guildMain: "1471512555762483330", emojis: { loadingAnimatedId: "1448687876018540695", loadingFallbackId: "1462504528774430962" }, links: { vote: "https://discadia.com/server/viniliecaffe/", invite: "https://discord.gg/viniliecaffe" } }
+  meta: { guildMain: "1329080093599076474", emojis: { loadingAnimatedId: "1448687876018540695", loadingFallbackId: "1462504528774430962" }, links: { vote: "https://discadia.com/server/viniliecaffe/", invite: "https://discord.gg/viniliecaffe" } }
 };
