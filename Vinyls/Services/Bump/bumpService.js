@@ -506,7 +506,7 @@ async function awardBumpVoteExp(client, guild, userId, source, previousLastAt, c
   const member = await getGuildMemberCached(guild, userId);
   const ignoreExp = await shouldIgnoreExpForMember({ guildId, member, channelId: null });
   if (!ignoreExp) {
-    await addExpWithLevel(guild, userId, effectiveExp, false, false).catch(() => {});
+    await addExpWithLevel(guild, userId, effectiveExp, false, true).catch(() => {});
   }
   return { baseExp, fastBonus, streakBonus, effectiveExp, newStreak, bestStreak, isFast };
 }

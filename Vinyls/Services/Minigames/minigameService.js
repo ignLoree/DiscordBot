@@ -5911,7 +5911,7 @@ async function awardWinAndReply(message, rewardExp, game = null) {
   const ignoreExp = await shouldIgnoreExpForMember({ guildId: message.guild.id, member, channelId: message.channel?.id || message.channelId || null, });
   if (!ignoreExp) {
     try {
-      await addExpWithLevel(message.guild, message.author.id, effectiveExp, false, false);
+      await addExpWithLevel(message.guild, message.author.id, effectiveExp, false, true);
     } catch (err) {
       warnMinigame(err);
     }
@@ -6739,7 +6739,7 @@ ${game.previewUrl}`,
   });
   if (!ignoreExp) {
     try {
-      await addExpWithLevel(interaction.guild, interaction.user.id, effectiveExp, false, false);
+      await addExpWithLevel(interaction.guild, interaction.user.id, effectiveExp, false, true);
     } catch (err) {
       warnMinigame(err);
     }
