@@ -327,14 +327,14 @@ async function buildWeeklyEmbed(message, excludeStaffFromShort = false, useExpUs
     .setDescription(
       [
         useExpUserBoard
-        ? "<a:VC_Sparkles:1468546911936974889> I 10 utenti con più exp guadagnati in settimana"
-        : "",
-        excludeStaffFromShort ? "" : "",
-        "",
-        lines.join("\n"),
+          ? "<a:VC_Sparkles:1468546911936974889> I 10 utenti con più exp guadagnati in settimana [Weekly]"
+          : null,
+        excludeStaffFromShort ? "" : null,
       ]
-        .filter((line) => line !== "")
-        .join("\n"),
+        .filter((line) => line != null && line !== "")
+        .join("\n") +
+        "\n\n" +
+        lines.join("\n"),
     );
 }
 
@@ -377,14 +377,14 @@ async function buildAllTimeEmbed(message, excludeStaffFromShort = false, useExpU
     .setDescription(
       [
         useExpUserBoard
-          ? "<a:VC_Sparkles:1468546911936974889> I 10 utenti con più exp guadagnati"
-          : "",
-        excludeStaffFromShort ? "" : "",
-        "",
-        lines.join("\n"),
+          ? "<a:VC_Sparkles:1468546911936974889> I 10 utenti con più exp guadagnati [AllTime]"
+          : null,
+        excludeStaffFromShort ? "" : null,
       ]
-        .filter((line) => line !== "")
-        .join("\n"),
+        .filter((line) => line != null && line !== "")
+        .join("\n") +
+        "\n\n" +
+        lines.join("\n"),
     );
 }
 
