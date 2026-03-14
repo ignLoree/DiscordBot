@@ -58,7 +58,7 @@ async function sendEventRewardSkippedLog(client, data) {
 
   const embed = new EmbedBuilder()
     .setColor("#99aab5")
-    .setTitle("<:VC_page3:1463196404120813766> Premio già assegnato")
+    .setTitle("<:VC_page3:1482459759268462613> Premio già assegnato")
     .setDescription(`<:VC_Info:1460670816214585481> **Utente:** <@${userId}>`)
     .addFields(
       { name: "<:VC_Info:1460670816214585481> Tipo", value: label, inline: true },

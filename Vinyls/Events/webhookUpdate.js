@@ -167,9 +167,9 @@ module.exports = {
       const typeText = webhookTypeLabel(entry?.target?.type);
 
       const lines = [
-        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsible}`,
-        `<:VC_right_arrow:1473441155055096081> **Target:** ${targetName} \`${targetId}\``,
-        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+        `<:VC_right_arrow:1482459908245815296> **Responsible:** ${responsible}`,
+        `<:VC_right_arrow:1482459908245815296> **Target:** ${targetName} \`${targetId}\``,
+        `<:VC_right_arrow:1482459908245815296> ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         sectionTitle,
       ];
@@ -180,25 +180,25 @@ module.exports = {
         const channelChange = changes.find((c) => String(c?.key || "") === "channel_id");
         const avatarChange = changes.find((c) => String(c?.key || "") === "avatar_hash");
         if (nameChange) {
-          lines.push(`<:VC_right_arrow:1473441155055096081> **Name**`);
-          lines.push(`  ${String(nameChange?.old ?? "sconosciuto")} <:VC_right_arrow:1473441155055096081> ${String(nameChange?.new ?? targetName)}`);
+          lines.push(`<:VC_right_arrow:1482459908245815296> **Name**`);
+          lines.push(`  ${String(nameChange?.old ?? "sconosciuto")} <:VC_right_arrow:1482459908245815296> ${String(nameChange?.new ?? targetName)}`);
         } else {
-          lines.push(`<:VC_right_arrow:1473441155055096081> **Name:** ${targetName}`);
+          lines.push(`<:VC_right_arrow:1482459908245815296> **Name:** ${targetName}`);
         }
         if (channelChange) {
-          lines.push(`<:VC_right_arrow:1473441155055096081> **Channel**`);
-          lines.push(`  ${channelChange?.old ? `<#${channelChange.old}>` : "none"} <:VC_right_arrow:1473441155055096081> ${channelChange?.new ? `<#${channelChange.new}>` : "none"}`);
+          lines.push(`<:VC_right_arrow:1482459908245815296> **Channel**`);
+          lines.push(`  ${channelChange?.old ? `<#${channelChange.old}>` : "none"} <:VC_right_arrow:1482459908245815296> ${channelChange?.new ? `<#${channelChange.new}>` : "none"}`);
         }
         if (avatarChange) {
-          lines.push(`<:VC_right_arrow:1473441155055096081> **Avatar aggiornato:** Sì`);
+          lines.push(`<:VC_right_arrow:1482459908245815296> **Avatar aggiornato:** Sì`);
         }
       } else {
-        lines.push(`<:VC_right_arrow:1473441155055096081> **Channel:** ${channelText}`);
+        lines.push(`<:VC_right_arrow:1482459908245815296> **Channel:** ${channelText}`);
         if (appId) {
-          lines.push(`<:VC_right_arrow:1473441155055096081> **Application Id:** \`${appId}\``);
+          lines.push(`<:VC_right_arrow:1482459908245815296> **Application Id:** \`${appId}\``);
         }
-        lines.push(`<:VC_right_arrow:1473441155055096081> **Name:** ${targetName}`);
-        lines.push(`<:VC_right_arrow:1473441155055096081> **Type:** ${typeText}`);
+        lines.push(`<:VC_right_arrow:1482459908245815296> **Name:** ${targetName}`);
+        lines.push(`<:VC_right_arrow:1482459908245815296> **Type:** ${typeText}`);
       }
 
       if (monitorableExecutor && logChannel?.isTextBased?.()) {

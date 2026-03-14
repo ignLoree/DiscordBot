@@ -13,7 +13,7 @@ const {
   hasAdminsProfileCapability,
 } = require("../Services/Moderation/securityProfilesService");
 
-const ARROW = "<:VC_right_arrow:1473441155055096081>";
+const ARROW = "<:VC_right_arrow:1482459908245815296>";
 const CORE_EXEMPT_USER_IDS = new Set(["1466495522474037463", "1329118940110127204"]);
 const USER_UPDATE_DEDUPE_MS = 15_000;
 const recentUserUpdateActions = new Map();

@@ -169,7 +169,7 @@ module.exports = {
           content: `
 <:partnermanager:1443651916838998099> ${targetUser}
 <:VC_reason:1478517122929004544> ${reason}
-<:VC_Link:1448688587133685895> ${messageLink}`,
+<:VC_Link:1482460590894088222> ${messageLink}`,
         }).catch(() => null);
       }
 

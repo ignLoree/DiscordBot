@@ -154,22 +154,22 @@ async function sendDeleteLog(message) {
   const hasContent = normalizeText(content).length > 0;
   const hasAttachments = attachmentNames.length > 0;
 
-  const lines=[`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
+  const lines=[`<:VC_right_arrow:1482459908245815296> ${toDiscordTimestamp(new Date(),"F")}`,
     "",
     "**Previous Settings**",
-    `<:VC_right_arrow:1473441155055096081> **Channel:** ${message.channel||"#sconosciuto"}`,
-    `<:VC_right_arrow:1473441155055096081> **Id:** \`${message.id||"sconosciuto"}\``,];
+    `<:VC_right_arrow:1482459908245815296> **Channel:** ${message.channel||"#sconosciuto"}`,
+    `<:VC_right_arrow:1482459908245815296> **Id:** \`${message.id||"sconosciuto"}\``,];
 
-  lines.push("<:VC_right_arrow:1473441155055096081> **Content:**");
+  lines.push("<:VC_right_arrow:1482459908245815296> **Content:**");
   lines.push("```diff");
   lines.push(buildDeletedDiff(hasContent ? content : "(vuoto)"));
   lines.push("```");
   lines.push(
-    `<:VC_right_arrow:1473441155055096081> **Attachments:** ${hasAttachments ? `[ ${attachmentNames.join(", ")} ]` : "[ nessuno ]"}`,
+    `<:VC_right_arrow:1482459908245815296> **Attachments:** ${hasAttachments ? `[ ${attachmentNames.join(", ")} ]` : "[ nessuno ]"}`,
   );
   if (message?.author) {
     lines.push(
-      `<:VC_right_arrow:1473441155055096081> **Author:** ${buildAuthorLabel(message)}`,
+      `<:VC_right_arrow:1482459908245815296> **Author:** ${buildAuthorLabel(message)}`,
     );
   }
 

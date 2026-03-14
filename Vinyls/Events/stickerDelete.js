@@ -80,17 +80,17 @@ module.exports = {
         .setTitle("Sticker Delete")
         .setDescription(
           [
-            `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-            `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+            `<:VC_right_arrow:1482459908245815296> **Responsible:** ${responsibleText}`,
+            `<:VC_right_arrow:1482459908245815296> ${toDiscordTimestamp(new Date(), "F")}`,
             "",
             "**Previous Settings**",
-            `<:VC_right_arrow:1473441155055096081> **Id:** \`${stickerId}\``,
-            `<:VC_right_arrow:1473441155055096081> **Name:** ${sticker.name || "sconosciuto"}`,
-            `<:VC_right_arrow:1473441155055096081> **Tags:** ${sticker.tags || "-"}`,
-            `<:VC_right_arrow:1473441155055096081> **Type:** Local Server Sticker`,
-            `<:VC_right_arrow:1473441155055096081> **Format Type:** ${stickerFormatLabel(sticker.formatType)}`,
-            `<:VC_right_arrow:1473441155055096081> **Available:** ${yesNo(Boolean(sticker.available))}`,
-            `<:VC_right_arrow:1473441155055096081> **Guild Id:** \`${guild.id}\``,
+            `<:VC_right_arrow:1482459908245815296> **Id:** \`${stickerId}\``,
+            `<:VC_right_arrow:1482459908245815296> **Name:** ${sticker.name || "sconosciuto"}`,
+            `<:VC_right_arrow:1482459908245815296> **Tags:** ${sticker.tags || "-"}`,
+            `<:VC_right_arrow:1482459908245815296> **Type:** Local Server Sticker`,
+            `<:VC_right_arrow:1482459908245815296> **Format Type:** ${stickerFormatLabel(sticker.formatType)}`,
+            `<:VC_right_arrow:1482459908245815296> **Available:** ${yesNo(Boolean(sticker.available))}`,
+            `<:VC_right_arrow:1482459908245815296> **Guild Id:** \`${guild.id}\``,
           ].join("\n"),
         );
 

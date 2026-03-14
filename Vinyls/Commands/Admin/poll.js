@@ -318,7 +318,7 @@ async function handleRemove(interaction) {
   return safeEditReply(interaction, {
     embeds: [
       successEmbed(
-        `<:VC_Trash:1460645075242451025> L'ultimo poll (#${lastPoll.pollcount}) è stato rimosso.`,
+        `<:VC_purge:1478861828271636561> L'ultimo poll (#${lastPoll.pollcount}) è stato rimosso.`,
       ),
     ],
   });

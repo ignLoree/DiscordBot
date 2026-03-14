@@ -56,7 +56,7 @@ function buildSuccessEmbed(interaction, result) {
           `<:VC_threads:1478515497569095760> Thread: **${result.stats.threads}**`,
           `<:VC_Chat:1448694742237053061> Messaggi: **${result.stats.messages}**`,
           `<:VC_BanHammer:1443933132645732362> Bans: **${result.stats.bans}**`,
-          `<:VC_Link:1448688587133685895> Invites: **${result.stats.invites}**`,
+          `<:VC_Link:1482460590894088222> Invites: **${result.stats.invites}**`,
           `<:VC_webhooks:1478515450769047704> Webhooks: **${result.stats.webhooks}**`,
           `<:VC_file:1478515880722698300> File: \`${result.fileName}\` (${formatBytes(result.sizeBytes)})`,
         ].join("\n"),
@@ -187,7 +187,7 @@ function buildInfoEmbed(interaction, backupId, backupData, fileSize, checksum = 
         inline: false,
       },
       {
-        name: "<:VC_Link:1448688587133685895> Integrità",
+        name: "<:VC_Link:1482460590894088222> Integrità",
         value: checksum
           ? `\`SHA256\` payload: \`${String(checksum.payload || "").slice(0, 12)}...\`\n\`SHA256\` compressed: \`${String(checksum.compressed || "").slice(0, 12)}...\`` : "N/D", inline: false,
       },]).setFooter({ text: interaction.guild?.name || "Backup", iconURL: interaction.guild?.iconURL?.() || null, }).setTimestamp();
@@ -214,7 +214,7 @@ function buildLoadStatusEmbed(status) {
         `<a:VC_Loading:1448687876018540695> Fase: \`${String(status.phase || "avvio")}\``,
         `<a:VC_Loading:1462504528774430962> Elementi processati: **${Number(status.processed || 0)}**`,
         `<:cancel:1461730653677551691> Annullamento richiesto: **${status.cancelRequested ? "sì" : "no"}**`,
-        `<:VC_Link:1448688587133685895> Limite messaggi: \`${status.messagesLimit == null ? "TUTTI" : Number(status.messagesLimit || 0)}\``,
+        `<:VC_Link:1482460590894088222> Limite messaggi: \`${status.messagesLimit == null ? "TUTTI" : Number(status.messagesLimit || 0)}\``,
         `<:VC_BanHammer:1443933132645732362> Azioni: ${actions.length ? `\`${actions.join("`, `")}\`` : "nessuna"}`,
       ].join("\n"),
     );

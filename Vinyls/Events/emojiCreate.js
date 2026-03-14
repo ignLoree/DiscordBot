@@ -75,13 +75,13 @@ module.exports = {
         .setTitle("Emoji Create")
         .setDescription(
           [
-            `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-            `<:VC_right_arrow:1473441155055096081> **Target:** ${emoji.name || "emoji"} \`${emojiId}\``,
-            `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+            `<:VC_right_arrow:1482459908245815296> **Responsible:** ${responsibleText}`,
+            `<:VC_right_arrow:1482459908245815296> **Target:** ${emoji.name || "emoji"} \`${emojiId}\``,
+            `<:VC_right_arrow:1482459908245815296> ${toDiscordTimestamp(new Date(), "F")}`,
             "",
             "**Settings**",
-            `<:VC_right_arrow:1473441155055096081> **Name:** ${emoji.name || "sconosciuto"}`,
-            `<:VC_right_arrow:1473441155055096081> **Animated:** ${emoji?.animated ? "Yes" : "No"}`,
+            `<:VC_right_arrow:1482459908245815296> **Name:** ${emoji.name || "sconosciuto"}`,
+            `<:VC_right_arrow:1482459908245815296> **Animated:** ${emoji?.animated ? "Yes" : "No"}`,
           ].join("\n"),
         );
 

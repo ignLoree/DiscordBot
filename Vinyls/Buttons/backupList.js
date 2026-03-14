@@ -60,12 +60,12 @@ async function renderList(userId, page = 1) {
     new ButtonBuilder()
       .setCustomId(`${PREFIX_PREV}${userId}:${currentPage}`)
       .setStyle(ButtonStyle.Secondary)
-      .setEmoji("<:VC_page5:1463196506143326261> ")
+      .setEmoji("<:VC_page5:1482459835042762752> ")
       .setDisabled(currentPage <= 1),
     new ButtonBuilder()
       .setCustomId(`${PREFIX_NEXT}${userId}:${currentPage}`)
       .setStyle(ButtonStyle.Secondary)
-      .setEmoji("<:VC_page4:1463196456964980808>")
+      .setEmoji("<:VC_page4:1482459791975645226>")
       .setDisabled(currentPage >= totalPages)
   );
 

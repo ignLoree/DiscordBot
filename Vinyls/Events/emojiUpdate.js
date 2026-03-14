@@ -100,12 +100,12 @@ module.exports = {
 
       const changeLines = [];
       if (hasNameChange) {
-        changeLines.push(`<:VC_right_arrow:1473441155055096081> **Name**`);
-        changeLines.push(`  ${fromName} <:VC_right_arrow:1473441155055096081> ${toName}`);
+        changeLines.push(`<:VC_right_arrow:1482459908245815296> **Name**`);
+        changeLines.push(`  ${fromName} <:VC_right_arrow:1482459908245815296> ${toName}`);
       }
 
       if (hasRolesChange) {
-        changeLines.push(`<:VC_right_arrow:1473441155055096081> **Roles**`);
+        changeLines.push(`<:VC_right_arrow:1482459908245815296> **Roles**`);
         if (addedRoles.length) {
           changeLines.push(`  + ${addedRoles.map((id) => `<@&${id}>`).join(", ")}`);
         }
@@ -119,9 +119,9 @@ module.exports = {
         .setTitle("Emoji Update")
         .setDescription(
           [
-            `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-            `<:VC_right_arrow:1473441155055096081> **Target:** ${newEmoji?.name || oldEmoji?.name || "emoji"} \`${emojiId}\``,
-            `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+            `<:VC_right_arrow:1482459908245815296> **Responsible:** ${responsibleText}`,
+            `<:VC_right_arrow:1482459908245815296> **Target:** ${newEmoji?.name || oldEmoji?.name || "emoji"} \`${emojiId}\``,
+            `<:VC_right_arrow:1482459908245815296> ${toDiscordTimestamp(new Date(), "F")}`,
             "",
             "**Changes**",
             ...changeLines,

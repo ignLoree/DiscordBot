@@ -95,7 +95,7 @@ function didTimeoutChange(oldMember, newMember) {
 function buildNickChangeLine(oldMember, newMember) {
   const oldNick = String(oldMember?.nickname || "").trim() || "<:cancel:1461730653677551691>";
   const newNick = String(newMember?.nickname || "").trim() || "<:cancel:1461730653677551691>";
-  return `${oldNick} <:VC_right_arrow:1473441155055096081> ${newNick}`;
+  return `${oldNick} <:VC_right_arrow:1482459908245815296> ${newNick}`;
 }
 
 function buildTimeoutChangeLine(oldMember, newMember) {
@@ -103,7 +103,7 @@ function buildTimeoutChangeLine(oldMember, newMember) {
   const newTs = newMember?.communicationDisabledUntilTimestamp || 0;
   const oldLabel = oldTs ? toRelativeDiscordTime(oldTs) : "<:cancel:1461730653677551691>";
   const newLabel = newTs ? toRelativeDiscordTime(newTs) : "<:cancel:1461730653677551691> (Reset)";
-  return `${oldLabel} <:VC_right_arrow:1473441155055096081> ${newLabel}`;
+  return `${oldLabel} <:VC_right_arrow:1482459908245815296> ${newLabel}`;
 }
 
 async function resolveMemberUpdateAuditInfo(guild, targetUserId) {
@@ -193,24 +193,24 @@ async function sendMemberUpdateLog(oldMember, newMember) {
   const responsibleText = formatAuditActor(audit.executor);
 
   const lines = [
-    `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-    `<:VC_right_arrow:1473441155055096081> **Target:** ${newMember.user} \`${newMember.user.id}\``,
-    `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+    `<:VC_right_arrow:1482459908245815296> **Responsible:** ${responsibleText}`,
+    `<:VC_right_arrow:1482459908245815296> **Target:** ${newMember.user} \`${newMember.user.id}\``,
+    `<:VC_right_arrow:1482459908245815296> ${toDiscordTimestamp(new Date(), "F")}`,
   ];
 
   if (audit.reason) {
-    lines.push(`<:VC_right_arrow:1473441155055096081> **Reason:** ${audit.reason}`);
+    lines.push(`<:VC_right_arrow:1482459908245815296> **Reason:** ${audit.reason}`);
   }
 
   lines.push("", "**Changes**");
 
   if (timeoutChanged) {
-    lines.push("<:VC_right_arrow:1473441155055096081> **Communication Disabled Until**");
+    lines.push("<:VC_right_arrow:1482459908245815296> **Communication Disabled Until**");
     lines.push(`  ${buildTimeoutChangeLine(oldMember, newMember)}`);
   }
 
   if (nickChanged) {
-    lines.push("<:VC_right_arrow:1473441155055096081> **Nick**");
+    lines.push("<:VC_right_arrow:1482459908245815296> **Nick**");
     lines.push(`  ${buildNickChangeLine(oldMember, newMember)}`);
   }
 

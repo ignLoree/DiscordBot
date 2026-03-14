@@ -126,16 +126,16 @@ module.exports = {
         const embed = new EmbedBuilder()
             .setColor("#57F287")
             .setTitle("Invite Create")
-            .setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-              `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+            .setDescription([`<:VC_right_arrow:1482459908245815296> **Responsible:** ${responsibleText}`,
+              `<:VC_right_arrow:1482459908245815296> ${toDiscordTimestamp(new Date(), "F")}`,
               "",
               "**Settings**",
-              `<:VC_right_arrow:1473441155055096081> **Code:** ${code}`,
-              inviteUrl ? `<:VC_right_arrow:1473441155055096081> **URL:** ${inviteUrl}` : null,
-              `<:VC_right_arrow:1473441155055096081> **Channel:** ${channelText}`,
-              `<:VC_right_arrow:1473441155055096081> **Max Uses:** ${normalizeCount(invite.maxUses, 0)}`,
-              `<:VC_right_arrow:1473441155055096081> **Max Age:** ${formatMaxAge(invite.maxAge)}`,
-              `<:VC_right_arrow:1473441155055096081> **Temporary:** ${yesNo(Boolean(invite.temporary))}`,
+              `<:VC_right_arrow:1482459908245815296> **Code:** ${code}`,
+              inviteUrl ? `<:VC_right_arrow:1482459908245815296> **URL:** ${inviteUrl}` : null,
+              `<:VC_right_arrow:1482459908245815296> **Channel:** ${channelText}`,
+              `<:VC_right_arrow:1482459908245815296> **Max Uses:** ${normalizeCount(invite.maxUses, 0)}`,
+              `<:VC_right_arrow:1482459908245815296> **Max Age:** ${formatMaxAge(invite.maxAge)}`,
+              `<:VC_right_arrow:1482459908245815296> **Temporary:** ${yesNo(Boolean(invite.temporary))}`,
             ]
               .filter(Boolean)
               .join("\n"));

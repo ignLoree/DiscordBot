@@ -20,7 +20,7 @@ const THANKS_CHANNEL_ID = IDs.channels.supporters;
 const INFO_PERKS_CHANNEL_ID = IDs.channels.info;
 const INVITE_REWARD_TIERS=[{target:5,roleIds:[IDs.roles.Promoter,IDs.roles.PicPerms||"1468938195348754515",].filter(Boolean),},{target:25,roleIds:[IDs.roles.Propulsor].filter(Boolean),},{target:100,roleIds:[IDs.roles.Catalyst].filter(Boolean),},];
 const JOIN_LEAVE_LOG_CHANNEL_ID = IDs.channels.joinLeaveLogs;
-const ARROW = "<:VC_right_arrow:1473441155055096081>";
+const ARROW = "<:VC_right_arrow:1482459908245815296>";
 const JOIN_GATE_WHITELIST_ROLE_IDS=new Set([IDs.roles.Founder,IDs.roles.CoFounder,].filter(Boolean).map(String),);
 const CORE_EXEMPT_USER_IDS=new Set(["1466495522474037463","1329118940110127204",]);
 const AUDIT_FETCH_LIMIT = 20;
@@ -291,7 +291,7 @@ function buildDmWelcomeEmbed(member) {
         "<a:VC_Arrow:1448672967721615452> <https://discord.com/channels/1329080093599076474/1442569111119990887/1470102236527853661>",
         "------------------------------",
         "<:VC_Dot:1443932948599668746> Check out our GUILD TAGS",
-        "<:moon:1470064812615667827>[⭑.ᐟ](<https://discord.gg/E6vrm5zE6B>)<:VC_Luna1:1471613026158514246><:VC_Luna2:1471613140654489783> & <a:VC_Money:1448671284748746905>[⭑.ᐟ](<https://discord.gg/QnTN5P578g>)<:VC_Cash1:1471614972034547884><:VC_Cash2:1471615052435161162>",
+        "<:moon:1470064812615667827>[⭑.ᐟ](<https://discord.gg/E6vrm5zE6B>)<:VC_Luna1:1471613026158514246><:VC_Luna2:1471613140654489783> & <a:VC_Money:1448671284748746905>[⭑.ᐟ](<https://discord.gg/QnTN5P578g>)<:VC_Cash1:1482460724302184450><:VC_Cash2:1482460763346960434>",
         "<:VC_Firework:1470796227913322658>[⭑.ᐟ](<https://discord.gg/WMuZ4EMAkc>)<:VC_Porn1:1471615143434518661><:VC_Porn2:1471615225743675554> & <a:VC_PepeEggPlant:1331622686014570588>[⭑.ᐟ](<https://discord.gg/uqUNS9f5m5>)<:VC_SixNine1:1471615411639292047><:VC_SixNine2:1471615623044796519>",
         "<a:VC_PepeSmoke:1331590685673132103>[⭑.ᐟ](<https://discord.gg/SzBwnxHXNv>)<:VC_Weed1:1471615705601282119><:VC_Weed2:1471615783615463467> & <a:VC_PepeExcited:1331621719093284956>[⭑.ᐟ](<https://discord.gg/z3EXtJwvQH>)<:VC_Figa1:1471615881929818328><:VC_Figa2:1471615955955355873>",
         "<a:VC_Arrow:1448672967721615452> <https://discord.com/channels/1329080093599076474/1442569111119990887/1470102239094767699>",

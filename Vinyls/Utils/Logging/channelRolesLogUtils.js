@@ -1,7 +1,7 @@
 const { PermissionsBitField } = require("discord.js");
 const IDs = require("../Config/ids");
 const { getGuildChannelCached } = require("../Interaction/interactionEntityCache");
-const ARROW = "<:VC_right_arrow:1473441155055096081>";
+const ARROW = "<:VC_right_arrow:1482459908245815296>";
 
 function wait(ms) {
   return new Promise((resolve) => {

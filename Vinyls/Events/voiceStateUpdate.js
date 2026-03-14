@@ -155,13 +155,13 @@ async function sendMemberDisconnectLog(oldState, newState) {
   const embed = new EmbedBuilder()
     .setColor("#ED4245")
     .setTitle("Member Disconnect")
-    .setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${formatActor(audit.executor)}`,
-        `<:VC_right_arrow:1473441155055096081> **Target:** ${user}\`${user.id}\``,
-        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+    .setDescription([`<:VC_right_arrow:1482459908245815296> **Responsible:** ${formatActor(audit.executor)}`,
+        `<:VC_right_arrow:1482459908245815296> **Target:** ${user}\`${user.id}\``,
+        `<:VC_right_arrow:1482459908245815296> ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         "**Additional Information**",
-        `<:VC_right_arrow:1473441155055096081> **Channel:** ${fromChannel}\`${oldChannelId || "sconosciuto"}\``,
-        `<:VC_right_arrow:1473441155055096081> **Count:** ${Math.max(1, Number(audit?.count || 1))}`,
+        `<:VC_right_arrow:1482459908245815296> **Channel:** ${fromChannel}\`${oldChannelId || "sconosciuto"}\``,
+        `<:VC_right_arrow:1482459908245815296> **Count:** ${Math.max(1, Number(audit?.count || 1))}`,
       ].join("\n"));
 
   await sendLogWithRetry(logChannel, { embeds: [embed] }, "[voiceStateUpdate] sendMemberDisconnectLog failed:");
@@ -187,12 +187,12 @@ async function sendMemberMoveLog(oldState, newState) {
   const embed = new EmbedBuilder()
     .setColor("#F59E0B")
     .setTitle("Member Move")
-    .setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+    .setDescription([`<:VC_right_arrow:1482459908245815296> **Responsible:** ${responsibleText}`,
+        `<:VC_right_arrow:1482459908245815296> ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         "**Additional Information**",
-        `<:VC_right_arrow:1473441155055096081> **Channel:** ${destination}\`${newChannelId}\``,
-        `<:VC_right_arrow:1473441155055096081> **Count:** ${Math.max(1, Number(audit.count || 1))}`,
+        `<:VC_right_arrow:1482459908245815296> **Channel:** ${destination}\`${newChannelId}\``,
+        `<:VC_right_arrow:1482459908245815296> **Count:** ${Math.max(1, Number(audit.count || 1))}`,
       ].join("\n"));
 
   await sendLogWithRetry(logChannel, { embeds: [embed] }, "[voiceStateUpdate] sendMemberMoveLog failed:");
@@ -218,22 +218,22 @@ async function sendMemberVoiceFlagsUpdateLog(oldState, newState) {
   const audit = await resolveMemberUpdateAuditInfo(guild, user.id);
   const responsibleText = formatActor(audit.executor);
 
-  const lines = [`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-    `<:VC_right_arrow:1473441155055096081> **Target:** ${user}\`${user.id}\``,
-    `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+  const lines = [`<:VC_right_arrow:1482459908245815296> **Responsible:** ${responsibleText}`,
+    `<:VC_right_arrow:1482459908245815296> **Target:** ${user}\`${user.id}\``,
+    `<:VC_right_arrow:1482459908245815296> ${toDiscordTimestamp(new Date(), "F")}`,
   ];
   if (audit.reason) {
-    lines.push(`<:VC_right_arrow:1473441155055096081> **Reason:** ${audit.reason}`);
+    lines.push(`<:VC_right_arrow:1482459908245815296> **Reason:** ${audit.reason}`);
   }
   lines.push("", "**Changes**");
 
   if (muteChanged) {
-    lines.push("<:VC_right_arrow:1473441155055096081> **Mute**");
-    lines.push(`  ${yesNo(Boolean(oldState?.serverMute))} <:VC_right_arrow:1473441155055096081> ${yesNo(Boolean(newState?.serverMute))}`);
+    lines.push("<:VC_right_arrow:1482459908245815296> **Mute**");
+    lines.push(`  ${yesNo(Boolean(oldState?.serverMute))} <:VC_right_arrow:1482459908245815296> ${yesNo(Boolean(newState?.serverMute))}`);
   }
   if (deafChanged) {
-    lines.push("<:VC_right_arrow:1473441155055096081> **Deaf**");
-    lines.push(`  ${yesNo(Boolean(oldState?.serverDeaf))} <:VC_right_arrow:1473441155055096081> ${yesNo(Boolean(newState?.serverDeaf))}`);
+    lines.push("<:VC_right_arrow:1482459908245815296> **Deaf**");
+    lines.push(`  ${yesNo(Boolean(oldState?.serverDeaf))} <:VC_right_arrow:1482459908245815296> ${yesNo(Boolean(newState?.serverDeaf))}`);
   }
 
   const embed = new EmbedBuilder()

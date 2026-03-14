@@ -132,7 +132,7 @@ function buildInfoButtons(backupId, userId, guildId) {
     new ButtonBuilder()
       .setCustomId(deleteId)
       .setStyle(ButtonStyle.Danger)
-      .setEmoji("<:VC_Trash:1460645075242451025>")
+      .setEmoji("<:VC_purge:1478861828271636561>")
   );
 }
 

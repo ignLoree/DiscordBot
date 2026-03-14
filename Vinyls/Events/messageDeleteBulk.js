@@ -222,12 +222,12 @@ module.exports = {
         .setTitle("Messaggi eliminati")
         .setDescription(
           [
-            `<:VC_right_arrow:1473441155055096081> **Responsible:** ${formatAuditActor(responsible)}`,
-            `<:VC_right_arrow:1473441155055096081> **Target:** ${channelText} \`${channelId}\``,
-            `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+            `<:VC_right_arrow:1482459908245815296> **Responsible:** ${formatAuditActor(responsible)}`,
+            `<:VC_right_arrow:1482459908245815296> **Target:** ${channelText} \`${channelId}\``,
+            `<:VC_right_arrow:1482459908245815296> ${toDiscordTimestamp(new Date(), "F")}`,
             "",
             "**Additional Information**",
-            `<:VC_right_arrow:1473441155055096081> **Count:** ${count}`,
+            `<:VC_right_arrow:1482459908245815296> **Count:** ${count}`,
           ].join("\n"),
         );
 

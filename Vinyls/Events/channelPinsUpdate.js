@@ -114,13 +114,13 @@ module.exports = {
       const messageUrl=messageId?buildMessageUrl(guild.id,channel.id,messageId):null;
 
       const lines = [
-        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsible}`,
-        `<:VC_right_arrow:1473441155055096081> **Target:** ${channel} \`${channel.id}\``,
-        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+        `<:VC_right_arrow:1482459908245815296> **Responsible:** ${responsible}`,
+        `<:VC_right_arrow:1482459908245815296> **Target:** ${channel} \`${channel.id}\``,
+        `<:VC_right_arrow:1482459908245815296> ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         "**Additional Information**",
-        `<:VC_right_arrow:1473441155055096081> **Channel:** ${channel} \`${channel.id}\``,
-        `<:VC_right_arrow:1473441155055096081> **Message Id:** \`${messageId || "sconosciuto"}\``,
+        `<:VC_right_arrow:1482459908245815296> **Channel:** ${channel} \`${channel.id}\``,
+        `<:VC_right_arrow:1482459908245815296> **Message Id:** \`${messageId || "sconosciuto"}\``,
       ];
 
       const embed = new EmbedBuilder()

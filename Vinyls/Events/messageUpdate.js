@@ -138,7 +138,7 @@ async function sendMessageEditLog(previous, updated) {
   if (updated?.webhookId) actorFlags.push("WEBHOOK");
   const actorSuffix = actorFlags.length ? ` [${actorFlags.join("/")}]` : "";
 
-  const lines=[`<:VC_right_arrow:1473441155055096081> **Autore:** ${updated.author}${actorSuffix}\`${updated.author.id}\``,`<:VC_right_arrow:1473441155055096081> **Target:** ${updated.channel||"#sconosciuto"}•\`${updated.id}\``,`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
+  const lines=[`<:VC_right_arrow:1482459908245815296> **Autore:** ${updated.author}${actorSuffix}\`${updated.author.id}\``,`<:VC_right_arrow:1482459908245815296> **Target:** ${updated.channel||"#sconosciuto"}•\`${updated.id}\``,`<:VC_right_arrow:1482459908245815296> ${toDiscordTimestamp(new Date(),"F")}`,
     "",
     "**Changes**",
   ];
@@ -147,12 +147,12 @@ async function sendMessageEditLog(previous, updated) {
   if (contentChanged) {
     const fullDiff = buildSimpleDiff(beforeContent, afterContent);
     if (fullDiff.length <= MAX_EMBED_DIFF_LENGTH) {
-      lines.push("<:VC_right_arrow:1473441155055096081> **Content:**");
+      lines.push("<:VC_right_arrow:1482459908245815296> **Content:**");
       lines.push("```diff");
       lines.push(fullDiff);
       lines.push("```");
     } else {
-      lines.push("<:VC_right_arrow:1473441155055096081> **Content:** diff troppo lungo, vedi allegato `.txt`.");
+      lines.push("<:VC_right_arrow:1482459908245815296> **Content:** diff troppo lungo, vedi allegato `.txt`.");
       const text = buildEditLogText(previous, updated, beforeNames, afterNames);
       const name = `${updated.channelId || "channel"}_${updated.id || Date.now()}.txt`;
       files.push(new AttachmentBuilder(Buffer.from(text, "utf8"), { name }));
@@ -160,7 +160,7 @@ async function sendMessageEditLog(previous, updated) {
   }
 
   if (filesChanged) {
-    lines.push("<:VC_right_arrow:1473441155055096081> **Attachments:**");
+    lines.push("<:VC_right_arrow:1482459908245815296> **Attachments:**");
     lines.push(formatAttachmentsChange(beforeNames, afterNames));
   }
 

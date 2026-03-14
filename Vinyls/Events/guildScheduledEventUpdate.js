@@ -171,8 +171,8 @@ module.exports = {
       if (!tracked.length) return;
 
       const lines = [
-        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+        `<:VC_right_arrow:1482459908245815296> **Responsible:** ${responsibleText}`,
+        `<:VC_right_arrow:1482459908245815296> ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         "**Changes**",
       ];
@@ -180,9 +180,9 @@ module.exports = {
       for (const change of tracked) {
         const key = String(change?.key || "");
         const label = CHANGE_LABELS.get(key) || key;
-        lines.push(`<:VC_right_arrow:1473441155055096081> **${label}**`);
+        lines.push(`<:VC_right_arrow:1482459908245815296> **${label}**`);
         lines.push(
-          `  ${formatValue(key, change?.old)} <:VC_right_arrow:1473441155055096081> ${formatValue(key, change?.new)}`,
+          `  ${formatValue(key, change?.old)} <:VC_right_arrow:1482459908245815296> ${formatValue(key, change?.new)}`,
         );
       }
 

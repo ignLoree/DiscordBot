@@ -77,19 +77,19 @@ module.exports = {
       if (!nameChange && !tagsChange && !fallbackNameChanged && !fallbackTagsChanged) return;
 
       const lines = [
-        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+        `<:VC_right_arrow:1482459908245815296> **Responsible:** ${responsibleText}`,
+        `<:VC_right_arrow:1482459908245815296> ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         "**Changes**",
       ];
 
       if (nameChange || fallbackNameChanged) {
-        lines.push(`<:VC_right_arrow:1473441155055096081> **Name**`);
-        lines.push(`  ${String(nameChange?.old ?? oldSticker?.name ?? "sconosciuto")} <:VC_right_arrow:1473441155055096081> ${String(nameChange?.new ?? newSticker?.name ?? "sconosciuto")}`);
+        lines.push(`<:VC_right_arrow:1482459908245815296> **Name**`);
+        lines.push(`  ${String(nameChange?.old ?? oldSticker?.name ?? "sconosciuto")} <:VC_right_arrow:1482459908245815296> ${String(nameChange?.new ?? newSticker?.name ?? "sconosciuto")}`);
       }
       if (tagsChange || fallbackTagsChanged) {
-        lines.push(`<:VC_right_arrow:1473441155055096081> **Tags**`);
-        lines.push(`  ${String(tagsChange?.old ?? oldSticker?.tags ?? "-")} <:VC_right_arrow:1473441155055096081> ${String(tagsChange?.new ?? newSticker?.tags ?? "-")}`);
+        lines.push(`<:VC_right_arrow:1482459908245815296> **Tags**`);
+        lines.push(`  ${String(tagsChange?.old ?? oldSticker?.tags ?? "-")} <:VC_right_arrow:1482459908245815296> ${String(tagsChange?.new ?? newSticker?.tags ?? "-")}`);
       }
 
       const embed = new EmbedBuilder()

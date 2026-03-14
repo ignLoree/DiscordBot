@@ -55,7 +55,7 @@ const reminderPool = [
       .setDescription(
         [
           "<:VC_EXP:1468714279673925883> La prima volta otterrai **250 EXP**, le altre volte altri exp!",
-          "<:VC_Link:1448688587133685895> Vota qui: https://discadia.com/server/viniliecaffe/",
+          "<:VC_Link:1482460590894088222> Vota qui: https://discadia.com/server/viniliecaffe/",
         ].join("\n"),
       ),
   () =>
@@ -64,7 +64,7 @@ const reminderPool = [
       .setTitle("<:VC_bump:1330185435401424896> Recensiscici su DISBOARD!")
       .setDescription([
         `<:VC_LevelUp2:1443701876892762243> Scrivi la tua recensione e fai brillare Vinili & Caffè! Dopo aver recensito, apri un <#1442569095068254219> \`Terza Categoria\` e ricevi **5 livelli** come premio!`,
-        "<:VC_Link:1448688587133685895> Lascia la tua recensione qui: https://disboard.org/it/server/1329080093599076474",
+        "<:VC_Link:1482460590894088222> Lascia la tua recensione qui: https://disboard.org/it/server/1329080093599076474",
       ].join("\n")),
   () =>
     new EmbedBuilder()
@@ -85,7 +85,7 @@ const reminderPool = [
       .setColor("#6f4e37")
       .setTitle("<a:VC_PepeFoto:1479131953100750882> Sblocca subito i Picperms!")
       .setDescription([
-        '<:VC_Link:1448688587133685895> Basta mettere ".gg/viniliecaffe" nello stato, boostare il server o arrivare al Livello 10 per sbloccarli velocemente.',
+        '<:VC_Link:1482460590894088222> Basta mettere ".gg/viniliecaffe" nello stato, boostare il server o arrivare al Livello 10 per sbloccarli velocemente.',
         `> <a:VC_Arrow:1448672967721615452> Scopri tutte le ricompense di boost & livelli su: <#1442569111119990887>`,
       ].join("\n")),
   () =>
@@ -163,7 +163,7 @@ const reminderPool = [
   () =>
     new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle("<:VC_Link:1448688587133685895> BUMPA e fai crescere il server!")
+      .setTitle("<:VC_Link:1482460590894088222> BUMPA e fai crescere il server!")
       .setDescription([
         "<:VC_FrogCute:1331620415185096746> Usa `/bump` con Disboard: ogni bump fa salire Vinili & Caffè in classifica e ci porta nuovi amici!",
         "",
@@ -199,7 +199,7 @@ const reminderPool = [
   () =>
     new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle("<:VC_Link:1448688587133685895> Fai entrare i tuoi amici!")
+      .setTitle("<:VC_Link:1482460590894088222> Fai entrare i tuoi amici!")
       .setDescription([
         "<a:VC_FlowerPink:1468688049725636903> Ti diverti su Vinili & Caffè? Invita amici e persone che conosci: più siamo, più la community si anima!",
         "",

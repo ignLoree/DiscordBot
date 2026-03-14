@@ -7,7 +7,7 @@ const { isJoinGateSuspiciousAccount, } = require("./suspiciousAccountService");
 const { getGuildChannelCached, getGuildMemberCached, getGuildRoleCached, } = require("../../Utils/Interaction/interactionEntityCache");
 const { createModCase, getModConfig, logModCase } = require("../../Utils/Moderation/moderation");
 const UNKNOWN_EXECUTOR_ID = "__unknown_audit_executor__";
-const ARROW = "<:VC_right_arrow:1473441155055096081>";
+const ARROW = "<:VC_right_arrow:1482459908245815296>";
 const HIGH_STAFF_MENTION = IDs.roles?.HighStaff ? `<@&${IDs.roles.HighStaff}>` : null;
 const CORE_EXEMPT_USER_IDS = new Set(["1466495522474037463", "1329118940110127204",]);
 const VERIFIED_BOT_IDS = new Set(Object.values(IDs?.bots || {}).filter(Boolean).map(String),);
@@ -775,9 +775,9 @@ async function sendPanicModeDetailedReport(
     `<:VC_Mention:1443994358201323681> **Roles**`,
     `<:cancel:1461730653677551691> Deleted: ${Number(report.roles.deleted || 0)} | <:success:1461731530333229226> Recovered: ${Number(report.roles.recovered || 0)} | Edited: ${Number(report.roles.edited || 0)}`,
     `<:channeltext:1443247596922470551> **Channels**`,
-    `<:cancel:1461730653677551691> Deleted: ${Number(report.channels.deleted || 0)} | <:success:1461731530333229226> Recovered: ${Number(report.channels.recovered || 0)} | <:VC_right_arrow:1473441155055096081> Edited: ${Number(report.channels.edited || 0)}`,
+    `<:cancel:1461730653677551691> Deleted: ${Number(report.channels.deleted || 0)} | <:success:1461731530333229226> Recovered: ${Number(report.channels.recovered || 0)} | <:VC_right_arrow:1482459908245815296> Edited: ${Number(report.channels.edited || 0)}`,
     `<:VC_category:1478836096669581505> **Categories**`,
-    `<:cancel:1461730653677551691> Deleted: ${Number(report.categories.deleted || 0)} | <:success:1461731530333229226> Recovered: ${Number(report.categories.recovered || 0)} | <:VC_right_arrow:1473441155055096081> Edited: ${Number(report.categories.edited || 0)}`,
+    `<:cancel:1461730653677551691> Deleted: ${Number(report.categories.deleted || 0)} | <:success:1461731530333229226> Recovered: ${Number(report.categories.recovered || 0)} | <:VC_right_arrow:1482459908245815296> Edited: ${Number(report.categories.edited || 0)}`,
     `<:VC_webhooks:1478515450769047704> **Webhooks**`,
     `<:cancel:1461730653677551691> Deleted: ${Number(report.webhooks.deleted || 0)}`,
     `<:VC_tools:1478862265305272364> **Settings**`,
@@ -823,7 +823,7 @@ async function lockDangerousRolesForPanic(guild, state) {
           "<:VC_Lock:1468544444113617063> AntiNuke Panic: lock dangerous role permissions",
         )
         .catch(() => { });
-      incrementPanicMetric(state, "<:VC_Mention:1443994358201323681> roles", "<:VC_right_arrow:1473441155055096081> edited", 1);
+      incrementPanicMetric(state, "<:VC_Mention:1443994358201323681> roles", "<:VC_right_arrow:1482459908245815296> edited", 1);
     }
   }
 }
@@ -1386,7 +1386,7 @@ function scheduleQuarantineRoleRollback(guild, userId, roleId, durationMs) {
 }
 
 function quarantineOutcomeLabel(outcome) {
-  const suspiciousSuffix = outcome?.joinGateSuspicious ? " | <:VC_right_arrow:1473441155055096081> JoinGate suspicious: YES" : "";
+  const suspiciousSuffix = outcome?.joinGateSuspicious ? " | <:VC_right_arrow:1482459908245815296> JoinGate suspicious: YES" : "";
   if (!outcome?.applied) return "<:cancel:1461730653677551691> Quarantine not applied";
   if (outcome.method === "ban") return `<:VC_Lock:1468544444113617063> Banned ${suspiciousSuffix}`;
   if (outcome.method === "already_role") {

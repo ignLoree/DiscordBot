@@ -97,25 +97,25 @@ module.exports = {
       const endTime=toEventTimeLabel(scheduledEvent.scheduledEndAt||scheduledEvent.scheduledEndTimestamp,);
 
       const lines = [
-        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+        `<:VC_right_arrow:1482459908245815296> **Responsible:** ${responsibleText}`,
+        `<:VC_right_arrow:1482459908245815296> ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         "**Previous Settings**",
-        `<:VC_right_arrow:1473441155055096081> **Name:** ${scheduledEvent.name || "sconosciuto"}`,
-        `<:VC_right_arrow:1473441155055096081> **Privacy Level:** ${privacyLabel(scheduledEvent.privacyLevel)}`,
-        `<:VC_right_arrow:1473441155055096081> **Status:** ${statusLabel(scheduledEvent.status)}`,
-        `<:VC_right_arrow:1473441155055096081> **Entity Type:** ${entityTypeLabel(scheduledEvent.entityType)}`,
-        startTime ? `<:VC_right_arrow:1473441155055096081> **Start Time:** ${startTime}` : null,
-        endTime ? `<:VC_right_arrow:1473441155055096081> **End Time:** ${endTime}` : null,
+        `<:VC_right_arrow:1482459908245815296> **Name:** ${scheduledEvent.name || "sconosciuto"}`,
+        `<:VC_right_arrow:1482459908245815296> **Privacy Level:** ${privacyLabel(scheduledEvent.privacyLevel)}`,
+        `<:VC_right_arrow:1482459908245815296> **Status:** ${statusLabel(scheduledEvent.status)}`,
+        `<:VC_right_arrow:1482459908245815296> **Entity Type:** ${entityTypeLabel(scheduledEvent.entityType)}`,
+        startTime ? `<:VC_right_arrow:1482459908245815296> **Start Time:** ${startTime}` : null,
+        endTime ? `<:VC_right_arrow:1482459908245815296> **End Time:** ${endTime}` : null,
       ];
 
       if (scheduledEvent.channelId) {
         lines.push(
-          `<:VC_right_arrow:1473441155055096081> **Channel:** <#${scheduledEvent.channelId}>`,
+          `<:VC_right_arrow:1482459908245815296> **Channel:** <#${scheduledEvent.channelId}>`,
         );
       } else if (scheduledEvent.entityMetadata?.location) {
         lines.push(
-          `<:VC_right_arrow:1473441155055096081> **Location:** ${scheduledEvent.entityMetadata.location}`,
+          `<:VC_right_arrow:1482459908245815296> **Location:** ${scheduledEvent.entityMetadata.location}`,
         );
       }
 

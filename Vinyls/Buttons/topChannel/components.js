@@ -102,11 +102,11 @@ function buildTopChannelComponents(ownerId, lookbackDays, controlsView, selected
   const rows = safeControls === "period" ? [row1, rowPeriod1, rowPeriod2, rowViewSelect] : [row1, rowViewSelect];
   if (safeView !== "overview") {
     const row2 = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId(firstId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page1:1463196324156674289>").setDisabled(safePage <= 1),
-      new ButtonBuilder().setCustomId(prevId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page5:1463196506143326261>").setDisabled(safePage <= 1),
-      new ButtonBuilder().setCustomId(modalOpenId).setStyle(ButtonStyle.Primary).setEmoji("<:VC_page2:1463196369123676414> "),
-      new ButtonBuilder().setCustomId(nextId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page4:1463196456964980808>").setDisabled(safePage >= safeTotal),
-      new ButtonBuilder().setCustomId(lastId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page3:1463196404120813766>").setDisabled(safePage >= safeTotal)
+      new ButtonBuilder().setCustomId(firstId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page1:1482459684630958223>").setDisabled(safePage <= 1),
+      new ButtonBuilder().setCustomId(prevId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page5:1482459835042762752>").setDisabled(safePage <= 1),
+      new ButtonBuilder().setCustomId(modalOpenId).setStyle(ButtonStyle.Primary).setEmoji("<:VC_page2:1482459724657201387>"),
+      new ButtonBuilder().setCustomId(nextId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page4:1482459791975645226>").setDisabled(safePage >= safeTotal),
+      new ButtonBuilder().setCustomId(lastId).setStyle(ButtonStyle.Secondary).setEmoji("<:VC_page3:1482459759268462613>").setDisabled(safePage >= safeTotal)
     );
     rows.push(row2);
   }
