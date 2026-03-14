@@ -1,5 +1,5 @@
 const discord = require("discord.js");
-const { Client, IntentsBitField, Options } = discord;
+const { Client, IntentsBitField } = discord;
 const GatewayIntentBits = discord.GatewayIntentBits || IntentsBitField?.Flags || {};
 const Partials = discord.Partials || {};
 const path = require("path");
@@ -16,10 +16,15 @@ if (process.env.RUN_UNDER_LOADER !== "1") {
 const installProcessHandlers = require("./Handlers/processHandler");
 installProcessHandlers();
 
-let intentList = [GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates,GatewayIntentBits.DirectMessages,GatewayIntentBits.GuildMessageReactions,GatewayIntentBits.GuildModeration,].filter((x) => x !== undefined && x !== null);
-if (intentList.length === 0) intentList = [1];
-const partialList = [Partials.Message,Partials.Channel,Partials.Reaction,Partials.User,Partials.GuildMember,].filter((x) => x !== undefined && x !== null);
-const client = new Client({intents:intentList,partials:partialList,presence:{status:"invisible"},rest:{timeout:12_000,offset:50,retries:2,},...(typeof Options ?. cacheWithLimits === "function" &&{makeCache:Options.cacheWithLimits({...(Options.DefaultMakeCacheSettings ||{}),MessageManager:100,GuildMemberManager:200,PresenceManager:0,ReactionManager:50,}),}),...(typeof Options ?. DefaultSweeperSettings === "object" &&{sweepers:{...(Options.DefaultSweeperSettings ||{}),messages:{interval:300,lifetime:600},},}),});
+const intentList = [...new Set(Object.values(GatewayIntentBits).filter((x) => typeof x === "number" && x > 0))];
+if (intentList.length === 0) intentList.push(1);
+const partialList = [...new Set(Object.values(Partials).filter((x) => typeof x === "number"))];
+const client = new Client({
+  intents: intentList,
+  partials: partialList,
+  presence: { status: "invisible" },
+  rest: { timeout: 30_000, offset: 50, retries: 3 },
+});
 
 try {
   client.config = require("./config.json");

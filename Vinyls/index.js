@@ -1,5 +1,5 @@
 const discord = require("discord.js");
-const { Client, IntentsBitField, Options } = discord;
+const { Client, IntentsBitField } = discord;
 const GatewayIntentBits = discord.GatewayIntentBits || IntentsBitField?.Flags || {};
 const Partials = discord.Partials || {};
 const fs = require("fs");
@@ -23,33 +23,28 @@ let client;
 
 try {
   installEmbedFooterPatch();
-  let baseIntents = [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMembers, GatewayIntentBits.DirectMessageTyping, GatewayIntentBits.GuildEmojisAndStickers, GatewayIntentBits.DirectMessages, GatewayIntentBits.GuildIntegrations, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.GuildModeration, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.DirectMessageReactions, GatewayIntentBits.GuildBans, GatewayIntentBits.GuildInvites, GatewayIntentBits.GuildMessageTyping, GatewayIntentBits.GuildPresences, GatewayIntentBits.GuildWebhooks, GatewayIntentBits.AutoModerationExecution, GatewayIntentBits.AutoModerationConfiguration,].filter((x) => x !== undefined && x !== null);
-  if (baseIntents.length === 0) baseIntents = [1];
-  const basePartials = [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User, Partials.GuildMember, Partials.ThreadMember,].filter((x) => x !== undefined && x !== null);
+  const baseIntents = [
+    ...new Set(
+      Object.values(GatewayIntentBits).filter(
+        (x) => typeof x === "number" && x > 0,
+      ),
+    ),
+  ];
+  if (baseIntents.length === 0) baseIntents.push(1);
+  const basePartials = [
+    ...new Set(
+      Object.values(Partials).filter((x) => typeof x === "number"),
+    ),
+  ];
 
   client = new Client({
     intents: baseIntents,
     partials: basePartials,
     rest: {
-      timeout: 15_000,
+      timeout: 30_000,
       offset: 50,
-      retries: 2,
+      retries: 3,
     },
-    ...(typeof Options?.cacheWithLimits === "function" && {
-      makeCache: Options.cacheWithLimits({
-        ...(Options.DefaultMakeCacheSettings || {}),
-        MessageManager: 150,
-        GuildMemberManager: 300,
-        PresenceManager: 0,
-        ReactionManager: 50,
-      }),
-    }),
-    ...(typeof Options?.DefaultSweeperSettings === "object" && {
-      sweepers: {
-        ...(Options.DefaultSweeperSettings || {}),
-        messages: { interval: 300, lifetime: 900 },
-      },
-    }),
   });
 } catch (error) {
   global.logger.error("[ERROR] Error while creating the client.", error);

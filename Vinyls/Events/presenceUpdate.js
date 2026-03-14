@@ -8,7 +8,7 @@ const { getGuildChannelCached, getGuildMemberCached } = require("../Utils/Intera
 const ROLE_ID = IDs.roles.Supporter;
 const PERK_ROLE_ID = IDs.roles.PicPerms;
 const CHANNEL_ID = IDs.channels.supporters;
-const INVITE_REGEX = /(?:https?:\/\/)?(?:www\.)?(?:discord\.gg\/|discord\.com\/invite\/|\.gg\/)viniliecaffe\b|(?:discord\.gg|\.gg)\/viniliecaffe/i;
+const INVITE_REGEX = /(?:https?:\/\/)?(?:www\.)?(?:discord\.(?:gg|com\/invite)\/|\.gg\/)viniliecaffe|discord\.gg\s*\/\s*viniliecaffe|\.gg\s*\/\s*viniliecaffe/i;
 
 const statusCache = new Map();
 const pendingChecks = new Map();
@@ -69,7 +69,7 @@ function allActivitiesSearchText(presence) {
   if (!presence?.activities?.length) return "";
   return presence.activities
     .map((a) =>
-      [a?.state, a?.name, a?.details].filter(Boolean).join(" "),
+      [a?.state, a?.name, a?.details, a?.url].filter(Boolean).join(" "),
     )
     .join(" ");
 }
@@ -86,6 +86,7 @@ function getInviteState(presence) {
   if (isOfflinePresence(presence)) return null;
   if (hasInvite(presence)) return true;
   if (hasCustomActivity(presence)) return false;
+  if ((presence.activities?.length || 0) > 0) return false;
   return null;
 }
 
@@ -458,7 +459,6 @@ async function bootstrapSupporter(client) {
 
       const existing = getCachedState(guildId, member.id);
       if (existing?.lastMessageId) continue;
-      if (bootstrappedUsers.has(getBootstrapKey(guildId, member.id))) continue;
 
       await startPendingFlow(member, channel);
     }
@@ -492,9 +492,10 @@ function startCleanupClock(client, guildId) {
   cleanupIntervalsByGuild.set(guildId, interval);
 }
 
-async function applyOnlineState(member, userId, prev, prevHas) {
+async function applyOnlineState(member, userId, prev, prevHas, presenceFresh) {
   const guildId = member.guild.id;
-  const newHas = resolveInviteState(member.presence, prevHas);
+  const presence = presenceFresh || member.presence;
+  const newHas = resolveInviteState(presence, prevHas);
   const lastSeenOnlineAt = Date.now();
 
   if (newHas && member.roles.cache.has(ROLE_ID)) {
@@ -637,7 +638,7 @@ module.exports = {
         return;
       }
 
-      await applyOnlineState(member, userId, prev, prevHas);
+      await applyOnlineState(member, userId, prev, prevHas, newPresence);
     } catch (error) {
       global.logger?.error?.("[presenceUpdate] failed:", error);
     }
