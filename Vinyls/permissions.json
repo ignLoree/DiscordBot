@@ -739,7 +739,9 @@
                 "roles.Member"
             ],
             "channels": [
-                "channels.commands"
+                "channels.commands",
+                "channels.staffCmds",
+                "channels.highCmds"
             ]
         },
         "channel": {
