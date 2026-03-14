@@ -743,12 +743,12 @@ module.exports = {
         .setDescription([
           "> Per prendere una di queste tag vi basterà entrare nel server dedicato e verificarvi <a:VC_HeartsBlue:1468686100045369404>",
           "",
-          "<:VC_Luna1:1471613026158514246><:VC_Luna2:1471613140654489783><a:VC_Arrow:1448672967721615452> <https://discord.gg/E6vrm5zE6B>",
+          "<:VC_Luna1:1471613026158514246><:VC_Luna2:1482497653387427902><a:VC_Arrow:1448672967721615452> <https://discord.gg/E6vrm5zE6B>",
           "<:VC_Cash1:1482460724302184450><:VC_Cash2:1482460763346960434><a:VC_Arrow:1448672967721615452> <https://discord.gg/QnTN5P578g>",
-          "<:VC_Porn1:1471615143434518661><:VC_Porn2:1471615225743675554><a:VC_Arrow:1448672967721615452> <https://discord.gg/WMuZ4EMAkc>",
-          "<:VC_SixNine1:1471615411639292047><:VC_SixNine2:1471615623044796519><a:VC_Arrow:1448672967721615452> <https://discord.gg/uqUNS9f5m5>",
-          "<:VC_Weed1:1471615705601282119><:VC_Weed2:1471615783615463467><a:VC_Arrow:1448672967721615452> <https://discord.gg/SzBwnxHXNv>",
-          "<:VC_Figa1:1471615881929818328><:VC_Figa2:1471615955955355873><a:VC_Arrow:1448672967721615452> <https://discord.gg/z3EXtJwvQH>",
+          "<:VC_Porn1:1482497744513011944><:VC_Porn2:1482497774892089547><a:VC_Arrow:1448672967721615452> <https://discord.gg/WMuZ4EMAkc>",
+          "<:VC_SixNine1:1471615411639292047><:VC_SixNine2:1482497868328865813><a:VC_Arrow:1448672967721615452> <https://discord.gg/uqUNS9f5m5>",
+          "<:VC_Weed1:1482497951686201534><:VC_Weed2:1482497986910097592><a:VC_Arrow:1448672967721615452> <https://discord.gg/SzBwnxHXNv>",
+          "<:VC_Figa1:1482495980275499169><:VC_Figa2:1482496046222544937><a:VC_Arrow:1448672967721615452> <https://discord.gg/z3EXtJwvQH>",
           "",
           "<:VC_Reply:1468262952934314131> _In costante aggiornamento, per consigliarne altre " + suggestionsMention + "_",
         ].join("\n"))
