@@ -153,10 +153,10 @@ async function getEligibleChannelIdSet(guild) {
   return set;
 }
 
-async function computeLeaderboardRows(guild, mode = "alltime") {
+async function computeLeaderboardRows(guild, mode = "alltime", maxCandidates = TOP_LIMIT * 5) {
   if (!guild?.id) return [];
   const activeWeeklyKey = mode === "weekly" ? getActiveWeeklyKeyRome(new Date()) : "";
-  const key = `${guild.id}:${mode}:${activeWeeklyKey}`;
+  const key = `${guild.id}:${mode}:${activeWeeklyKey}:n${maxCandidates}`;
   const cached = leaderboardCache.get(key);
   if (cached && cached.expiresAt > Date.now()) return cached.rows;
 
@@ -187,7 +187,7 @@ async function computeLeaderboardRows(guild, mode = "alltime") {
       })
       .filter((entry) => entry.userId && entry.exp > 0)
       .sort((a, b) => b.exp - a.exp)
-      .slice(0, TOP_LIMIT * 5);
+      .slice(0, Math.max(TOP_LIMIT * 5, maxCandidates));
 
     leaderboardCache.set(key, {
       rows,
@@ -226,7 +226,7 @@ async function computeLeaderboardRows(guild, mode = "alltime") {
     perUser.set(userId, current);
   }
 
-  const rows = Array.from(perUser.values()).map((entry) => { const baseExpFromText = entry.textCount * MESSAGE_EXP; const baseExpFromVoice = Math.floor((entry.voiceSeconds * VOICE_EXP_PER_MINUTE) / 60,); const exp = Math.max(0, Math.floor(baseExpFromText + baseExpFromVoice)); return { userId: entry.userId, exp, level: getLevelInfo(exp).level, }; }).filter((entry) => entry.exp > 0).sort((a, b) => b.exp - a.exp).slice(0, TOP_LIMIT * 5); if (mode === "alltime" && rows.length > 0) {
+  const rows = Array.from(perUser.values()).map((entry) => { const baseExpFromText = entry.textCount * MESSAGE_EXP; const baseExpFromVoice = Math.floor((entry.voiceSeconds * VOICE_EXP_PER_MINUTE) / 60,); const exp = Math.max(0, Math.floor(baseExpFromText + baseExpFromVoice)); return { userId: entry.userId, exp, level: getLevelInfo(exp).level, }; }).filter((entry) => entry.exp > 0).sort((a, b) => b.exp - a.exp).slice(0, Math.max(TOP_LIMIT * 5, maxCandidates)); if (mode === "alltime" && rows.length > 0) {
     const userIds = rows.map((r) => r.userId);
     const expUsers = await ExpUser.find({ guildId: guild.id, userId: { $in: userIds }, }).select("userId totalExp level").lean();
     const expByUser = new Map(expUsers.map((d) => [String(d.userId), { totalExp: Number(d.totalExp || 0), level: Number(d.level || 0) }]),);
@@ -245,10 +245,16 @@ async function computeLeaderboardRows(guild, mode = "alltime") {
   return rows;
 }
 
-async function buildWeeklyEmbed(message) {
-  const candidateRows = await computeLeaderboardRows(message.guild, "weekly");
+async function buildWeeklyEmbed(message, excludeStaffFromShort = false) {
+  const maxCand = excludeStaffFromShort ? TOP_LIMIT * 40 : TOP_LIMIT * 5;
+  const candidateRows = await computeLeaderboardRows(message.guild, "weekly", maxCand);
+  const staffId = IDs.roles?.Staff;
   const members = await fetchMembers(message.guild, candidateRows.map((r) => r.userId),);
-  const rows = candidateRows.filter((row) => members.has(row.userId)).slice(0, TOP_LIMIT);
+  let rows = candidateRows.filter((row) => members.has(row.userId));
+  if (excludeStaffFromShort && staffId) {
+    rows = rows.filter((row) => !members.get(row.userId)?.roles?.cache?.has(staffId));
+  }
+  rows = rows.slice(0, TOP_LIMIT);
   const lines = [];
   rows.forEach((row, index) => {
     const member = members.get(row.userId);
@@ -275,16 +281,25 @@ async function buildWeeklyEmbed(message) {
     .setDescription(
       [
         "<a:VC_Sparkles:1468546911936974889> I 10 utenti con più exp guadagnati in settimana",
+        excludeStaffFromShort ? "" : "",
         "",
         lines.join("\n"),
-      ].join("\n"),
+      ]
+        .filter(Boolean)
+        .join("\n"),
     );
 }
 
-async function buildAllTimeEmbed(message) {
-  const candidateRows = await computeLeaderboardRows(message.guild, "alltime");
+async function buildAllTimeEmbed(message, excludeStaffFromShort = false) {
+  const maxCand = excludeStaffFromShort ? TOP_LIMIT * 40 : TOP_LIMIT * 5;
+  const candidateRows = await computeLeaderboardRows(message.guild, "alltime", maxCand);
+  const staffId = IDs.roles?.Staff;
   const members = await fetchMembers(message.guild, candidateRows.map((r) => r.userId),);
-  const rows = candidateRows.filter((row) => members.has(row.userId)).slice(0, TOP_LIMIT);
+  let rows = candidateRows.filter((row) => members.has(row.userId));
+  if (excludeStaffFromShort && staffId) {
+    rows = rows.filter((row) => !members.get(row.userId)?.roles?.cache?.has(staffId));
+  }
+  rows = rows.slice(0, TOP_LIMIT);
   const lines = [];
   rows.forEach((row, index) => {
     const member = members.get(row.userId);
@@ -312,9 +327,12 @@ async function buildAllTimeEmbed(message) {
     .setDescription(
       [
         "<a:VC_Sparkles:1468546911936974889> I 10 utenti con più exp guadagnati",
+        excludeStaffFromShort ? "" : "",
         "",
         lines.join("\n"),
-      ].join("\n"),
+      ]
+        .filter(Boolean)
+        .join("\n"),
     );
 }
 
@@ -331,6 +349,7 @@ module.exports = {
   async execute(message, args = []) {
     await message.channel.sendTyping();
     const invoked = getInvokedCommand(message);
+    const excludeStaffFromShort = invoked === "c" || invoked === "cs";
     const rawMode = String(args[0] || "").toLowerCase();
     const normalizedMode = ["weekly", "settimanale", "week", "w"].includes(rawMode,) ? "weekly" : ["alltime", "all", "totale", "general", "generale", "a"].includes(rawMode,) ? "alltime" : null;
     const mode = normalizedMode || (invoked === "cs" || invoked === "classificasettimanale" ? "weekly" : "alltime");
@@ -345,7 +364,9 @@ module.exports = {
       return;
     }
 
-    const embed = isWeekly ? await buildWeeklyEmbed(message) : await buildAllTimeEmbed(message);
+    const embed = isWeekly
+      ? await buildWeeklyEmbed(message, excludeStaffFromShort)
+      : await buildAllTimeEmbed(message, excludeStaffFromShort);
 
     const shouldRedirect = message.channel.id !== LEADERBOARD_CHANNEL_ID;
     if (!shouldRedirect) {
