@@ -1,19 +1,25 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const IDs = require("../../Utils/Config/ids");
 const { upsertVerifiedMember, applyTenureForMember, } = require("../../Services/Community/communityOpsService");
-
-const MAIN_GUILD_ID = IDs.guilds?.main || "1329080093599076474";
-
-const VERIFY_ROLE_IDS_MAIN=[IDs.roles.Member,IDs.roles.separatore6,IDs.roles.separatore8,IDs.roles.separatore5,IDs.roles.separatore7,].filter(Boolean);
+const {
+  resolveValidVerifyRoleIds,
+  isResolvedMainGuildId,
+} = require("../../Utils/Interaction/verifyUtils");
 
 function isSponsorGuild(guildId) {
-  if (!guildId || guildId === MAIN_GUILD_ID) return false;
-  return Boolean(IDs.verificatoRoleIds?.[guildId]);
+  const gid = String(guildId || "");
+  if (!gid || isResolvedMainGuildId(gid)) return false;
+  return Boolean(
+    IDs.verificatoRoleIds?.[gid] ?? IDs.verificatoRoleIds?.[guildId],
+  );
 }
 
 function hasSponsorStaffRole(member, guildId) {
   if (!member || !guildId) return false;
-  const roleId = IDs.roles?.sponsorStaffRoleIds?.[guildId];
+  const gid = String(guildId);
+  const roleId =
+    IDs.roles?.sponsorStaffRoleIds?.[gid] ??
+    IDs.roles?.sponsorStaffRoleIds?.[guildId];
   if (!roleId) return false;
   return member?.roles?.cache?.has(roleId) === true;
 }
@@ -29,19 +35,6 @@ function formatUserList(list) {
     lines.push(`<:space:1461733157840621608> \`+${remaining} users\``);
   }
   return lines.join("\n");
-}
-
-async function resolveValidVerifyRoleIds(guild) {
-  if (!guild) return [];
-  const guildId = guild.id;
-  const roleIds=guildId===MAIN_GUILD_ID?VERIFY_ROLE_IDS_MAIN:(IDs.verificatoRoleIds?.[guildId]?[IDs.verificatoRoleIds[guildId]]:[]);
-  const valid = [];
-  for (const roleId of roleIds) {
-    if (!roleId) continue;
-    const role=guild.roles.cache.get(roleId)||(await guild.roles.fetch(roleId).catch(() => null));
-    if (role?.id) valid.push(role.id);
-  }
-  return Array.from(new Set(valid));
 }
 
 function buildPromptEmbed(targetTag) {
@@ -169,7 +162,7 @@ module.exports = {
         allowedMentions: { repliedUser: false },
       });
     }
-    if (guildId !== MAIN_GUILD_ID && !isSponsorGuild(guildId)) {
+    if (!isResolvedMainGuildId(guildId) && !isSponsorGuild(guildId)) {
       return safeMessageReply(message, {
         embeds: [
           new EmbedBuilder()
@@ -298,7 +291,9 @@ module.exports = {
           await i.deferUpdate();
         }
       } catch (err) {
-        global.logger?.warn?.("[verify] deferUpdate:", err?.message || err);
+        if (err?.code !== 10062) {
+          global.logger?.warn?.("[verify] deferUpdate:", err?.message || err);
+        }
       }
       await promptMsg.delete().catch(() => {});
       await message.delete().catch(() => {});

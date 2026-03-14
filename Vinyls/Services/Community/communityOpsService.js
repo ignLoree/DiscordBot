@@ -72,8 +72,9 @@ async function upsertVerifiedMember(guildId, userId, verifiedAt = new Date()) {
 
 async function applyTenureForMember(member, record) {
   if (!member || !record) return;
-  const guildId = member.guild?.id;
-  const sponsorVerifyRoleId = IDs.verificatoRoleIds?.[guildId];
+  const guildId = String(member.guild?.id || "");
+  const sponsorVerifyRoleId =
+    IDs.verificatoRoleIds?.[guildId] ?? IDs.verificatoRoleIds?.[member.guild?.id];
   const hasVerifiedRole = VERIFIED_ROLE_IDS.some((roleId) => member.roles.cache.has(roleId));
   const me = member.guild?.members?.me || (await member.guild?.members?.fetchMe?.().catch(() => null));
   const canManageRoles = Boolean(me?.permissions?.has?.(PermissionsBitField.Flags.ManageRoles));

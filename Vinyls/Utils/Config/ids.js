@@ -388,11 +388,24 @@ if (!sponsorConfig.sponsorGuildIds?.length) {
   ].filter(Boolean);
 }
 
+function normalizeGuildIdRoleMap(raw) {
+  const out = {};
+  if (!raw || typeof raw !== "object") return out;
+  for (const [guildId, roleId] of Object.entries(raw)) {
+    const g = String(guildId || "").trim();
+    const r = String(roleId || "").trim();
+    if (g && r) out[g] = r;
+  }
+  return out;
+}
+
 ids.guilds.sponsorGuildIds = sponsorConfig.sponsorGuildIds;
 ids.sponsorVerifyChannelIds = sponsorConfig.sponsorVerifyChannelIds;
 ids.sponsorTicketChannelIds = sponsorConfig.sponsorTicketChannelIds;
-ids.verificatoRoleIds = sponsorConfig.verificatoRoleIds;
-ids.roles.sponsorStaffRoleIds = sponsorConfig.sponsorStaffRoleIds || {};
+ids.verificatoRoleIds = normalizeGuildIdRoleMap(sponsorConfig.verificatoRoleIds);
+ids.roles.sponsorStaffRoleIds = normalizeGuildIdRoleMap(
+  sponsorConfig.sponsorStaffRoleIds || {},
+);
 
 ids.sponsorChannels = {
   lunaTag: "1471522979706835018",

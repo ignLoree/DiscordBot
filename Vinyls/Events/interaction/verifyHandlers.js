@@ -122,7 +122,7 @@ async function finalizeVerification(interaction, member) {
       return null;
     });
     if (pingMsg) {
-      const t = setTimeout(() => pingMsg.delete().catch(() => {}), 2);
+      const t = setTimeout(() => pingMsg.delete().catch(() => {}), 2500);
       if (t?.unref) t.unref();
     }
   }
@@ -150,7 +150,19 @@ async function handleVerifyInteraction(interaction) {
         return true;
       }
 
-      if (isAlreadyVerifiedInThisGuild(interaction.member, guildId)) {
+      let memberForVerify = interaction.member;
+      if (
+        interaction.guild &&
+        memberForVerify &&
+        (!memberForVerify.roles?.cache?.size ||
+          memberForVerify.partial)
+      ) {
+        memberForVerify =
+          (await interaction.guild.members
+            .fetch(interaction.user.id)
+            .catch(() => null)) || memberForVerify;
+      }
+      if (isAlreadyVerifiedInThisGuild(memberForVerify, guildId)) {
         await safeReply(interaction, {
           embeds: [makeAlreadyVerifiedEmbed()],
           flags: 1 << 6,
@@ -242,7 +254,9 @@ async function handleVerifyInteraction(interaction) {
       if (!state || Date.now() > state.expiresAt) {
         clearVerifyState(stateKey);
         try {
-          await interaction.deferUpdate();
+          await interaction.deferUpdate().catch((e) => {
+            if (!isUnknownInteraction(e)) throw e;
+          });
           const retryRow = makeVerifyStartRow();
           await interaction.message
             .edit({

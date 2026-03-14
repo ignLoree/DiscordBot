@@ -39,20 +39,27 @@ function clearVerifyState(stateKey) {
 }
 
 function isSponsorGuildVerify(guildId) {
-  if (!guildId || isResolvedMainGuildId(guildId)) return false;
-  return Boolean(IDs.verificatoRoleIds?.[guildId]);
+  const gid = String(guildId || "");
+  if (!gid || isResolvedMainGuildId(gid)) return false;
+  return Boolean(
+    IDs.verificatoRoleIds?.[gid] ?? IDs.verificatoRoleIds?.[guildId],
+  );
 }
 
 async function getMainGuild(client) {
   if (!client) return null;
-  return getClientGuildCached(client, MAIN_GUILD_ID);
+  let g = await getClientGuildCached(client, MAIN_GUILD_ID);
+  if (!g && String(MAIN_GUILD_ID) !== CANONICAL_MAIN_GUILD_ID) {
+    g = await getClientGuildCached(client, CANONICAL_MAIN_GUILD_ID);
+  }
+  return g;
 }
 
 async function isUserInMainGuild(client, userId) {
   if (!client || !userId) return false;
   const guild = await getMainGuild(client);
   if (!guild) return false;
-  const member = await getGuildMemberCached(guild, userId);
+  const member = await getGuildMemberCached(guild, userId, { preferFresh: true });
   return Boolean(member);
 }
 
@@ -60,7 +67,9 @@ async function isUserVerifiedInMainGuild(client, userId) {
   if (!client || !userId) return false;
   const guild = await getMainGuild(client);
   if (!guild) return false;
-  const member = await getGuildMemberCached(guild, userId);
+  const member =
+    (await guild.members.fetch(userId).catch(() => null)) ||
+    (await getGuildMemberCached(guild, userId, { preferFresh: true }));
   if (!member?.roles?.cache) return false;
   if (!MAIN_VERIFIED_ROLE_ID) return Boolean(member);
   return member.roles.cache.has(MAIN_VERIFIED_ROLE_ID);
@@ -275,9 +284,11 @@ function isAlreadyVerifiedInThisGuild(member, guildId) {
     const ids = [IDs.roles.Member].filter(Boolean);
     return ids.some((id) => member.roles.cache.has(id));
   }
-  const sponsorRoleId = IDs.verificatoRoleIds?.[guildId];
+  const gid = String(guildId || "");
+  const sponsorRoleId =
+    IDs.verificatoRoleIds?.[gid] ?? IDs.verificatoRoleIds?.[guildId];
   if (sponsorRoleId && member.roles.cache.has(sponsorRoleId)) return true;
   return false;
 }
 
-module.exports = { verifyState, VERIFY_CODE_TTL_MS, VERIFY_MAX_ATTEMPTS, CENTRAL_VERIFY_LOG_CHANNEL_ID, VERIFY_PING_CHANNEL_IDS, VERIFY_CAPTCHA, getVerifyStateKey, clearVerifyState, isSponsorGuildVerify, getMainGuild, isUserInMainGuild, isUserVerifiedInMainGuild, makeExpiredEmbed, makeWrongAnswerEmbed, makeTooManyAttemptsEmbed, makeVerifyStartRow, makeVerifiedEmbed, makeAlreadyVerifiedEmbed, makeOwnerEmbed, isUnknownInteraction, sanitizeEmbedText, makeCode, makeCaptchaPng, resolveValidVerifyRoleIds, isAlreadyVerifiedInThisGuild }; 
+module.exports = { verifyState, VERIFY_CODE_TTL_MS, VERIFY_MAX_ATTEMPTS, CENTRAL_VERIFY_LOG_CHANNEL_ID, VERIFY_PING_CHANNEL_IDS, VERIFY_CAPTCHA, getVerifyStateKey, clearVerifyState, isSponsorGuildVerify, getMainGuild, isUserInMainGuild, isUserVerifiedInMainGuild, makeExpiredEmbed, makeWrongAnswerEmbed, makeTooManyAttemptsEmbed, makeVerifyStartRow, makeVerifiedEmbed, makeAlreadyVerifiedEmbed, makeOwnerEmbed, isUnknownInteraction, sanitizeEmbedText, makeCode, makeCaptchaPng, resolveValidVerifyRoleIds, isAlreadyVerifiedInThisGuild, isResolvedMainGuildId }; 
