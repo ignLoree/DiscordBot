@@ -301,7 +301,7 @@ function scheduleDiscadiaVoteReminder(client, guildId, userId, lastVoteAt) {
   const targetTime = new Date(lastVoteAt).getTime() + cooldownMs;
   const delay = targetTime - Date.now();
 
-  const run = async () => { try { const doc = await DiscadiaVoter.findOne({ guildId, userId }).lean(); if (!doc?.lastVoteAt) return; const cooldownMsRun = getVoteCooldownMs(client); if (Date.now() - new Date(doc.lastVoteAt).getTime() < cooldownMsRun) return; if (doc.lastRemindedAt && new Date(doc.lastRemindedAt).getTime() >= new Date(doc.lastVoteAt).getTime()) return; if (await shouldSkipVoteDmByNoDm(client, guildId, userId)) return; const user = await getUserCached(client, userId); if (!user) return; const { embed, components } = buildVoteReminderEmbed(client); try { await user.send({ embeds: [embed], ...(components.length ? { components } : {}) }); } catch { await sendVoteFallbackChannelReminder(client, guildId, userId); } await DiscadiaVoter.updateOne({ guildId, userId }, { $set: { lastRemindedAt: new Date() } },).catch(() => { }); } finally { discadiaVoteTimers.delete(key); } };
+  const run = async () => { try { const doc = await DiscadiaVoter.findOne({ guildId, userId }).lean(); if (!doc?.lastVoteAt) return; const cooldownMsRun = getVoteCooldownMs(client); if (Date.now() - new Date(doc.lastVoteAt).getTime() < cooldownMsRun) return; if (doc.lastRemindedAt && new Date(doc.lastRemindedAt).getTime() >= new Date(doc.lastVoteAt).getTime()) return; if (await shouldSkipVoteDmByNoDm(client, guildId, userId)) return; const guild = await client.guilds.fetch(guildId).catch(() => null); if (guild && IDs.roles?.Staff) { const mem = await guild.members.fetch({ user: userId, force: true }).catch(() => null); if (mem?.roles?.cache?.has(IDs.roles.Staff)) { await DiscadiaVoter.updateOne({ guildId, userId }, { $set: { lastRemindedAt: new Date() } }).catch(() => {}); return; } } const user = await getUserCached(client, userId); if (!user) return; const { embed, components } = buildVoteReminderEmbed(client); try { await user.send({ embeds: [embed], ...(components.length ? { components } : {}) }); } catch { await sendVoteFallbackChannelReminder(client, guildId, userId); } await DiscadiaVoter.updateOne({ guildId, userId }, { $set: { lastRemindedAt: new Date() } },).catch(() => { }); } finally { discadiaVoteTimers.delete(key); } };
 
   if (delay <= 0) {
     void run();
@@ -416,6 +416,15 @@ async function sendDueDiscadiaVoteReminders(client) {
     if (Date.now() - lastVoteAt < cooldownMs) continue;
     if (doc.lastRemindedAt && new Date(doc.lastRemindedAt).getTime() >= lastVoteAt) continue;
     if (await shouldSkipVoteDmByNoDm(client, guildId, userId)) continue;
+
+    const guild = await client.guilds.fetch(guildId).catch(() => null);
+    if (guild && IDs.roles?.Staff) {
+      const mem = await guild.members.fetch({ user: userId, force: true }).catch(() => null);
+      if (mem?.roles?.cache?.has(IDs.roles.Staff)) {
+        await DiscadiaVoter.updateOne({ guildId, userId }, { $set: { lastRemindedAt: new Date() } }).catch(() => {});
+        continue;
+      }
+    }
 
     const user = await getUserCached(client, userId);
     if (!user) continue;

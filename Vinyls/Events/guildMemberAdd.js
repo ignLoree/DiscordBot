@@ -865,13 +865,15 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
     if (appliedAction === "kick") {
       markJoinGateKick(member.guild.id, member.id, reason);
     }
-    await registerJoinRaidSecuritySignal(member, {
-      reason: `Join Gate action: ${reason}`,
-      enableAntiNuke: false,
-      antiNukeHeat: 0,
-      enableAutoMod: false,
-      raidBoost: 0,
-    }).catch(() => null);
+    if (joinGateCfg.escalateRaidOnJoinGatePunish) {
+      await registerJoinRaidSecuritySignal(member, {
+        reason: `Join Gate action: ${reason}`,
+        enableAntiNuke: false,
+        antiNukeHeat: 0,
+        enableAutoMod: false,
+        raidBoost: 0,
+      }).catch(() => null);
+    }
 
     if (member.guild?.client && appliedAction !== "log") {
       const modAction=appliedAction==="timeout"?"MUTE":appliedAction==="ban"?"BAN":"KICK";

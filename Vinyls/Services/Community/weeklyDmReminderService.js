@@ -721,9 +721,15 @@ function collectOpenDmRecipientIds(client) {
   return ids;
 }
 
-function isStaffMember(member) {
-  if (!member?.roles?.cache || !STAFF_ROLE_IDS.length) return false;
-  return STAFF_ROLE_IDS.some((roleId) => member.roles.cache.has(roleId));
+async function isStaffMemberResolved(guild, member) {
+  if (!guild || !member?.id) return false;
+  if (!STAFF_ROLE_IDS.length) return false;
+  let m = member;
+  if (m.partial || !m.roles?.cache?.size) {
+    m = (await guild.members.fetch({ user: m.id, force: true }).catch(() => null)) || m;
+  }
+  if (!m?.roles?.cache) return false;
+  return STAFF_ROLE_IDS.some((roleId) => m.roles.cache.has(roleId));
 }
 
 function isMemberOldEnough(member, minAgeDays) {
@@ -818,11 +824,7 @@ async function buildWeeklyJobs(client, guild) {
   const candidates = [];
   for (const member of guild.members.cache.values()) {
     if (!member || member.user?.bot) continue;
-    let m = member;
-    if (!m.roles?.cache?.size) {
-      m = (await guild.members.fetch(member.id).catch(() => null)) || m;
-    }
-    if (isStaffMember(m)) continue;
+    if (await isStaffMemberResolved(guild, member)) continue;
     if (!isMemberOldEnough(m, minMemberAgeDays)) continue;
     const id = String(member.id);
     if (await shouldBlockDm(guild.id, id, "weekly").catch(() => false)) continue;
@@ -958,11 +960,7 @@ async function runStartupBlastOnce(client, guild) {
     const eligibleMembers = [];
     for (const member of guild.members.cache.values()) {
       if (!member || member.user?.bot) continue;
-      let m = member;
-      if (!m.roles?.cache?.size) {
-        m = (await guild.members.fetch(member.id).catch(() => null)) || m;
-      }
-      if (isStaffMember(m)) continue;
+      if (await isStaffMemberResolved(guild, member)) continue;
       const userId = String(member.id);
       if (!userId || (await shouldBlockDm(guild.id, userId, "weekly").catch(() => false))) continue;
       eligibleMembers.push(member);
@@ -1267,15 +1265,12 @@ async function sendDueJobs(client, guild) {
       job.skipped = "not-in-guild";
       continue;
     }
-    if (!member.roles?.cache?.size) {
-      member = (await guild.members.fetch(userId).catch(() => null)) || member;
+    if (await isStaffMemberResolved(guild, member)) {
+      job.skipped = "staff-member";
+      continue;
     }
     if (!isMemberOldEnough(member, minMemberAgeDays)) {
       job.skipped = "member-too-new";
-      continue;
-    }
-    if (isStaffMember(member)) {
-      job.skipped = "staff-member";
       continue;
     }
 

@@ -9,8 +9,13 @@ const VERIFY_MAX_ATTEMPTS = 3;
 const CENTRAL_VERIFY_LOG_CHANNEL_ID = IDs.channels.verifyLogs || IDs.channels.modLogs || "1442569294796820541";
 const VERIFY_PING_CHANNEL_IDS = [IDs.channels?.candidatureStaff, IDs.channels?.news, IDs.channels?.eventAnnouncements].filter(Boolean);
 const VERIFY_CAPTCHA = { width: 300, height: 100, fontSize: 40, fontColor: "#33d17a", codeLength: 6, charset: "ABCDEFGHIJKLMNOPQRSTUVWXYZ", decoys: { trace: true, mixedUnderEach: true, spreadAround: true } };
-const MAIN_GUILD_ID = IDs.guilds?.main || "1329080093599076474";
+const CANONICAL_MAIN_GUILD_ID = "1329080093599076474";
+const MAIN_GUILD_ID = String(IDs.guilds?.main || CANONICAL_MAIN_GUILD_ID);
 const MAIN_VERIFIED_ROLE_ID = IDs.roles?.Member || null;
+function isResolvedMainGuildId(guildId) {
+  const g = String(guildId || "");
+  return g === MAIN_GUILD_ID || g === CANONICAL_MAIN_GUILD_ID;
+}
 const verifyState = new Map();
 const fontPath = path.join(__dirname, "..", "..", "UI", "Fonts", "Mojangles.ttf");
 let captchaFontFamily = "captcha";
@@ -34,7 +39,7 @@ function clearVerifyState(stateKey) {
 }
 
 function isSponsorGuildVerify(guildId) {
-  if (!guildId || guildId === MAIN_GUILD_ID) return false;
+  if (!guildId || isResolvedMainGuildId(guildId)) return false;
   return Boolean(IDs.verificatoRoleIds?.[guildId]);
 }
 
@@ -235,9 +240,9 @@ async function makeCaptchaPng(code) {
 
 async function resolveValidVerifyRoleIds(guild) {
   if (!guild) return [];
-  const gid = guild.id;
+  const gid = String(guild.id || "");
   let roleIds = [];
-  if (gid === MAIN_GUILD_ID) {
+  if (isResolvedMainGuildId(gid)) {
     roleIds = [
       IDs.roles.Member,
       IDs.roles.separatore6,
@@ -246,12 +251,19 @@ async function resolveValidVerifyRoleIds(guild) {
       IDs.roles.separatore7,
     ].filter(Boolean);
   } else {
-    const sponsorRoleId = IDs.verificatoRoleIds?.[gid];
+    const sponsorRoleId =
+      IDs.verificatoRoleIds?.[gid] ?? IDs.verificatoRoleIds?.[String(gid)];
     roleIds = sponsorRoleId ? [sponsorRoleId] : [];
   }
   const valid = [];
   for (const roleId of roleIds) {
-    const role = await getGuildRoleCached(guild, roleId);
+    const rid = String(roleId || "");
+    const cached = guild.roles?.cache?.get(rid);
+    if (cached?.id) {
+      valid.push(cached.id);
+      continue;
+    }
+    const role = await getGuildRoleCached(guild, rid);
     if (role?.id) valid.push(role.id);
   }
   return Array.from(new Set(valid));
@@ -259,7 +271,7 @@ async function resolveValidVerifyRoleIds(guild) {
 
 function isAlreadyVerifiedInThisGuild(member, guildId) {
   if (!member?.roles?.cache) return false;
-  if (guildId === MAIN_GUILD_ID) {
+  if (isResolvedMainGuildId(guildId)) {
     const ids = [IDs.roles.Member].filter(Boolean);
     return ids.some((id) => member.roles.cache.has(id));
   }

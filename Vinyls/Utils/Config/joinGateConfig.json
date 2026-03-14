@@ -1,6 +1,7 @@
 {
   "enabled": true,
   "dmPunishedMembers": true,
+  "escalateRaidOnJoinGatePunish": false,
   "noAvatar": {
     "enabled": true,
     "action": "log"

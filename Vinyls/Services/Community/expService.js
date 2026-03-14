@@ -594,8 +594,23 @@ function scheduleEventLevelUpMessage(clientOrGuild, guildId, userId, level) {
   const existing = eventLevelUpPending.get(key);
   if (existing) {
     clearTimeout(existing.timeoutId);
+    level = Math.max(Number(level), Number(existing.level) || 0);
   }
-  const timeoutId = setTimeout(async () => { eventLevelUpPending.delete(key); try { const guild = client.guilds.cache.get(guildId) || (await getClientGuildCached(client, guildId)); if (!guild) return; const member = await getGuildMemberCached(guild, userId); if (!member) return; await sendLevelUpMessage(guild, member, level); } catch (err) { global.logger?.error?.("[expService] scheduleEventLevelUpMessage flush error:", err); } }, EVENT_LEVEL_UP_DEBOUNCE_MS); timeoutId.unref?.(); eventLevelUpPending.set(key, { timeoutId, level, guildId, client });
+  const flushLevel = Math.floor(Number(level));
+  const timeoutId = setTimeout(async () => {
+    eventLevelUpPending.delete(key);
+    try {
+      const g = client.guilds.cache.get(guildId) || (await getClientGuildCached(client, guildId));
+      if (!g) return;
+      const mem = await getGuildMemberCached(g, userId);
+      if (!mem) return;
+      await sendLevelUpAnnouncement(g, mem, flushLevel);
+    } catch (err) {
+      global.logger?.error?.("[expService] scheduleEventLevelUpMessage flush error:", err);
+    }
+  }, EVENT_LEVEL_UP_DEBOUNCE_MS);
+  timeoutId.unref?.();
+  eventLevelUpPending.set(key, { timeoutId, level: flushLevel, guildId, client });
 }
 
 async function sendLevelUpPayload(channel, member, payload) {
@@ -744,11 +759,7 @@ async function addExpWithLevel(guild, userId, amount, applyMultiplier = false, i
         if (!roleId) continue;
         await addLevelRoleIfPossible(member, roleId);
       }
-      if (LEVEL_ROLE_MAP.has(level)) {
-        await sendPerksLevelMessage(guild, member, level);
-      } else {
-        await sendLevelUpMessage(guild, member, level);
-      }
+      scheduleEventLevelUpMessage(guild, guild.id, userId, level);
       if (result.levelInfo.level >= 10) {
         await addPerkRoleIfPossible(member);
       }

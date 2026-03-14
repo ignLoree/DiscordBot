@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const JOIN_GATE_CONFIG_PATH=path.resolve(__dirname,"../../Utils/Config/joinGateConfig.json",);
 const VALID_ACTIONS = new Set(["log", "timeout", "kick", "ban"]);
-const DEFAULT_JOIN_GATE_CONFIG={enabled:true,dmPunishedMembers:true,noAvatar:{enabled:true,action:"log",},newAccounts:{enabled:true,minAgeDays:3,action:"kick",},botAdditions:{enabled:true,action:"kick",},unverifiedBotAdditions:{enabled:true,action:"kick",},suspiciousAccount:{enabled:true,action:"log",},advertisingName:{enabled:true,action:"kick",},usernameFilter:{enabled:true,postJoinEnabled:true,action:"kick",strictWords:["discord staff","discord support","nitro free","steam gift","free nitro","airdrop",],wildcardWords:["*discord*support*","*discord*staff*","*nitro*free*","*steam*gift*","*crypto*airdrop*",],},};
+const DEFAULT_JOIN_GATE_CONFIG={enabled:true,dmPunishedMembers:true,escalateRaidOnJoinGatePunish:false,noAvatar:{enabled:true,action:"log",},newAccounts:{enabled:true,minAgeDays:3,action:"kick",},botAdditions:{enabled:true,action:"kick",},unverifiedBotAdditions:{enabled:true,action:"kick",},suspiciousAccount:{enabled:true,action:"log",},advertisingName:{enabled:true,action:"kick",},usernameFilter:{enabled:true,postJoinEnabled:true,action:"kick",strictWords:["discord staff","discord support","nitro free","steam gift","free nitro","airdrop",],wildcardWords:["*discord*support*","*discord*staff*","*nitro*free*","*steam*gift*","*crypto*airdrop*",],},};
 
 function readJsonSafe(filePath, fallback) {
   try {
@@ -46,6 +46,10 @@ function sanitizeJoinGateConfig(rawConfig) {
     typeof source.dmPunishedMembers === "boolean"
       ? source.dmPunishedMembers
       : DEFAULT_JOIN_GATE_CONFIG.dmPunishedMembers;
+  out.escalateRaidOnJoinGatePunish =
+    typeof source.escalateRaidOnJoinGatePunish === "boolean"
+      ? source.escalateRaidOnJoinGatePunish
+      : DEFAULT_JOIN_GATE_CONFIG.escalateRaidOnJoinGatePunish;
 
   const mergeRule=(key) => {const srcRule=source?.[key]||{};const dstRule=out[key];dstRule.enabled=typeof srcRule.enabled==="boolean"?srcRule.enabled:dstRule.enabled;dstRule.action=normalizeAction(srcRule.action,dstRule.action);};
 
