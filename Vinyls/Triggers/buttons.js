@@ -29,7 +29,7 @@ async function removeMemberRolesSequential(member, roleIds) {
   let m = await member.guild.members.fetch(member.id).catch(() => member);
   for (const rid of roleIds) {
     if (!rid) continue;
-    await m.roles.remove(rid).catch(() => {});
+    await m.roles.remove(rid).catch(() => { });
     m = await member.guild.members.fetch(member.id).catch(() => m);
   }
 }
@@ -83,13 +83,13 @@ async function handleStaffButtons(interaction) {
       .setImage(DIVIDER_URL)
       .setColor("#6f4e37")
       .setDescription(
-      "<:reportmessage:1443670575376765130> Ogni staffer per sanzionare dovr\u00e0 __seguire__ <#1442569243626307634>, chi non lo far\u00e0 **ricever\u00e0** una __valutazione negativa__.\n\n" +
-      "> <a:VC_Arrow:1448672967721615452> **__LIMITI SETTIMANALI SULLE SANZIONI__**\n" +
-      "<:dot:1443660294596329582> Ogni <@&1442568901887000618> dovr\u00e0 __eseguire__ almeno: **`3 sanzioni`**\n" +
-      "<:dot:1443660294596329582> Ogni <@&1442568897902678038> dovr\u00e0 __eseguire__ almeno: **`4 sanzioni`**\n" +
-      "<:dot:1443660294596329582> Ogni <@&1442568896237277295> dovr\u00e0 __eseguire__ almeno: **`4 sanzioni`**\n\n" +
-      "> Chi __rispetter\u00e0__ questi limiti ricever\u00e0 **una valutazione positiva**."
-    );
+        "<:reportmessage:1443670575376765130> Ogni staffer per sanzionare dovr\u00e0 __seguire__ <#1442569243626307634>, chi non lo far\u00e0 **ricever\u00e0** una __valutazione negativa__.\n\n" +
+        "> <a:VC_Arrow:1448672967721615452> **__LIMITI SETTIMANALI SULLE SANZIONI__**\n" +
+        "<:dot:1443660294596329582> Ogni <@&1442568901887000618> dovr\u00e0 __eseguire__ almeno: **`3 sanzioni`**\n" +
+        "<:dot:1443660294596329582> Ogni <@&1442568897902678038> dovr\u00e0 __eseguire__ almeno: **`4 sanzioni`**\n" +
+        "<:dot:1443660294596329582> Ogni <@&1442568896237277295> dovr\u00e0 __eseguire__ almeno: **`4 sanzioni`**\n\n" +
+        "> Chi __rispetter\u00e0__ questi limiti ricever\u00e0 **una valutazione positiva**."
+      );
     await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
   }
@@ -99,10 +99,10 @@ async function handleStaffButtons(interaction) {
       .setImage(DIVIDER_URL)
       .setColor("#6f4e37")
       .setDescription(
-      "<:banhammer:1443651875441217639> I **warn staff** vengono __assegnati__ dopo **3 valutazioni negative**. Raggiunti i `2` **warn staff** si verr\u00e0 depexati al ruolo precedente. **__(Per i Mod sar\u00e0 depex completo)__**\n\n" +
-      "> L'<@&1442568894349840435> pu\u00f2 decidere di graziare qualcuno al secondo warn, ma in caso di **terzo warn** lo staffer verr\u00e0 depexato **__completamente__**\n\n" +
-      "<:attentionfromvega:1443651874032062505> I **warn staff** non possono essere __rimossi__. Il **reset** dei __warn staff__ avviene ogni **__6 mesi__**."
-    );
+        "<:banhammer:1443651875441217639> I **warn staff** vengono __assegnati__ dopo **3 valutazioni negative**. Raggiunti i `2` **warn staff** si verr\u00e0 depexati al ruolo precedente. **__(Per i Mod sar\u00e0 depex completo)__**\n\n" +
+        "> L'<@&1442568894349840435> pu\u00f2 decidere di graziare qualcuno al secondo warn, ma in caso di **terzo warn** lo staffer verr\u00e0 depexato **__completamente__**\n\n" +
+        "<:attentionfromvega:1443651874032062505> I **warn staff** non possono essere __rimossi__. Il **reset** dei __warn staff__ avviene ogni **__6 mesi__**."
+      );
     await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
   }
@@ -425,7 +425,7 @@ module.exports = {
         }
         await removeMemberRolesSequential(member, roleIds);
         let m = await interaction.guild.members.fetch(interaction.user.id).catch(() => member);
-        await m.roles.add(values).catch(() => {});
+        await m.roles.add(values).catch(() => { });
         m = await interaction.guild.members.fetch(interaction.user.id).catch(() => m);
         const appliedAll = values.every((roleId) => m?.roles?.cache?.has?.(roleId));
         const stillOld = roleIds.some((rid) => values.every((v) => String(v) !== String(rid)) && m?.roles?.cache?.has?.(rid));
@@ -486,8 +486,8 @@ module.exports = {
           { upsert: true, new: true, setDefaultsOnInsert: true },
         );
       } catch (err) {
-    global.logger?.warn?.("[buttons] ", err?.message || err);
-  }
+        global.logger?.warn?.("[buttons] ", err?.message || err);
+      }
       const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setTitle("Comando sbloccato").setDescription("Hai sbloccato con successo la visualizzazione del tuo avatar.",);
       return interaction.reply({ embeds: [embed] });
     }
@@ -520,8 +520,8 @@ module.exports = {
           { upsert: true, new: true, setDefaultsOnInsert: true },
         );
       } catch (err) {
-    global.logger?.warn?.("[buttons] ", err?.message || err);
-  }
+        global.logger?.warn?.("[buttons] ", err?.message || err);
+      }
       const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setTitle("Comando sbloccato").setDescription("Hai sbloccato con successo la visualizzazione del tuo banner.",);
       return interaction.reply({ embeds: [embed] });
     }
@@ -570,8 +570,8 @@ module.exports = {
       try {
         await decrementQuoteCount(interaction.guild?.id);
       } catch (err) {
-    global.logger?.warn?.("[buttons] ", err?.message || err);
-  }
+        global.logger?.warn?.("[buttons] ", err?.message || err);
+      }
       return interaction
         .update({ embeds: [removedEmbed], components: [], files: [] })
         .catch(async () => {
@@ -671,45 +671,45 @@ module.exports = {
           iconURL: "https://cdn.discordapp.com/emojis/1448695567244066827.webp?size=40&animated=true",
         })
         .setDescription([
-        "Usiamo i soldi donati per portare eventi con premi migliori, come Discord Nitro o gift card, e per cercare collaborazioni interessanti per voi utenti.",
-        "Le donazioni sono completamente volontarie e contribuiscono alla nostra crescita. In anticipo, grazie.",
-        "",
-        "**Vuoi acquistare direttamente tutti i vantaggi permanenti e differenti dal VIP?**",
-        "`5,00 €`✩",
-        "<:dot:1443660294596329582> Il ruolo <@&1442568916114346096> **permanente**",
-        "<:dot:1443660294596329582> Possibilità di allegare link e immagini in chat",
-        "<:dot:1443660294596329582> Possibilità di usare le soundboard di altri server",
-        "<:dot:1443660294596329582> Possibilità di mandare sticker ed emoji di altri server",
-        "<:dot:1443660294596329582> Bypass dei requisiti nei giveaway",
-        "<:dot:1443660294596329582> Possibilità di cambiare il tuo nickname",
-        "<:dot:1443660294596329582> Sblocchi i COLORI PLUS (gradienti) su <#1469429150669602961>",
-        "<:dot:1443660294596329582> Sblocchi il comando `+quote`",
-        "<:dot:1443660294596329582> X3 EXP boost",
-      ].join("\n"))
+          "Usiamo i soldi donati per portare eventi con premi migliori, come Discord Nitro o gift card, e per cercare collaborazioni interessanti per voi utenti.",
+          "Le donazioni sono completamente volontarie e contribuiscono alla nostra crescita. In anticipo, grazie.",
+          "",
+          "**Vuoi acquistare direttamente tutti i vantaggi permanenti e differenti dal VIP?**",
+          "`5,00 €`✩",
+          "<:dot:1443660294596329582> Il ruolo <@&1442568916114346096> **permanente**",
+          "<:dot:1443660294596329582> Possibilità di allegare link e immagini in chat",
+          "<:dot:1443660294596329582> Possibilità di usare le soundboard di altri server",
+          "<:dot:1443660294596329582> Possibilità di mandare sticker ed emoji di altri server",
+          "<:dot:1443660294596329582> Bypass dei requisiti nei giveaway",
+          "<:dot:1443660294596329582> Possibilità di cambiare il tuo nickname",
+          "<:dot:1443660294596329582> Sblocchi i COLORI PLUS (gradienti) su <#1469429150669602961>",
+          "<:dot:1443660294596329582> Sblocchi il comando `+quote`",
+          "<:dot:1443660294596329582> X3 EXP boost",
+        ].join("\n"))
         .setImage(DIVIDER_URL);
 
       const vip = new EmbedBuilder()
         .setImage(DIVIDER_URL)
         .setColor("#6f4e37")
         .setDescription([
-        "**Vuoi sostenere il server?** Acquista il VIP e riscatta tutti i vantaggi che hai sbloccato qui nel server! <a:VC_HeartsBlue:1468686100045369404>",
-        "",
-        "ACQUISTA IL <@&1442568950805430312> <a:VC_HeartsPink:1468685897389052008>",
-        "`10,00 €`✩",
-        "",
-        "<:sparkledred:1470064814502973591> Sbloccherai:",
-        "<:dot:1443660294596329582> Permesso di allegare link e immagini in chat",
-        "<:dot:1443660294596329582> Permesso di usare soundboard di altri server",
-        "<:dot:1443660294596329582> Possibilità di mandare sticker ed emoji di altri server",
-        "<:dot:1443660294596329582> Bypass dei requisiti nei giveaway",
-        "<:dot:1443660294596329582> Possibilità di creare una vocale privata per te e i tuoi amici",
-        "<:dot:1443660294596329582> Reazioni al messaggio quando vieni @menzionato in chat (max. 3 reazioni).",
-        "<:dot:1443660294596329582> Potrai crearti un ruolo personalizzato con colore GRADIENTE scelto da te.",
-        "<:dot:1443660294596329582> X4 EXP boost",
-        "",
-        "<:attentionfromvega:1443651874032062505> DISCLAIMER / I soldi non sono rimborsabili, essendo volontari.",
-        "I vantaggi segnati con \"✩\" vengono rimossi qualora l'utente violi il regolamento, porti un'immagine negativa al server o sia inattivo per mesi.",
-      ].join("\n"))
+          "**Vuoi sostenere il server?** Acquista il VIP e riscatta tutti i vantaggi che hai sbloccato qui nel server! <a:VC_HeartsBlue:1468686100045369404>",
+          "",
+          "ACQUISTA IL <@&1442568950805430312> <a:VC_HeartsPink:1468685897389052008>",
+          "`10,00 €`✩",
+          "",
+          "<:sparkledred:1470064814502973591> Sbloccherai:",
+          "<:dot:1443660294596329582> Permesso di allegare link e immagini in chat",
+          "<:dot:1443660294596329582> Permesso di usare soundboard di altri server",
+          "<:dot:1443660294596329582> Possibilità di mandare sticker ed emoji di altri server",
+          "<:dot:1443660294596329582> Bypass dei requisiti nei giveaway",
+          "<:dot:1443660294596329582> Possibilità di creare una vocale privata per te e i tuoi amici",
+          "<:dot:1443660294596329582> Reazioni al messaggio quando vieni @menzionato in chat (max. 3 reazioni).",
+          "<:dot:1443660294596329582> Potrai crearti un ruolo personalizzato con colore GRADIENTE scelto da te.",
+          "<:dot:1443660294596329582> X4 EXP boost",
+          "",
+          "<:attentionfromvega:1443651874032062505> DISCLAIMER / I soldi non sono rimborsabili, essendo volontari.",
+          "I vantaggi segnati con \"✩\" vengono rimossi qualora l'utente violi il regolamento, porti un'immagine negativa al server o sia inattivo per mesi.",
+        ].join("\n"))
         .setImage(DIVIDER_URL);
 
       const ticket = new EmbedBuilder()
@@ -777,14 +777,14 @@ module.exports = {
         .setColor("#6f4e37")
         .setTitle("<a:VC_Verified:1448687631109197978> **__Verificati per ottenere vantaggi unici__**")
         .setDescription([
-        `Per verificare il tuo profilo dovrai andare in <#${IDs.channels.ticket}> e selezionare la terza categoria`,
-        "<:VC_Reply:1468262952934314131> successivamente, dovrete mandare una vostra foto in cui si vede bene il viso:",
-        "con il vostro nickname scritto su un foglio cartaceo o altrimenti con il cellulare nella schermata del vostro profilo Discord",
-        "",
-        "<:sparkledred:1470064814502973591> Ruolo <@&1469040179799920801> o <@&1469040190730408018> con badge speciale",
-        "<:moon:1470064812615667827> Permesso di allegare immagini e link in chat",
-        "<:pinkstar:1470064804835229768> Permesso di scrivere in <#1470029899740873029>",
-      ].join("\n"));
+          `Per verificare il tuo profilo dovrai andare in <#${IDs.channels.ticket}> e selezionare la terza categoria`,
+          "<:VC_Reply:1468262952934314131> successivamente, dovrete mandare una vostra foto in cui si vede bene il viso:",
+          "con il vostro nickname scritto su un foglio cartaceo o altrimenti con il cellulare nella schermata del vostro profilo Discord",
+          "",
+          "<:sparkledred:1470064814502973591> Ruolo <@&1469040179799920801> o <@&1469040190730408018> con badge speciale",
+          "<:moon:1470064812615667827> Permesso di allegare immagini e link in chat",
+          "<:pinkstar:1470064804835229768> Permesso di scrivere in <#1470029899740873029>",
+        ].join("\n"));
 
       await interaction.reply({ embeds: [verifyEmbed], flags: 1 << 6 }).catch(() => null);
     }
@@ -795,17 +795,17 @@ module.exports = {
         .setColor("#6f4e37")
         .setTitle("<a:VC_HeartWhite:1448673535253024860> **__Potenzia il server e sblocca vantaggi unici__**")
         .setDescription([
-        "Un modo per sostenere il server è potenziarlo: se hai un Nitro Boost (quello da 9,99€) hai a disposizione 2 potenziamenti che puoi utilizzare in qualunque server tu voglia. Se deciderai di potenziare noi, __Vinili & Caffè__, sbloccherai un sacco di vantaggi.",
-        "**Non sai cos'è Discord Nitro?** <:link:1470064815899803668> [Scoprilo qui](<https://discord.com/nitro>).",
-        "",
-        `<:sparkledred:1470064814502973591> Ruolo <@&${IDs.roles.ServerBooster}> con badge speciale`,
-        "<:moon:1470064812615667827> Permesso di allegare immagini e link in chat",
-        "<:pinkstar:1470064804835229768> Permesso di mandare emoji e adesivi di altri server",
-        "<:sparkle:1470064801811140866> Permesso di usare le Soundboard del server",
-        "<:blueflash:1470064803157643468> Possibilità di creare un **ruolo personalizzato** e una **vocale privata personalizzata**",
-        "<a:reddiamond:1443652837346377841> Sblocchi il comando `+quote`",
-        "<:exp:1470067108543987846> X2 EXP Boost",
-      ].join("\n"))
+          "Un modo per sostenere il server è potenziarlo: se hai un Nitro Boost (quello da 9,99€) hai a disposizione 2 potenziamenti che puoi utilizzare in qualunque server tu voglia. Se deciderai di potenziare noi, __Vinili & Caffè__, sbloccherai un sacco di vantaggi.",
+          "**Non sai cos'è Discord Nitro?** <:link:1470064815899803668> [Scoprilo qui](<https://discord.com/nitro>).",
+          "",
+          `<:sparkledred:1470064814502973591> Ruolo <@&${IDs.roles.ServerBooster}> con badge speciale`,
+          "<:moon:1470064812615667827> Permesso di allegare immagini e link in chat",
+          "<:pinkstar:1470064804835229768> Permesso di mandare emoji e adesivi di altri server",
+          "<:sparkle:1470064801811140866> Permesso di usare le Soundboard del server",
+          "<:blueflash:1470064803157643468> Possibilità di creare un **ruolo personalizzato** e una **vocale privata personalizzata**",
+          "<a:reddiamond:1443652837346377841> Sblocchi il comando `+quote`",
+          "<:exp:1470067108543987846> X2 EXP Boost",
+        ].join("\n"))
         .setImage(DIVIDER_URL);
 
       const howtoEmbed = new EmbedBuilder()
@@ -814,9 +814,9 @@ module.exports = {
         .setTitle("<:nitroboost:1470064881674883326> **__Come creare ruolo personalizzato e vocale privata__**")
         .setDescription([
           `Usa \`+customrole create\` in <#${IDs.channels.commands}> per creare e configurare il ruolo.`,
-        "Poi usa \`+customvoc\` nello stesso canale per creare e configurare la vocale privata.",
-        "Digita \`+help\` per la lista completa dei comandi.",
-      ].join("\n"));
+          "Poi usa \`+customvoc\` nello stesso canale per creare e configurare la vocale privata.",
+          "Digita \`+help\` per la lista completa dei comandi.",
+        ].join("\n"));
 
       const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("info_levels").setLabel("︲INFO & VANTAGGI RUOLI").setEmoji("<:exp:1470067108543987846>").setStyle(ButtonStyle.Secondary),);
 
@@ -829,15 +829,15 @@ module.exports = {
         .setColor("#6f4e37")
         .setTitle("<:exp:1470067108543987846> **__Sali di livello e sblocca vantaggi sempre migliori__**")
         .setDescription([
-        "I livelli nel server rappresentano la tua attività: scrivendo in chat testuale e stando nei canali vocali, guadagnerai esperienza che verrà aggiunta al tuo livello globale.",
-        "Una volta raggiunta una certa somma di esperienza, farai un **level up**!",
-        "",
-        `<:dot:1443660294596329582> Per __vedere i tuoi EXP__ e le tue statistiche, usa il comando \`+rank\` in <#${IDs.channels.commands}>.`,
-        "",
-        "<:VC_Dot:1443932948599668746> ──────── <:exp:1470067108543987846> ──────── <:VC_Dot:1443932948599668746>",
-        "",
-        "<a:VC_Arrow:1448672967721615452> **LISTA DEI LIVELLI:**",
-      ].join("\n"))
+          "I livelli nel server rappresentano la tua attività: scrivendo in chat testuale e stando nei canali vocali, guadagnerai esperienza che verrà aggiunta al tuo livello globale.",
+          "Una volta raggiunta una certa somma di esperienza, farai un **level up**!",
+          "",
+          `<:dot:1443660294596329582> Per __vedere i tuoi EXP__ e le tue statistiche, usa il comando \`+rank\` in <#${IDs.channels.commands}>.`,
+          "",
+          "<:VC_Dot:1443932948599668746> ──────── <:exp:1470067108543987846> ──────── <:VC_Dot:1443932948599668746>",
+          "",
+          "<a:VC_Arrow:1448672967721615452> **LISTA DEI LIVELLI:**",
+        ].join("\n"))
         .addFields(
           {
             name: "\`LIVELLO 10-19\`",
@@ -929,7 +929,112 @@ module.exports = {
     }
 
     if (interaction.customId == "info_badges_roles") {
-      const badgesEmbed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setTitle("<:pinkstar:1470064804835229768>\u30FB**__Ottieni un ruolo speciale per il tuo profilo!__**",).setDescription(["I badge sono dei ruoli __aggiuntivi__ che ti permettono di sbloccare vantaggi e permessi all'interno del server. Possono essere ottenuti in diversi modi e tutti danno vantaggi diversi.", "", "<:VC_Dot:1443932948599668746> \u2500\u2500\u2500\u2500\u22C6\u22C5\u2606\u22C5\u22C6\u2500\u2500\u2500\u2500 \u0B68\u2661\u0B67 \u2500\u2500\u2500\u2500\u22C6\u22C5\u2606\u22C5\u22C6\u2500\u2500\u2500\u2500 \u0B68\u2661\u0B67 \u2500\u2500\u2500\u2500\u22C6\u22C5\u2606\u22C5\u22C6\u2500\u2500\u2500\u2500 <:VC_Dot:1443932948599668746>", "", "<a:VC_Arrow:1448672967721615452> **LISTA DEI BADGES:**",].join("\n"),).addFields({ name: "\`WEEKLY WINNERS\`", value: ["<@&1468674837957574757>/<@&1468674787399172208>", "Ottenibile arrivando primo per exp in messaggi o exp in vocale nella [classifica settimanale](<https://discord.com/channels/1329080093599076474/1470183921236049940>).", "\u096F Tutte le ricompense precedenti", "<:VC_DoubleReply:1468713981152727120> Ruolo esclusivo per 7 giorni.", "<:VC_Reply:1468262952934314131> Permesso di usare soundboard esterne",].join("\n"), inline: true, }, { name: "\`SUPPORTER\`", value: ["<@&1442568948271943721>", 'Ottenibile mettendo il testo ".gg/viniliecaffe" o "discord.gg/viniliecaffe" nello status del tuo profilo Discord!', "Nello stato, non nella bio; se viene tolto o se sei offline, non ti verranno assegnati i vantaggi.", "<:VC_DoubleReply:1468713981152727120> Permesso di allegare link e immagini in chat", "<:VC_Reply:1468262952934314131> Permesso di cambiare il tuo nickname",].join("\n"), inline: true, }, { name: "\`VOTER\`", value: ["<@&1468266342682722679>", "Ottenibile votando il server su [Discadia](<https://discadia.com/vote/viniliecaffe/>)", "<:VC_DoubleReply:1468713981152727120> EXP casuale da 100 a 250.", "<:VC_Reply:1468262952934314131> Ruolo esclusivo per 24 ore.",].join("\n"), inline: true, }, { name: "\`PROMOTER\`", value: ["<@&1469758545263198442>", "Ottenibile invitando 5 persone nel server, attraverso [custom link](<https://imgur.com/a/3wpDOVj>)", "<:VC_DoubleReply:1468713981152727120> Permesso di allegare link e immagini in chat", "<:VC_Reply:1468262952934314131> Permesso di cambiare il tuo nickname",].join("\n"), inline: true, }, { name: "\`PROPULSOR\`", value: ["<@&1474357579143577610>", "Ottenibile invitando 25 persone nel server, attraverso [custom link](<https://imgur.com/a/3wpDOVj>)", "\u096F Tutte le ricompense precedenti", "<:VC_DoubleReply:1468713981152727120> Inviare emoji e adesivi esterni", "<:VC_Reply:1468262952934314131> Aggiungi reazioni ai messaggi",].join("\n"), inline: true, }, { name: "\`CATALYST\`", value: ["<@&1474361806956007425>", "Ottenibile invitando 100 persone nel server, attraverso [custom link](<https://imgur.com/a/3wpDOVj>)", "\u096F Tutte le ricompense precedenti", "<:VC_Reply:1468262952934314131> Usare SoundBoard esterne nelle vocali",].join("\n"), inline: true, }, { name: "\`GUILDED\`", value: ["<@&1471955147692179497>", "Ottenibile mettendo una delle nostre <#1475223034057982184>", "\u096F Esclusivit\u00E0 del ruolo.",].join("\n"), inline: true, }, { name: "\`VETERANO\`", value: ["<@&1469073503025103113>", "Ottenibile stando nel server per almeno 1 mese", "\u096F Esclusivit\u00E0 del ruolo.",].join("\n"), inline: true, }, { name: "\`OG\`", value: ["<@&1469041493401534644>", "Ottenibile stando nel server per almeno 1 anno", "\u096F Esclusivit\u00E0 del ruolo.",].join("\n"), inline: true, },).setFooter({ text: "\u26A0\uFE0F \u25B8 Se dovessi uscire dal server o cambiare account perderai i tuoi badge e i vantaggi annessi.", });
+      const badgesEmbed = new EmbedBuilder()
+        .setImage(DIVIDER_URL)
+        .setColor("#6f4e37")
+        .setTitle("<:pinkstar:1470064804835229768>・**__Ottieni un ruolo speciale per il tuo profilo!__**")
+        .setDescription([
+          "I badge sono dei ruoli __aggiuntivi__ che ti permettono di sbloccare vantaggi e permessi all'interno del server. Possono essere ottenuti in diversi modi e tutti danno vantaggi diversi.",
+          "",
+          "<:VC_Dot:1443932948599668746> ────⋆⋅☆⋅⋆──── ୨♡୧ ────⋆⋅☆⋅⋆──── ୨♡୧ ────⋆⋅☆⋅⋆──── <:VC_Dot:1443932948599668746>",
+          "",
+          "<a:VC_Arrow:1448672967721615452> **LISTA DEI BADGES:**",
+        ].join("\n"))
+        .addFields(
+          {
+            name: "`WEEKLY WINNERS`",
+            value: [
+              "<@&1468674837957574757>/<@&1468674787399172208>",
+              "Ottenibile arrivando primo per exp in messaggi o exp in vocale nella [classifica settimanale](<https://discord.com/channels/1329080093599076474/1470183921236049940>).",
+              "९ Tutte le ricompense precedenti",
+              "<:VC_DoubleReply:1468713981152727120> Ruolo esclusivo per 7 giorni.",
+              "<:VC_Reply:1468262952934314131> Permesso di usare soundboard esterne",
+            ].join("\n"),
+            inline: true,
+          },
+          {
+            name: "`SUPPORTER`",
+            value: [
+              "<@&1442568948271943721>",
+              'Ottenibile mettendo il testo ".gg/viniliecaffe" o "discord.gg/viniliecaffe" nello status del tuo profilo Discord!',
+              "Nello stato, non nella bio; se viene tolto o se sei offline, non ti verranno assegnati i vantaggi.",
+              "<:VC_DoubleReply:1468713981152727120> Permesso di allegare link e immagini in chat",
+              "<:VC_Reply:1468262952934314131> Permesso di cambiare il tuo nickname",
+            ].join("\n"),
+            inline: true,
+          },
+          {
+            name: "`VOTER`",
+            value: [
+              "<@&1468266342682722679>",
+              "Ottenibile votando il server su [Discadia](<https://discadia.com/vote/viniliecaffe/>)",
+              "<:VC_DoubleReply:1468713981152727120> EXP casuale da 100 a 250.",
+              "<:VC_Reply:1468262952934314131> Ruolo esclusivo per 24 ore.",
+            ].join("\n"),
+            inline: true,
+          },
+          {
+            name: "`PROMOTER`",
+            value: [
+              "<@&1469758545263198442>",
+              "Ottenibile invitando 5 persone nel server, attraverso [custom link](<https://imgur.com/a/3wpDOVj>)",
+              "<:VC_DoubleReply:1468713981152727120> Permesso di allegare link e immagini in chat",
+              "<:VC_Reply:1468262952934314131> Permesso di cambiare il tuo nickname",
+            ].join("\n"),
+            inline: true,
+          },
+          {
+            name: "`PROPULSOR`",
+            value: [
+              "<@&1474357579143577610>",
+              "Ottenibile invitando 25 persone nel server, attraverso [custom link](<https://imgur.com/a/3wpDOVj>)",
+              "९ Tutte le ricompense precedenti",
+              "<:VC_DoubleReply:1468713981152727120> Inviare emoji e adesivi esterni",
+              "<:VC_Reply:1468262952934314131> Aggiungi reazioni ai messaggi",
+            ].join("\n"),
+            inline: true,
+          },
+          {
+            name: "`CATALYST`",
+            value: [
+              "<@&1474361806956007425>",
+              "Ottenibile invitando 100 persone nel server, attraverso [custom link](<https://imgur.com/a/3wpDOVj>)",
+              "९ Tutte le ricompense precedenti",
+              "<:VC_Reply:1468262952934314131> Usare SoundBoard esterne nelle vocali",
+            ].join("\n"),
+            inline: true,
+          },
+          {
+            name: "`GUILDED`",
+            value: [
+              "<@&1471955147692179497>",
+              "Ottenibile mettendo una delle nostre https://discord.com/channels/1329080093599076474/1442569111119990887/1470102236527853661",
+              "९ Esclusività del ruolo.",
+            ].join("\n"),
+            inline: true,
+          },
+          {
+            name: "`VETERANO`",
+            value: [
+              "<@&1469073503025103113>",
+              "Ottenibile stando nel server per almeno 1 mese",
+              "९ Esclusività del ruolo.",
+            ].join("\n"),
+            inline: true,
+          },
+          {
+            name: "`OG`",
+            value: [
+              "<@&1469041493401534644>",
+              "Ottenibile stando nel server per almeno 1 anno",
+              "९ Esclusività del ruolo.",
+            ].join("\n"),
+            inline: true,
+          },
+        )
+        .setFooter({
+          text: "⚠️ ▸ Se dovessi uscire dal server o cambiare account perderai i tuoi badge e i vantaggi annessi.",
+        });
 
       await interaction.reply({ embeds: [badgesEmbed], flags: 1 << 6 }).catch(() => null);
     }
