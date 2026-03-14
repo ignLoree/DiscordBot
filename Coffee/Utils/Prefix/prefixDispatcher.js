@@ -93,7 +93,7 @@ async function maybeSendWrongPrefixHint(message, client, validPrefix = "-") {
     return true;
   }
   await sendTemporaryChannelNotice(message.channel, {
-    content: "`" + attempt.usedPrefix + attempt.token + "` non \u00E8 valido. Usa `" + safePrefix + commandName + "`." ,
+    content: "`" + attempt.usedPrefix + attempt.token + "` non è valido. Usa `" + safePrefix + commandName + "`." ,
   });
   return true;
 }

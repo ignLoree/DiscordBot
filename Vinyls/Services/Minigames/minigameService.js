@@ -2797,7 +2797,7 @@ function buildGuessPlayerEmbed(rewardExp, durationMs, imageUrl) {
     .setColor("#6f4e37")
     .setTitle("Indovina il calciatore <a:VC_Exclamation:1448687427836444854>")
     .setDescription([
-      `<:VC_EXP:1468714279673925883> Indovina il calciatore pi\u00F9 famoso per ottenere **${rewardExp} exp**.`,
+      `<:VC_EXP:1468714279673925883> Indovina il calciatore più famoso per ottenere **${rewardExp} exp**.`,
       `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per indovinarlo!`,
       `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
     ].join("\n"),);
@@ -7128,7 +7128,7 @@ async function restoreActiveGames(client) {
     const parsed = parseStateTarget(state.target);
     const name = parsed?.name || "il calciatore";
     const team = parsed?.team || "Squadra sconosciuta";
-    const nationality = parsed?.nationality || "Nazionalit\u00E0 sconosciuta";
+    const nationality = parsed?.nationality || "Nazionalità sconosciuta";
     const timeout = setTimeout(async () => { const game = activeGames.get(cfg.channelId); if (!game) return; recordNoParticipationIfNeeded(cfg.channelId, game); activeGames.delete(cfg.channelId); if (game.hintTimeout) clearTimeout(game.hintTimeout); await channel.send({ embeds: [buildTimeoutPlayerEmbed(game.displayName)] }).catch(() => { }); await clearActiveGame(client, cfg); }, remainingMs); timeout.unref?.();
     const hintTimeout = await scheduleGenericHint(client, cfg.channelId, remainingMs, `${team} \u2022 ${nationality} \u2022 ${buildRevealHint(name)}`,
   );
@@ -7150,7 +7150,7 @@ async function restoreActiveGames(client) {
     const parsed = parseStateTarget(state.target);
     const title = parsed?.title || "la canzone";
     const artist = parsed?.artist || "";
-    const artistCountry = parsed?.artistCountry || "Nazionalit\u00E0 sconosciuta";
+    const artistCountry = parsed?.artistCountry || "Nazionalità sconosciuta";
     const genre = parsed?.genre || "Genere sconosciuto";
     const timeout = setTimeout(async () => { const game = activeGames.get(cfg.channelId); if (!game) return; recordNoParticipationIfNeeded(cfg.channelId, game); activeGames.delete(cfg.channelId); if (game.hintTimeout) clearTimeout(game.hintTimeout); await channel.send({ embeds: [buildTimeoutSongEmbed(game.title, game.artist)] }).catch(() => { }); await clearActiveGame(client, cfg); }, remainingMs); timeout.unref?.();
     const hintTimeout = await scheduleGenericHint(client, cfg.channelId, remainingMs, `${artistCountry} \u2022 ${genre} \u2022 Canzone: ${buildRevealHint(title)}`,

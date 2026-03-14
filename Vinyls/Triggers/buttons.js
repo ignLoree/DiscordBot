@@ -3,7 +3,7 @@ const { decrementQuoteCount } = require("../Utils/Quote/quoteCounter");
 const { ROLE_MULTIPLIERS } = require("../Services/Community/expService");
 const { AvatarPrivacy, BannerPrivacy, } = require("../Schemas/Community/communitySchemas");
 const IDs = require("../Utils/Config/ids");
-const { getGuildMemberCached, getUserCached, getGuildChannelCached, } = require("../Utils/Interaction/interactionEntityCache");
+const { getGuildMemberCached, getUserCached } = require("../Utils/Interaction/interactionEntityCache");
 const { applyDepexOneLevel } = require("../Services/Staff/staffWarnService");
 const { sendPexDepexLog } = require("../Events/interaction/resocontoHandlers");
 const { checkButtonPermission, checkStringSelectPermission, buildGlobalPermissionDeniedEmbed, buildGlobalNotYourControlEmbed, } = require("../Utils/Moderation/commandPermissions");
@@ -83,12 +83,12 @@ async function handleStaffButtons(interaction) {
       .setImage(DIVIDER_URL)
       .setColor("#6f4e37")
       .setDescription(
-        "<:reportmessage:1443670575376765130> Ogni staffer per sanzionare dovr\u00e0 __seguire__ <#1442569243626307634>, chi non lo far\u00e0 **ricever\u00e0** una __valutazione negativa__.\n\n" +
+        "<:reportmessage:1443670575376765130> Ogni staffer per sanzionare dovrà __seguire__ <#1442569243626307634>, chi non lo farà **riceverà** una __valutazione negativa__.\n\n" +
         "> <a:VC_Arrow:1448672967721615452> **__LIMITI SETTIMANALI SULLE SANZIONI__**\n" +
-        "<:dot:1443660294596329582> Ogni <@&1442568901887000618> dovr\u00e0 __eseguire__ almeno: **`3 sanzioni`**\n" +
-        "<:dot:1443660294596329582> Ogni <@&1442568897902678038> dovr\u00e0 __eseguire__ almeno: **`4 sanzioni`**\n" +
-        "<:dot:1443660294596329582> Ogni <@&1442568896237277295> dovr\u00e0 __eseguire__ almeno: **`4 sanzioni`**\n\n" +
-        "> Chi __rispetter\u00e0__ questi limiti ricever\u00e0 **una valutazione positiva**."
+        "<:dot:1443660294596329582> Ogni <@&1442568901887000618> dovrà __eseguire__ almeno: **`3 sanzioni`**\n" +
+        "<:dot:1443660294596329582> Ogni <@&1442568897902678038> dovrà __eseguire__ almeno: **`4 sanzioni`**\n" +
+        "<:dot:1443660294596329582> Ogni <@&1442568896237277295> dovrà __eseguire__ almeno: **`4 sanzioni`**\n\n" +
+        "> Chi __rispetterà__ questi limiti riceverà **una valutazione positiva**."
       );
     await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
@@ -99,8 +99,8 @@ async function handleStaffButtons(interaction) {
       .setImage(DIVIDER_URL)
       .setColor("#6f4e37")
       .setDescription(
-        "<:banhammer:1443651875441217639> I **warn staff** vengono __assegnati__ dopo **3 valutazioni negative**. Raggiunti i `2` **warn staff** si verr\u00e0 depexati al ruolo precedente. **__(Per i Mod sar\u00e0 depex completo)__**\n\n" +
-        "> L'<@&1442568894349840435> pu\u00f2 decidere di graziare qualcuno al secondo warn, ma in caso di **terzo warn** lo staffer verr\u00e0 depexato **__completamente__**\n\n" +
+        "<:banhammer:1443651875441217639> I **warn staff** vengono __assegnati__ dopo **3 valutazioni negative**. Raggiunti i `2` **warn staff** si verrà depexati al ruolo precedente. **__(Per i Mod sarà depex completo)__**\n\n" +
+        "> L'<@&1442568894349840435> può decidere di graziare qualcuno al secondo warn, ma in caso di **terzo warn** lo staffer verrà depexato **__completamente__**\n\n" +
         "<:attentionfromvega:1443651874032062505> I **warn staff** non possono essere __rimossi__. Il **reset** dei __warn staff__ avviene ogni **__6 mesi__**."
       );
     await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
@@ -110,11 +110,11 @@ async function handleStaffButtons(interaction) {
   if (interaction.customId == "valutazioni") {
     const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setDescription(
       "<a:1370everythingisstable:1444006799643508778> **__VALUTAZIONI POSITIVE__**\n" +
-      "<a:questionexclaimanimated:1443660299994533960> Le **valutazioni positive** aumentano la possibilit\u00e0 di essere **pexati** e si possono **ottenere** generando un'__attivit\u00e0__ **superiore** a quella richiesta nei _limiti settimanali_ o facendo qualcosa per dare un **vantaggio** al __server__.\n\n" +
-      "> Le **valutazioni positive** si possono **__scambiare__** per dei giorni in pi\u00f9 di **pausa**.\n\n" +
+      "<a:questionexclaimanimated:1443660299994533960> Le **valutazioni positive** aumentano la possibilità di essere **pexati** e si possono **ottenere** generando un'__attività__ **superiore** a quella richiesta nei _limiti settimanali_ o facendo qualcosa per dare un **vantaggio** al __server__.\n\n" +
+      "> Le **valutazioni positive** si possono **__scambiare__** per dei giorni in più di **pausa**.\n\n" +
       "<a:laydowntorest:1444006796661358673> **__VALUTAZIONI NEGATIVE__**\n" +
-      "> Le **valutazioni negative** diminuiscono la possibilit\u00e0 di essere **pexati** e si ottengono **non completando** i _limiti settimanali_ o facendo qualcosa di _nocivo_ per il **server**.\n\n" +
-      "> Le **valutazioni negative** possono essere **__rimosse__** completando compiti extra assegnati dall'<@&1442568894349840435> o rinunciando ad almeno `3 o pi\u00f9 valutazioni positive` in base al motivo per cui \u00e8 stata assegnata la valutazione."
+      "> Le **valutazioni negative** diminuiscono la possibilità di essere **pexati** e si ottengono **non completando** i _limiti settimanali_ o facendo qualcosa di _nocivo_ per il **server**.\n\n" +
+      "> Le **valutazioni negative** possono essere **__rimosse__** completando compiti extra assegnati dall'<@&1442568894349840435> o rinunciando ad almeno `3 o più valutazioni positive` in base al motivo per cui è stata assegnata la valutazione."
     );
     await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
@@ -122,15 +122,15 @@ async function handleStaffButtons(interaction) {
 
   if (interaction.customId == "pause") {
     const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setDescription(
-      "<:Clock:1330530065133338685> Vinili & Caff\u00e8 presenta un **sistema** di **`pause`** _sofisticato_, infatti \u00e8 tutto __organizzato__ per **garantire** al meglio l'__attivit\u00e0__ del server.\n\n" +
+      "<:Clock:1330530065133338685> Vinili & Caffè presenta un **sistema** di **`pause`** _sofisticato_, infatti è tutto __organizzato__ per **garantire** al meglio l'__attività__ del server.\n\n" +
       "> Per __richiedere__ una pausa basta scrivere nel canale <#1442569262689554444> usando il formato corretto.\n\n" +
       "<a:VC_Arrow:1448672967721615452> **__LIMITI__**\n" +
-      "<a:loading:1443934440614264924> In un anno si possono chiedere __massimo__ **`60 giorni`** di pausa che si possono usufruire in __tutti__ i **12 mesi** dell'anno. Gli <@&1442568895251611924> avranno **__`5`__** giorni in pi\u00f9.\n\n" +
-      "> Nei giorni **festivi** avrete anche dei giorni in pi\u00f9 **ulteriori** al __normale mese__:\n" +
+      "<a:loading:1443934440614264924> In un anno si possono chiedere __massimo__ **`60 giorni`** di pausa che si possono usufruire in __tutti__ i **12 mesi** dell'anno. Gli <@&1442568895251611924> avranno **__`5`__** giorni in più.\n\n" +
+      "> Nei giorni **festivi** avrete anche dei giorni in più **ulteriori** al __normale mese__:\n" +
       "<:dot:1443660294596329582> **24**, **25**, **26**, **31** __Dicembre__\n" +
       "<:dot:1443660294596329582> **1** Gennaio\n" +
       "<:dot:1443660294596329582> **Pasqua** e **Pasquetta**\n\n" +
-      "> Naturalmente per **garantire** al meglio l'attivit\u00e0 del server ci sono dei __limiti__ di staffer che possono essere in pausa nello __stesso periodo__\n" +
+      "> Naturalmente per **garantire** al meglio l'attività del server ci sono dei __limiti__ di staffer che possono essere in pausa nello __stesso periodo__\n" +
       "<:dot:1443660294596329582> <@&1442568904311570555> <a:VC_Arrow:1448672967721615452> __Nessun limite__\n" +
       "<:dot:1443660294596329582> <@&1442568901887000618> <a:VC_Arrow:1448672967721615452> __3__ **staffer**\n" +
       "<:dot:1443660294596329582> <@&1442568897902678038> <a:VC_Arrow:1448672967721615452> __1__ **staffer**\n" +
@@ -138,9 +138,9 @@ async function handleStaffButtons(interaction) {
       "<:dot:1443660294596329582> <@&1442568893435478097> <a:VC_Arrow:1448672967721615452> __2__ **staffer**\n" +
       "<:dot:1443660294596329582> <@&1442568891875201066> <a:VC_Arrow:1448672967721615452> __1__ **staffer**\n" +
       "<:dot:1443660294596329582> <@&1442568889052430609> <a:VC_Arrow:1448672967721615452> __1__ **staffer**\n\n" +
-      "<:attentionfromvega:1443651874032062505> Potrai chiedere __una pausa__ **ogni mese**. Se quest'ultima cade in `2` **__mesi diversi__**, verr\u00e0 contato il mese in cui viene **chiesta** la __pausa__, a patto che non superi i primi __`5` giorni__ dell'altro mese. Per chiedere un'altra pausa dovrai aspettare almeno **__`1 settimana`__**\n\n" +
-      "<:infoglowingdot:1443660296823767110> Gli __`Helper`__ potranno richiedere una __pausa__ nella loro prima settimana **solo** per **__problemi personali__ o __familiari gravi__**. Se l'<@&1442568894349840435> viene a conoscenza di un **__falso__ motivo** per usare una pausa, **in qualsiasi circostanza**, si verr\u00e0 **__depexati__** all'**__istante__**.\n\n" +
-      "> <:banhammer:1443651875441217639> Se l'<@&1442568894349840435> verr\u00e0 a conoscenza di uno **staffer** __in pausa__ ma **attivo** in un **altro server** nel periodo di tempo della pausa, **toglier\u00e0** la pausa e **sanzioner\u00e0** lo staffer."
+      "<:attentionfromvega:1443651874032062505> Potrai chiedere __una pausa__ **ogni mese**. Se quest'ultima cade in `2` **__mesi diversi__**, verrà contato il mese in cui viene **chiesta** la __pausa__, a patto che non superi i primi __`5` giorni__ dell'altro mese. Per chiedere un'altra pausa dovrai aspettare almeno **__`1 settimana`__**\n\n" +
+      "<:infoglowingdot:1443660296823767110> Gli __`Helper`__ potranno richiedere una __pausa__ nella loro prima settimana **solo** per **__problemi personali__ o __familiari gravi__**. Se l'<@&1442568894349840435> viene a conoscenza di un **__falso__ motivo** per usare una pausa, **in qualsiasi circostanza**, si verrà **__depexati__** all'**__istante__**.\n\n" +
+      "> <:banhammer:1443651875441217639> Se l'<@&1442568894349840435> verrà a conoscenza di uno **staffer** __in pausa__ ma **attivo** in un **altro server** nel periodo di tempo della pausa, **toglierà** la pausa e **sanzionerà** lo staffer."
     );
     await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
@@ -162,7 +162,7 @@ async function handleStaffButtons(interaction) {
       "<a:VC_Arrow:1448672967721615452> <@&1442568896237277295>\n" +
       "<:VC_DoubleReply:1468713981152727120> **__450__** messaggi\n" +
       "<:VC_Reply:1468262952934314131> **__4h__** in vocale\n\n" +
-      "> <:attentionfromvega:1443651874032062505> Verr\u00e0 **valutato** anche il **modo** in cui questi __limiti__ vengono raggiunti, ovvero se lo **staffer** \u00e8 stato costante o no."
+      "> <:attentionfromvega:1443651874032062505> Verrà **valutato** anche il **modo** in cui questi __limiti__ vengono raggiunti, ovvero se lo **staffer** è stato costante o no."
     );
     await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
@@ -547,7 +547,7 @@ module.exports = {
       const now = new Date();
       const dateStr = now.toLocaleDateString("it-IT");
       const timeStr = now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit", });
-      const removedEmbed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setTitle("\u{1F5D1}\uFE0F Citazione rimossa").setDescription("Questa citazione \u00E8 stata rimossa dall'autore.").addFields({
+      const removedEmbed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setTitle("\u{1F5D1}\uFE0F Citazione rimossa").setDescription("Questa citazione è stata rimossa dall'autore.").addFields({
         name: "Rimossa da", value: `<@${interaction.user.id}>`,
         inline: true,
       },
@@ -911,7 +911,7 @@ module.exports = {
         "Digita \`+help\` per la lista completa dei comandi.",
       ].join("\n"));
 
-      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setLabel("︲COLORI VIP SBLOCCATI").setEmoji(`<:VC_Color:1470781368630775982>`).setStyle(ButtonStyle.Link).setURL("https://discord.com/channels/1329080093599076474/1469429150669602961/1469803395937472647",), new ButtonBuilder().setLabel("︲CANALE PER I COMANDI").setEmoji(`<:VC_Bot:1470780684233871428>`).setStyle(ButtonStyle.Link).setURL("https://discord.com/channels/1329080093599076474/1442569138114662490",), new ButtonBuilder().setCustomId("torna_indietro").setLabel("︲TORNAA INDIETRO").setEmoji("<a:vegaleftarrow:1462914743416131816>").setStyle(ButtonStyle.Primary),);
+      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setLabel("︲COLORI VIP SBLOCCATI").setEmoji(`<:VC_Color:1470781368630775982>`).setStyle(ButtonStyle.Link).setURL("https://discord.com/channels/1329080093599076474/1469429150669602961/1469803395937472647",), new ButtonBuilder().setLabel("︲CANALE PER I COMANDI").setEmoji(`<:VC_Bot:1470780684233871428>`).setStyle(ButtonStyle.Link).setURL("https://discord.com/channels/1329080093599076474/1442569138114662490",), new ButtonBuilder().setCustomId("torna_indietro").setLabel("︲TORNA INDIETRO").setEmoji("<a:vegaleftarrow:1462914743416131816>").setStyle(ButtonStyle.Primary),);
 
       return { embeds: [levelEmbed, howtoEmbed], components: [row] };
     };
