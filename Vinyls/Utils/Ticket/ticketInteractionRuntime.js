@@ -149,6 +149,12 @@ function isHandledTicketInteraction(interaction) {
 }
 
 function getSponsorGuildIds() {
+  const fromConfig = Array.isArray(IDs.guilds?.sponsorGuildIds)
+    ? IDs.guilds.sponsorGuildIds
+    : [];
+  if (fromConfig.length) {
+    return fromConfig.map((id) => String(id)).filter(Boolean);
+  }
   return [
     IDs.guilds.luna,
     IDs.guilds.cash,
@@ -156,12 +162,15 @@ function getSponsorGuildIds() {
     IDs.guilds[69],
     IDs.guilds.weed,
     IDs.guilds.figa,
-  ].filter(Boolean);
+  ]
+    .filter(Boolean)
+    .map((id) => String(id));
 }
 
 function isSponsorGuild(guildId) {
   if (!guildId) return false;
-  return getSponsorGuildIds().includes(guildId);
+  const gid = String(guildId);
+  return getSponsorGuildIds().some((id) => String(id) === gid);
 }
 
 module.exports = { canUserHandleCloseRequest, ensureClosableTicketOrReply, findOpenTicketByUser, findTicketByChannel, getClientGuildCached, getGuildChannelCached, getGuildMemberCached, getSelectedTicketAction, hasActiveTicketClaimer, isHandledTicketInteraction, isSponsorGuild, isTicketClaimedByUser, isTicketOwnedByUser, isTicketRatingButton, isTicketTranscriptButton, loadTicketForChannelOrReply, warmGuildChannels };

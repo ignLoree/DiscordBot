@@ -78,7 +78,10 @@ async function handleSponsorTicketOpen(interaction) {
       return true;
     }
 
-    const staffRoleId = IDs.roles?.sponsorStaffRoleIds?.[guild.id];
+    const gid = String(guild.id);
+    const staffRoleId =
+      IDs.roles?.sponsorStaffRoleIds?.[gid] ??
+      IDs.roles?.sponsorStaffRoleIds?.[guild.id];
     const config = IDs.sponsorTicketConfig?.[guild.id] || {};
     const emoji = config.emoji || "🎫";
     const tagName = config.tagName || "Supporto";

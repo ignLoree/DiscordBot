@@ -171,7 +171,18 @@ async function handleTicketInteraction(interaction) {
           });
           return true;
         }
-        if (!interaction.member?.roles?.cache?.has(ROLE_USER)) {
+        let memTicket = interaction.member;
+        if (
+          interaction.guild &&
+          memTicket &&
+          (!memTicket.roles?.cache?.size || memTicket.partial)
+        ) {
+          memTicket =
+            (await interaction.guild.members
+              .fetch(interaction.user.id)
+              .catch(() => null)) || memTicket;
+        }
+        if (!memTicket?.roles?.cache?.has(ROLE_USER)) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
@@ -278,6 +289,17 @@ async function handleTicketInteraction(interaction) {
         }
         interaction.client.ticketOpenLocks.add(ticketLockKey);
         try {
+          let memOpen = interaction.member;
+          if (
+            interaction.guild &&
+            memOpen &&
+            (!memOpen.roles?.cache?.size || memOpen.partial)
+          ) {
+            memOpen =
+              (await interaction.guild.members
+                .fetch(interaction.user.id)
+                .catch(() => null)) || memOpen;
+          }
           if (
             [
               "ticket_partnership",
@@ -285,10 +307,7 @@ async function handleTicketInteraction(interaction) {
               "ticket_supporto",
             ].includes(ticketActionId)
           ) {
-            if (
-              !ROLE_USER ||
-              !interaction.member?.roles?.cache?.has(ROLE_USER)
-            ) {
+            if (!ROLE_USER || !memOpen?.roles?.cache?.has(ROLE_USER)) {
               await safeReply(interaction, {
                 embeds: [
                   makeErrorEmbed(
@@ -302,7 +321,9 @@ async function handleTicketInteraction(interaction) {
             }
           }
           if (config.requiredRoles?.length > 0) {
-            const hasRole = config.requiredRoles.some((r) => interaction.member?.roles?.cache?.has(r),);
+            const hasRole = config.requiredRoles.some((r) =>
+              memOpen?.roles?.cache?.has(r),
+            );
             if (!hasRole) {
               await safeReply(interaction, {
                 embeds: [
