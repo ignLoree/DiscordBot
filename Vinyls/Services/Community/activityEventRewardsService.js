@@ -1,5 +1,5 @@
 const { ActivityEventReward, ExpUser, EventUserExpSnapshot, EventWeekWinner, VoteRole } = require("../../Schemas/Community/communitySchemas");
-const { getGuildExpSettings, addExp, getTotalExpForLevel, getLevelInfo, recordLevelHistory, isEventStaffMember, scheduleEventLevelUpMessage } = require("./expService");
+const { getGuildExpSettings, addExp, getTotalExpForLevel, getLevelInfo, recordLevelHistory, isEventStaffMember, scheduleEventLevelUpMessage, syncLevelRolesForMember } = require("./expService");
 const IDs = require("../../Utils/Config/ids");
 const { sendEventRewardLog, sendEventRewardSkippedLog, sendEventRewardDm } = require("./eventRewardLogService");
 const TIME_ZONE_ROME = "Europe/Rome";
@@ -110,6 +110,19 @@ async function grantEventLevels(guildId, userId, levels, note = null, member = n
 
   const result = await addExp(guildId, userId, expToAdd, false, null);
   if (!result) return null;
+  const newLevel = result.levelInfo?.level ?? getLevelInfo(result.afterExp).level;
+  const prevLevel = result.prevLevel ?? 0;
+  if (clientOrGuild && newLevel > prevLevel) {
+    const gid = String(guildId);
+    const guild =
+      clientOrGuild?.id === gid && clientOrGuild?.members
+        ? clientOrGuild
+        : clientOrGuild?.guilds?.cache?.get(gid) ??
+          (await clientOrGuild?.guilds?.fetch(gid).catch(() => null));
+    if (guild) {
+      await syncLevelRolesForMember(guild, userId, newLevel).catch(() => {});
+    }
+  }
   const suppressLog = Boolean(options?.suppressLog);
   const suppressDm = Boolean(options?.suppressDm);
   if (clientOrGuild && !suppressLog) {
@@ -126,9 +139,8 @@ async function grantEventLevels(guildId, userId, levels, note = null, member = n
       sendEventRewardDm(client, userId, guildId, { label, levels }).catch(() => { });
     }
   }
-  if (result && clientOrGuild) {
-    const newLevel = getLevelInfo(result.afterExp).level;
-    if (newLevel >= 1) scheduleEventLevelUpMessage(clientOrGuild, guildId, userId, newLevel);
+  if (result && clientOrGuild && newLevel >= 1) {
+    scheduleEventLevelUpMessage(clientOrGuild, guildId, userId, newLevel);
   }
   return result;
 }
