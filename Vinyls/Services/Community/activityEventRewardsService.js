@@ -87,6 +87,16 @@ async function isEventActive(guildId) {
   return Boolean(settings?.eventExpiresAt);
 }
 
+async function resolveGuildForEvent(clientOrGuild, guildId) {
+  const gid = String(guildId || "");
+  if (!gid || !clientOrGuild) return null;
+  if (clientOrGuild.id === gid && clientOrGuild.members) return clientOrGuild;
+  return (
+    clientOrGuild.guilds?.cache?.get(gid) ??
+    (await clientOrGuild.guilds?.fetch(gid).catch(() => null))
+  );
+}
+
 async function grantEventLevels(guildId, userId, levels, note = null, member = null, clientOrGuild = null, options = {}) {
   if (!guildId || !userId || !Number.isFinite(levels) || levels <= 0)
     return null;
@@ -100,36 +110,28 @@ async function grantEventLevels(guildId, userId, levels, note = null, member = n
   const currentLevel = getLevelInfo(currentExp).level;
   const targetLevel = currentLevel + Math.floor(Number(levels));
   const expToAdd = Math.max(0, getTotalExpForLevel(targetLevel) - getTotalExpForLevel(currentLevel),);
-  if (expToAdd <= 0) return { doc, added: 0 };
 
-  if (clientOrGuild) {
-    const gid = String(guildId);
-    const guild =
-      clientOrGuild?.id === gid && clientOrGuild?.members
-        ? clientOrGuild
-        : clientOrGuild?.guilds?.cache?.get(gid) ??
-          (await clientOrGuild?.guilds?.fetch(gid).catch(() => null));
-    const mem = guild
-      ? guild.members?.cache?.get(userId) ??
-        (await guild.members?.fetch(userId).catch(() => null))
-      : null;
+  const guild = await resolveGuildForEvent(clientOrGuild, guildId);
+  if (guild) {
+    const mem =
+      guild.members?.cache?.get(userId) ??
+      (await guild.members.fetch(userId).catch(() => null));
     if (mem?.user?.bot) return null;
+  }
+
+  if (expToAdd <= 0) {
+    if (guild) {
+      await syncLevelRolesForMember(guild, userId, currentLevel).catch(() => {});
+    }
+    return { doc, added: 0, level: currentLevel };
   }
 
   const result = await addExp(guildId, userId, expToAdd, false, null);
   if (!result) return null;
   const newLevel = result.levelInfo?.level ?? getLevelInfo(result.afterExp).level;
   const prevLevel = result.prevLevel ?? 0;
-  if (clientOrGuild && newLevel > prevLevel) {
-    const gid = String(guildId);
-    const guild =
-      clientOrGuild?.id === gid && clientOrGuild?.members
-        ? clientOrGuild
-        : clientOrGuild?.guilds?.cache?.get(gid) ??
-          (await clientOrGuild?.guilds?.fetch(gid).catch(() => null));
-    if (guild) {
-      await syncLevelRolesForMember(guild, userId, newLevel).catch(() => {});
-    }
+  if (guild) {
+    await syncLevelRolesForMember(guild, userId, newLevel).catch(() => {});
   }
   const suppressLog = Boolean(options?.suppressLog);
   const suppressDm = Boolean(options?.suppressDm);
@@ -147,7 +149,7 @@ async function grantEventLevels(guildId, userId, levels, note = null, member = n
       sendEventRewardDm(client, userId, guildId, { label, levels }).catch(() => { });
     }
   }
-  if (result && clientOrGuild && newLevel >= 1) {
+  if (result && clientOrGuild && newLevel > prevLevel && newLevel >= 1) {
     scheduleEventLevelUpMessage(clientOrGuild, guildId, userId, newLevel);
   }
   return result;

@@ -39,6 +39,7 @@ module.exports = {
     "levelunignore",
     "levelconfig",
     "levelgmulti",
+    "levelsyncroles",
   ],
   subcommands: [
     "set",
@@ -52,6 +53,7 @@ module.exports = {
     "ignore",
     "unignore",
     "config",
+    "syncroles",
   ],
   subcommandAliases: {
     gmulti: "gmulti",
@@ -66,7 +68,10 @@ module.exports = {
     levelunignore: "unignore",
     levelconfig: "config",
     levelgmulti: "gmulti",
+    levelsyncroles: "syncroles",
   },
+  usage: "+level <set|add|remove|reset|syncroles|…> …",
+  examples: ["+level syncroles @utente", "+level syncroles all", "+level set @utente level 10"],
 
   async execute(message, args = []) {
     await message.channel.sendTyping().catch(() => {});
@@ -90,9 +95,53 @@ module.exports = {
         "`+level ignore <@ruolo | id>`",
         "`+level unignore <@ruolo | id>`",
         "`+level config`",
+        "`+level syncroles <@utente | id | all>`",
       ].join("\n"));
       await safeMessageReply(message, {
         embeds: [usage],
+        allowedMentions: { repliedUser: false },
+      });
+      return;
+    }
+
+    if (sub === "syncroles") {
+      const mode = String(args[1] || "").toLowerCase();
+      if (mode === "all") {
+        await safeMessageReply(message, {
+          content: "<:VC_Info:1460670816214585481> Sync ruoli in corso (tutti gli utenti con EXP nel DB)…",
+          allowedMentions: { repliedUser: false },
+        });
+        const cursor = ExpUser.find({ guildId }).select("userId totalExp").lean().cursor();
+        let n = 0;
+        for await (const row of cursor) {
+          const uid = String(row?.userId || "");
+          if (!uid) continue;
+          const level = getLevelInfo(Math.max(0, Number(row?.totalExp || 0))).level;
+          await syncLevelRolesForMember(message.guild, uid, level).catch(() => {});
+          n += 1;
+          if (n % 25 === 0) await message.channel.sendTyping().catch(() => {});
+        }
+        await safeMessageReply(message, {
+          content: `<:vegacheckmark:1443666279058772028> Sync ruoli completato: **${n}** utenti.`,
+          allowedMentions: { repliedUser: false },
+        });
+        return;
+      }
+      const target = await resolveTargetUser(message, args[1]);
+      if (!target) {
+        await safeMessageReply(message, {
+          content:
+            "<:vegax:1443934876440068179> Usa: `+level syncroles <@utente | id>` oppure `+level syncroles all`",
+          allowedMentions: { repliedUser: false },
+        });
+        return;
+      }
+      const row = await ExpUser.findOne({ guildId, userId: target.id }).lean().catch(() => null);
+      const totalExp = Math.max(0, Number(row?.totalExp || 0));
+      const level = getLevelInfo(totalExp).level;
+      await syncLevelRolesForMember(message.guild, target.id, level);
+      await safeMessageReply(message, {
+        content: `<:vegacheckmark:1443666279058772028> Ruoli allineati al livello **${level}** per <@${target.id}>.`,
         allowedMentions: { repliedUser: false },
       });
       return;
