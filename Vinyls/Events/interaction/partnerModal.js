@@ -2,6 +2,7 @@ const { EmbedBuilder } = require("discord.js");
 const axios = require("axios");
 const Staff = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../../Utils/Config/ids");
+const { isPartnershipGuildBlacklisted } = require("../../Services/Partner/partnershipBlacklistService");
 const { getGuildMemberCached } = require("../../Utils/Interaction/interactionEntityCache");
 
 function extractInviteCode(text) {
@@ -184,6 +185,18 @@ async function handlePartnerModal(interaction) {
     serverIcon = data.guild.icon
       ? `https://cdn.discordapp.com/icons/${data.guild.id}/${data.guild.icon}.png`
       : null;
+    if (await isPartnershipGuildBlacklisted(data.guild.id)) {
+      await interaction.editReply({
+        embeds: [
+          new EmbedBuilder()
+            .setColor("Red")
+            .setDescription(
+              "<a:VC_Alert:1448670089670037675> Questo server è in **blacklist partnership**: non puoi effettuare partner con lui.",
+            ),
+        ],
+      });
+      return true;
+    }
   } catch {
     serverName = "Server Sconosciuto";
   }

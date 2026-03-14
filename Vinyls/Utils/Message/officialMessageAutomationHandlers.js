@@ -419,6 +419,10 @@ async function handleDiscadiaBump(message, client) {
   const isBumpFromDiscadiaInCommands = isFromDiscadiaBot && isLikelyCommandChannel && (isBumpInteraction || hasBumpWord) && !hasFailureWord;
   const isBump = !hasFailureWord && (isBumpFromDiscadiaInCommands || isSuccessInCommandChannel || (looksLikeDiscadiaSource && (hasBumpSuccessText || (isBumpInteraction && hasBumpWord))) || (isAutomatedSource && !looksLikeDisboardSource && hasBumpSuccessText));
   if (!isBump) return false;
+  const guildThanksKey = `discadia_thanks:${message.guild.id}`;
+  if (shouldSkipProcessedBump(guildThanksKey, 90_000)) {
+    return true;
+  }
   const dedupeKey = `discadia:${message.guild.id}:${message.id}`;
   if (shouldSkipProcessedBump(dedupeKey)) return true;
   const bumpUserId = message.interaction?.user?.id || message.interactionMetadata?.user?.id || extractUserIdFromText(message.content) || extractUserIdFromText(joined) || null;

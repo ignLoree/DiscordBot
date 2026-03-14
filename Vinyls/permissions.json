@@ -740,6 +740,17 @@
                 "roles.HighStaff"
             ]
         },
+        "blacklist": {
+            "roles": [
+                "roles.HighStaff",
+                "roles.PartnerManager",
+                "roles.Manager"
+            ],
+            "channels": [
+                "channels.staffCmds",
+                "channels.highCmds"
+            ]
+        },
         "server": {
             "roles": [
                 "roles.Member"
