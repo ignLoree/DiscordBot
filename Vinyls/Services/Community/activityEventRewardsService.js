@@ -103,8 +103,16 @@ async function grantEventLevels(guildId, userId, levels, note = null, member = n
   if (expToAdd <= 0) return { doc, added: 0 };
 
   if (clientOrGuild) {
-    const guild = clientOrGuild?.guilds?.cache?.get(guildId) ?? (await clientOrGuild?.guilds?.fetch(guildId).catch(() => null));
-    const mem = guild ? (guild.members?.cache?.get(userId) ?? (await guild.members?.fetch(userId).catch(() => null))) : null;
+    const gid = String(guildId);
+    const guild =
+      clientOrGuild?.id === gid && clientOrGuild?.members
+        ? clientOrGuild
+        : clientOrGuild?.guilds?.cache?.get(gid) ??
+          (await clientOrGuild?.guilds?.fetch(gid).catch(() => null));
+    const mem = guild
+      ? guild.members?.cache?.get(userId) ??
+        (await guild.members?.fetch(userId).catch(() => null))
+      : null;
     if (mem?.user?.bot) return null;
   }
 

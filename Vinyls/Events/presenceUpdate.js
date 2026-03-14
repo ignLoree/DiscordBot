@@ -8,7 +8,7 @@ const { getGuildChannelCached, getGuildMemberCached } = require("../Utils/Intera
 const ROLE_ID = IDs.roles.Supporter;
 const PERK_ROLE_ID = IDs.roles.PicPerms;
 const CHANNEL_ID = IDs.channels.supporters;
-const INVITE_REGEX = /(?:discord\.gg|\.gg)\/viniliecaffe/i;
+const INVITE_REGEX = /(?:https?:\/\/)?(?:www\.)?(?:discord\.gg\/|discord\.com\/invite\/|\.gg\/)viniliecaffe\b|(?:discord\.gg|\.gg)\/viniliecaffe/i;
 
 const statusCache = new Map();
 const pendingChecks = new Map();
@@ -32,28 +32,61 @@ function isDbReady() {
   return mongoose.connection?.readyState === 1;
 }
 
+function activityTypeIsCustom(activity) {
+  return Number(activity?.type) === Number(ActivityType.Custom);
+}
+
 function getCustomStatus(presence) {
   if (!presence?.activities?.length) return "";
-  const custom=presence.activities.find((activity) => activity.type===ActivityType.Custom,);
-  return String(custom?.state || "");
+  const customs = presence.activities.filter(activityTypeIsCustom);
+  const parts = [];
+  for (const a of customs) {
+    const state = String(a?.state || "").trim();
+    const name = String(a?.name || "").trim();
+    const details = String(a?.details || "").trim();
+    if (state) parts.push(state);
+    if (name && name.toLowerCase() !== "custom status") parts.push(name);
+    if (details) parts.push(details);
+  }
+  if (parts.length) return parts.join(" ");
+  const first = presence.activities.find(activityTypeIsCustom);
+  return String(first?.state || first?.name || "");
 }
 
 function hasCustomActivity(presence) {
   if (!presence?.activities?.length) return false;
-  return presence.activities.some(
-    (activity) => activity.type === ActivityType.Custom,
-  );
+  return presence.activities.some(activityTypeIsCustom);
+}
+
+function normalizeStatusForMatch(text) {
+  return String(text || "")
+    .replace(/\u2044|\u2215/g, "/")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .toLowerCase();
+}
+
+function allActivitiesSearchText(presence) {
+  if (!presence?.activities?.length) return "";
+  return presence.activities
+    .map((a) =>
+      [a?.state, a?.name, a?.details].filter(Boolean).join(" "),
+    )
+    .join(" ");
 }
 
 function hasInvite(presence) {
-  const status = getCustomStatus(presence).toLowerCase();
-  return INVITE_REGEX.test(status);
+  const blob = normalizeStatusForMatch(
+    allActivitiesSearchText(presence) || getCustomStatus(presence),
+  );
+  return INVITE_REGEX.test(blob);
 }
 
 function getInviteState(presence) {
   if (!presence) return null;
-  if (!hasCustomActivity(presence)) return null;
-  return hasInvite(presence);
+  if (isOfflinePresence(presence)) return null;
+  if (hasInvite(presence)) return true;
+  if (hasCustomActivity(presence)) return false;
+  return null;
 }
 
 function resolveInviteState(presence, fallback = false) {
