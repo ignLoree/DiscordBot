@@ -28,7 +28,13 @@ const APPLICATION_COOLDOWN_PATH = path.join(BOT_ROOT, "Data", "applicationCooldo
 const APPLICATION_COUNTERS_PATH = path.join(BOT_ROOT, "Data", "applicationCounters.json",);
 const APPLICATION_DRAFTS_PATH = path.join(BOT_ROOT, "Data", "applicationDrafts.json",);
 const pendingApplications = new Map();
-const cooldownByUser = new Map();
+const cooldownByUserAndType = new Map();
+function cooldownTypeKey(type) {
+  return type === "partnermanager" ? "partnermanager" : "helper";
+}
+function cooldownStorageKey(userId, type) {
+  return `${String(userId || "")}:${cooldownTypeKey(type)}`;
+}
 const draftByStateKey = new Map();
 const candidatePexLocks = new Set();
 const applicationCounters = { helper: 0, partnermanager: 0, };
@@ -41,9 +47,25 @@ function loadCooldownMap() {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return;
     const now = Date.now();
-    for (const [userId, until] of Object.entries(parsed)) {
-      const ts = Number(until || 0);
-      if (Number.isFinite(ts) && ts > now) cooldownByUser.set(String(userId), ts);
+    for (const [userId, entry] of Object.entries(parsed)) {
+      const uid = String(userId || "");
+      if (!uid) continue;
+      if (typeof entry === "number") {
+        const ts = Number(entry || 0);
+        if (Number.isFinite(ts) && ts > now) {
+          cooldownByUserAndType.set(`${uid}:helper`, ts);
+          cooldownByUserAndType.set(`${uid}:partnermanager`, ts);
+        }
+        continue;
+      }
+      if (entry && typeof entry === "object") {
+        for (const t of ["helper", "partnermanager"]) {
+          const ts = Number(entry[t] || 0);
+          if (Number.isFinite(ts) && ts > now) {
+            cooldownByUserAndType.set(`${uid}:${t}`, ts);
+          }
+        }
+      }
     }
   } catch (err) {
     global.logger?.warn?.("[candidature] load:", err?.message || err);
@@ -56,8 +78,15 @@ function persistCooldownMap() {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     const now = Date.now();
     const out = {};
-    for (const [userId, until] of cooldownByUser.entries()) {
-      if (Number(until) > now) out[userId] = Number(until);
+    for (const [key, until] of cooldownByUserAndType.entries()) {
+      const ts = Number(until || 0);
+      if (!(ts > now)) continue;
+      const idx = key.lastIndexOf(":");
+      if (idx <= 0) continue;
+      const uid = key.slice(0, idx);
+      const typ = key.slice(idx + 1);
+      if (!out[uid]) out[uid] = {};
+      out[uid][typ] = ts;
     }
     fs.writeFileSync(APPLICATION_COOLDOWN_PATH, JSON.stringify(out, null, 2), "utf8");
   } catch (err) {
@@ -255,18 +284,18 @@ function hasHighStaffRole(interaction) {
   return Boolean(interaction?.member?.roles?.cache?.has(highStaffRoleId));
 }
 
-function getCooldownUntil(userId) {
-  const safeId = String(userId || "");
-  const ts = Number(cooldownByUser.get(safeId) || 0);
+function getCooldownUntil(userId, type) {
+  const key = cooldownStorageKey(userId, type);
+  const ts = Number(cooldownByUserAndType.get(key) || 0);
   if (!Number.isFinite(ts) || ts <= Date.now()) {
-    cooldownByUser.delete(safeId);
+    cooldownByUserAndType.delete(key);
     return 0;
   }
   return ts;
 }
 
-function setCooldown(userId, untilTs) {
-  cooldownByUser.set(String(userId || ""), Number(untilTs));
+function setCooldown(userId, untilTs, type) {
+  cooldownByUserAndType.set(cooldownStorageKey(userId, type), Number(untilTs));
   persistCooldownMap();
 }
 
@@ -300,17 +329,23 @@ function buildNoModuliDeniedEmbed() {
     );
 }
 
-function buildCooldownDeniedEmbed(untilTs) {
+function buildCooldownDeniedEmbed(untilTs, type) {
   const unix = Math.floor(Number(untilTs) / 1000);
+  const label =
+    type === "partnermanager"
+      ? "**Partner Manager**"
+      : "**Helper**";
   return new EmbedBuilder()
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> Candidatura non disponibile")
     .setDescription(
       [
-        "<:VC_Clock:1473359204189474886> Hai già inviato una candidatura recentemente.",
+        `<:VC_Clock:1473359204189474886> Hai già inviato una candidatura ${label} di recente.`,
         "",
-        `<:VC_update:1478721333096349817> Potrai inviarne una nuova dopo: <t:${unix}:F> (<t:${unix}:R>).`,
-        "<a:VC_Timer:1462779065625739344> Devi attendere 7 giorni prima di riprovare.",
+        `<:VC_update:1478721333096349817> Potrai reinviare **solo quella** (${label}) dopo: <t:${unix}:F> (<t:${unix}:R>).`,
+        "",
+        "<:VC_Info:1460670816214585481> Le candidature **Helper** e **Partner Manager** hanno cooldown **separati**: puoi comunque candidarti all’altra se non è in cooldown.",
+        "<a:VC_Timer:1462779065625739344> Tra una candidatura e la successiva **dello stesso tipo** passano 7 giorni.",
       ].join("\n"),
     );
 }
@@ -339,8 +374,10 @@ function buildIntroEmbed(type) {
     );
 }
 
-function buildFinalThanksEmbed(untilTs) {
+function buildFinalThanksEmbed(untilTs, type) {
   const unix = Math.floor(Number(untilTs) / 1000);
+  const label =
+    type === "partnermanager" ? "Partner Manager" : "Helper";
   return new EmbedBuilder()
     .setColor("#2ECC71")
     .setTitle("<:vegacheckmark:1443666279058772028> Candidatura inviata")
@@ -348,7 +385,8 @@ function buildFinalThanksEmbed(untilTs) {
       [
         "<a:VC_ThankYou:1330186319673950401> Grazie per esserti candidato.",
         "",
-        `<:VC_update:1478721333096349817> Non potrai inviare una nuova candidatura prima di: <t:${unix}:F> (<t:${unix}:R>).`,
+        `<:VC_update:1478721333096349817> Per **un'altra candidatura ${label}** dovrai attendere fino a: <t:${unix}:F> (<t:${unix}:R>).`,
+        "<:VC_Info:1460670816214585481> Puoi comunque candidarti all’**altro** ruolo (Helper / Partner Manager) se non l’hai già fatto di recente per quello.",
         "",
         "<a:VC_Alert:1448670089670037675> Non aprire ticket e non pingare lo staff per chiedere l'esito, altrimenti la candidatura verrà automaticamente scartata.",
       ].join("\n"),
@@ -401,10 +439,10 @@ async function enforceEligibility(interaction, type) {
     }).catch(() => null);
     return false;
   }
-  const until = getCooldownUntil(interaction.user?.id);
+  const until = getCooldownUntil(interaction.user?.id, type);
   if (until) {
     await interaction.reply({
-      embeds: [buildCooldownDeniedEmbed(until)],
+      embeds: [buildCooldownDeniedEmbed(until, type)],
       flags: 1 << 6,
     }).catch(() => null);
     return false;
@@ -598,11 +636,11 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
   }
 
   const nextAllowedAt = Date.now() + APPLICATION_COOLDOWN_MS;
-  setCooldown(user.id, nextAllowedAt);
+  setCooldown(user.id, nextAllowedAt, type);
   if (stateKey) clearDraftState(stateKey);
 
   await interaction.reply({
-    embeds: [buildFinalThanksEmbed(nextAllowedAt)],
+    embeds: [buildFinalThanksEmbed(nextAllowedAt, type)],
     flags: 1 << 6,
   }).catch(() => null);
   return true;
