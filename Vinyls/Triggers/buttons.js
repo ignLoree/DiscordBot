@@ -668,14 +668,14 @@ module.exports = {
         .setColor("#6f4e37")
         .setAuthor({
           name: "Supporta il server con l'acquisto di un VIP o una donazione!",
-          iconURL: "https://emoji.gg/emoji/480166-coffee",
+          iconURL: "https://cdn.discordapp.com/emojis/1448695567244066827.webp?size=40&animated=true",
         })
         .setDescription([
         "Usiamo i soldi donati per portare eventi con premi migliori, come Discord Nitro o gift card, e per cercare collaborazioni interessanti per voi utenti.",
         "Le donazioni sono completamente volontarie e contribuiscono alla nostra crescita. In anticipo, grazie.",
         "",
         "**Vuoi acquistare direttamente tutti i vantaggi permanenti e differenti dal VIP?**",
-        "`5,00 €`",
+        "`5,00 €`✩",
         "<:dot:1443660294596329582> Il ruolo <@&1442568916114346096> **permanente**",
         "<:dot:1443660294596329582> Possibilità di allegare link e immagini in chat",
         "<:dot:1443660294596329582> Possibilità di usare le soundboard di altri server",
@@ -695,7 +695,7 @@ module.exports = {
         "**Vuoi sostenere il server?** Acquista il VIP e riscatta tutti i vantaggi che hai sbloccato qui nel server! <a:VC_HeartsBlue:1468686100045369404>",
         "",
         "ACQUISTA IL <@&1442568950805430312> <a:VC_HeartsPink:1468685897389052008>",
-        "`10,00 €`",
+        "`10,00 €`✩",
         "",
         "<:sparkledred:1470064814502973591> Sbloccherai:",
         "<:dot:1443660294596329582> Permesso di allegare link e immagini in chat",
@@ -708,7 +708,7 @@ module.exports = {
         "<:dot:1443660294596329582> X4 EXP boost",
         "",
         "<:attentionfromvega:1443651874032062505> DISCLAIMER / I soldi non sono rimborsabili, essendo volontari.",
-        "I vantaggi segnati con \"?\" vengono rimossi qualora l'utente violi il regolamento, porti un'immagine negativa al server o sia inattivo per mesi.",
+        "I vantaggi segnati con \"✩\" vengono rimossi qualora l'utente violi il regolamento, porti un'immagine negativa al server o sia inattivo per mesi.",
       ].join("\n"))
         .setImage(DIVIDER_URL);
 
