@@ -200,7 +200,7 @@ async function executePrefixCommandRuntime({
     });
 
     if (errorChannel?.isTextBased?.()) {
-      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("error_pending").setEmoji(`<:VC_InactiveStatus:1472011031709745307>`).setStyle(ButtonStyle.Primary), new ButtonBuilder().setCustomId("error_solved").setEmoji(`<:VC_OnlineStatus:1472011187569950751>`).setStyle(ButtonStyle.Success), new ButtonBuilder().setCustomId("error_unsolved").setEmoji(`<:VC_OfflineStatus:1472011150081130751>`).setStyle(ButtonStyle.Danger),);
+      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("error_pending").setEmoji(`<:VC_InactiveStatus:1482526984234860574>`).setStyle(ButtonStyle.Primary), new ButtonBuilder().setCustomId("error_solved").setEmoji(`<:VC_OnlineStatus:1482527088912240650>`).setStyle(ButtonStyle.Success), new ButtonBuilder().setCustomId("error_unsolved").setEmoji(`<:VC_OfflineStatus:1482527117051957380>`).setStyle(ButtonStyle.Danger),);
       const sentError = await errorChannel.send({ embeds: [errorEmbed], components: [row] }).catch(() => null);
 
       if (sentError) {
@@ -309,7 +309,7 @@ async function handleOfficialPrefixMessage({ message, resolvedClient, defaultPre
       message.channel,
       {
         content:
-          `<:VC_Lock:1468544444113617063> Server in lockdown di sicurezza: comandi temporaneamente bloccati. ${lockSources?.length ? ` (${lockSources.join(", ")})` : ""}`,
+          `<:VC_Lock:1482526739044368476> Server in lockdown di sicurezza: comandi temporaneamente bloccati. ${lockSources?.length ? ` (${lockSources.join(", ")})` : ""}`,
       },
       EPHEMERAL_TTL_SHORT_MS,
     );
@@ -329,7 +329,7 @@ async function handleOfficialPrefixMessage({ message, resolvedClient, defaultPre
       message.channel,
       {
         content:
-          "<:VC_Lock:1468544444113617063> Comandi di moderazione temporaneamente bloccati.",
+          "<:VC_Lock:1482526739044368476> Comandi di moderazione temporaneamente bloccati.",
       },
       EPHEMERAL_TTL_SHORT_MS,
     );

@@ -110,20 +110,22 @@ async function finalizeVerification(interaction, member) {
     global.logger?.warn?.("[VERIFY] Central verify log channel not found:", CENTRAL_VERIFY_LOG_CHANNEL_ID);
   }
 
-  const pingContent = `<@${interaction.user.id}>`;
-  const guildForPing = mainGuild || guild;
-  const pingChannelIds = VERIFY_PING_CHANNEL_IDS && VERIFY_PING_CHANNEL_IDS.length ? VERIFY_PING_CHANNEL_IDS : [];
-  const allowedMentions = { users: [interaction.user.id] };
-  for (const channelId of pingChannelIds) {
-    const pingChannel = channelId && guildForPing ? await getGuildChannelCached(guildForPing, channelId) : null;
-    if (!pingChannel?.isTextBased?.()) continue;
-    const pingMsg = await pingChannel.send({ content: pingContent, allowedMentions }).catch((err) => {
-      global.logger?.warn?.("[VERIFY] Ping failed for channel", channelId, err?.message || err);
-      return null;
-    });
-    if (pingMsg) {
-      const t = setTimeout(() => pingMsg.delete().catch(() => {}), 2500);
-      if (t?.unref) t.unref();
+  if (!isSponsorGuildVerify(guildId)) {
+    const pingContent = `<@${interaction.user.id}>`;
+    const guildForPing = mainGuild || guild;
+    const pingChannelIds = VERIFY_PING_CHANNEL_IDS && VERIFY_PING_CHANNEL_IDS.length ? VERIFY_PING_CHANNEL_IDS : [];
+    const allowedMentions = { users: [interaction.user.id] };
+    for (const channelId of pingChannelIds) {
+      const pingChannel = channelId && guildForPing ? await getGuildChannelCached(guildForPing, channelId) : null;
+      if (!pingChannel?.isTextBased?.()) continue;
+      const pingMsg = await pingChannel.send({ content: pingContent, allowedMentions }).catch((err) => {
+        global.logger?.warn?.("[VERIFY] Ping failed for channel", channelId, err?.message || err);
+        return null;
+      });
+      if (pingMsg) {
+        const t = setTimeout(() => pingMsg.delete().catch(() => {}), 2500);
+        if (t?.unref) t.unref();
+      }
     }
   }
 

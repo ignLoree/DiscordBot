@@ -82,7 +82,7 @@ function refreshEmbedRoleLine(sourceEmbed, role) {
       `$1${role}`,
     );
   } else {
-    nextDesc = [oldDesc, "", "<:VC_Mention:1443994358201323681> **Ruolo:**", `${role}`]
+    nextDesc = [oldDesc, "", "<:VC_Mention:1482526855289634997> **Ruolo:**", `${role}`]
       .join("\n")
       .trim();
   }

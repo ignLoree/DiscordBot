@@ -141,7 +141,7 @@ async function handleSponsorTicketOpen(interaction) {
         await safeEditReplyHelper(interaction, {
           embeds: [
             new EmbedBuilder()
-              .setTitle("<:VC_Ticket:1448694637106692156> Ticket Aperto")
+              .setTitle("<:VC_Ticket:1482535175283019888> Ticket Aperto")
               .setDescription(`<:VC_alert:1448670089670037675> Hai già un ticket aperto${other?.channelId ? `: <#${other.channelId}>` : "."}`)
               .setColor("#6f4e37"),
           ],
@@ -166,7 +166,7 @@ async function handleSponsorTicketOpen(interaction) {
     await safeEditReplyHelper(interaction, {
       embeds: [
         new EmbedBuilder()
-          .setTitle("<:VC_Ticket:1448694637106692156> Ticket Creato")
+          .setTitle("<:VC_Ticket:1482535175283019888> Ticket Creato")
           .setDescription(`<:VC_open:1478517277279129712> Aperto un nuovo ticket: ${channel}`)
           .setColor("#6f4e37"),
       ],

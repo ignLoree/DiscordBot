@@ -100,13 +100,13 @@ async function buildLeaderboardEmbed( partners, currentPage, totalPages, isWeekl
   const currentPartners = partners.slice(startIndex, startIndex + PARTNERS_PER_PAGE,);
 
   const usernames = await Promise.all(currentPartners.map((partner) => resolveUsername(partner.userId)),);
-  const rows = currentPartners.map((partner, index) => `**${startIndex + index + 1}.**${usernames[index] || UNKNOWN_USERNAME}- <:VC_Partner:1443933014835986473> ${partner.score} partnership`,
+  const rows = currentPartners.map((partner, index) => `**${startIndex + index + 1}.**${usernames[index] || UNKNOWN_USERNAME} - <:VC_Partner:1482527213780729896> ${partner.score} partnership`,
   );
 
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle(
-      `<a:VC_Winner:1448687700235256009> Classifica Partnership (${isWeekly ? "Settimanale" : "Totale"})`,
+      `<a:VC_Winner:1482535294757507255> Classifica Partnership (${isWeekly ? "Settimanale" : "Totale"})`,
     )
     .setDescription(rows.join("\n"))
     .setFooter({ text: `Pagina ${currentPage} di ${totalPages}` })

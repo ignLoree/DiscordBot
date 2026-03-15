@@ -308,7 +308,7 @@ async function buildWeeklyEmbed(message, excludeStaffFromShort = false, useExpUs
     const exp = Number(row.exp || 0);
     lines.push(`${rankLabel(index)} ${label}`);
     lines.push(
-      `<:VC_Reply:1468262952934314131> __${exp}__ EXP <:VC_EXP:1468714279673925883>`,
+      `<:VC_Reply:1482532158080942191> __${exp}__ EXP <:VC_EXP:1482534670896730143>`,
     );
   });
 
@@ -358,7 +358,7 @@ async function buildAllTimeEmbed(message, excludeStaffFromShort = false, useExpU
     const level = Number(row.level || 0);
     lines.push(`${rankLabel(index)} ${label}`);
     lines.push(
-      `<:VC_Reply:1468262952934314131> Exp: <:VC_EXP:1468714279673925883> __${exp}__ <a:VC_Arrow:1448672967721615452> Livello: ${level}`,
+      `<:VC_Reply:1482532158080942191> Exp: <:VC_EXP:1482534670896730143> __${exp}__ <a:VC_Arrow:1448672967721615452> Livello: ${level}`,
     );
   });
 

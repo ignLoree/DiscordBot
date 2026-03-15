@@ -171,9 +171,9 @@ function createBumpReminderService(options) {
   return { recordBump, setBumpAt, restorePendingReminders };
 }
 
-const disboardService = createBumpReminderService({ model: DisboardBump, configKey: "disboard", defaultCooldownMinutes: 120, mentionContent: "<@&1442569013074071644>", title: "<:VC_Eye:1331619214410383381> **È L'ORA DEL `BUMP`!**", url: "https://disboard.org/it/server/1329080093599076474", description: "<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!", errorTag: "<:VC_Alert:1448670089670037675> [DISBOARD REMINDER ERROR]", logTag: "<:VC_Alert:1448670089670037675> [DISBOARD REMINDER]", suppressInfoLogs: true, });
+const disboardService = createBumpReminderService({ model: DisboardBump, configKey: "disboard", defaultCooldownMinutes: 120, mentionContent: "<@&1442569013074071644>", title: "<:VC_Eye:1331619214410383381> **È L'ORA DEL `BUMP`!**", url: "https://disboard.org/it/server/1329080093599076474", description: "<:VC_bump:1482531857521311885> **Per bumpare scrivi __`/bump` in chat__**!", errorTag: "<:VC_Alert:1448670089670037675> [DISBOARD REMINDER ERROR]", logTag: "<:VC_Alert:1448670089670037675> [DISBOARD REMINDER]", suppressInfoLogs: true, });
 
-const discadiaBumpService = createBumpReminderService({ model: DiscadiaBump, configKey: "discadia", defaultCooldownMinutes: 1440, mentionContent: "<@&1442569013074071644>", title: "<:VC_Eye:1331619214410383381> **È L'ORA DEL `BUMP` SU DISCADIA!**", url: "https://discadia.com/server/viniliecaffe/", description: "<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!", errorTag: "<:VC_Alert:1448670089670037675> [DISCADIA REMINDER ERROR]", logTag: "<:VC_Alert:1448670089670037675> [DISCADIA REMINDER]", suppressInfoLogs: true, });
+const discadiaBumpService = createBumpReminderService({ model: DiscadiaBump, configKey: "discadia", defaultCooldownMinutes: 1440, mentionContent: "<@&1442569013074071644>", title: "<:VC_Eye:1331619214410383381> **È L'ORA DEL `BUMP` SU DISCADIA!**", url: "https://discadia.com/server/viniliecaffe/", description: "<:VC_bump:1482531857521311885> **Per bumpare scrivi __`/bump` in chat__**!", errorTag: "<:VC_Alert:1448670089670037675> [DISCADIA REMINDER ERROR]", logTag: "<:VC_Alert:1448670089670037675> [DISCADIA REMINDER]", suppressInfoLogs: true, });
 let discadiaVoteReminderLoopHandle = null;
 
 function getVoteCooldownMs(client) {
@@ -194,7 +194,7 @@ function getVoteReminderText(client) {
   return (
     client?.config?.discadiaVoteReminder?.message ||
     [
-      "<:VC_bump:1330185435401424896> Hey! Sono passate 24 ore: puoi votare di nuovo su Discadia.",
+      "<:VC_bump:1482531857521311885> Hey! Sono passate 24 ore: puoi votare di nuovo su Discadia.",
       "<a:VC_ThankYou:1330186319673950401> **Grazie per il supporto!**",
       "<:link:1470064815899803668> Per votare su Discadia, clicca sul pulsante sottostante:\n",
     ]

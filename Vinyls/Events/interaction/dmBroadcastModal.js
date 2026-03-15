@@ -138,7 +138,7 @@ async function handleDmBroadcastModal(interaction, client) {
 
   await interaction.editReply({
     embeds: [
-      progressEmbed(`<a:VC_pixeltime:1470796283320209600> Invio DM in corso...\n<:VC_Mention:1443994358201323681> Utenti target: **${total}**`),
+      progressEmbed(`<a:VC_pixeltime:1482535344103620771> Invio DM in corso...\n<:VC_Mention:1482526855289634997> Utenti target: **${total}**`),
     ],
   }).catch(() => { });
 
@@ -166,7 +166,7 @@ async function handleDmBroadcastModal(interaction, client) {
       await interaction.editReply({
         embeds: [
           progressEmbed(
-            `<a:VC_pixeltime:1470796283320209600> Invio DM in corso...\n<:VC_Mention:1443994358201323681> Utenti target: **${total}**\n<a:VC_pixeltime:1470796283320209600> Inviati: **${sent}**\n<:cancel:1461730653677551691> Falliti: **${failed}**`,
+            `<a:VC_pixeltime:1482535344103620771> Invio DM in corso...\n<:VC_Mention:1482526855289634997> Utenti target: **${total}**\n<a:VC_pixeltime:1482535344103620771> Inviati: **${sent}**\n<:cancel:1461730653677551691> Falliti: **${failed}**`,
           ),
         ],
       }).catch(() => { });
@@ -177,7 +177,7 @@ async function handleDmBroadcastModal(interaction, client) {
   await interaction.editReply({
     embeds: [
       progressEmbed(
-        `<:thumbsup:1471292172145004768> Invio completato.\n<:VC_Mention:1443994358201323681> Utenti target: **${total}**\n<a:VC_pixeltime:1470796283320209600> Inviati: **${sent}**\n<:cancel:1461730653677551691> Falliti: **${failed}**`,
+        `<:thumbsup:1471292172145004768> Invio completato.\n<:VC_Mention:1482526855289634997> Utenti target: **${total}**\n<a:VC_pixeltime:1482535344103620771> Inviati: **${sent}**\n<:cancel:1461730653677551691> Falliti: **${failed}**`,
       ),
     ],
   }).catch(() => { });
@@ -191,9 +191,9 @@ async function handleDmBroadcastModal(interaction, client) {
       }
     }
     if (skippedNoDm.length) {
-      lines.push("\n<:vegax:1443934876440068179> **Esclusi (no-dm):**");
+      lines.push("\n<:vegax:1443934876440068179> **Esclusi (no - dm):**");
       for (const id of skippedNoDm) {
-        lines.push(`<@${id}> (no-dm)`);
+        lines.push(`<@${id}> (no - dm)`);
       }
     }
     const chunks = chunkLines(lines);

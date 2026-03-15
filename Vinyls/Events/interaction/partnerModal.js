@@ -376,7 +376,7 @@ function splitMessage(message, maxLength = 2000) {
 
 function normalizeManagerLine(text, managerId) {
   const content = String(text || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim().replace(/\n*Manager:\s*(<@!?\d+>)?\s*$/gi, "").replace(/\n*Partner effettuata con\s*\*\*<@!?\d+>\*\*\s*$/gi, "").trim();
-  return `${content}\n\n<:VC_Mention:1443994358201323681> Manager: <@${managerId}>`;
+  return `${content}\n\n<:VC_Mention:1482526855289634997> Manager: <@${managerId}>`;
 }
 
 function stripOuterCodeBlock(text) {

@@ -154,7 +154,7 @@ module.exports = {
     if (sub === "add") {
       const staffData = await addPartnerPoints(guildId, targetUser.id, amount);
       const changeLabel = formatPartnerPointsChange("add", amount);
-      const embed = buildResultEmbed(interaction, `<:vegacheckmark:1443666279058772028> **Successo**: ${changeLabel} a <@${targetUser.id}>. <:VC_Info:1460670816214585481> Totale Punti:\`${staffData.partnerCount}\``,);
+      const embed = buildResultEmbed(interaction, `<:vegacheckmark:1443666279058772028> **Successo**: ${changeLabel} a <@${targetUser.id}>. <:VC_InactiveStatus:1472011031709745307> Totale Punti:\`${staffData.partnerCount}\``,);
 
       return safeEditReply(interaction, { embeds: [embed] });
     }
@@ -162,7 +162,7 @@ module.exports = {
     if (sub === "remove") {
       const staffData = await removePartnerPoints(guildId, targetUser.id, amount);
       const changeLabel = formatPartnerPointsChange("remove", amount);
-      const embed = buildResultEmbed(interaction, `<:vegacheckmark:1443666279058772028> **Successo**: ${changeLabel} a <@${targetUser.id}>. <:VC_Info:1460670816214585481> Totale Punti:\`${staffData.partnerCount}\``,);
+      const embed = buildResultEmbed(interaction, `<:vegacheckmark:1443666279058772028> **Successo**: ${changeLabel} a <@${targetUser.id}>. <:VC_InactiveStatus:1472011031709745307> Totale Punti:\`${staffData.partnerCount}\``,);
 
       if (removedPointsChannel) {
         await removedPointsChannel.send({

@@ -206,7 +206,7 @@ async function getEventWeekTopNTextAndVoice(guild, eventWeekNum, limit = 10) {
 }
 
 function buildEmptyLine(kind) {
-  return `<:VC_Info:1460670816214585481> - Nessun dato disponibile per ${kind}.`;
+  return `<:VC_InactiveStatus:1472011031709745307> - Nessun dato disponibile per ${kind}.`;
 }
 
 function formatRankLine(index, userMention, value, unit) {
@@ -401,14 +401,14 @@ async function sendEventWeekAnnouncementToNews(client, guild, eventWeek, topMess
   const msgLines = topMessages.length ? topMessages.map((item, i) => {
     const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}> <a:VC_Arrow:1448672967721615452> **${item.messageCount}** _messaggi_`;
   })
-    : ["<:VC_Info:1460670816214585481> - Nessun dato per la classifica testuale."];
+    : ["<:VC_InactiveStatus:1472011031709745307> - Nessun dato per la classifica testuale."];
   const voiceLines = topVoice.length ? topVoice.map((item, i) => {
     const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}> <a:VC_Arrow:1448672967721615452> **${formatVoiceDuration(item.voiceSeconds)}** _in vocale_`;
   })
-    : ["<:VC_Info:1460670816214585481> - Nessun dato per la classifica vocale."];
+    : ["<:VC_InactiveStatus:1472011031709745307> - Nessun dato per la classifica vocale."];
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle(`<:VC_Leaderboard:1469659357678669958> Evento Activity EXP — Settimana ${eventWeek}`)
+    .setTitle(`<:VC_Leaderboard:1482534806314287387> Evento Activity EXP — Settimana ${eventWeek}`)
     .setDescription(
       [
         "<a:VC_HeartsPink:1468685897389052008> **Top 3 testuale**:",
@@ -422,8 +422,8 @@ async function sendEventWeekAnnouncementToNews(client, guild, eventWeek, topMess
     .setFooter({ text: `Settimana ${eventWeek} di ${eventWeek === 1 ? "evento" : "evento"} • Premi assegnati ai vincitori` }).setTimestamp();
   await eventChannel.send({
     content: `<@&1442568949605597264>
-<a:VC_Winner:1448687700235256009> Ciao a tutti! Annunciamo i vincitori dell'Activity Event EXP della settimana ${eventWeek}
-<:VC_EXP:1468714279673925883> Avete ricevuto __${getEventWeeklyRewardLabel(eventWeek)}__ come ricompensa di questa settimana
+<a:VC_Winner:1482535294757507255> Ciao a tutti! Annunciamo i vincitori dell'Activity Event EXP della settimana ${eventWeek}
+<:VC_EXP:1482534670896730143> Avete ricevuto __${getEventWeeklyRewardLabel(eventWeek)}__ come ricompensa di questa settimana
 
 <a:VC_Events:1448688007438667796> Vi aspettiamo la prossima settimana, con i vincitori che vinceranno __${getEventWeeklyRewardLabel(eventWeek + 1)}__`,
     embeds: [embed],
@@ -447,12 +447,12 @@ async function trySendEventEndAnnouncementToNews(client) {
   if (sentFor !== null && sentFor === expiresAt) return;
   const top3 = await getTop3ExpDuringEventExcludingStaff(guild);
   const lines = top3.length ? top3.map((item, i) => {
-    const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}>—**${item.expDuringEvent.toLocaleString("it-IT")}** <:VC_EXP:1468714279673925883>`;
+    const medal = TROPHY_LABELS[i] || ""; return `${medal}<@${item.userId}>—**${item.expDuringEvent.toLocaleString("it-IT")}** <:VC_EXP:1482534670896730143>`;
   })
-    : ["<:VC_Info:1460670816214585481> - Nessun dato."];
+    : ["<:VC_InactiveStatus:1472011031709745307> - Nessun dato."];
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<:VC_Leaderboard:1469659357678669958> Top 3 EXP totale — Evento Activity EXP")
+    .setTitle("<:VC_Leaderboard:1482534806314287387> Top 3 EXP totale — Evento Activity EXP")
     .setDescription(["**Classifica per EXP guadagnata durante l'evento:**", "", ...lines].join("\n"))
     .setThumbnail(guild.iconURL({ size: 256 }) || null)
     .setFooter({ text: "Evento terminato • Grazie per la partecipazione!" })
@@ -485,7 +485,7 @@ async function trySendEventEndAnnouncementToNews(client) {
     const staffEndLines = [];
     if (first) staffEndLines.push(`<:VC_Podio1:1469659449974329598> **Miglior punteggio:** <@${first.userId}> <a:VC_Arrow:1448672967721615452> **${first.points}** punti`);
     if (last && last.userId !== first?.userId) staffEndLines.push(`**Peggior punteggio:** <@${last.userId}> <a:VC_Arrow:1448672967721615452> **${last.points}** punti`);
-    const staffEndContent = ["## <a:VC_Announce:1448687280381235443> **EVENTO STAFF — Terminato**", "", "<:VC_Attention:1443933073438675016> Risultati evento staff:", ...(staffEndLines.length ? staffEndLines : [" - Nessun dato."]), "", `<:VC_Mention:1443994358201323681>︲<@&${IDs.roles.Staff}>`,
+    const staffEndContent = ["## <a:VC_Announce:1482534613568979007> **EVENTO STAFF — Terminato**", "", "<:VC_Attention:1482534443632558151> Risultati evento staff:", ...(staffEndLines.length ? staffEndLines : [" - Nessun dato."]), "", `<:VC_Mention:1482526855289634997>︲<@&${IDs.roles.Staff}>`,
     ].join("\n");
     const newsStaffChannel = NEWS_STAFF_CHANNEL_ID && (client.channels.cache.get(NEWS_STAFF_CHANNEL_ID) || (await getClientChannelCached(client, NEWS_STAFF_CHANNEL_ID)));
     if (newsStaffChannel?.guild) {
@@ -618,7 +618,7 @@ async function publishWeeklyActivityWinners(client, options = {}) {
     });
   }
 
-  const embed = new EmbedBuilder().setColor("#6f4e37").setDescription([`<:VC_Leaderboard:1469659357678669958> // I vantaggi che avete sbloccato sono in "badge" nel canale <#${INFO_CHANNEL_ID}>`,
+  const embed = new EmbedBuilder().setColor("#6f4e37").setDescription([`<:VC_Leaderboard:1482534806314287387> // I vantaggi che avete sbloccato sono in "badge" nel canale <#${INFO_CHANNEL_ID}>`,
     "",
     `<a:VC_HeartsPink:1468685897389052008> • **Classifica testuale:**`,
   ...messageRows,
@@ -641,7 +641,7 @@ async function publishWeeklyActivityWinners(client, options = {}) {
   await channel
     .send({
       content: `<@&${IDs.roles.Member}>
-<a:VC_Winner:1448687700235256009> Ciao a tutti! Annunciamo i vincitori di questa settimana per attività.
+<a:VC_Winner:1482535294757507255> Ciao a tutti! Annunciamo i vincitori di questa settimana per attività.
 
 <a:VC_Arrow:1448672967721615452> Con un totale di **${messageWinnerTotal} messaggi**, ${messageWinnerMention} ottieni il primo posto per **__chat testuale__**.
 <a:VC_Arrow:1448672967721615452> Con un totale di **${voiceWinnerTotal} exp**, ${voiceWinnerMention} ottieni il primo posto per **__chat vocale__**.

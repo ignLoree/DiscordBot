@@ -126,7 +126,7 @@ async function logPointRemoval(guild, staffUserId, reason, action) {
     .send({
       content: `<:partnermanager:1443651916838998099> <@${staffUserId}>
 <:VC_reason:1478517122929004544> ${reason}
-<:VC_Chat:1448694742237053061> Messaggio: ${msgRef}
+<:VC_Chat:1482532573002465413> Messaggio: ${msgRef}
 <:link:1470064815899803668> Invite: ${inviteDb}`,
     })
     .catch(() => { });

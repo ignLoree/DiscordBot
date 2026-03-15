@@ -47,7 +47,7 @@ function buildGiveawayEmbed(giveaway, options = {}) {
         inline: true,
       },
       {
-        name: "<:VC_EXP:1468714279673925883> Hosted by",
+        name: "<:VC_EXP:1482534670896730143> Hosted by",
         value: hostTag || "—",
         inline: true,
       }
@@ -194,10 +194,10 @@ async function endGiveaway(giveawayId, client) {
     }
 
     if (winnerIds.length === 1) {
-      await channel.send({ content: `<a:VC_Events:1448688007438667796> <@${winnerIds[0]}> ha vinto il giveaway! <a:VC_Winner:1448687700235256009>` }).catch(() => { });
+      await channel.send({ content: `<a:VC_Events:1448688007438667796> <@${winnerIds[0]}> ha vinto il giveaway! <a:VC_Winner:1482535294757507255>` }).catch(() => { });
     } else if (winnerIds.length > 1) {
       const mention = winnerIds.map((id) => `<@${id}>`).join(", ");
-      await channel.send({ content: `<a:VC_Events:1448688007438667796>${mention} hanno vinto il giveaway! <a:VC_Winner:1448687700235256009>` }).catch(() => { });
+      await channel.send({ content: `<a:VC_Events:1448688007438667796>${mention} hanno vinto il giveaway! <a:VC_Winner:1482535294757507255>` }).catch(() => { });
     }
   }
 
@@ -249,7 +249,7 @@ async function rerollGiveaway(interaction, client) {
         const rerollRow = buildRerollButton(giveawayId);
         await msg.edit({ embeds: [embed], components: [rerollRow] }).catch(() => { });
       }
-      await channel.send({ content: `<a:VC_Events:1448688007438667796><@${newWinnerId}> ha vinto il giveaway! <a:VC_Winner:1448687700235256009>` }).catch(() => { });
+      await channel.send({ content: `<a:VC_Events:1448688007438667796><@${newWinnerId}> ha vinto il giveaway! <a:VC_Winner:1482535294757507255>` }).catch(() => { });
     } catch (err) {
       global.logger?.warn?.("[giveawayService] end/reroll:", err?.message || err);
     }
@@ -257,12 +257,12 @@ async function rerollGiveaway(interaction, client) {
 
   if (newWinnerId) {
     await interaction.reply({
-      content: "<a:VC_Alert:1448670089670037675> Re-roll effettuato! Il messaggio con il nuovo vincitore è stato inviato nel canale.",
+      content: "<a:VC_Alert:1448670089670037675> Re - roll effettuato! Il messaggio con il nuovo vincitore è stato inviato nel canale.",
       flags: 1 << 6,
     }).catch(() => { });
   } else {
     await interaction.reply({
-      content: "<a:VC_Alert:1448670089670037675> Nessun altro partecipante disponibile per il re-roll.",
+      content: "<a:VC_Alert:1448670089670037675> Nessun altro partecipante disponibile per il re - roll.",
       flags: 1 << 6,
     }).catch(() => { });
   }
@@ -301,14 +301,14 @@ async function rerollGiveawayByMessageId(messageId, client) {
         const rerollRow = buildRerollButton(giveaway._id.toString());
         await msg.edit({ embeds: [embed], components: [rerollRow] }).catch(() => {});
       }
-      await channel.send({ content: `<a:VC_Events:1448688007438667796><@${newWinnerId}> ha vinto il giveaway! <a:VC_Winner:1448687700235256009>` }).catch(() => {});
+      await channel.send({ content: `<a:VC_Events:1448688007438667796><@${newWinnerId}> ha vinto il giveaway! <a:VC_Winner:1482535294757507255>` }).catch(() => {});
     } catch (err) {
       global.logger?.warn?.("[giveawayService] reroll send:", err?.message || err);
     }
   }
 
   if (newWinnerId) return { ok: true, newWinnerId };
-  return { ok: false, error: "<a:VC_Alert:1448670089670037675> Nessun altro partecipante disponibile per il re-roll." };
+  return { ok: false, error: "<a:VC_Alert:1448670089670037675> Nessun altro partecipante disponibile per il re - roll." };
 }
 
 async function runScheduledEnds(client) {

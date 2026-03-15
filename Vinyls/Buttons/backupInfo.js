@@ -75,7 +75,7 @@ async function execute(interaction) {
       return true;
     }
     await safeEditReply(interaction, {
-      embeds: [new EmbedBuilder().setColor("#3498db").setDescription("<:VC_Info:1460670816214585481> Eliminazione annullata.")],
+      embeds: [new EmbedBuilder().setColor("#3498db").setDescription("<:VC_InactiveStatus:1472011031709745307> Eliminazione annullata.")],
       components: [],
       flags: EPHEMERAL,
     });
@@ -128,7 +128,7 @@ function buildInfoButtons(backupId, userId, guildId) {
     new ButtonBuilder()
       .setCustomId(loadId)
       .setStyle(ButtonStyle.Primary)
-      .setEmoji("<a:VC_Loading:1462504528774430962>"),
+      .setEmoji("<a:VC_Loading:1482526818278969578>"),
     new ButtonBuilder()
       .setCustomId(deleteId)
       .setStyle(ButtonStyle.Danger)

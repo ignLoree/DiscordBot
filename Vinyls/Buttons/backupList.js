@@ -51,7 +51,7 @@ async function renderList(userId, page = 1) {
 
   const embed = new EmbedBuilder()
     .setColor("#3498db")
-    .setTitle("<:VC_Info:1460670816214585481> Lista backup")
+    .setTitle("<:VC_InactiveStatus:1472011031709745307> Lista backup")
     .setDescription(lines.join("\n").slice(0, 3900) || "-")
     .setFooter({ text: `Pagina ${currentPage}/${totalPages} • ${total} backup totali` })
     .setTimestamp();
@@ -76,10 +76,10 @@ function buildListSelectionInfoEmbed(selectedBackup) {
   const m = selectedBackup || {};
   return new EmbedBuilder()
     .setColor("#3498db")
-    .setTitle("<:VC_Info:1460670816214585481> Backup selezionato")
+    .setTitle("<:VC_InactiveStatus:1472011031709745307> Backup selezionato")
     .setDescription(
       [
-        `<:VC_Mention:1443994358201323681> **Server:** ${String(m?.guildName || "?").replace(/\*\*/g, "")}`,
+        `<:VC_Mention:1482526855289634997> **Server:** ${String(m?.guildName || "?").replace(/\*\*/g, "")}`,
         `<:VC_id:1478517313618575419> **Backup ID:** \`${m?.backupId || "?"}\``,
         `<:VC_opentime:1478517163022221323> **Creato:** ${m?.createdAt ? `<t:${Math.floor(Number(m.createdAt) / 1000)}:F>` : "N/D"}`,
       ].join("\n")

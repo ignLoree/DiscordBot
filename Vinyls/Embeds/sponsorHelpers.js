@@ -26,13 +26,13 @@ function buildSponsorTagEmbed(config, boosterRoleMention) {
         "",
         "**<a:VC_Arrow:1448672967721615452> Come mantenere la Guild-TAG <:VC_PinkQuestionMark:1471892611026391306>**",
         "────────୨ৎ────────",
-        "<a:VC_Exclamation:1448687427836444854> Ti basta essere parte di https://discord.gg/viniliecaffe oppure",
+        "<a:VC_Exclamation:1482534702077444217> Ti basta essere parte di https://discord.gg/viniliecaffe oppure",
         `boostare questo server (<a:flyingnitroboost:1443652205705170986> ${boosterRoleMention})`,
         "",
         "",
         "**<a:VC_Arrow:1448672967721615452> How to keep the Guild-TAG <:VC_PinkQuestionMark:1471892611026391306>**",
         "────────୨ৎ────────",
-        "<a:VC_Exclamation:1448687427836444854> You just need to be in https://discord.gg/viniliecaffe or boost",
+        "<a:VC_Exclamation:1482534702077444217> You just need to be in https://discord.gg/viniliecaffe or boost",
         `this server (<a:flyingnitroboost:1443652205705170986> ${boosterRoleMention})`,
         "",
         "",
@@ -198,7 +198,7 @@ async function processOneVerifyPanel(client, guildId, verifyChannelIds) {
         "<:space:1461733157840621608><:space:1461733157840621608> <:rightSort:1461726104422453298> Clicca il pulsante **Verify** qui sotto per iniziare.",
     );
   const verifyRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId("verify_start").setEmoji(`<a:VC_Verified:1448687631109197978>`).setLabel("︲VERIFY").setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId("verify_start").setEmoji(`<a:VC_Verified:1482532479637127188>`).setLabel("︲VERIFY").setStyle(ButtonStyle.Success),
   );
 
   const panelDoc = await sponsorGetOrCreatePanelDoc(guildId, channel.id).catch(() => null);

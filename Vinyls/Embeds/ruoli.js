@@ -26,19 +26,19 @@ async function run(client) {
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("<:sparkledred:1470064814502973591> Personalità")
-    .setDescription(["Scegli in cosa ti identifichi, quanti anni hai e di dove sei. Utilizza i menù a tendina sottostanti.", "", "<a:VC_Exclamation:1448687427836444854> Massimo **1** ruolo per categoria."].join("\n"))
+    .setDescription(["Scegli in cosa ti identifichi, quanti anni hai e di dove sei. Utilizza i menù a tendina sottostanti.", "", "<a:VC_Exclamation:1482534702077444217> Massimo **1** ruolo per categoria."].join("\n"))
     .setImage(DIVIDER_URL);
   const mentionsAttachment = fs.existsSync(MENTIONS_IMAGE_PATH) ? new AttachmentBuilder(MENTIONS_IMAGE_PATH, { name: MENTIONS_IMAGE_NAME }) : null;
   const mentionsEmbed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("<:sparkledred:1470064814502973591> Personalità")
-    .setDescription(["Scegli quali notifiche ricevere dal server in base a cosa ti interessa maggiormente.", "", "<a:VC_Exclamation:1448687427836444854> Le notifiche di **@everyone** le riceveranno tutti."].join("\n"))
+    .setDescription(["Scegli quali notifiche ricevere dal server in base a cosa ti interessa maggiormente.", "", "<a:VC_Exclamation:1482534702077444217> Le notifiche di **@everyone** le riceveranno tutti."].join("\n"))
     .setImage(DIVIDER_URL);
   const colorsAttachment = fs.existsSync(COLORS_IMAGE_PATH) ? new AttachmentBuilder(COLORS_IMAGE_PATH, { name: COLORS_IMAGE_NAME }) : null;
   const colorsEmbed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("<:sparkledred:1470064814502973591> Personalità")
-    .setDescription(["Scegli il colore per personalizzare il nome del tuo profilo quando scrivi in chat.", "", "<a:VC_Exclamation:1448687427836444854> Verrà mostrato il **colore più in alto** nella lista dei ruoli nel tuo profilo."].join("\n"))
+    .setDescription(["Scegli il colore per personalizzare il nome del tuo profilo quando scrivi in chat.", "", "<a:VC_Exclamation:1482534702077444217> Verrà mostrato il **colore più in alto** nella lista dei ruoli nel tuo profilo."].join("\n"))
     .setImage(DIVIDER_URL);
   const plusColorsAttachment = fs.existsSync(PLUS_COLORS_IMAGE_PATH) ? new AttachmentBuilder(PLUS_COLORS_IMAGE_PATH, { name: PLUS_COLORS_IMAGE_NAME }) : null;
   const plusColorsEmbed = new EmbedBuilder()

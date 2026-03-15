@@ -5,7 +5,7 @@ const { createLoadSession, buildLoadWarningEmbed, buildLoadComponents, getGuildB
 const { renderList } = require("../../Services/Backup/backupListService");
 const { buildInfoButtons, buildDeleteConfirmButtons, buildDeleteWarningEmbed } = require("../../Buttons").backupInfo;
 const EPHEMERAL_FLAG = 1 << 6;
-const CHANNEL_TYPE_LABEL = { 0: "<:channeltext:1443247596922470551>", 2: "<:voice:1467639623735054509>", 4: "<:VC_category:1478836096669581505>", 5: "<a:VC_Announce:1448687280381235443>", 13: "<:VC_stage:1478836138583134400>", 15: "<:forum:1470541157724328059>", 16: "<:link:1470064815899803668>", };
+const CHANNEL_TYPE_LABEL = { 0: "<:channeltext:1443247596922470551>", 2: "<:voice:1467639623735054509>", 4: "<:VC_category:1478836096669581505>", 5: "<a:VC_Announce:1482534613568979007>", 13: "<:VC_stage:1478836138583134400>", 15: "<:forum:1470541157724328059>", 16: "<:link:1470064815899803668>", };
 
 function formatBytes(bytes) {
   const size = Number(bytes || 0);
@@ -30,7 +30,7 @@ function toCodeBlock(lines) {
 function buildCreatingEmbed() {
   return new EmbedBuilder()
     .setColor("#4aa3ff")
-    .setDescription("<a:VC_Loading:1448687876018540695> **Creazione backup in corso...**");
+    .setDescription("<a:VC_Loading:1482526772862914776> **Creazione backup in corso...**");
 }
 
 function buildSuccessEmbed(interaction, result) {
@@ -41,7 +41,7 @@ function buildSuccessEmbed(interaction, result) {
       [
         `<:success:1461731530333229226> Backup creato con successo con ID \`${result.backupId}\`.`,
         "",
-        "<:VC_Info:1460670816214585481> Comandi utili",
+        "<:VC_InactiveStatus:1472011031709745307> Comandi utili",
         `\`/backup info backup_id: ${result.backupId}\``,
         `\`/backup load backup_id: ${result.backupId}\``,
       ].join("\n"),
@@ -51,11 +51,11 @@ function buildSuccessEmbed(interaction, result) {
         name: "<:success:1461731530333229226> Salvato",
         value: [
           `<:member_role_icon:1330530086792728618> Membri/Bot: **${result.stats.members}**`,
-          `<:VC_Mention:1443994358201323681> Ruoli: **${result.stats.roles}**`,
+          `<:VC_Mention:1482526855289634997> Ruoli: **${result.stats.roles}**`,
           `<:channeltext:1443247596922470551> Canali: **${result.stats.channels}**`,
           `<:VC_threads:1478515497569095760> Thread: **${result.stats.threads}**`,
-          `<:VC_Chat:1448694742237053061> Messaggi: **${result.stats.messages}**`,
-          `<:VC_BanHammer:1443933132645732362> Bans: **${result.stats.bans}**`,
+          `<:VC_Chat:1482532573002465413> Messaggi: **${result.stats.messages}**`,
+          `<:VC_BanHammer:1482534474502897795> Bans: **${result.stats.bans}**`,
           `<:VC_Link:1482460590894088222> Invites: **${result.stats.invites}**`,
           `<:VC_webhooks:1478515450769047704> Webhooks: **${result.stats.webhooks}**`,
           `<:VC_file:1478515880722698300> File: \`${result.fileName}\` (${formatBytes(result.sizeBytes)})`,
@@ -156,12 +156,12 @@ function buildInfoEmbed(interaction, backupId, backupData, fileSize, checksum = 
 
   const minimalBackup = totalMessages <= 0 || members.length <= 0 || bans.length <= 0;
 
-  const embed = new EmbedBuilder().setColor("#3498db").setTitle(`<:VC_Info:1460670816214585481> Info Backup - ${guild.name || interaction.guild?.name || "Server sconosciuto"}`,
+  const embed = new EmbedBuilder().setColor("#3498db").setTitle(`<:VC_InactiveStatus:1472011031709745307> Info Backup - ${guild.name || interaction.guild?.name || "Server sconosciuto"}`,
   )
     .setDescription(
       minimalBackup
         ? "<:vegax:1443934876440068179> Questo backup non contiene messaggi, membri o ban."
-        : "<:VC_Info:1460670816214585481> Questo backup contiene uno snapshot completo del server.",
+        : "<:VC_InactiveStatus:1472011031709745307> Questo backup contiene uno snapshot completo del server.",
     )
     .addFields([
       {
@@ -170,7 +170,7 @@ function buildInfoEmbed(interaction, backupId, backupData, fileSize, checksum = 
         inline: true,
       },
       {
-        name: "<a:VC_Timer:1462779065625739344> Conservato fino a",
+        name: "<a:VC_Timer:1482527426557775954> Conservato fino a",
         value: "per sempre",
         inline: true,
       },
@@ -199,23 +199,23 @@ function buildLoadStatusEmbed(status) {
   if (!status) {
     return new EmbedBuilder()
       .setColor("#3498db")
-      .setTitle("<a:VC_Loading:1462504528774430962> Stato caricamento backup")
+      .setTitle("<a:VC_Loading:1482526818278969578> Stato caricamento backup")
       .setDescription("<:cancel:1461730653677551691> Nessun backup load in corso in questo server.");
   }
   const startedAt = Math.floor(Number(status.startedAtMs || Date.now()) / 1000);
   const actions = Array.isArray(status.actions) ? status.actions : [];
   return new EmbedBuilder()
     .setColor("#3498db")
-    .setTitle("<:VC_Info:1460670816214585481> Stato caricamento backup")
+    .setTitle("<:VC_InactiveStatus:1472011031709745307> Stato caricamento backup")
     .setDescription(
       [
         `<:VC_id:1478517313618575419> Backup ID: \`${String(status.backupId || "").toUpperCase()}\``,
         `<:VC_Clock:1473359204189474886> Avviato: <t:${startedAt}:R>`,
-        `<a:VC_Loading:1448687876018540695> Fase: \`${String(status.phase || "avvio")}\``,
-        `<a:VC_Loading:1462504528774430962> Elementi processati: **${Number(status.processed || 0)}**`,
+        `<a:VC_Loading:1482526772862914776> Fase: \`${String(status.phase || "avvio")}\``,
+        `<a:VC_Loading:1482526818278969578> Elementi processati: **${Number(status.processed || 0)}**`,
         `<:cancel:1461730653677551691> Annullamento richiesto: **${status.cancelRequested ? "sì" : "no"}**`,
         `<:VC_Link:1482460590894088222> Limite messaggi: \`${status.messagesLimit == null ? "TUTTI" : Number(status.messagesLimit || 0)}\``,
-        `<:VC_BanHammer:1443933132645732362> Azioni: ${actions.length ? `\`${actions.join("`, `")}\`` : "nessuna"}`,
+        `<:VC_BanHammer:1482534474502897795> Azioni: ${actions.length ? `\`${actions.join("`, `")}\`` : "nessuna"}`,
       ].join("\n"),
     );
 }
@@ -223,7 +223,7 @@ function buildLoadStatusEmbed(status) {
 function buildLoadCancelResultEmbed(cancelled) {
   return new EmbedBuilder()
     .setColor(cancelled ? "#2ecc71" : "#3498db")
-    .setTitle(cancelled ? "<:success:1461731530333229226> Completato" : " <:VC_Info:1460670816214585481> Info")
+    .setTitle(cancelled ? "<:success:1461731530333229226> Completato" : " <:VC_InactiveStatus:1472011031709745307> Info")
     .setDescription(
       cancelled
         ? "<:success:1461731530333229226> Richiesta di annullamento inviata. Il processo verrà fermato appena possibile."
@@ -359,7 +359,7 @@ module.exports = {
       const backupRef = String(interaction.options.getString("backup_id") || "").trim();
       if (!backupRef) {
         await safeEditReply(interaction, {
-          embeds: [buildErrorEmbed("backup_id non valido.", "<:VC_Info:1460670816214585481> Backup info")],
+          embeds: [buildErrorEmbed("backup_id non valido.", "<:VC_InactiveStatus:1472011031709745307> Backup info")],
           flags: EPHEMERAL_FLAG,
         });
         return;
@@ -397,7 +397,7 @@ module.exports = {
       const messagesLimit = interaction.options.getInteger("messages_limit");
       if (!backupRef) {
         await safeEditReply(interaction, {
-          embeds: [buildErrorEmbed("backup_id non valido.", "<a:VC_Loading:1462504528774430962> Backup load")],
+          embeds: [buildErrorEmbed("backup_id non valido.", "<a:VC_Loading:1482526818278969578> Backup load")],
           flags: EPHEMERAL_FLAG,
         });
         return;

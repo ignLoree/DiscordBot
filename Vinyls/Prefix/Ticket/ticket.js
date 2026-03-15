@@ -109,7 +109,7 @@ function buildTicketRatingRows(ticketId) {
   const row = new ActionRowBuilder().addComponents(...[1, 2, 3, 4, 5].map((score) => new ButtonBuilder().setCustomId(`ticket_rate:${ticketId}:${score}`)
     .setStyle(stylesByScore[score] || ButtonStyle.Secondary)
     .setLabel(String(score).slice(0, 80))
-    .setEmoji("<:VC_EXP:1468714279673925883>"),
+    .setEmoji("<:VC_EXP:1482534670896730143>"),
   ),
   );
   return [row];
@@ -124,12 +124,12 @@ function buildTicketClosedEmbed(data) {
   let reasonValue = reasonText;
   if (Number.isFinite(data?.ratingScore) && data.ratingScore >= 1) {
     const s = Math.max(0, Math.min(5, Math.floor(Number(data.ratingScore) || 0)));
-    reasonValue = "<:VC_EXP:1468714279673925883>".repeat(s) + "<:VC_EXP:1468714279673925883>".repeat(5 - s) + (data?.ratingBy ? ` – da <@${data.ratingBy}>` : "") + "\n" + reasonText;
+    reasonValue = "<:VC_EXP:1482534670896730143>".repeat(s) + "<:VC_EXP:1482534670896730143>".repeat(5 - s) + (data?.ratingBy ? ` – da <@${data.ratingBy}>` : "") + "\n" + reasonText;
   }
 
   const embed = new EmbedBuilder()
-    .setAuthor({ name: data?.guildName || "<:VC_Ticket:1448694637106692156> Sistema Ticket", iconURL: data?.guildIconURL || undefined, })
-    .setTitle("<:VC_Ticket:1448694637106692156> Ticket Chiuso")
+    .setAuthor({ name: data?.guildName || "<:VC_Ticket:1482535175283019888> Sistema Ticket", iconURL: data?.guildIconURL || undefined, })
+    .setTitle("<:VC_Ticket:1482535175283019888> Ticket Chiuso")
     .setColor("#6f4e37")
     .addFields(
       { name: "<:VC_id:1478517313618575419> ID Ticket", value: String(data?.ticketNumber || "N/D"), inline: true },
@@ -216,7 +216,7 @@ function getTicketPanelConfig(raw) {
       name: "supporto",
       label: "Supporto",
       embed: new EmbedBuilder()
-        .setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET SUPPORTO__**")
+        .setTitle("<:VC_Ticket:1482535175283019888> • **__TICKET SUPPORTO__**")
         .setDescription(
           `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`,
         )
@@ -228,7 +228,7 @@ function getTicketPanelConfig(raw) {
       name: "partnership",
       label: "Partnership",
       embed: new EmbedBuilder()
-        .setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET PARTNERSHIP__**",)
+        .setTitle("<:VC_Ticket:1482535175283019888> • **__TICKET PARTNERSHIP__**",)
         .setDescription(
           `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la descrizione del tuo server/catena tramite il bottone qui in basso.`,
         )
@@ -240,7 +240,7 @@ function getTicketPanelConfig(raw) {
       name: "highstaff",
       label: "High Staff",
       embed: new EmbedBuilder()
-        .setTitle("<:VC_Ticket:1448694637106692156> • **__TICKET HIGH STAFF__**",)
+        .setTitle("<:VC_Ticket:1482535175283019888> • **__TICKET HIGH STAFF__**",)
         .setDescription(
           `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`,
         )
@@ -572,7 +572,7 @@ const activeTicketInChannel = effectiveChannelId ? await Ticket.findOne({ channe
       }
 
       const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId("close_ticket").setEmoji("<:VC_Lock:1468544444113617063>").setLabel("Chiudi").setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId("close_ticket").setEmoji("<:VC_Lock:1482526739044368476>").setLabel("Chiudi").setStyle(ButtonStyle.Danger),
     new ButtonBuilder().setCustomId("close_ticket_motivo").setEmoji("<:VC_reason:1478517122929004544>").setLabel("Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
     new ButtonBuilder().setCustomId("claim_ticket").setEmoji("<:VC_claim:1478517202016669887>").setLabel("Claim").setStyle(ButtonStyle.Success),
   );
@@ -998,9 +998,9 @@ const activeTicketInChannel = effectiveChannelId ? await Ticket.findOne({ channe
 
       const updatedEmbed = msg.embeds?.[0] ? EmbedBuilder.from(msg.embeds[0]) : new EmbedBuilder().setColor("#6f4e37");
       const updatedButtons = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId("close_ticket").setEmoji("<:VC_Lock:1468544444113617063>").setLabel("Chiudi").setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId("close_ticket").setEmoji("<:VC_Lock:1482526739044368476>").setLabel("Chiudi").setStyle(ButtonStyle.Danger),
         new ButtonBuilder().setCustomId("close_ticket_motivo").setEmoji("<:VC_reason:1478517122929004544>").setLabel("Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
-        new ButtonBuilder().setCustomId("unclaim").setEmoji("<a:VC_Unlock:1470011538432852108>").setLabel("Unclaim").setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId("unclaim").setEmoji("<a:VC_Unlock:1482532082466029608>").setLabel("Unclaim").setStyle(ButtonStyle.Secondary),
       );
 
       await msg.edit({ embeds: [updatedEmbed], components: [updatedButtons] });
@@ -1088,7 +1088,7 @@ const activeTicketInChannel = effectiveChannelId ? await Ticket.findOne({ channe
 
       const originalEmbed = msg.embeds?.[0] ? EmbedBuilder.from(msg.embeds[0]) : new EmbedBuilder().setColor("#6f4e37");
       const originalButtons = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId("close_ticket").setEmoji("<:VC_Lock:1468544444113617063>").setLabel("Chiudi").setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId("close_ticket").setEmoji("<:VC_Lock:1482526739044368476>").setLabel("Chiudi").setStyle(ButtonStyle.Danger),
         new ButtonBuilder().setCustomId("close_ticket_motivo").setEmoji("<:VC_reason:1478517122929004544>").setLabel("Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
         new ButtonBuilder().setCustomId("claim_ticket").setEmoji("<:VC_claim:1478517202016669887>").setLabel("Claim").setStyle(ButtonStyle.Success),
       );
@@ -1333,10 +1333,10 @@ const activeTicketInChannel = effectiveChannelId ? await Ticket.findOne({ channe
         const msg = await fetchTicketMessage(targetChannel, ticketDoc.messageId,);
         if (msg) {
           const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId("close_ticket").setEmoji("<:VC_Lock:1468544444113617063>").setLabel("Chiudi").setStyle(ButtonStyle.Danger),
+            new ButtonBuilder().setCustomId("close_ticket").setEmoji("<:VC_Lock:1482526739044368476>").setLabel("Chiudi").setStyle(ButtonStyle.Danger),
             new ButtonBuilder().setCustomId("close_ticket_motivo").setEmoji("<:VC_reason:1478517122929004544>").setLabel("Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
             ticketDoc.claimedBy
-              ? new ButtonBuilder().setCustomId("unclaim").setEmoji("<a:VC_Unlock:1470011538432852108>").setLabel("Unclaim").setStyle(ButtonStyle.Secondary)
+              ? new ButtonBuilder().setCustomId("unclaim").setEmoji("<a:VC_Unlock:1482532082466029608>").setLabel("Unclaim").setStyle(ButtonStyle.Secondary)
               : new ButtonBuilder().setCustomId("claim_ticket").setEmoji("<:VC_claim:1478517202016669887>").setLabel("Claim").setStyle(ButtonStyle.Success),
           );
           await msg

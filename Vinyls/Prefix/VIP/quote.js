@@ -10,7 +10,7 @@ function buildQuotePostEmbed({ messageAuthorId, creatorId, totalPosts }) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("<a:VC_Sparkles:1468546911936974889> Nuova quotazione ✨")
-    .setDescription("<:VC_Reply:1468262952934314131> Crea un post usando il comando **+quote** rispondendo al messaggio di un utente.")
+    .setDescription("<:VC_Reply:1482532158080942191> Crea un post usando il comando **+quote** rispondendo al messaggio di un utente.")
     .addFields(
       { name: "Messaggio di:", value: `<@${messageAuthorId}>` },
       { name: "Creato da:", value: `<@${creatorId}>` },
@@ -87,7 +87,7 @@ module.exports = {
           embeds: [
             new EmbedBuilder()
               .setColor("#ed4245")
-              .setTitle("<a:VC_Unlock:1470011538432852108> Quote bloccate")
+              .setTitle("<a:VC_Unlock:1482532082466029608> Quote bloccate")
               .setDescription(
                 [
                   `**${displayName || author.username}** ha bloccato le quote dei propri messaggi.`,

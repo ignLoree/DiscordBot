@@ -27,21 +27,21 @@ async function sendEventRewardLog(client, data) {
 
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<:VC_EXP:1468714279673925883> Premio evento assegnato")
+    .setTitle("<:VC_EXP:1482534670896730143> Premio evento assegnato")
     .setDescription(String(`**Utente:** <@${userId}>`).slice(0, 4096))
-    .addFields({ name: String("<:VC_Info:1460670816214585481> Tipo").slice(0, 256), value: String(label || "").slice(0, 1024), inline: true });
+    .addFields({ name: String("<:VC_InactiveStatus:1472011031709745307> Tipo").slice(0, 256), value: String(label || "").slice(0, 1024), inline: true });
 
   if (levels != null && levels > 0) {
-    embed.addFields({ name: String("<:VC_EXP:1468714279673925883> Livelli").slice(0, 256), value: String(`+${levels}`).slice(0, 1024), inline: true });
+    embed.addFields({ name: String("<:VC_EXP:1482534670896730143> Livelli").slice(0, 256), value: String(`+${levels}`).slice(0, 1024), inline: true });
   }
   if (roleId) {
-    embed.addFields({ name: String("<:VC_Mention:1443994358201323681> Ruolo").slice(0, 256), value: String(`<@&${roleId}>`).slice(0, 1024), inline: true });
+    embed.addFields({ name: String("<:VC_Mention:1482526855289634997> Ruolo").slice(0, 256), value: String(`<@&${roleId}>`).slice(0, 1024), inline: true });
   }
   if (week != null) {
     embed.addFields({ name: String("<a:VC_Calendar:1448670320180592724> Settimana").slice(0, 256), value: String(`${week}`).slice(0, 1024), inline: true });
   }
   if (detail) {
-    embed.addFields({ name: String("<:VC_Info:1460670816214585481> Dettaglio").slice(0, 256), value: String(detail).slice(0, 1024), inline: false });
+    embed.addFields({ name: String("<:VC_InactiveStatus:1472011031709745307> Dettaglio").slice(0, 256), value: String(detail).slice(0, 1024), inline: false });
   }
   embed.setTimestamp();
 
@@ -59,10 +59,10 @@ async function sendEventRewardSkippedLog(client, data) {
   const embed = new EmbedBuilder()
     .setColor("#99aab5")
     .setTitle("<:VC_page3:1482459759268462613> Premio già assegnato")
-    .setDescription(`<:VC_Info:1460670816214585481> **Utente:** <@${userId}>`)
+    .setDescription(`<:VC_InactiveStatus:1472011031709745307> **Utente:** <@${userId}>`)
     .addFields(
-      { name: "<:VC_Info:1460670816214585481> Tipo", value: label, inline: true },
-      { name: "<:VC_Info:1460670816214585481> Motivo", value: "Già ricevuto per questo evento", inline: true },
+      { name: "<:VC_InactiveStatus:1472011031709745307> Tipo", value: label, inline: true },
+      { name: "<:VC_InactiveStatus:1472011031709745307> Motivo", value: "Già ricevuto per questo evento", inline: true },
     )
     .setTimestamp();
 
@@ -88,12 +88,12 @@ async function sendEventRewardDm(client, userId, guildId, data) {
   const week = data?.week != null && Number.isFinite(Number(data.week)) ? Number(data.week) : null;
 
   const eventName = "Activity EXP Event";
-  const lines = [`<:VC_EXP:1468714279673925883> Per **${label}** nell'${eventName} ti è stato assegnato:`, "",];
+  const lines = [`<:VC_EXP:1482534670896730143> Per **${label}** nell'${eventName} ti è stato assegnato:`, "",];
   if (levels != null && levels > 0) {
-    lines.push(`<:VC_EXP:1468714279673925883> **+${levels} livelli** al tuo contatore EXP.`, "");
+    lines.push(`<:VC_EXP:1482534670896730143> **+${levels} livelli** al tuo contatore EXP.`, "");
   }
   if (roleId) {
-    lines.push(`<:VC_Mention:1443994358201323681> Ruolo <@&${roleId}>.`, "");
+    lines.push(`<:VC_Mention:1482526855289634997> Ruolo <@&${roleId}>.`, "");
   }
   if (week != null) {
     lines.push(`<a:VC_Calendar:1448670320180592724> Premio della **settimana ${week}** dell'evento.`, "");

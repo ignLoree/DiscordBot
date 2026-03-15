@@ -64,17 +64,17 @@ async function buildEventoClassificaPayload(guild, selectedWeek, currentEventWee
 
   const msgLines = topMessages.length
     ? topMessages.map((item, i) => `${rankLabel(i)} <@${item.userId}> <a:VC_Arrow:1448672967721615452> **${item.messageCount}** _messaggi_`)
-    : ["<:VC_Info:1460670816214585481> - Nessun dato per la classifica testuale."];
+    : ["<:VC_InactiveStatus:1472011031709745307> - Nessun dato per la classifica testuale."];
   const voiceLines = topVoice.length
     ? topVoice.map((item, i) => `${rankLabel(i)} <@${item.userId}> <a:VC_Arrow:1448672967721615452> **${formatVoiceDuration(item.voiceSeconds)}** _in vocale_`)
-    : ["<:VC_Info:1460670816214585481> - Nessun dato per la classifica vocale."];
+    : ["<:VC_InactiveStatus:1472011031709745307> - Nessun dato per la classifica vocale."];
   const expLines = topExp.length
     ? topExp.map((item, i) => `${rankLabel(i)} <@${item.userId}> <a:VC_Arrow:1448672967721615452> **${item.expDuringEvent}** _EXP_`)
-    : ["<:VC_Info:1460670816214585481> - Nessun dato per la classifica EXP."];
+    : ["<:VC_InactiveStatus:1472011031709745307> - Nessun dato per la classifica EXP."];
 
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle(`<:VC_Leaderboard:1469659357678669958> Evento Activity EXP — Settimana ${week}`)
+    .setTitle(`<:VC_Leaderboard:1482534806314287387> Evento Activity EXP — Settimana ${week}`)
     .setDescription(
       [
         "<a:VC_HeartsPink:1468685897389052008> **Top 10 testuale**:",
@@ -83,7 +83,7 @@ async function buildEventoClassificaPayload(guild, selectedWeek, currentEventWee
         "<a:VC_HeartsBlue:1468686100045369404> **Top 10 vocale**:",
         ...voiceLines,
         "",
-        "<:VC_Leaderboard:1469659357678669958> **Top 10 EXP**:",
+        "<:VC_Leaderboard:1482534806314287387> **Top 10 EXP**:",
         ...expLines,
       ].join("\n")
     )

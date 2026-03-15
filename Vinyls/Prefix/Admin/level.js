@@ -108,7 +108,7 @@ module.exports = {
       const mode = String(args[1] || "").toLowerCase();
       if (mode === "all") {
         await safeMessageReply(message, {
-          content: "<:VC_Info:1460670816214585481> Sync ruoli in corso (tutti gli utenti con EXP nel DB)…",
+          content: "<:VC_InactiveStatus:1472011031709745307> Sync ruoli in corso (tutti gli utenti con EXP nel DB)…",
           allowedMentions: { repliedUser: false },
         });
         const cursor = ExpUser.find({ guildId }).select("userId totalExp").lean().cursor();

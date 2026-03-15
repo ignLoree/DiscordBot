@@ -51,19 +51,19 @@ const reminderPool = [
   () =>
     new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle("<a:VC_Vote:1448729692235628818> Votaci su Discadia!")
+      .setTitle("<a:VC_Vote:1482535223001485473> Votaci su Discadia!")
       .setDescription(
         [
-          "<:VC_EXP:1468714279673925883> La prima volta otterrai **250 EXP**, le altre volte altri exp!",
+          "<:VC_EXP:1482534670896730143> La prima volta otterrai **250 EXP**, le altre volte altri exp!",
           "<:VC_Link:1482460590894088222> Vota qui: https://discadia.com/server/viniliecaffe/",
         ].join("\n"),
       ),
   () =>
     new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle("<:VC_bump:1330185435401424896> Recensiscici su DISBOARD!")
+      .setTitle("<:VC_bump:1482531857521311885> Recensiscici su DISBOARD!")
       .setDescription([
-        `<:VC_LevelUp2:1443701876892762243> Scrivi la tua recensione e fai brillare Vinili & Caffè! Dopo aver recensito, apri un <#1442569095068254219> \`Terza Categoria\` e ricevi **5 livelli** come premio!`,
+        `<:VC_LevelUp2:1482527047871107143> Scrivi la tua recensione e fai brillare Vinili & Caffè! Dopo aver recensito, apri un <#1442569095068254219> \`Terza Categoria\` e ricevi **5 livelli** come premio!`,
         "<:VC_Link:1482460590894088222> Lascia la tua recensione qui: https://disboard.org/it/server/1329080093599076474",
       ].join("\n")),
   () =>
@@ -76,7 +76,7 @@ const reminderPool = [
   () =>
     new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle("<:VC_Ticket:1448694637106692156> Serve aiuto, partnership o vuoi segnalare?")
+      .setTitle("<:VC_Ticket:1482535175283019888> Serve aiuto, partnership o vuoi segnalare?")
       .setDescription([
         `<:VC_Staff:1479443779571155086> Apri subito un ticket su <#1442569095068254219>: lo Staff è pronto ad aiutarti per qualsiasi cosa ti serva!`,
       ].join("\n")),
@@ -110,33 +110,33 @@ const reminderPool = [
   () =>
     new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle("<:VC_Color:1470781368630775982> Sblocca i colori gradienti esclusivi!")
+      .setTitle("<:VC_Color:1482532543273238569> Sblocca i colori gradienti esclusivi!")
       .setDescription([
-        "<:VC_Vip:1448691936797134880> Ottieni i colori PLUS con i ruoli <@&1329497467481493607> o <@&1442568932136587297>; con <@&1442568950805430312> puoi crearne uno personalizzato! Tutti disponibili su <#1469429150669602961>.",
+        "<:VC_Vip:1482534921472835895> Ottieni i colori PLUS con i ruoli <@&1329497467481493607> o <@&1442568932136587297>; con <@&1442568950805430312> puoi crearne uno personalizzato! Tutti disponibili su <#1469429150669602961>.",
       ].join("\n")),
   () =>
     new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle("<:VC_EXP:1468714279673925883> Sfida te stesso con i minigiochi e vinci EXP!")
+      .setTitle("<:VC_EXP:1482534670896730143> Sfida te stesso con i minigiochi e vinci EXP!")
       .setDescription([
         "<a:VC_Events:1448688007438667796> Ogni giorno nuovi minigiochi: indovina la bandiera, capitale, impiccato, quiz patente e tanti altri!",
         "",
-        "<:VC_EXP:1468714279673925883> Vinci, accumula EXP e sali di livello giocando. Controlla le tue stats con `+mstats`.",
+        "<:VC_EXP:1482534670896730143> Vinci, accumula EXP e sali di livello giocando. Controlla le tue stats con `+mstats`.",
         `> <a:VC_Arrow:1448672967721615452> Trovi livelli e premi in <#1442569111119990887>`,
       ].join("\n")),
   () =>
     new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle("<:VC_LevelUp2:1443701876892762243> Scala i livelli e ottieni premi!")
+      .setTitle("<:VC_LevelUp2:1482527047871107143> Scala i livelli e ottieni premi!")
       .setDescription([
-        "<:VC_EXP:1468714279673925883> Ogni messaggio in chat e ogni minigioco ti portano EXP e nuovi livelli! Sblocca ruoli e vantaggi esclusivi.",
+        "<:VC_EXP:1482534670896730143> Ogni messaggio in chat e ogni minigioco ti portano EXP e nuovi livelli! Sblocca ruoli e vantaggi esclusivi.",
         "",
-        `<:VC_Stats:1448695844923510884> Scopri tutte le statistiche con \`+mstats\` e guarda i premi nel canale <#1442569111119990887>.`,
+        `<:VC_Stats:1482527532682055780> Scopri tutte le statistiche con \`+mstats\` e guarda i premi nel canale <#1442569111119990887>.`,
       ].join("\n")),
   () =>
     new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle("<:VC_BlackPin:1448687216871084266> Tutte le info sul server in un unico posto")
+      .setTitle("<:VC_BlackPin:1482534513400610948> Tutte le info sul server in un unico posto")
       .setDescription([
         `<a:VC_Boost:1448670271115497617> Livelli, boost, Picperms, ruoli, funzioni... tutto raccolto in <#1442569111119990887>!`,
         "",
@@ -145,9 +145,9 @@ const reminderPool = [
   () =>
     new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle("<:VC_Color:1470781368630775982> Personalizza il tuo profilo!")
+      .setTitle("<:VC_Color:1482532543273238569> Personalizza il tuo profilo!")
       .setDescription([
-        "<:VC_Vip:1448691936797134880> Su <#1469429150669602961> scegli ruoli e colori per rendere unico il tuo nome nel server.",
+        "<:VC_Vip:1482534921472835895> Su <#1469429150669602961> scegli ruoli e colori per rendere unico il tuo nome nel server.",
         "",
         `<a:VC_Boost:1448670271115497617> Alcuni colori/ruoli si sbloccano con livelli o boost: rendi il tuo profilo davvero personale!`,
       ].join("\n")),
@@ -156,7 +156,7 @@ const reminderPool = [
       .setColor("#6f4e37")
       .setTitle("<a:VC_Coffe:1448695567244066827> Entra nella community più sociale!")
       .setDescription([
-        "<:VC_Chat:1448694742237053061> **Zero tossicità, solo chiacchiere, musica, passioni e nuove amicizie!**",
+        "<:VC_Chat:1482532573002465413> **Zero tossicità, solo chiacchiere, musica, passioni e nuove amicizie!**",
         "",
         "<a:VC_PepeKeyboard:1448688327782826024> Partecipa in chat, gioca e scopri le attività: più sei attivo, più livelli e premi ottieni.",
       ].join("\n")),
@@ -167,7 +167,7 @@ const reminderPool = [
       .setDescription([
         "<:VC_FrogCute:1331620415185096746> Usa `/bump` con Disboard: ogni bump fa salire Vinili & Caffè in classifica e ci porta nuovi amici!",
         "",
-        "<:VC_bump:1330185435401424896> Ricorda di controllare il cooldown e di bumpare appena puoi.",
+        "<:VC_bump:1482531857521311885> Ricorda di controllare il cooldown e di bumpare appena puoi.",
       ].join("\n")),
   () =>
     new EmbedBuilder()
@@ -176,12 +176,12 @@ const reminderPool = [
       .setDescription([
         "<a:VC_NewsExclamation:1471891662786527253> Scrivi **`+help`** per vedere tutti i comandi bot, giochi e funzioni!",
         "",
-        `<:VC_Info:1460670816214585481> Per info su livelli, ruoli, minigiochi e regole: <#1442569111119990887>. Trovi davvero tutto lì!`,
+        `<:VC_InactiveStatus:1472011031709745307> Per info su livelli, ruoli, minigiochi e regole: <#1442569111119990887>. Trovi davvero tutto lì!`,
       ].join("\n")),
   () =>
     new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle("<:VC_BlackPin:1448687216871084266> Porta in alto i messaggi migliori!")
+      .setTitle("<:VC_BlackPin:1482534513400610948> Porta in alto i messaggi migliori!")
       .setDescription([
         "<:VC_Nails:1476166664201441280> Hai letto un messaggio che va ricordato? Rispondi con **`+quote`**: lo troverai postato tra i momenti migliori della community!",
         "",
@@ -190,11 +190,11 @@ const reminderPool = [
   () =>
     new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle("<:VC_Chat:1448694742237053061> Qui si gioca pulito: rispetto e regole")
+      .setTitle("<:VC_Chat:1482532573002465413> Qui si gioca pulito: rispetto e regole")
       .setDescription([
         "<a:VC_Rule:1469462649950703709> **Il rispetto è la base!** Leggi le regole e rispetta tutti, membri e staff.",
         "",
-        `<:VC_Ticket:1448694637106692156> Dubbio o problema? Apri un ticket in <#1442569095068254219>: siamo sempre disponibili ad aiutarti.`,
+        `<:VC_Ticket:1482535175283019888> Dubbio o problema? Apri un ticket in <#1442569095068254219>: siamo sempre disponibili ad aiutarti.`,
       ].join("\n")),
   () =>
     new EmbedBuilder()
@@ -217,7 +217,7 @@ const reminderPool = [
   () =>
     new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle("<a:VC_Announce:1448687280381235443> Resta sempre aggiornato!")
+      .setTitle("<a:VC_Announce:1482534613568979007> Resta sempre aggiornato!")
       .setDescription([
         "<:VC_Eye:1331619214410383381> Eventi, novità e annunci? Li trovi nei canali del server! Rimani sintonizzato su <#1442569115972669541> e la chat per non perderti nulla.",
         "",
@@ -233,9 +233,9 @@ const reminderPool = [
   () =>
     new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle("<:VC_Poll:1448695754972729436> Partecipa ai sondaggi!")
+      .setTitle("<:VC_Poll:1482535102436216832> Partecipa ai sondaggi!")
       .setDescription([
-        "<a:VC_Vote:1448729692235628818> Ogni sera ci sono nuovi sondaggi su <#1442569128706838528>! Partecipa anche tu: aiutano a capire la community e a migliorare il server.",
+        "<a:VC_Vote:1482535223001485473> Ogni sera ci sono nuovi sondaggi su <#1442569128706838528>! Partecipa anche tu: aiutano a capire la community e a migliorare il server.",
       ].join("\n")),
   () =>
     new EmbedBuilder()
@@ -276,17 +276,17 @@ const reminderPool = [
   () =>
     new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle("<:VC_Collab:1448707281423302697> Vuoi sponsorizzare?")
+      .setTitle("<:VC_Collab:1482534540089098260> Vuoi sponsorizzare il tuo server o social network?")
       .setDescription([
         "<a:VC_ThankYou:1330186319673950401> Vinili & Caffè offre sponsorizzazioni per chi rispetta i requisiti: apri un <#1442569095068254219> `Terza Categoria` per iniziare!",
-        "<:VC_Ticket:1448694637106692156> Trovi tutte le info sulle sponsorizzazioni in <#1442569111119990887>",
+        "<:VC_Ticket:1482535175283019888> Trovi tutte le info sulle sponsorizzazioni in <#1442569111119990887>",
       ].join("\n")),
   () =>
     new EmbedBuilder()
       .setColor("#6f4e37")
       .setTitle("<a:VC_Events:1448688007438667796> Giveaway per tutti!")
       .setDescription([
-        "<:VC_Wallet:1462794843746205815> Partecipa ai giveaway organizzati dallo staff! Li trovi in <#1442569115972669541> e sono aperti a tutti i membri: non perdere le prossime estrazioni!",
+        "<:VC_Wallet:1482534947574124584> Partecipa ai giveaway organizzati dallo staff! Li trovi in <#1442569115972669541> e sono aperti a tutti i membri: non perdere le prossime estrazioni!",
       ].join("\n")),
 ];
 
@@ -296,11 +296,11 @@ function getEventReminderEmbed() {
     .setTitle("<a:VC_Events:1448688007438667796> Evento in corso!")
     .setDescription(
       [
-        "<:VC_EXP:1468714279673925883> **È attivo un moltiplicatore EXP**: messaggi in chat e minigiochi danno più punti!",
+        "<:VC_EXP:1482534670896730143> **È attivo un moltiplicatore EXP**: messaggi in chat e minigiochi danno più punti!",
         "",
         "<a:VC_Arrow:1448672967721615452> Partecipa in chat, gioca ai minigiochi e scala la classifica prima che finisca.",
         "",
-        "> <:VC_Info:1460670816214585481> Livelli e premi in <#1442569111119990887>",
+        "> <:VC_InactiveStatus:1472011031709745307> Livelli e premi in <#1442569111119990887>",
       ].join("\n"),
     );
 }

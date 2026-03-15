@@ -133,7 +133,7 @@ async function sendPartnerManagerWelcome(pmChannel, user) {
 # Benvenutx nei Partner Manager <:partnermanager:1443651916838998099>
 
 > **Per iniziare al meglio controlla:** <:VC_id:1478517313618575419>
-<:VC_Reply:1468262952934314131> <#1442569199229730836>
+<:VC_Reply:1482532158080942191> <#1442569199229730836>
 
 __Per qualsiasi cosa l'High Staff è disponibile__ <:staff:1443651912179388548>`,
   }).catch(() => null);
@@ -145,9 +145,9 @@ async function sendHelperWelcome(staffChannel, user) {
 # Benvenutx nello staff <:staff:1443651912179388548>
 
 > **Per iniziare al meglio controlla:** <:VC_id:1478517313618575419>
-<:VC_DoubleReply:1468713981152727120> <#1442569237142044773>
-<:VC_DoubleReply:1468713981152727120> <#1442569239063167139>
-<:VC_Reply:1468262952934314131> <#1442569243626307634>
+<:VC_DoubleReply:1482532332509466797> <#1442569237142044773>
+<:VC_DoubleReply:1482532332509466797> <#1442569239063167139>
+<:VC_Reply:1482532158080942191> <#1442569243626307634>
 
 __Per qualsiasi cosa l'High Staff è disponibile__ <:staff:1443651912179388548>`,
   }).catch(() => null);

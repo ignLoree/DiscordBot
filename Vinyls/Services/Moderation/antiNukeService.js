@@ -371,9 +371,9 @@ function isUnknownExecutorId(executorId) {
 function formatExecutorLine(executorId) {
   const actorId = String(executorId || "").trim();
   if (!actorId || actorId === UNKNOWN_EXECUTOR_ID) {
-    return `<:VC_Mention:1443994358201323681> **Executor:** Sconosciuto`;
+    return `<:VC_Mention:1482526855289634997> **Executor:** Sconosciuto`;
   }
-  return `<:VC_Mention:1443994358201323681> **Executor:** <@${actorId}> \`${actorId}\``;
+  return `<:VC_Mention:1482526855289634997> **Executor:** <@${actorId}> \`${actorId}\``;
 }
 
 function formatAuditStatusLine(executorId) {
@@ -544,8 +544,8 @@ function extractLineValue(lines, label) {
 }
 
 function antiNukeHeadline(title, lines) {
-  const executor = extractLineValue(lines, "<:VC_Mention:1443994358201323681> Executor");
-  const action = extractLineValue(lines, "<:VC_Mention:1443994358201323681> Action");
+  const executor = extractLineValue(lines, "<:VC_Mention:1482526855289634997> Executor");
+  const action = extractLineValue(lines, "<:VC_Mention:1482526855289634997> Action");
   if (/panic mode enabled/i.test(String(title || ""))) {
     return "<:success:1461731530333229226> AntiNuke panic mode has been enabled!";
   }
@@ -553,7 +553,7 @@ function antiNukeHeadline(title, lines) {
     return "<:cancel:1461730653677551691> AntiNuke panic mode has ended.";
   }
   if (executor && /quarantined/i.test((lines || []).join(" "))) {
-    return `<:VC_Lock:1468544444113617063> ${executor.split(" ")[0]} has been quarantined!`;
+    return `<:VC_Lock:1482526739044368476> ${executor.split(" ")[0]} has been quarantined!`;
   }
   if (action) return `<a:VC_Alert:1448670089670037675> AntiNuke action: ${action}`;
   return title || "<a:VC_Alert:1448670089670037675> AntiNuke Trigger";
@@ -569,8 +569,8 @@ function cleanAntiNukeLines(lines) {
     )
     .filter(
       (line) =>
-        !line.startsWith("<:VC_Mention:1443994358201323681> **Executor:**") &&
-        !line.startsWith("<:VC_Mention:1443994358201323681> **Target:**") &&
+        !line.startsWith("<:VC_Mention:1482526855289634997> **Executor:**") &&
+        !line.startsWith("<:VC_Mention:1482526855289634997> **Target:**") &&
         !line.startsWith("<:channeltext:1443247596922470551> **Channel:**"),
     );
 }
@@ -588,8 +588,8 @@ async function sendAntiNukeLog(guild, title, lines, color = "#ED4245") {
   if (ANTINUKE_LOG_DEDUPE.has(dedupeBasis)) return;
   ANTINUKE_LOG_DEDUPE.set(dedupeBasis, now);
 
-  const executor = extractLineValue(lines, "<:VC_Mention:1443994358201323681> Executor");
-  const target = extractLineValue(lines, "<:VC_Mention:1443994358201323681> Target");
+  const executor = extractLineValue(lines, "<:VC_Mention:1482526855289634997> Executor");
+  const target = extractLineValue(lines, "<:VC_Mention:1482526855289634997> Target");
   const channel = extractLineValue(lines, "<:channeltext:1443247596922470551> Channel");
   const filterName = title?.replace(/^AntiNuke:\s*/i, "") || "<a:VC_Alert:1448670089670037675> AntiNuke";
   const details = cleanAntiNukeLines(lines);
@@ -599,10 +599,10 @@ async function sendAntiNukeLog(guild, title, lines, color = "#ED4245") {
     ? `<:channeltext:1443247596922470551> **Channel:** ${channel}`
     : null,
   target
-    ? `<:VC_Mention:1443994358201323681> **Target:** ${target}`
+    ? `<:VC_Mention:1482526855289634997> **Target:** ${target}`
     : null,
   executor
-    ? `<:VC_Mention:1443994358201323681> **Member:** ${executor}`
+    ? `<:VC_Mention:1482526855289634997> **Member:** ${executor}`
     : null,
     "",
   ...details.map(
@@ -721,8 +721,8 @@ async function sendPanicModeDetailedReport(
   const report = ensurePanicReport(state);
   if (backupSummary) {
     report.backup.loaded = Boolean(backupSummary.loaded);
-    incrementPanicMetric(state, "<:VC_Mention:1443994358201323681> roles", "<:cancel:1461730653677551691> deleted", Number(backupSummary.rolesDeleted || 0));
-    incrementPanicMetric(state, "<:VC_Mention:1443994358201323681> roles", "<:success:1461731530333229226> recovered", Number(backupSummary.rolesRecovered || 0));
+    incrementPanicMetric(state, "<:VC_Mention:1482526855289634997> roles", "<:cancel:1461730653677551691> deleted", Number(backupSummary.rolesDeleted || 0));
+    incrementPanicMetric(state, "<:VC_Mention:1482526855289634997> roles", "<:success:1461731530333229226> recovered", Number(backupSummary.rolesRecovered || 0));
     incrementPanicMetric(
       state,
       "<:channeltext:1443247596922470551> channels",
@@ -772,7 +772,7 @@ async function sendPanicModeDetailedReport(
     `<a:VC_Alert:1448670089670037675> **Backup System Report**`,
     `<:VC_reason:1478517122929004544>${backupLabel}`,
     "",
-    `<:VC_Mention:1443994358201323681> **Roles**`,
+    `<:VC_Mention:1482526855289634997> **Roles**`,
     `<:cancel:1461730653677551691> Deleted: ${Number(report.roles.deleted || 0)} | <:success:1461731530333229226> Recovered: ${Number(report.roles.recovered || 0)} | Edited: ${Number(report.roles.edited || 0)}`,
     `<:channeltext:1443247596922470551> **Channels**`,
     `<:cancel:1461730653677551691> Deleted: ${Number(report.channels.deleted || 0)} | <:success:1461731530333229226> Recovered: ${Number(report.channels.recovered || 0)} | <:VC_right_arrow:1482459908245815296> Edited: ${Number(report.channels.edited || 0)}`,
@@ -820,10 +820,10 @@ async function lockDangerousRolesForPanic(guild, state) {
       await role
         .setPermissions(
           safeBits,
-          "<:VC_Lock:1468544444113617063> AntiNuke Panic: lock dangerous role permissions",
+          "<:VC_Lock:1482526739044368476> AntiNuke Panic: lock dangerous role permissions",
         )
         .catch(() => { });
-      incrementPanicMetric(state, "<:VC_Mention:1443994358201323681> roles", "<:VC_right_arrow:1482459908245815296> edited", 1);
+      incrementPanicMetric(state, "<:VC_Mention:1482526855289634997> roles", "<:VC_right_arrow:1482459908245815296> edited", 1);
     }
   }
 }
@@ -844,7 +844,7 @@ async function unlockDangerousRolesAfterPanic(guild, state) {
     if (role.position >= me.roles.highest.position) continue;
     const oldBits = BigInt(oldBitsStr || 0n);
     await role
-      .setPermissions(oldBits, "<a:VC_Unlock:1470011538432852108> AntiNuke Panic: restore role permissions")
+      .setPermissions(oldBits, "<a:VC_Unlock:1482532082466029608> AntiNuke Panic: restore role permissions")
       .catch(() => { });
   }
   state.lockedRoles.clear();
@@ -923,7 +923,7 @@ async function lockGuildChannelsForPanic(guild, state) {
           Object.fromEntries(
             LOCKDOWN_CHANNEL_PERMISSION_FLAGS.map(([name]) => [name, false]),
           ),
-          { reason: "<:VC_Lock:1468544444113617063> AntiNuke Panic: global channel lockdown" },
+          { reason: "<:VC_Lock:1482526739044368476> AntiNuke Panic: global channel lockdown" },
         )
         .catch(() => { });
       ops += 1;
@@ -959,7 +959,7 @@ async function unlockGuildChannelsAfterPanic(guild, state) {
       if (!targetSnapshot) continue;
       if (!targetSnapshot?.hadOverwrite) {
         await channel.permissionOverwrites
-          .delete(targetId, "<a:VC_Unlock:1470011538432852108> AntiNuke Panic: restore channel overwrite")
+          .delete(targetId, "<a:VC_Unlock:1482532082466029608> AntiNuke Panic: restore channel overwrite")
           .catch(() => { });
         ops += 1;
         if (ops % 8 === 0) {
@@ -971,7 +971,7 @@ async function unlockGuildChannelsAfterPanic(guild, state) {
         .edit(
           targetId,
           buildLockdownRestorePayload(targetSnapshot),
-          { reason: "<a:VC_Unlock:1470011538432852108> AntiNuke Panic: restore channel permissions" },
+          { reason: "<a:VC_Unlock:1482532082466029608> AntiNuke Panic: restore channel permissions" },
         )
         .catch(() => { });
       ops += 1;
@@ -1078,7 +1078,7 @@ async function restoreDeletedRoleSnapshots(guild, state) {
       continue;
     }
     const targetPosition = Math.max(1, Number(snap.position || 1));
-    await role.setPosition(targetPosition, { reason: "<a:VC_Unlock:1470011538432852108> AntiNuke restore: role position" }).catch(() => { });
+    await role.setPosition(targetPosition, { reason: "<a:VC_Unlock:1482532082466029608> AntiNuke restore: role position" }).catch(() => { });
     restored += 1;
   }
   state.deletedRoleSnapshots?.clear?.();
@@ -1131,7 +1131,7 @@ async function restoreDeletedChannelSnapshots(guild, state) {
     }
     const position = Number(snap.position || 0);
     if (Number.isFinite(position) && position >= 0) {
-      await restoredChannel.setPosition(position, { reason: "<a:VC_Unlock:1470011538432852108> AntiNuke restore: channel position" }).catch(() => { });
+      await restoredChannel.setPosition(position, { reason: "<a:VC_Unlock:1482532082466029608> AntiNuke restore: channel position" }).catch(() => { });
     }
     restored += 1;
   }
@@ -1153,7 +1153,7 @@ async function runAutoBackupSyncAfterPanic(guild, state) {
     for (const channelId of state.createdChannelIds) {
       const channel = await getGuildChannelCached(guild, String(channelId), { ttlMs: 30_000 });
       if (!channel) continue;
-      const deleted = await channel.delete("<a:VC_Unlock:1470011538432852108> AntiNuke panic cleanup: delete new channel").then(() => true).catch(() => false);
+      const deleted = await channel.delete("<a:VC_Unlock:1482532082466029608> AntiNuke panic cleanup: delete new channel").then(() => true).catch(() => false);
       if (deleted) {
         if (Number(channel.type) === 4) categoriesDeleted += 1;
         else channelsDeleted += 1;
@@ -1167,7 +1167,7 @@ async function runAutoBackupSyncAfterPanic(guild, state) {
       if (!role) continue;
       if (role.managed) continue;
       if (role.position >= me.roles.highest.position) continue;
-      const deleted = await role.delete("<a:VC_Unlock:1470011538432852108> AntiNuke panic cleanup: delete new role").then(() => true).catch(() => false);
+      const deleted = await role.delete("<a:VC_Unlock:1482532082466029608> AntiNuke panic cleanup: delete new role").then(() => true).catch(() => false);
       if (deleted) rolesDeleted += 1;
     }
   }
@@ -1179,7 +1179,7 @@ async function runAutoBackupSyncAfterPanic(guild, state) {
       if (!webhooks?.size) continue;
       for (const webhook of webhooks.values()) {
         if (!state.createdWebhookIds.has(String(webhook.id))) continue;
-        const deleted = await webhook.delete("<a:VC_Unlock:1470011538432852108> AntiNuke panic cleanup: delete new webhook").then(() => true).catch(() => false);
+        const deleted = await webhook.delete("<a:VC_Unlock:1482532082466029608> AntiNuke panic cleanup: delete new webhook").then(() => true).catch(() => false);
         if (deleted) webhooksDeleted += 1;
       }
     }
@@ -1388,13 +1388,13 @@ function scheduleQuarantineRoleRollback(guild, userId, roleId, durationMs) {
 function quarantineOutcomeLabel(outcome) {
   const suspiciousSuffix = outcome?.joinGateSuspicious ? " | <:VC_right_arrow:1482459908245815296> JoinGate suspicious: YES" : "";
   if (!outcome?.applied) return "<:cancel:1461730653677551691> Quarantine not applied";
-  if (outcome.method === "ban") return `<:VC_Lock:1468544444113617063> Banned ${suspiciousSuffix}`;
+  if (outcome.method === "ban") return `<:VC_Lock:1482526739044368476> Banned ${suspiciousSuffix}`;
   if (outcome.method === "already_role") {
-    return `<:VC_Lock:1468544444113617063> Quarantine active ${suspiciousSuffix}`;
+    return `<:VC_Lock:1482526739044368476> Quarantine active ${suspiciousSuffix}`;
   }
-  if (outcome.method === "role") return `<:VC_Lock:1468544444113617063> Quarantined via role ${suspiciousSuffix}`;
-  if (outcome.method === "timeout") return `<:VC_Lock:1468544444113617063> Quarantined via timeout ${suspiciousSuffix}`;
-  return `<:VC_Lock:1468544444113617063> Quarantined${suspiciousSuffix}`;
+  if (outcome.method === "role") return `<:VC_Lock:1482526739044368476> Quarantined via role ${suspiciousSuffix}`;
+  if (outcome.method === "timeout") return `<:VC_Lock:1482526739044368476> Quarantined via timeout ${suspiciousSuffix}`;
+  return `<:VC_Lock:1482526739044368476> Quarantined${suspiciousSuffix}`;
 }
 
 async function quarantineExecutor(guild, executorId, reason) {
@@ -1428,7 +1428,7 @@ async function quarantineExecutor(guild, executorId, reason) {
     guild?.members?.me?.permissions?.has?.(PermissionsBitField.Flags.BanMembers) &&
     String(guild?.ownerId || "") !== userId
   ) {
-    const banReason = `<:VC_Lock:1468544444113617063> AntiNuke panic: ${String(reason || "malicious executor")}`;
+    const banReason = `<:VC_Lock:1482526739044368476> AntiNuke panic: ${String(reason || "malicious executor")}`;
     const banned = await guild.members.ban(userId, { deleteMessageSeconds: 604800, reason: banReason, }).then(() => true).catch(() => false);
     if (banned) {
       ensurePanicReport(getPanicState(guild?.id)).quarantinedUserIds.add(String(userId));
@@ -1527,7 +1527,7 @@ async function deleteWebhookById(guild, webhookId, preferredChannelId = "") {
       const wh = await preferredChannel.fetchWebhooks().catch(() => null);
       const target = wh?.get?.(id) || null;
       if (target) {
-        const deleted = await target.delete("<:VC_Lock:1468544444113617063> AntiNuke panic: delete webhook created during active panic").then(() => true).catch(() => false);
+        const deleted = await target.delete("<:VC_Lock:1482526739044368476> AntiNuke panic: delete webhook created during active panic").then(() => true).catch(() => false);
         if (deleted) return true;
       }
     }
@@ -1539,7 +1539,7 @@ async function deleteWebhookById(guild, webhookId, preferredChannelId = "") {
     if (!webhooks?.size) continue;
     const target = webhooks.get(id);
     if (!target) continue;
-    const deleted = await target.delete("<:VC_Lock:1468544444113617063> AntiNuke panic: delete webhook created during active panic").then(() => true).catch(() => false);
+    const deleted = await target.delete("<:VC_Lock:1482526739044368476> AntiNuke panic: delete webhook created during active panic").then(() => true).catch(() => false);
     if (deleted) return true;
   }
   return false;
@@ -1722,7 +1722,7 @@ async function handleKickBanAction({ guild, executorId, action = "unknown", targ
   if (now - Number(state.lastPunishAt || 0) < 15_000) return;
   state.lastPunishAt = now;
 
-  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1468544444113617063> AntiNuke: kick/ban abuse detected",);
+  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1482526739044368476> AntiNuke: kick/ban abuse detected",);
   await sendAntiNukeLog(
     guild,
     "<a:VC_Alert:1448670089670037675> AntiNuke: Kick/Ban Filter",
@@ -1802,9 +1802,9 @@ async function handleRoleCreationAction({ guild, executorId, roleId = "" }) {
       me?.permissions?.has?.(PermissionsBitField.Flags.ManageRoles) &&
       role.position < me.roles.highest.position
     ) {
-      const removed = await role.delete("<:VC_Lock:1468544444113617063> AntiNuke panic: delete role created during active panic").then(() => true).catch(() => false);
+      const removed = await role.delete("<:VC_Lock:1482526739044368476> AntiNuke panic: delete role created during active panic").then(() => true).catch(() => false);
       const canQuarantine = instantCfg?.quarantineExecutor && !shouldSkipPanicExecutorAction(guild.id, actorId, now);
-      const quarantine = canQuarantine ? await quarantineExecutor(guild, actorId, "<:VC_Lock:1468544444113617063> AntiNuke panic: role creation blocked during active panic",) : { applied: false, method: "cooldown" };
+      const quarantine = canQuarantine ? await quarantineExecutor(guild, actorId, "<:VC_Lock:1482526739044368476> AntiNuke panic: role creation blocked during active panic",) : { applied: false, method: "cooldown" };
       if (removed) {
         await sendAntiNukeLog(
           guild,
@@ -1840,7 +1840,7 @@ async function handleRoleCreationAction({ guild, executorId, roleId = "" }) {
   if (now - Number(state.lastPunishAt || 0) < 15_000) return;
   state.lastPunishAt = now;
 
-  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1468544444113617063> AntiNuke: role creation spam detected",);
+  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1482526739044368476> AntiNuke: role creation spam detected",);
   await sendAntiNukeLog(
     guild,
     "<a:VC_Alert:1448670089670037675> AntiNuke: Role Creations Filter",
@@ -1934,7 +1934,7 @@ async function handleRoleDeletionAction({ guild, executorId, roleName = "", role
   if (now - Number(state.lastPunishAt || 0) < 15_000) return;
   state.lastPunishAt = now;
 
-  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1468544444113617063> AntiNuke: role deletion spam detected",);
+  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1482526739044368476> AntiNuke: role deletion spam detected",);
   await sendAntiNukeLog(
     guild,
     "<a:VC_Alert:1448670089670037675> AntiNuke: Role Deletions Filter",
@@ -2012,9 +2012,9 @@ async function handleChannelCreationAction({ guild, executorId, channelId = "", 
     const targetChannel = channel || (await getGuildChannelCached(guild, String(channelId), { ttlMs: 30_000 }));
     const canDelete = targetChannel?.deletable && me?.permissions?.has?.(PermissionsBitField.Flags.ManageChannels);
     if (canDelete) {
-      const removed = await targetChannel.delete("<:VC_Lock:1468544444113617063> AntiNuke panic: delete channel created during active panic").then(() => true).catch(() => false);
+      const removed = await targetChannel.delete("<:VC_Lock:1482526739044368476> AntiNuke panic: delete channel created during active panic").then(() => true).catch(() => false);
       const canQuarantine = instantCfg?.quarantineExecutor && !shouldSkipPanicExecutorAction(guild.id, actorId, now);
-      const quarantine = canQuarantine ? await quarantineExecutor(guild, actorId, "<:VC_Lock:1468544444113617063> AntiNuke panic: channel creation blocked during active panic",) : { applied: false, method: "cooldown" };
+      const quarantine = canQuarantine ? await quarantineExecutor(guild, actorId, "<:VC_Lock:1482526739044368476> AntiNuke panic: channel creation blocked during active panic",) : { applied: false, method: "cooldown" };
       if (removed) {
         await sendAntiNukeLog(
           guild,
@@ -2050,7 +2050,7 @@ async function handleChannelCreationAction({ guild, executorId, channelId = "", 
   if (now - Number(state.lastPunishAt || 0) < 15_000) return;
   state.lastPunishAt = now;
 
-  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1468544444113617063> AntiNuke: channel creation spam detected",);
+  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1482526739044368476> AntiNuke: channel creation spam detected",);
   await sendAntiNukeLog(
     guild,
     "<a:VC_Alert:1448670089670037675> AntiNuke: Channel Creations Filter",
@@ -2148,7 +2148,7 @@ async function handleChannelDeletionAction({ guild, executorId, channelName = ""
   if (now - Number(state.lastPunishAt || 0) < 15_000) return;
   state.lastPunishAt = now;
 
-  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1468544444113617063> AntiNuke: channel deletion spam detected",);
+  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1482526739044368476> AntiNuke: channel deletion spam detected",);
   await sendAntiNukeLog(
     guild,
     "<a:VC_Alert:1448670089670037675> AntiNuke: Channel Deletions Filter",
@@ -2229,7 +2229,7 @@ async function handleWebhookCreationAction({ guild, executorId, webhookId = "", 
   ) {
     const removed = await deleteWebhookById(guild, normalizedWebhookId, channelId);
     const canQuarantine = instantCfg?.quarantineExecutor && !shouldSkipPanicExecutorAction(guild.id, actorId, now);
-    const quarantine = canQuarantine ? await quarantineExecutor(guild, actorId, "<:VC_Lock:1468544444113617063> AntiNuke panic: webhook creation blocked during active panic",) : { applied: false, method: "cooldown" };
+    const quarantine = canQuarantine ? await quarantineExecutor(guild, actorId, "<:VC_Lock:1482526739044368476> AntiNuke panic: webhook creation blocked during active panic",) : { applied: false, method: "cooldown" };
     if (removed) {
       await sendAntiNukeLog(
         guild,
@@ -2264,7 +2264,7 @@ async function handleWebhookCreationAction({ guild, executorId, webhookId = "", 
   if (now - Number(state.lastPunishAt || 0) < 15_000) return;
   state.lastPunishAt = now;
 
-  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1468544444113617063> AntiNuke: webhook creation spam detected",);
+  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1482526739044368476> AntiNuke: webhook creation spam detected",);
   await sendAntiNukeLog(
     guild,
     "<a:VC_Alert:1448670089670037675> AntiNuke: Webhook Creations Filter",
@@ -2361,7 +2361,7 @@ async function handleWebhookUpdateAction({ guild, executorId, webhookId = "" }) 
   if (now - Number(state.lastPunishAt || 0) < 15_000) return;
   state.lastPunishAt = now;
 
-  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1468544444113617063> AntiNuke: webhook update spam detected",);
+  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1482526739044368476> AntiNuke: webhook update spam detected",);
   await sendAntiNukeLog(
     guild,
     "<a:VC_Alert:1448670089670037675> AntiNuke: Webhook Updates Filter",
@@ -2439,7 +2439,7 @@ async function handleWebhookDeletionAction({ guild, executorId, webhookId = "" }
   if (now - Number(state.lastPunishAt || 0) < 15_000) return;
   state.lastPunishAt = now;
 
-  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1468544444113617063> AntiNuke: webhook deletion spam detected",);
+  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1482526739044368476> AntiNuke: webhook deletion spam detected",);
   await sendAntiNukeLog(
     guild,
     "<a:VC_Alert:1448670089670037675> AntiNuke: Webhook Deletions Filter",
@@ -2525,7 +2525,7 @@ async function handleInviteCreationAction({ guild, executorId, inviteCode = "", 
   if (now - Number(state.lastPunishAt || 0) < 15_000) return;
   state.lastPunishAt = now;
 
-  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1468544444113617063> AntiNuke: invite creation spam detected",);
+  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1482526739044368476> AntiNuke: invite creation spam detected",);
   await sendAntiNukeLog(
     guild,
     "<a:VC_Alert:1448670089670037675> AntiNuke: Invite Creations Filter",
@@ -2569,8 +2569,8 @@ async function handleRoleUpdate({ oldRole, newRole, executorId }) {
   if (!myMember?.permissions?.has(PermissionsBitField.Flags.ManageRoles)) return;
   if (newRole.position >= myMember.roles.highest.position) return;
 
-  await newRole.setPermissions(oldRole.permissions.bitfield, "<:VC_Lock:1468544444113617063> AntiNuke: revert dangerous role perms").catch(() => { });
-  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1468544444113617063> AntiNuke: dangerous role permission update",);
+  await newRole.setPermissions(oldRole.permissions.bitfield, "<:VC_Lock:1482526739044368476> AntiNuke: revert dangerous role perms").catch(() => { });
+  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1482526739044368476> AntiNuke: dangerous role permission update",);
   await sendAntiNukeLog(
     guild,
     "<a:VC_Alert:1448670089670037675> AntiNuke: Role Quarantine",
@@ -2619,10 +2619,10 @@ async function handleMemberRoleAddition({ guild, targetMember, addedRoles, execu
 
   const removable = dangerousRoles.filter((role) => role.position < myMember.roles.highest.position);
   if (!removable.length) return;
-  await targetMember.roles.remove(removable, "<:VC_Lock:1468544444113617063> AntiNuke: remove dangerous role grants").catch(() => { });
+  await targetMember.roles.remove(removable, "<:VC_Lock:1482526739044368476> AntiNuke: remove dangerous role grants").catch(() => { });
   const refreshedTarget = await getGuildMemberCached(guild, String(targetMember.id), { ttlMs: 1 });
   if (removable.some((role) => refreshedTarget?.roles?.cache?.has?.(role.id))) return;
-  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1468544444113617063> AntiNuke: dangerous role granted to member",);
+  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1482526739044368476> AntiNuke: dangerous role granted to member",);
   await sendAntiNukeLog(
     guild,
     "<a:VC_Alert:1448670089670037675> AntiNuke: Member Role Quarantine",
@@ -2664,10 +2664,10 @@ async function handleChannelOverwrite({ guild, channel, overwrite, beforeAllow =
   await channel.permissionOverwrites.edit(
     overwrite.id,
     { allow: beforeAllow, deny: overwrite.deny?.bitfield ?? 0n },
-    { reason: "<:VC_Lock:1468544444113617063> AntiNuke: revert dangerous channel overwrite permissions" },
+    { reason: "<:VC_Lock:1482526739044368476> AntiNuke: revert dangerous channel overwrite permissions" },
   ).catch(() => { });
 
-  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1468544444113617063> AntiNuke: dangerous channel overwrite",);
+  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1482526739044368476> AntiNuke: dangerous channel overwrite",);
   await sendAntiNukeLog(
     guild,
     "<a:VC_Alert:1448670089670037675> AntiNuke: Channel Overwrite Quarantine",
@@ -2702,11 +2702,11 @@ async function handleVanityGuard({ oldGuild, newGuild, executorId }) {
   await enableAntiNukePanic(guild, "<a:VC_Alert:1448670089670037675> Vanity URL unauthorized update", 100);
 
   if (oldVanity) {
-    await newGuild.setVanityCode(oldVanity, "<:VC_Lock:1468544444113617063> AntiNuke: restore vanity url").catch(() => { });
+    await newGuild.setVanityCode(oldVanity, "<:VC_Lock:1482526739044368476> AntiNuke: restore vanity url").catch(() => { });
   } else {
-    await newGuild.setVanityCode(null, "<:VC_Lock:1468544444113617063> AntiNuke: clear unauthorized vanity url").catch(() => { });
+    await newGuild.setVanityCode(null, "<:VC_Lock:1482526739044368476> AntiNuke: clear unauthorized vanity url").catch(() => { });
   }
-  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1468544444113617063> AntiNuke: unauthorized vanity update",);
+  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1482526739044368476> AntiNuke: unauthorized vanity update",);
   await sendAntiNukeLog(
     guild,
     "<a:VC_Alert:1448670089670037675> AntiNuke: Vanity Guard",
@@ -2733,7 +2733,7 @@ async function handlePruneAction({ guild, executorId, removedCount = 0 }) {
   }
   if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   await enableAntiNukePanic(guild, "<a:VC_Alert:1448670089670037675> Member prune detected", 100);
-  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1468544444113617063> AntiNuke: member prune detected",);
+  const quarantine = await quarantineExecutor(guild, actorId, "<:VC_Lock:1482526739044368476> AntiNuke: member prune detected",);
   await sendAntiNukeLog(
     guild,
     "<a:VC_Alert:1448670089670037675> AntiNuke: Member Prune",

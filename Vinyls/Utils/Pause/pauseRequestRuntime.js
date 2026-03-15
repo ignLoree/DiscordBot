@@ -131,13 +131,13 @@ async function createPauseRequest({ guild, userId, requesterMention, rawStart, r
 
   const requisitiNonRispettati = [];
   if (getOnePausePerMonthWarning(stafferDoc, { ...normalized, excludePauseId: pauseId })) {
-    requisitiNonRispettati.push("<:VC_Attention:1443933073438675016> **Una pausa al mese:** hai già una richiesta pausa in questo mese.");
+    requisitiNonRispettati.push("<:VC_Attention:1482534443632558151> **Una pausa al mese:** hai già una richiesta pausa in questo mese.");
   }
   if (getOneWeekBetweenWarning(stafferDoc, pauseId)) {
-    requisitiNonRispettati.push("<:VC_Attention:1443933073438675016> **Almeno 1 settimana tra richieste:** l'ultima richiesta pausa è stata fatta da meno di 7 giorni.");
+    requisitiNonRispettati.push("<:VC_Attention:1482534443632558151> **Almeno 1 settimana tra richieste:** l'ultima richiesta pausa è stata fatta da meno di 7 giorni.");
   }
   if (member && isHelperFirstWeek(member, stafferDoc)) {
-    requisitiNonRispettati.push("<:VC_Attention:1443933073438675016> **Helper in prima settimana:** le pause richieste dagli Helper nella prima settimana sono consentite solo per problemi personali o familiari gravi.");
+    requisitiNonRispettati.push("<:VC_Attention:1482534443632558151> **Helper in prima settimana:** le pause richieste dagli Helper nella prima settimana sono consentite solo per problemi personali o familiari gravi.");
   }
   const warningBlock = requisitiNonRispettati.length
     ? "\n\n<a:VC_Alert:1448670089670037675> **Requisiti non rispettati:**\n" + requisitiNonRispettati.map((r) => `• ${r}`).join("\n") + "\n\n_L'High Staff può accettare comunque._"

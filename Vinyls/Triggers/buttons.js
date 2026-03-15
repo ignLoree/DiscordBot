@@ -52,7 +52,7 @@ async function handleStaffButtons(interaction) {
     const targetUser = member?.user;
     if (choice === "no") {
       await interaction.update({
-        content: "<:VC_OnlineStatus:1472011187569950751> Nessuna azione. Al **3° warn staff** scatterà il depex completo (ruolo + staff).",
+        content: "<:VC_OnlineStatus:1482527088912240650> Nessuna azione. Al **3° warn staff** scatterà il depex completo (ruolo + staff).",
         embeds: [],
         components: [],
       }).catch(() => null);
@@ -151,17 +151,17 @@ async function handleStaffButtons(interaction) {
       "<:infoglowingdot:1443660296823767110> I **`limiti settimanali`** sono dei **messaggi** e delle **ore vocali** che entro una __settimana__ si devono __raggiungere__.\n\n" +
       "> <:attentionfromvega:1443651874032062505> **Superare** i limiti di __poco__ potrebbe comportare un **depex**, mentre **superarli** di __tanto__ **__non garantisce__** un **pex**.\n\n" +
       "<a:VC_Arrow:1448672967721615452> <@&1442568904311570555>\n" +
-      "<:VC_DoubleReply:1468713981152727120> **__400__** messaggi\n" +
-      "<:VC_Reply:1468262952934314131> **__3.5h__** in vocale\n\n" +
+      "<:VC_DoubleReply:1482532332509466797> **__400__** messaggi\n" +
+      "<:VC_Reply:1482532158080942191> **__3.5h__** in vocale\n\n" +
       "<a:VC_Arrow:1448672967721615452> <@&1442568901887000618>\n" +
-      "<:VC_DoubleReply:1468713981152727120> **__500__** messaggi\n" +
-      "<:VC_Reply:1468262952934314131> **__5h__** in vocale\n\n" +
+      "<:VC_DoubleReply:1482532332509466797> **__500__** messaggi\n" +
+      "<:VC_Reply:1482532158080942191> **__5h__** in vocale\n\n" +
       "<a:VC_Arrow:1448672967721615452> <@&1442568897902678038>\n" +
-      "<:VC_DoubleReply:1468713981152727120> **__500__** messaggi\n" +
-      "<:VC_Reply:1468262952934314131> **__4.5h__** in vocale\n\n" +
+      "<:VC_DoubleReply:1482532332509466797> **__500__** messaggi\n" +
+      "<:VC_Reply:1482532158080942191> **__4.5h__** in vocale\n\n" +
       "<a:VC_Arrow:1448672967721615452> <@&1442568896237277295>\n" +
-      "<:VC_DoubleReply:1468713981152727120> **__450__** messaggi\n" +
-      "<:VC_Reply:1468262952934314131> **__4h__** in vocale\n\n" +
+      "<:VC_DoubleReply:1482532332509466797> **__450__** messaggi\n" +
+      "<:VC_Reply:1482532158080942191> **__4h__** in vocale\n\n" +
       "> <:attentionfromvega:1443651874032062505> Verrà **valutato** anche il **modo** in cui questi __limiti__ vengono raggiunti, ovvero se lo **staffer** è stato costante o no."
     );
     await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
@@ -190,100 +190,100 @@ async function handleStaffButtons(interaction) {
 
   if (interaction.customId == "generalimoderazione") {
     const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setDescription(`<:rules:1443307208543703131> **__Regola \`1.1\`__**
-                <:VC_Reply:1468262952934314131> Sanzione: **Ban**
+                <:VC_Reply:1482532158080942191> Sanzione: **Ban**
 
                 <:rules:1443307208543703131> **__Regola \`1.2\`__**
-                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
-                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __2h__**
+                <:VC_DoubleReply:1482532332509466797> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1482532158080942191> 2° Sanzione: **Mute __2h__**
 
                 <:rules:1443307208543703131> **__Regola \`1.3\`__**
-                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
-                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __3h__**
-                <:VC_Reply:1468262952934314131> 3° Sanzione: **Mute __6h__**
-                <:VC_Reply:1468262952934314131> 4° Sanzione: **Mute __18h__**
+                <:VC_DoubleReply:1482532332509466797> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1482532158080942191> 2° Sanzione: **Mute __3h__**
+                <:VC_Reply:1482532158080942191> 3° Sanzione: **Mute __6h__**
+                <:VC_Reply:1482532158080942191> 4° Sanzione: **Mute __18h__**
 
                 <:rules:1443307208543703131> **__Regola \`1.4\`__**
-                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Mute __12h__**
-                <:VC_Reply:1468262952934314131> 2° Sanzione: **Ban**
+                <:VC_DoubleReply:1482532332509466797> 1° Sanzione: **Mute __12h__**
+                <:VC_Reply:1482532158080942191> 2° Sanzione: **Ban**
 
                 <:rules:1443307208543703131> **__Regola \`1.5\`__**
-                <:VC_Reply:1468262952934314131> Sanzione: **Ban**`);
+                <:VC_Reply:1482532158080942191> Sanzione: **Ban**`);
     await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
   }
 
   if (interaction.customId == "testualimoderazione") {
     const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setDescription(`<:rules:1443307208543703131> **__Regola \`2.1\`__**
-                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Mute __18h__**
-                <:VC_Reply:1468262952934314131> 2° Sanzione: **Ban**
+                <:VC_DoubleReply:1482532332509466797> 1° Sanzione: **Mute __18h__**
+                <:VC_Reply:1482532158080942191> 2° Sanzione: **Ban**
 
                 <:rules:1443307208543703131> **__Regola \`2.2\`__**
-                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
-                <:VC_Reply:1468262952934314131> 2° Sanzione: **Warn**
-                <:VC_Reply:1468262952934314131> 3° Sanzione: **Mute __12h__**
-                <:VC_Reply:1468262952934314131> 4° Sanzione: **Mute __18h__**
-                <:VC_Reply:1468262952934314131> 5° Sanzione: **Mute __24h__**
-                <:VC_Reply:1468262952934314131> 6° Sanzione: **Ban**
+                <:VC_DoubleReply:1482532332509466797> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1482532158080942191> 2° Sanzione: **Warn**
+                <:VC_Reply:1482532158080942191> 3° Sanzione: **Mute __12h__**
+                <:VC_Reply:1482532158080942191> 4° Sanzione: **Mute __18h__**
+                <:VC_Reply:1482532158080942191> 5° Sanzione: **Mute __24h__**
+                <:VC_Reply:1482532158080942191> 6° Sanzione: **Ban**
 
                 <:rules:1443307208543703131> **__Regola \`2.3\`__**
-                <:VC_Reply:1468262952934314131> Sanzione: **Ban**
+                <:VC_Reply:1482532158080942191> Sanzione: **Ban**
 
                 <:rules:1443307208543703131> **__Regola \`2.4\`__**
-                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
-                <:VC_Reply:1468262952934314131> 2° Sanzione: **Warn**
-                <:VC_Reply:1468262952934314131> 3° Sanzione: **Mute __6h__**
-                <:VC_Reply:1468262952934314131> 4° Sanzione: **Mute __18h__**
+                <:VC_DoubleReply:1482532332509466797> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1482532158080942191> 2° Sanzione: **Warn**
+                <:VC_Reply:1482532158080942191> 3° Sanzione: **Mute __6h__**
+                <:VC_Reply:1482532158080942191> 4° Sanzione: **Mute __18h__**
 
                 <:rules:1443307208543703131> **__Regola \`2.5\`__**
-                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
-                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __2h__**`);
+                <:VC_DoubleReply:1482532332509466797> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1482532158080942191> 2° Sanzione: **Mute __2h__**`);
     await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
   }
 
   if (interaction.customId == "vocalimoderazione") {
     const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setDescription(`<:rules:1443307208543703131> **__Regola \`3.1\`__**
-                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
-                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __16h__**
-                <:VC_Reply:1468262952934314131> 3° Sanzione: **Ban**
+                <:VC_DoubleReply:1482532332509466797> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1482532158080942191> 2° Sanzione: **Mute __16h__**
+                <:VC_Reply:1482532158080942191> 3° Sanzione: **Ban**
 
                 <:rules:1443307208543703131> **__Regola \`3.2\`__**
-                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
-                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __12h__**
-                <:VC_Reply:1468262952934314131> 3° Sanzione: **Mute __18h__**
-                <:VC_Reply:1468262952934314131> 4° Sanzione: **Mute __24h__**
-                <:VC_Reply:1468262952934314131> 5° Sanzione: **Ban**
+                <:VC_DoubleReply:1482532332509466797> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1482532158080942191> 2° Sanzione: **Mute __12h__**
+                <:VC_Reply:1482532158080942191> 3° Sanzione: **Mute __18h__**
+                <:VC_Reply:1482532158080942191> 4° Sanzione: **Mute __24h__**
+                <:VC_Reply:1482532158080942191> 5° Sanzione: **Ban**
 
                 <:rules:1443307208543703131> **__Regola \`3.3\`__**
-                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
-                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __6h__**
-                <:VC_Reply:1468262952934314131> 3° Sanzione: **Mute __12h__**
-                <:VC_Reply:1468262952934314131> 4° Sanzione: **Mute __24h__**
-                <:VC_Reply:1468262952934314131> 5° Sanzione: **Mute __48h__**
+                <:VC_DoubleReply:1482532332509466797> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1482532158080942191> 2° Sanzione: **Mute __6h__**
+                <:VC_Reply:1482532158080942191> 3° Sanzione: **Mute __12h__**
+                <:VC_Reply:1482532158080942191> 4° Sanzione: **Mute __24h__**
+                <:VC_Reply:1482532158080942191> 5° Sanzione: **Mute __48h__**
 
                 <:rules:1443307208543703131> **__Regola \`3.4\`__**
-                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
-                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __3h__**
-                <:VC_Reply:1468262952934314131> 3° Sanzione: **Mute __6h__**
-                <:VC_Reply:1468262952934314131> 4° Sanzione: **Mute __12h__**
-                <:VC_Reply:1468262952934314131> 5° Sanzione: **Ban**
+                <:VC_DoubleReply:1482532332509466797> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1482532158080942191> 2° Sanzione: **Mute __3h__**
+                <:VC_Reply:1482532158080942191> 3° Sanzione: **Mute __6h__**
+                <:VC_Reply:1482532158080942191> 4° Sanzione: **Mute __12h__**
+                <:VC_Reply:1482532158080942191> 5° Sanzione: **Ban**
 
                 <:rules:1443307208543703131> **__Regola \`3.5\`__**
-                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
-                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __3h__**
-                <:VC_Reply:1468262952934314131> 3° Sanzione: **Mute __12h__**
-                <:VC_Reply:1468262952934314131> 4° Sanzione: **Ban**
+                <:VC_DoubleReply:1482532332509466797> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1482532158080942191> 2° Sanzione: **Mute __3h__**
+                <:VC_Reply:1482532158080942191> 3° Sanzione: **Mute __12h__**
+                <:VC_Reply:1482532158080942191> 4° Sanzione: **Ban**
 
                 <:rules:1443307208543703131> **__Regola \`3.6\`__**
-                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
-                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __2h__**
+                <:VC_DoubleReply:1482532332509466797> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1482532158080942191> 2° Sanzione: **Mute __2h__**
 
                 <:rules:1443307208543703131> **__Regola \`3.7\`__**
-                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
-                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __4h__**
-                <:VC_Reply:1468262952934314131> 3° Sanzione: **Mute __12h__**
-                <:VC_Reply:1468262952934314131> 4° Sanzione: **Mute __18h__**
-                <:VC_Reply:1468262952934314131> 5° Sanzione: **Ban**`);
+                <:VC_DoubleReply:1482532332509466797> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1482532158080942191> 2° Sanzione: **Mute __4h__**
+                <:VC_Reply:1482532158080942191> 3° Sanzione: **Mute __12h__**
+                <:VC_Reply:1482532158080942191> 4° Sanzione: **Mute __18h__**
+                <:VC_Reply:1482532158080942191> 5° Sanzione: **Ban**`);
     await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
   }
@@ -607,57 +607,57 @@ module.exports = {
         .setDescription("<:5751attentionfromvega:1443651874032062505> __Lo staff si riserva il diritto di cambiare sanzioni e regole in base alla situazione.__");
       const generalEmbed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setDescription([
         "<:rules:1443307208543703131> **`REGOLA GENERALE 1.1`**",
-        "<:VC_Reply:1468262952934314131> **Rispettare** i [__ToS__](https://discord.com/terms) e le [__Linee Guida__](https://discord.com/guidelines) di Discord.",
+        "<:VC_Reply:1482532158080942191> **Rispettare** i [__ToS__](https://discord.com/terms) e le [__Linee Guida__](https://discord.com/guidelines) di Discord.",
         "",
         "<:rules:1443307208543703131> **`REGOLA GENERALE 1.2`**",
-        "<:VC_Reply:1468262952934314131> **Non discriminare nessuno**, non accettiamo nessuna forma di razzismo, fascismo, omofobia. È __vietato__ **scrivere** o **dire** la `f-word` e la `n-word`.",
+        "<:VC_Reply:1482532158080942191> **Non discriminare nessuno**, non accettiamo nessuna forma di razzismo, fascismo, omofobia. È __vietato__ **scrivere** o **dire** la `f-word` e la `n-word`.",
         "",
         "<:rules:1443307208543703131> **`REGOLA GENERALE 1.3`**",
-        "<:VC_Reply:1468262952934314131> **Rispettare** gli __utenti__ e lo __staff__ del server.",
+        "<:VC_Reply:1482532158080942191> **Rispettare** gli __utenti__ e lo __staff__ del server.",
         "",
         "<:rules:1443307208543703131> **`REGOLA GENERALE 1.4`**",
-        "<:VC_Reply:1468262952934314131> È __vietato__ **auto-promuoversi**.",
+        "<:VC_Reply:1482532158080942191> È __vietato__ **auto - promuoversi**.",
         "",
         "<:rules:1443307208543703131> **`REGOLA GENERALE 1.5`**",
-        "<:VC_Reply:1468262952934314131> È __vietato__ **uscire** e **rientrare** continuamente dal server.",
+        "<:VC_Reply:1482532158080942191> È __vietato__ **uscire** e **rientrare** continuamente dal server.",
       ].join("\n"));
       const textEmbed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setDescription([
         "<:rules:1443307208543703131> **`REGOLA TESTUALE 2.1`**",
-        "<:VC_Reply:1468262952934314131> È __vietato__ inviare **file** **gore**, **NSFW** o **dati sensibili** di un utente.",
+        "<:VC_Reply:1482532158080942191> È __vietato__ inviare **file** **gore**, **NSFW** o **dati sensibili** di un utente.",
         "",
         "<:rules:1443307208543703131> **`REGOLA TESTUALE 2.2`**",
-        "<:VC_Reply:1468262952934314131> È __vietato__ avere **comportamenti toxic** o **troll** che conducono al flame.",
+        "<:VC_Reply:1482532158080942191> È __vietato__ avere **comportamenti toxic** o **troll** che conducono al flame.",
         "",
         "<:rules:1443307208543703131> **`REGOLA TESTUALE 2.3`**",
-        "<:VC_Reply:1468262952934314131> È __vietato__ inviare **link** contenenti virus, grabber, sponsor o social.",
+        "<:VC_Reply:1482532158080942191> È __vietato__ inviare **link** contenenti virus, grabber, sponsor o social.",
         "",
         "<:rules:1443307208543703131> **`REGOLA TESTUALE 2.4`**",
-        "<:VC_Reply:1468262952934314131> È __vietato__ inviare **flood** o **Wall Of Text** che intasano la chat.",
+        "<:VC_Reply:1482532158080942191> È __vietato__ inviare **flood** o **Wall Of Text** che intasano la chat.",
         "",
         "<:rules:1443307208543703131> **`REGOLA TESTUALE 2.5`**",
-        "<:VC_Reply:1468262952934314131> È __vietato__ abusare di **parolacce**, **bestemmie** e ogni tipo di **insulto** a **divinità**.",
+        "<:VC_Reply:1482532158080942191> È __vietato__ abusare di **parolacce**, **bestemmie** e ogni tipo di **insulto** a **divinità**.",
       ].join("\n"));
       const voiceEmbed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setDescription([
         "<:rules:1443307208543703131> **`REGOLA VOCALE 3.1`**",
-        "<:VC_Reply:1468262952934314131> È __vietato__ mostrare contenuti **gore**, **NSFW** o **dati sensibili** di un utente.",
+        "<:VC_Reply:1482532158080942191> È __vietato__ mostrare contenuti **gore**, **NSFW** o **dati sensibili** di un utente.",
         "",
         "<:rules:1443307208543703131> **`REGOLA VOCALE 3.2`**",
-        "<:VC_Reply:1468262952934314131> È __vietato__ avere **comportamenti toxic** o **troll** che conducono al flame.",
+        "<:VC_Reply:1482532158080942191> È __vietato__ avere **comportamenti toxic** o **troll** che conducono al flame.",
         "",
         "<:rules:1443307208543703131> **`REGOLA VOCALE 3.3`**",
-        "<:VC_Reply:1468262952934314131> È __vietato__ **disconnettere il bot** o cambiare musica mentre un utente sta ascoltando una canzone tramite il bot.",
+        "<:VC_Reply:1482532158080942191> È __vietato__ **disconnettere il bot** o cambiare musica mentre un utente sta ascoltando una canzone tramite il bot.",
         "",
         "<:rules:1443307208543703131> **`REGOLA VOCALE 3.4`**",
-        "<:VC_Reply:1468262952934314131> È __vietato__ utilizzare **SoundBoard** o qualunque tipo di **VoiceChanger**.",
+        "<:VC_Reply:1482532158080942191> È __vietato__ utilizzare **SoundBoard** o qualunque tipo di **VoiceChanger**.",
         "",
         "<:rules:1443307208543703131> **`REGOLA VOCALE 3.5`**",
-        "<:VC_Reply:1468262952934314131> È __vietato__ **urlare** o fare **errori** col microfono.",
+        "<:VC_Reply:1482532158080942191> È __vietato__ **urlare** o fare **errori** col microfono.",
         "",
         "<:rules:1443307208543703131> **`REGOLA VOCALE 3.6`**",
-        "<:VC_Reply:1468262952934314131> È __vietato__ abusare di **parolacce**, **bestemmie** e ogni tipo di **insulto** a **divinità**.",
+        "<:VC_Reply:1482532158080942191> È __vietato__ abusare di **parolacce**, **bestemmie** e ogni tipo di **insulto** a **divinità**.",
         "",
         "<:rules:1443307208543703131> **`REGOLA VOCALE 3.7`**",
-        "<:VC_Reply:1468262952934314131> È __vietato__ **uscire** e **rientrare** continuamente dalle vocali.",
+        "<:VC_Reply:1482532158080942191> È __vietato__ **uscire** e **rientrare** continuamente dalle vocali.",
       ].join("\n"));
       await interaction.reply({ embeds: [generalEmbed, textEmbed, voiceEmbed, commonEmbed], flags: 1 << 6 }).catch(() => null);
     }
@@ -743,14 +743,14 @@ module.exports = {
         .setDescription([
           "> Per prendere una di queste tag vi basterà entrare nel server dedicato e verificarvi <a:VC_HeartsBlue:1468686100045369404>",
           "",
-          "<:VC_Luna1:1471613026158514246><:VC_Luna2:1482497653387427902><a:VC_Arrow:1448672967721615452> <https://discord.gg/E6vrm5zE6B>",
+          "<:VC_Luna1:1482497618289496117><:VC_Luna2:1482497653387427902><a:VC_Arrow:1448672967721615452> <https://discord.gg/E6vrm5zE6B>",
           "<:VC_Cash1:1482460724302184450><:VC_Cash2:1482460763346960434><a:VC_Arrow:1448672967721615452> <https://discord.gg/QnTN5P578g>",
           "<:VC_Porn1:1482497744513011944><:VC_Porn2:1482497774892089547><a:VC_Arrow:1448672967721615452> <https://discord.gg/WMuZ4EMAkc>",
-          "<:VC_SixNine1:1471615411639292047><:VC_SixNine2:1482497868328865813><a:VC_Arrow:1448672967721615452> <https://discord.gg/uqUNS9f5m5>",
+          "<:VC_SixNine1:1482497833578922065><:VC_SixNine2:1482497868328865813><a:VC_Arrow:1448672967721615452> <https://discord.gg/uqUNS9f5m5>",
           "<:VC_Weed1:1482497951686201534><:VC_Weed2:1482497986910097592><a:VC_Arrow:1448672967721615452> <https://discord.gg/SzBwnxHXNv>",
           "<:VC_Figa1:1482495980275499169><:VC_Figa2:1482496046222544937><a:VC_Arrow:1448672967721615452> <https://discord.gg/z3EXtJwvQH>",
           "",
-          "<:VC_Reply:1468262952934314131> _In costante aggiornamento, per consigliarne altre " + suggestionsMention + "_",
+          "<:VC_Reply:1482532158080942191> _In costante aggiornamento, per consigliarne altre " + suggestionsMention + "_",
         ].join("\n"))
         .setImage(DIVIDER_URL);
       await interaction.reply({ embeds: [tagsEmbed], flags: 1 << 6 }).catch(() => null);
@@ -764,7 +764,7 @@ module.exports = {
           "> Per riscattare eventuali premi bisognerà aprire un <#1442569095068254219> **__`Terza Categoria`__**\n\n" +
           "<:dot:1443660294596329582> **__`150`__** partner <a:vegarightarrow:1443673039156936837> **__2__ euro** <:paypal:1329524292446191676>\n" +
           "<:dot:1443660294596329582> **__`175`__** partner <a:vegarightarrow:1443673039156936837> **__3__ euro** <:paypal:1329524292446191676> / **Nitro __Basic__** <:sparkles_nitro_basic:1330196488336310383>\n" +
-          "<:dot:1443660294596329582> **__`250`__** partner <a:vegarightarrow:1443673039156936837> **Nitro __Boost__** <:VC_NitroBoost:1448706966263435326>\n\n" +
+          "<:dot:1443660294596329582> **__`250`__** partner <a:vegarightarrow:1443673039156936837> **Nitro __Boost__** <:VC_NitroBoost:1482532248967315627>\n\n" +
           "<a:flyingnitroboost:1443652205705170986> Naturalmente, in caso di riscatto del **Nitro __Boost__**, almeno un **boost** dovrà andare a **__Vinili & Caffè__**.",
         )
         .setImage(DIVIDER_URL);
@@ -775,10 +775,10 @@ module.exports = {
       const verifyEmbed = new EmbedBuilder()
         .setImage(DIVIDER_URL)
         .setColor("#6f4e37")
-        .setTitle("<a:VC_Verified:1448687631109197978> **__Verificati per ottenere vantaggi unici__**")
+        .setTitle("<a:VC_Verified:1482532479637127188> **__Verificati per ottenere vantaggi unici__**")
         .setDescription([
           `Per verificare il tuo profilo dovrai andare in <#${IDs.channels.ticket}> e selezionare la terza categoria`,
-          "<:VC_Reply:1468262952934314131> successivamente, dovrete mandare una vostra foto in cui si vede bene il viso:",
+          "<:VC_Reply:1482532158080942191> successivamente, dovrete mandare una vostra foto in cui si vede bene il viso:",
           "con il vostro nickname scritto su un foglio cartaceo o altrimenti con il cellulare nella schermata del vostro profilo Discord",
           "",
           "<:sparkledred:1470064814502973591> Ruolo <@&1469040179799920801> o <@&1469040190730408018> con badge speciale",
@@ -834,7 +834,7 @@ module.exports = {
           "",
           `<:dot:1443660294596329582> Per __vedere i tuoi EXP__ e le tue statistiche, usa il comando \`+rank\` in <#${IDs.channels.commands}>.`,
           "",
-          "<:VC_Dot:1443932948599668746> ──────── <:exp:1470067108543987846> ──────── <:VC_Dot:1443932948599668746>",
+          "<:VC_Dot:1482532364222595303> ──────── <:exp:1470067108543987846> ──────── <:VC_Dot:1482532364222595303>",
           "",
           "<a:VC_Arrow:1448672967721615452> **LISTA DEI LIVELLI:**",
         ].join("\n"))
@@ -843,9 +843,9 @@ module.exports = {
             name: "\`LIVELLO 10-19\`",
             value: [
               `<@&${IDs.roles.Level10}>`,
-              "<:VC_DoubleReply:1468713981152727120> Permesso di cambiare nickname",
-              "<:VC_DoubleReply:1468713981152727120> Permesso di allegare link e immagini in chat",
-              "<:VC_Reply:1468262952934314131> Sblocchi il comando \`+quote\`",
+              "<:VC_DoubleReply:1482532332509466797> Permesso di cambiare nickname",
+              "<:VC_DoubleReply:1482532332509466797> Permesso di allegare link e immagini in chat",
+              "<:VC_Reply:1482532158080942191> Sblocchi il comando \`+quote\`",
             ].join("\n"),
             inline: true,
           },
@@ -854,7 +854,7 @@ module.exports = {
             value: [
               `<@&${IDs.roles.Level20}>`,
               "Tutte le ricompense precedenti",
-              "<:VC_DoubleReply:1468713981152727120> Possibilità di aggiungere reazioni ai messaggi in chat",
+              "<:VC_DoubleReply:1482532332509466797> Possibilità di aggiungere reazioni ai messaggi in chat",
             ].join("\n"),
             inline: true,
           },
@@ -863,8 +863,8 @@ module.exports = {
             value: [
               `<@&${IDs.roles.Level30}>`,
               "Tutte le ricompense precedenti",
-              "<:VC_DoubleReply:1468713981152727120> Permesso di usare soundboard di altri server",
-              "<:VC_Reply:1468262952934314131> Cooldown sui comandi del nostro bot ridotto (da 30 secondi a 15 secondi).",
+              "<:VC_DoubleReply:1482532332509466797> Permesso di usare soundboard di altri server",
+              "<:VC_Reply:1482532158080942191> Cooldown sui comandi del nostro bot ridotto (da 30 secondi a 15 secondi).",
             ].join("\n"),
             inline: true,
           },
@@ -873,9 +873,9 @@ module.exports = {
             value: [
               `<@&${IDs.roles.Level50}>`,
               "Tutte le ricompense precedenti",
-              `<:VC_DoubleReply:1468713981152727120> Possibilità di usare i **colori PLUS** su <#${IDs.channels.ruoliColori}>`,
-              "<:VC_DoubleReply:1468713981152727120> Possibilità di creare un ruolo __personalizzato PERMANENTE__ e un canale vocale privato __personalizzato PERMANENTE__.",
-              "<:VC_Reply:1468262952934314131> Cooldown sui comandi del nostro bot ridotto (da 30 secondi a 5 secondi).",
+              `<:VC_DoubleReply:1482532332509466797> Possibilità di usare i **colori PLUS** su <#${IDs.channels.ruoliColori}>`,
+              "<:VC_DoubleReply:1482532332509466797> Possibilità di creare un ruolo __personalizzato PERMANENTE__ e un canale vocale privato __personalizzato PERMANENTE__.",
+              "<:VC_Reply:1482532158080942191> Cooldown sui comandi del nostro bot ridotto (da 30 secondi a 5 secondi).",
             ].join("\n"),
             inline: true,
           },
@@ -884,8 +884,8 @@ module.exports = {
             value: [
               `<@&${IDs.roles.Level70}>`,
               "Tutte le ricompense precedenti",
-              "<:VC_DoubleReply:1468713981152727120> Permesso di usare sticker ed emoji di altri server",
-              "<:VC_Reply:1468262952934314131> Aggiungi reazioni al messaggio quando ti @menzionano in chat (max. 3)",
+              "<:VC_DoubleReply:1482532332509466797> Permesso di usare sticker ed emoji di altri server",
+              "<:VC_Reply:1482532158080942191> Aggiungi reazioni al messaggio quando ti @menzionano in chat (max. 3)",
             ].join("\n"),
             inline: true,
           },
@@ -894,10 +894,10 @@ module.exports = {
             value: [
               `<@&${IDs.roles.Level100}>`,
               "Tutte le ricompense precedenti",
-              "<:VC_DoubleReply:1468713981152727120> Cooldown sui comandi del nostro bot ridotto (da 5 secondi a 1 secondo).",
-              "<:VC_DoubleReply:1468713981152727120> Bypass requisiti per i giveaway",
-              "<:VC_DoubleReply:1468713981152727120> Bypass requisiti per le candidature",
-              "<:VC_Reply:1468262952934314131> Bonus EXP permanente +25%",
+              "<:VC_DoubleReply:1482532332509466797> Cooldown sui comandi del nostro bot ridotto (da 5 secondi a 1 secondo).",
+              "<:VC_DoubleReply:1482532332509466797> Bypass requisiti per i giveaway",
+              "<:VC_DoubleReply:1482532332509466797> Bypass requisiti per le candidature",
+              "<:VC_Reply:1482532158080942191> Bonus EXP permanente +25%",
             ].join("\n"),
             inline: true,
           },
@@ -911,7 +911,7 @@ module.exports = {
         "Digita \`+help\` per la lista completa dei comandi.",
       ].join("\n"));
 
-      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setLabel("︲COLORI VIP SBLOCCATI").setEmoji(`<:VC_Color:1470781368630775982>`).setStyle(ButtonStyle.Link).setURL("https://discord.com/channels/1329080093599076474/1469429150669602961/1469803395937472647",), new ButtonBuilder().setLabel("︲CANALE PER I COMANDI").setEmoji(`<:VC_Bot:1470780684233871428>`).setStyle(ButtonStyle.Link).setURL("https://discord.com/channels/1329080093599076474/1442569138114662490",), new ButtonBuilder().setCustomId("torna_indietro").setLabel("︲TORNA INDIETRO").setEmoji("<a:vegaleftarrow:1462914743416131816>").setStyle(ButtonStyle.Primary),);
+      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setLabel("︲COLORI VIP SBLOCCATI").setEmoji(`<:VC_Color:1482532543273238569>`).setStyle(ButtonStyle.Link).setURL("https://discord.com/channels/1329080093599076474/1469429150669602961/1469803395937472647",), new ButtonBuilder().setLabel("︲CANALE PER I COMANDI").setEmoji(`<:VC_Bot:1470780684233871428>`).setStyle(ButtonStyle.Link).setURL("https://discord.com/channels/1329080093599076474/1442569138114662490",), new ButtonBuilder().setCustomId("torna_indietro").setLabel("︲TORNA INDIETRO").setEmoji("<a:vegaleftarrow:1462914743416131816>").setStyle(ButtonStyle.Primary),);
 
       return { embeds: [levelEmbed, howtoEmbed], components: [row] };
     };
@@ -936,7 +936,7 @@ module.exports = {
         .setDescription([
           "I badge sono dei ruoli __aggiuntivi__ che ti permettono di sbloccare vantaggi e permessi all'interno del server. Possono essere ottenuti in diversi modi e tutti danno vantaggi diversi.",
           "",
-          "<:VC_Dot:1443932948599668746> ────⋆⋅☆⋅⋆──── ୨♡୧ ────⋆⋅☆⋅⋆──── ୨♡୧ ────⋆⋅☆⋅⋆──── <:VC_Dot:1443932948599668746>",
+          "<:VC_Dot:1482532364222595303> ────⋆⋅☆⋅⋆──── ୨♡୧ ────⋆⋅☆⋅⋆──── ୨♡୧ ────⋆⋅☆⋅⋆──── <:VC_Dot:1482532364222595303>",
           "",
           "<a:VC_Arrow:1448672967721615452> **LISTA DEI BADGES:**",
         ].join("\n"))
@@ -947,8 +947,8 @@ module.exports = {
               "<@&1468674837957574757>/<@&1468674787399172208>",
               "Ottenibile arrivando primo per exp in messaggi o exp in vocale nella [classifica settimanale](<https://discord.com/channels/1329080093599076474/1470183921236049940>).",
               "९ Tutte le ricompense precedenti",
-              "<:VC_DoubleReply:1468713981152727120> Ruolo esclusivo per 7 giorni.",
-              "<:VC_Reply:1468262952934314131> Permesso di usare soundboard esterne",
+              "<:VC_DoubleReply:1482532332509466797> Ruolo esclusivo per 7 giorni.",
+              "<:VC_Reply:1482532158080942191> Permesso di usare soundboard esterne",
             ].join("\n"),
             inline: true,
           },
@@ -958,8 +958,8 @@ module.exports = {
               "<@&1442568948271943721>",
               'Ottenibile mettendo il testo ".gg/viniliecaffe" o "discord.gg/viniliecaffe" nello status del tuo profilo Discord!',
               "Nello stato, non nella bio; se viene tolto o se sei offline, non ti verranno assegnati i vantaggi.",
-              "<:VC_DoubleReply:1468713981152727120> Permesso di allegare link e immagini in chat",
-              "<:VC_Reply:1468262952934314131> Permesso di cambiare il tuo nickname",
+              "<:VC_DoubleReply:1482532332509466797> Permesso di allegare link e immagini in chat",
+              "<:VC_Reply:1482532158080942191> Permesso di cambiare il tuo nickname",
             ].join("\n"),
             inline: true,
           },
@@ -968,8 +968,8 @@ module.exports = {
             value: [
               "<@&1468266342682722679>",
               "Ottenibile votando il server su [Discadia](<https://discadia.com/vote/viniliecaffe/>)",
-              "<:VC_DoubleReply:1468713981152727120> EXP casuale da 100 a 250.",
-              "<:VC_Reply:1468262952934314131> Ruolo esclusivo per 24 ore.",
+              "<:VC_DoubleReply:1482532332509466797> EXP casuale da 100 a 250.",
+              "<:VC_Reply:1482532158080942191> Ruolo esclusivo per 24 ore.",
             ].join("\n"),
             inline: true,
           },
@@ -978,8 +978,8 @@ module.exports = {
             value: [
               "<@&1469758545263198442>",
               "Ottenibile invitando 5 persone nel server, attraverso [custom link](<https://imgur.com/a/3wpDOVj>)",
-              "<:VC_DoubleReply:1468713981152727120> Permesso di allegare link e immagini in chat",
-              "<:VC_Reply:1468262952934314131> Permesso di cambiare il tuo nickname",
+              "<:VC_DoubleReply:1482532332509466797> Permesso di allegare link e immagini in chat",
+              "<:VC_Reply:1482532158080942191> Permesso di cambiare il tuo nickname",
             ].join("\n"),
             inline: true,
           },
@@ -989,8 +989,8 @@ module.exports = {
               "<@&1474357579143577610>",
               "Ottenibile invitando 25 persone nel server, attraverso [custom link](<https://imgur.com/a/3wpDOVj>)",
               "९ Tutte le ricompense precedenti",
-              "<:VC_DoubleReply:1468713981152727120> Inviare emoji e adesivi esterni",
-              "<:VC_Reply:1468262952934314131> Aggiungi reazioni ai messaggi",
+              "<:VC_DoubleReply:1482532332509466797> Inviare emoji e adesivi esterni",
+              "<:VC_Reply:1482532158080942191> Aggiungi reazioni ai messaggi",
             ].join("\n"),
             inline: true,
           },
@@ -1000,7 +1000,7 @@ module.exports = {
               "<@&1474361806956007425>",
               "Ottenibile invitando 100 persone nel server, attraverso [custom link](<https://imgur.com/a/3wpDOVj>)",
               "९ Tutte le ricompense precedenti",
-              "<:VC_Reply:1468262952934314131> Usare SoundBoard esterne nelle vocali",
+              "<:VC_Reply:1482532158080942191> Usare SoundBoard esterne nelle vocali",
             ].join("\n"),
             inline: true,
           },
@@ -1046,7 +1046,7 @@ module.exports = {
       )
         : ["Nessun moltiplicatore attivo."];
 
-      const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setTitle("<:VC_EXP:1468714279673925883> Informazioni sui moltiplicatori",).setDescription(["I moltiplicatori sono ruoli che ti consentono di avere un boost di exp sui messaggi in chat e minuti di vocale.", `I ruoli sono sbloccabili in diversi modi, scopri come nel canale: <#${IDs.channels.info}>`,
+      const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37").setTitle("<:VC_EXP:1482534670896730143> Informazioni sui moltiplicatori",).setDescription(["I moltiplicatori sono ruoli che ti consentono di avere un boost di exp sui messaggi in chat e minuti di vocale.", `I ruoli sono sbloccabili in diversi modi, scopri come nel canale: <#${IDs.channels.info}>`,
         "",
         "**Moltiplicatori attivi:**",
         ...lines,

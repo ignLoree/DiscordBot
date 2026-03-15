@@ -112,7 +112,7 @@ function buildSubcommandRow(command, ownerId, currentValue = "__default") {
   const filteredSubs=hidden==="__default"?subs:subs.filter((sub) => String(sub).toLowerCase()!==hidden);
 
   const menu=new StringSelectMenuBuilder().setCustomId(`usage_guide:${command.name}:${ownerId}`)
-    .setPlaceholder("Vedi sotto-comandi")
+    .setPlaceholder("Vedi sotto - comandi")
     .addOptions(
       ...filteredSubs.slice(0, 24).map((sub) => ({
         label: sub,

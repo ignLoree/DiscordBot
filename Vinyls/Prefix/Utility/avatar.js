@@ -96,7 +96,7 @@ module.exports = {
 
       const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`avatar_unblock:${user.id}`)
           .setLabel("Sblocca")
-          .setEmoji("<a:VC_Unlock:1470011538432852108>")
+          .setEmoji("<a:VC_Unlock:1482532082466029608>")
           .setStyle(ButtonStyle.Secondary),
       );
 

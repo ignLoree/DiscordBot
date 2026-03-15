@@ -36,7 +36,7 @@ module.exports = {
         .setDescription(`<a:VC_GreenDot:1454118116392042711> Ping: **\`${gatewayPing}ms\`**`,)
         .addFields(
           { name: `<:Clock:1330530065133338685> **Uptime:** \`${uptimeString}\``, value: empty, inline: true },
-          { name: `<a:VC_Loading:1448687876018540695> **API:** \`...\``, value: empty, inline: true },
+          { name: `<a:VC_Loading:1482526772862914776> **API:** \`...\``, value: empty, inline: true },
           { name: empty, value: empty, inline: true },
           { name: `<:DatabaseCheck:1330543470259212329> **Database:** ${databaseLabel}`, value: empty, inline: true },
           { name: `<a:VC_Calendar:1448670320180592724> **Shard:** \`${shardLabel}\``, value: empty, inline: true },
@@ -45,7 +45,7 @@ module.exports = {
       const sent=await safeMessageReply(message,{embeds:[pingEmbed],allowedMentions:{repliedUser:false},});
       if (sent?.editable) {
         const commandRoundtrip=Math.max(0,Date.now()-Number(message.createdTimestamp||Date.now()),);
-        const updatedEmbed=EmbedBuilder.from(pingEmbed).spliceFields(1,1,{name:`<a:VC_Loading:1448687876018540695> **API:** \`${commandRoundtrip}ms\``,value:empty,inline:true,});
+        const updatedEmbed=EmbedBuilder.from(pingEmbed).spliceFields(1,1,{name:`<a:VC_Loading:1482526772862914776> **API:** \`${commandRoundtrip}ms\``,value:empty,inline:true,});
         await sent.edit({
           embeds: [updatedEmbed],
           allowedMentions: { repliedUser: false },

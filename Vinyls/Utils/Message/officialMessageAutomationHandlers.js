@@ -288,7 +288,7 @@ async function handleVoteManagerMessage(message, client) {
     `<a:VC_ThankYou:1330186319673950401> Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server!`,
     "",
     "`Hai guadagnato:`",
-    `<:VC_EXP:1468714279673925883> <a:VC_Arrow:1448672967721615452> **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : "**voto**"}`,
+    `<:VC_EXP:1482534670896730143> <a:VC_Arrow:1448672967721615452> **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : "**voto**"}`,
     ...(voteRewardExtras.length > 0 ? voteRewardExtras : []),
     voteRoleText,
     "",
@@ -296,7 +296,7 @@ async function handleVoteManagerMessage(message, client) {
   ];
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Vote:1448729692235628818> **Un nuovo voto!**")
+    .setTitle("<a:VC_Vote:1482535223001485473> **Un nuovo voto!**")
     .setDescription(descriptionLines.join("\n"))
     .setFooter({ text: "Ogni volta che voterai il valore dell'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente", }).setImage(dividerUrl);
 
@@ -354,7 +354,7 @@ async function handleDisboardBump(message, client) {
   if (bumpUserId && recordResult?.previousLastBumpAt !== undefined) {
     const reward = await awardBumpVoteExp(client, message.guild, bumpUserId, "disboard", recordResult.previousLastBumpAt, disboardCooldownMs).catch(() => null);
     if (reward?.effectiveExp != null) {
-      const parts = ["<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server!__**", "<:VC_EXP:1468714279673925883> **" + reward.effectiveExp + " exp** guadagnati!"];
+      const parts = ["<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server!__**", "<:VC_EXP:1482534670896730143> **" + reward.effectiveExp + " exp** guadagnati!"];
       if (reward.fastBonus > 0) parts.push("<a:VC_Flame:1473106990493335665> Risposta rapida +" + reward.fastBonus + " exp");
       if (reward.streakBonus > 0) parts.push("<a:VC_Flame:1473106990493335665> Streak " + reward.newStreak + " +" + reward.streakBonus + " exp");
       parts.push("<:VC_HelloKittyGun:1329447880150220883> Ci __vediamo__ nuovamente tra **due ore!**\n" + bumpMention);
@@ -435,7 +435,7 @@ async function handleDiscadiaBump(message, client) {
   if (bumpUserId && recordResult?.previousLastBumpAt !== undefined) {
     const reward = await awardBumpVoteExp(client, message.guild, bumpUserId, "discadia_bump", recordResult.previousLastBumpAt, discadiaCooldownMs).catch(() => null);
     if (reward?.effectiveExp != null) {
-      const parts = ["<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server su Discadia!__**", "<:VC_EXP:1468714279673925883> **" + reward.effectiveExp + " exp** guadagnati!"];
+      const parts = ["<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server su Discadia!__**", "<:VC_EXP:1482534670896730143> **" + reward.effectiveExp + " exp** guadagnati!"];
       if (reward.fastBonus > 0) parts.push("<a:VC_Flame:1473106990493335665> Risposta rapida +" + reward.fastBonus + " exp");
       if (reward.streakBonus > 0) parts.push("<a:VC_Flame:1473106990493335665> Streak " + reward.newStreak + " +" + reward.streakBonus + " exp");
       parts.push("<:VC_HelloKittyGun:1329447880150220883> Ci __vediamo__ nuovamente tra **24 ore!**\n" + bumpMention);
@@ -478,13 +478,13 @@ async function handleSuggestionChannelMessage(message) {
   const suggestionEmbed =
     new EmbedBuilder()
       .setColor("#6f4e37")
-      .setDescription(`**<:VC_Mention:1443994358201323681> Mandato da:**\n${message.author.username}
+      .setDescription(`**<:VC_Mention:1482526855289634997> Mandato da:**\n${message.author.username}
     
     **<:VC_PinkQuestionMark:1471892611026391306> Suggerimento:**
     
     ${suggestionText}
     
-    **<a:VC_Vote:1448729692235628818> Numero voti:**\n\n`,
+    **<a:VC_Vote:1482535223001485473> Numero voti:**\n\n`,
       )
       .setFields(
         { name: "<:thumbsup:1471292172145004768>", value: "0", inline: true },

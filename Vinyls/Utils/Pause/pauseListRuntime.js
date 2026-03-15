@@ -115,7 +115,7 @@ async function buildPauseListPayload({ guildId, requesterId, targetUser, isHighS
     const start = parseItalianDate(pause?.dataRichiesta);
     const end = parseItalianDate(pause?.dataRitorno);
     if (!start || !end || countOverlapDays(start, end, yearStart, yearEnd) <= 0) return null;
-    return `<:VC_Dot:1443932948599668746> \`${pause.dataRichiesta}\` <a:VC_Arrow:1448672967721615452> \`${pause.dataRitorno}\` | **${getPauseStatusLabel(pause, todayUtc)}** | <:VC_Clock:1473359204189474886> Giorni scalati:\`${computePauseScaledDaysThisYear(pause, todayUtc, yearStart, yearEnd)}\``;
+    return `<:VC_Dot:1482532364222595303> \`${pause.dataRichiesta}\` <a:VC_Arrow:1448672967721615452> \`${pause.dataRitorno}\` | **${getPauseStatusLabel(pause, todayUtc)}** | <:VC_Clock:1473359204189474886> Giorni scalati:\`${computePauseScaledDaysThisYear(pause, todayUtc, yearStart, yearEnd)}\``;
   }).filter(Boolean);
   if (!rows.length) {
     return {

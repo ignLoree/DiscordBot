@@ -23,7 +23,7 @@ function buildErrorLogEmbed({ contextLabel, contextValue, userTag, error, title 
   const safeTitle = truncateFieldValue(title || "<a:VC_Alert:1448670089670037675> Log errori", EMBED_FIELD_NAME_MAX);
   const safeServer = truncateFieldValue(serverName || "—", EMBED_FIELD_VALUE_MAX - 6);
 
-  return new EmbedBuilder().setColor("#6f4e37").setTitle(safeTitle).addFields({ name: `<:VC_Poll:1448695754972729436> ${safeLabel}`, value: `\`\`\`${safeContext}\`\`\`` }, { name: "<a:VC_Channel:1448670215444631706> Server", value: `\`\`\`${safeServer}\`\`\`` }, { name: "<:member_role_icon:1330530086792728618> Utente", value: `\`\`\`${safeUserTag}\`\`\`` }, { name: "<a:VC_Alert:1448670089670037675> Errore", value: `\`\`\`${errorInBlock}\`\`\`` }).setTimestamp();
+  return new EmbedBuilder().setColor("#6f4e37").setTitle(safeTitle).addFields({ name: `<:VC_Poll:1482535102436216832> ${safeLabel}`, value: `\`\`\`${safeContext}\`\`\`` }, { name: "<a:VC_Channel:1482534583944871996> Server", value: `\`\`\`${safeServer}\`\`\`` }, { name: "<:member_role_icon:1330530086792728618> Utente", value: `\`\`\`${safeUserTag}\`\`\`` }, { name: "<a:VC_Alert:1448670089670037675> Errore", value: `\`\`\`${errorInBlock}\`\`\`` }).setTimestamp();
 }
 
 module.exports = { buildErrorLogEmbed, getFullErrorText, truncateFieldValue };

@@ -435,11 +435,11 @@ async function runWeeklyStaffResoconti(client) {
       const sanctionLimit = STAFF_SANCTION_LIMITS[String(staffRoleId)];
       const contentLines = [
         `<:staff:1443651912179388548> **Staffer:** __**<@${userId}>**__`,
-        `<:VC_Mention:1443994358201323681> **Ruolo:** __<@&${staffRoleId}>__`,
-        `<:VC_Chat:1448694742237053061> **Messaggi in una settimana:** __${weeklyMessages}__`,
+        `<:VC_Mention:1482526855289634997> **Ruolo:** __<@&${staffRoleId}>__`,
+        `<:VC_Chat:1482532573002465413> **Messaggi in una settimana:** __${weeklyMessages}__`,
         `<:voice:1467639623735054509> **Ore in una settimana:** __${formatHoursFromSeconds(weeklyVoiceSeconds)}__`,
         ...buildCostanzaLines(overview),
-        `<a:VC_Exclamation:1448687427836444854>  **Attività:** __${activityGrade}__`,
+        `<a:VC_Exclamation:1482534702077444217>  **Attività:** __${activityGrade}__`,
         `<:VC_Eye:1331619214410383381> **Condotta:** __${behaviorGrade}__`,
       ];
       if (sanctionLimit != null) {
@@ -447,7 +447,7 @@ async function runWeeklyStaffResoconti(client) {
         contentLines.push(`<:VC_Dot:1443660294596329582> **Sanzioni nella settimana:** __${weeklySanctions}__ (minimo __${sanctionLimit}__)`);
       }
       const action = inPauseDuringWeek ? "Nulla" : computeStaffAction(activityGrade, behaviorGrade, pexedInWeek);
-      contentLines.push(`<:VC_BanHammer:1443933132645732362> **Azione:** __${action}__`);
+      contentLines.push(`<:VC_BanHammer:1482534474502897795> **Azione:** __${action}__`);
       const pauseLine = getStaffPauseLine(staffDoc);
       if (pauseLine) contentLines.push(pauseLine);
 
@@ -484,7 +484,7 @@ async function runWeeklyStaffResoconti(client) {
       const pmContentLines = [
         `<:partnermanager:1443651916838998099> **Partner Manager:** __<@${userId}>__`,
         `<:partneredserverowner:1443651871125409812> **Partner:** __${weeklyPartners}__`,
-        `<:VC_BanHammer:1443933132645732362> **Azione:** __${action}__`,
+        `<:VC_BanHammer:1482534474502897795> **Azione:** __${action}__`,
       ];
       if (pmPauseLine) pmContentLines.push(pmPauseLine);
 

@@ -38,12 +38,12 @@ module.exports = {
           inline: true,
         },
         {
-          name: "<:VC_BlackPin:1448687216871084266> Canale:",
+          name: "<:VC_BlackPin:1482534513400610948> Canale:",
           value: snipe.channel || `${targetChannel}`,
           inline: true,
         },
         {
-          name: "<:VC_Chat:1448694742237053061> Contenuto:",
+          name: "<:VC_Chat:1482532573002465413> Contenuto:",
           value: `\`\`\`${clippedContent}\`\`\``,
         },
       )

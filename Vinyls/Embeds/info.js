@@ -22,7 +22,7 @@ async function run(client) {
         "<a:VC_HeartsBlue:1468686100045369404> Benvenuto/a su **Vinili & Caffè**, l'unico server in Italia non tossico e __incentrato sulla socializzazione__.",
         "",
         "<a:VC_HeartBlue:1448673354751021190> **Personalizza il tuo profilo:**",
-        "<:VC_Reply:1468262952934314131> Nel canale <#1469429150669602961> potrai selezionare i colori e i ruoli da aggiungere al tuo profilo per completarlo: come età, menzioni, passioni e molto altro!",
+        "<:VC_Reply:1482532158080942191> Nel canale <#1469429150669602961> potrai selezionare i colori e i ruoli da aggiungere al tuo profilo per completarlo: come età, menzioni, passioni e molto altro!",
         "",
         `Dubbi o problemi? <#${IDs.channels.ticket}> sarà la vostra bussola, lo staff vi risponderà il prima possibile!`,
       ].join("\n"),
@@ -31,7 +31,7 @@ async function run(client) {
       {
         name: "<:dot:1443660294596329582> Links",
         value: [
-          "<:VC_bump:1330185435401424896> [Lascia una recensione su DISBOARD](<https://disboard.org/it/server/1329080093599076474>)",
+          "<:VC_bump:1482531857521311885> [Lascia una recensione su DISBOARD](<https://disboard.org/it/server/1329080093599076474>)",
           "<:link:1470064815899803668> [Votaci su Discadia](<https://discadia.com/vote/viniliecaffe/>)",
         ].join("\n"),
         inline: true,
@@ -80,7 +80,7 @@ async function run(client) {
   const row2 = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId("info_boost_levels").setLabel("︲VANTAGGI BOOST & LIVELLI").setEmoji("<a:VC_Rocket:1468544312475123753>").setStyle(ButtonStyle.Danger),
     new ButtonBuilder().setCustomId("info_badges_roles").setLabel("︲BADGE & ALTRI RUOLI").setEmoji("<a:VC_Diamon:1469463765610135635>").setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId("info_verifica").setLabel("︲VERIFICA SELFIE").setEmoji(`<a:VC_Verified:1448687631109197978>`).setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId("info_verifica").setLabel("︲VERIFICA SELFIE").setEmoji(`<a:VC_Verified:1482532479637127188>`).setStyle(ButtonStyle.Secondary),
   );
   const guildId = channel.guild?.id;
   if (!guildId) return;

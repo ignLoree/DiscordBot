@@ -669,7 +669,7 @@ async function buildStatusEmbeds(guild) {
 
   const page1 = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Global Anti-Nuke Panel")
+    .setTitle("Global Anti - Nuke Panel")
     .setDescription(
       [
         "[1] Status:",
@@ -813,7 +813,7 @@ async function buildPanicStatusEmbeds(guild) {
   const whitelistRows=whitelistCategoryIds.length?whitelistCategoryIds.slice(0,3).map((id) => `<#${id}>`).join(", ")
     : "`No record found.`";
 
-  const page1=new EmbedBuilder().setColor(panicCfg.enabled?"#6f4e37":"#57F287").setTitle("Anti-Nuke Panic Mode").setDescription(["[1] Status:",`- *${panicCfg.enabled?"Enabled":"Disabled"}*`,
+  const page1=new EmbedBuilder().setColor(panicCfg.enabled?"#6f4e37":"#57F287").setTitle("Anti - Nuke Panic Mode").setDescription(["[1] Status:",`- *${panicCfg.enabled?"Enabled":"Disabled"}*`,
         "",
         "[2] Heat Algorithm:",
         `- *${panicCfg.useHeatAlgorithm?"Enabled":"Disabled"}*`,

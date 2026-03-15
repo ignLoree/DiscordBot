@@ -124,7 +124,7 @@ module.exports = {
         .setTitle("Grazie per la recensione su Disboard! <a:VC_StarPink:1330194976440848500>",)
         .setDescription([`<a:VC_ThankYou:1330186319673950401> Grazie ${target} per aver lasciato una recensione su **Disboard**.`,
             "",
-            "<:VC_LevelUp2:1443701876892762243> Ricompensa assegnata: **+5 livelli**",
+            "<:VC_LevelUp2:1482527047871107143> Ricompensa assegnata: **+5 livelli**",
           ].join("\n"))
         .setThumbnail(target.displayAvatarURL({ size: 256 }));
 

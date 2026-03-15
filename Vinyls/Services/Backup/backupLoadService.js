@@ -1,6 +1,6 @@
 const { ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionFlagsBits, } = require("discord.js");
 const { readBackupByIdGlobal, createGuildBackup } = require("./serverBackupService");
-const LOAD_ACTIONS = [{ key: "delete_roles", label: "Delete Roles", description: "All existing roles will be deleted", emoji: "<:VC_purge:1478861828271636561>", }, { key: "delete_channels", label: "Delete Channels", description: "All existing channels will be deleted", emoji: "<:VC_purge:1478861828271636561>", }, { key: "load_roles", label: "Load Roles", description: "New roles will be loaded", emoji: "<:VC_Mention:1443994358201323681>", }, { key: "load_channels", label: "Load Channels", description: "New channels will be loaded", emoji: "<:channeltext:1443247596922470551>", }, { key: "load_settings", label: "Load Settings", description: "Server settings will be updated", emoji: "<:VC_tools:1478862265305272364>", }, { key: "load_threads", label: "Load Threads", description: "Threads and forum posts will be loaded", emoji: "<:VC_threads:1478515497569095760>", }, { key: "load_member_info", label: "Load Member Info", description: "Member roles and nicknames will be loaded", emoji: "<:member_role_icon:1330530086792728618>", }, { key: "load_bans", label: "Load Bans", description: "Banned members will be loaded", emoji: "<:VC_BanHammer:1443933132645732362>", }, { key: "load_messages", label: "Load Messages", description: "Messages will be loaded", emoji: "<:VC_Chat:1448694742237053061>", }, { key: "load_pinned_messages", label: "Pinned Messages", description: "Pinned messages will be loaded", emoji: "<:VC_BlackPin:1448687216871084266>", }, { key: "load_emojis", label: "Load Emojis", description: "Custom emojis will be loaded", emoji: "<:VC_Reply:1468262952934314131>", }, { key: "load_stickers", label: "Load Stickers", description: "Stickers will be loaded", emoji: "<:VC_Ticket:1448694637106692156>", }, { key: "load_webhooks", label: "Load Webhooks", description: "Webhooks will be restored", emoji: "<:VC_webhooks:1478515450769047704>", }, { key: "load_invites", label: "Load Invites", description: "Invites will be recreated", emoji: "<:link:1470064815899803668>", }, { key: "load_events", label: "Load Events", description: "Scheduled events will be loaded", emoji: "<a:VC_Calendar:1448670320180592724>", }, { key: "load_automod_rules", label: "Load AutoMod Rules", description: "AutoMod rules will be loaded", emoji: "<:VC_AutoMod:1478861194759508039>", },];
+const LOAD_ACTIONS = [{ key: "delete_roles", label: "Delete Roles", description: "All existing roles will be deleted", emoji: "<:VC_purge:1478861828271636561>", }, { key: "delete_channels", label: "Delete Channels", description: "All existing channels will be deleted", emoji: "<:VC_purge:1478861828271636561>", }, { key: "load_roles", label: "Load Roles", description: "New roles will be loaded", emoji: "<:VC_Mention:1482526855289634997>", }, { key: "load_channels", label: "Load Channels", description: "New channels will be loaded", emoji: "<:channeltext:1443247596922470551>", }, { key: "load_settings", label: "Load Settings", description: "Server settings will be updated", emoji: "<:VC_tools:1478862265305272364>", }, { key: "load_threads", label: "Load Threads", description: "Threads and forum posts will be loaded", emoji: "<:VC_threads:1478515497569095760>", }, { key: "load_member_info", label: "Load Member Info", description: "Member roles and nicknames will be loaded", emoji: "<:member_role_icon:1330530086792728618>", }, { key: "load_bans", label: "Load Bans", description: "Banned members will be loaded", emoji: "<:VC_BanHammer:1482534474502897795>", }, { key: "load_messages", label: "Load Messages", description: "Messages will be loaded", emoji: "<:VC_Chat:1482532573002465413>", }, { key: "load_pinned_messages", label: "Pinned Messages", description: "Pinned messages will be loaded", emoji: "<:VC_BlackPin:1482534513400610948>", }, { key: "load_emojis", label: "Load Emojis", description: "Custom emojis will be loaded", emoji: "<:VC_Reply:1482532158080942191>", }, { key: "load_stickers", label: "Load Stickers", description: "Stickers will be loaded", emoji: "<:VC_Ticket:1482535175283019888>", }, { key: "load_webhooks", label: "Load Webhooks", description: "Webhooks will be restored", emoji: "<:VC_webhooks:1478515450769047704>", }, { key: "load_invites", label: "Load Invites", description: "Invites will be recreated", emoji: "<:link:1470064815899803668>", }, { key: "load_events", label: "Load Events", description: "Scheduled events will be loaded", emoji: "<a:VC_Calendar:1448670320180592724>", }, { key: "load_automod_rules", label: "Load AutoMod Rules", description: "AutoMod rules will be loaded", emoji: "<:VC_AutoMod:1478861194759508039>", },];
 const ACTION_KEYS = new Set(LOAD_ACTIONS.map((a) => a.key));
 const DEFAULT_ACTIONS = new Set(LOAD_ACTIONS.map((a) => a.key));
 const DEFAULT_MESSAGES_LIMIT = 1000;
@@ -201,10 +201,10 @@ function buildLoadWarningEmbed(backupId, messagesLimit = DEFAULT_MESSAGES_LIMIT)
       [
         "<:VC_update:1478721333096349817> What do you want the bot to load from the backup?",
         "",
-        "<:VC_Info:1460670816214585481> Select below what actions should be performed.",
+        "<:VC_InactiveStatus:1472011031709745307> Select below what actions should be performed.",
         "<:VC_update:1478721333096349817> In the next step the restore starts immediately.",
         "",
-        `<:VC_Chat:1448694742237053061> Messages limit: \`${formatMessagesLimit(messagesLimit)}\``,
+        `<:VC_Chat:1482532573002465413> Messages limit: \`${formatMessagesLimit(messagesLimit)}\``,
         "",
         `<:VC_id:1478517313618575419> Backup ID: \`${String(backupId || "").toUpperCase()}\``,
       ].filter(Boolean).join("\n"),
@@ -286,7 +286,7 @@ function buildPreflightWarningEmbed({
   const pinnedMessages = countBackupPinnedMessages(payload);
 
   if (safeActions.has("load_roles")) {
-    lines.push(`<:VC_Mention:1443994358201323681> **${backupRoles.length}** roles will be created`);
+    lines.push(`<:VC_Mention:1482526855289634997> **${backupRoles.length}** roles will be created`);
   }
   if (safeActions.has("delete_roles")) {
     const rolesToDelete = [...guild.roles.cache.values()].filter((r) => r.editable && !r.managed && r.id !== guild.id,).length;
@@ -308,19 +308,19 @@ function buildPreflightWarningEmbed({
     lines.push(`<:member_role_icon:1330530086792728618> **${backupMembers.length}** members will be updated`);
   }
   if (safeActions.has("load_bans")) {
-    lines.push(`<:VC_BanHammer:1443933132645732362> **${backupBans.length}** bans will be loaded`);
+    lines.push(`<:VC_BanHammer:1482534474502897795> **${backupBans.length}** bans will be loaded`);
   }
   if (safeActions.has("load_messages")) {
-    lines.push(`<:VC_Chat:1448694742237053061> **${loadableMessages}** messages will be loaded (limit: \`${formatMessagesLimit(effectiveLimit)}\`)`);
+    lines.push(`<:VC_Chat:1482532573002465413> **${loadableMessages}** messages will be loaded (limit: \`${formatMessagesLimit(effectiveLimit)}\`)`);
   }
   if (safeActions.has("load_pinned_messages")) {
-    lines.push(`<:VC_BlackPin:1448687216871084266> **${pinnedMessages}** pinned messages will be loaded`);
+    lines.push(`<:VC_BlackPin:1482534513400610948> **${pinnedMessages}** pinned messages will be loaded`);
   }
   if (safeActions.has("load_emojis")) {
-    lines.push(`<:VC_Reply:1468262952934314131> **${backupEmojis.length}** emojis will be loaded`);
+    lines.push(`<:VC_Reply:1482532158080942191> **${backupEmojis.length}** emojis will be loaded`);
   }
   if (safeActions.has("load_stickers")) {
-    lines.push(`<:VC_Ticket:1448694637106692156> **${backupStickers.length}** stickers will be loaded`);
+    lines.push(`<:VC_Ticket:1482535175283019888> **${backupStickers.length}** stickers will be loaded`);
   }
   if (safeActions.has("load_webhooks")) {
     lines.push(`<:VC_webhooks:1478515450769047704> **${backupWebhooks.length}** webhooks will be loaded`);
@@ -374,15 +374,15 @@ function buildLoadDoneEmbed(backupId, stats) {
         "",
         `<:VC_purge:1478861828271636561> Ruoli eliminati: **${stats.deletedRoles}**`,
         `<:channeltext:1443247596922470551> Canali eliminati: **${stats.deletedChannels}**`,
-        `<:VC_Mention:1443994358201323681> Ruoli creati: **${stats.createdRoles}**`,
+        `<:VC_Mention:1482526855289634997> Ruoli creati: **${stats.createdRoles}**`,
         `<:channeltext:1443247596922470551> Canali creati: **${stats.createdChannels}**`,
         `<:VC_threads:1478515497569095760> Thread creati: **${stats.createdThreads}**`,
         `<:member_role_icon:1330530086792728618> Member aggiornati: **${stats.updatedMembers}**`,
-        `<:VC_BanHammer:1443933132645732362> Ban applicati: **${stats.loadedBans}**`,
-        `<:VC_Chat:1448694742237053061> Messaggi inviati: **${stats.loadedMessages}**`,
-        `<:VC_BlackPin:1448687216871084266> Messaggi pinnati: **${stats.loadedPinnedMessages}**`,
-        `<:VC_Reply:1468262952934314131> Emoji create: **${stats.loadedEmojis}**`,
-        `<:VC_Ticket:1448694637106692156> Sticker creati: **${stats.loadedStickers}**`,
+        `<:VC_BanHammer:1482534474502897795> Ban applicati: **${stats.loadedBans}**`,
+        `<:VC_Chat:1482532573002465413> Messaggi inviati: **${stats.loadedMessages}**`,
+        `<:VC_BlackPin:1482534513400610948> Messaggi pinnati: **${stats.loadedPinnedMessages}**`,
+        `<:VC_Reply:1482532158080942191> Emoji create: **${stats.loadedEmojis}**`,
+        `<:VC_Ticket:1482535175283019888> Sticker creati: **${stats.loadedStickers}**`,
         `<:VC_webhooks:1478515450769047704> Webhook creati: **${stats.loadedWebhooks}**`,
         `<:link:1470064815899803668> Inviti creati: **${stats.loadedInvites}**`,
         `<:a:VC_Calendar:1448670320180592724> Eventi creati: **${stats.loadedEvents}**`,
@@ -402,7 +402,7 @@ function buildLoadErrorEmbed(error) {
 function buildLoadCancelledEmbed(backupId) {
   return new EmbedBuilder()
     .setColor("#3498db")
-    .setTitle("<:VC_Info:1460670816214585481> Info")
+    .setTitle("<:VC_InactiveStatus:1472011031709745307> Info")
     .setDescription(
       [
         "<:VC_update:1478721333096349817> The loading process has been **cancelled**.",
@@ -422,7 +422,7 @@ function buildLoadComponents(
   const options = LOAD_ACTIONS.map((action) => ({ label: action.label, description: action.description, value: action.key, emoji: action.emoji, default: selected.has(action.key), }));
 
   const selectRow = new ActionRowBuilder().addComponents(new StringSelectMenuBuilder().setCustomId(`backup_load_actions:${sessionId}`)
-    .setPlaceholder("<:VC_Info:1460670816214585481> Select load actions")
+    .setPlaceholder("<:VC_InactiveStatus:1472011031709745307> Select load actions")
     .setMinValues(1)
     .setMaxValues(options.length)
     .addOptions(options),
@@ -438,7 +438,7 @@ function buildLoadComponents(
   );
 
   const limitRow = new ActionRowBuilder().addComponents(new StringSelectMenuBuilder().setCustomId(`backup_load_messages_limit:${sessionId}`)
-    .setPlaceholder("<:VC_Info:1460670816214585481> Select messages limit")
+    .setPlaceholder("<:VC_InactiveStatus:1472011031709745307> Select messages limit")
     .setMinValues(1)
     .setMaxValues(1)
     .addOptions(
@@ -1168,13 +1168,13 @@ function buildDryRunEmbed(result) {
         actionLines.join("\n") || "• none",
         "",
         "<:VC_update:1478721333096349817> **Estimated Changes**",
-        `<:VC_Mention:1443994358201323681> Roles to create: **${Number(result?.expected?.createRoles || 0)}**`,
+        `<:VC_Mention:1482526855289634997> Roles to create: **${Number(result?.expected?.createRoles || 0)}**`,
         `<:channeltext:1443247596922470551> Channels to create: **${Number(result?.expected?.createChannels || 0)}**`,
         `<:VC_threads:1478515497569095760> Threads to create: **${Number(result?.expected?.createThreads || 0)}**`,
         `<:member_role_icon:1330530086792728618> Members to update: **${Number(result?.expected?.updateMembers || 0)}**`,
-          `<:VC_Chat:1448694742237053061> Messages to load: **${Number(result?.expected?.loadMessages || 0)}**`,
+          `<:VC_Chat:1482532573002465413> Messages to load: **${Number(result?.expected?.loadMessages || 0)}**`,
         `<:VC_update:1478721333096349817> Messages limit: \`${formatMessagesLimit(result?.expected?.messagesLimit)}\``,
-        `<:VC_BlackPin:1448687216871084266> Pinned to load: **${Number(result?.expected?.loadPinnedMessages || 0)}**`,
+        `<:VC_BlackPin:1482534513400610948> Pinned to load: **${Number(result?.expected?.loadPinnedMessages || 0)}**`,
         "",
         "<:VC_update:1478721333096349817> **Permission Diff**",
         `<:VC_update:1478721333096349817> Missing roles: **${Number(result?.permissions?.roleMissing || 0)}**`,

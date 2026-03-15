@@ -142,9 +142,9 @@ module.exports = {
         .setColor("#6f4e37")
         .setTitle(title)
         .setDescription([
-          `<:VC_Mention:1443994358201323681> Ruolo: ${role}`,
-          `<:VC_Info:1460670816214585481> Azione:\`${action}\``, "",
-          `<a:VC_Loading:1462504528774430962> Processati: **${processed}/${total}**`,
+          `<:VC_Mention:1482526855289634997> Ruolo: ${role}`,
+          `<:VC_InactiveStatus:1472011031709745307> Azione:\`${action}\``, "",
+          `<a:VC_Loading:1482526818278969578> Processati: **${processed}/${total}**`,
           `<:success:1461731530333229226> Aggiornati:**${success}**`,
           `<:VC_skip:1478521335629086812> Saltati:**${skipped}**`,
           `<:cancel:1461730653677551691> Falliti:**${failed}**`,
@@ -158,7 +158,7 @@ module.exports = {
     await safeEditReply(interaction, {
       embeds: [
         progressEmbed({
-          title: "<a:VC_Loading:1448687876018540695> Aggiornamento ruoli in corso...",
+          title: "<a:VC_Loading:1482526772862914776> Aggiornamento ruoli in corso...",
           processed: 0,
           total,
           success: 0,

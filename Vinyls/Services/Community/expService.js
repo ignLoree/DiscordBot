@@ -468,7 +468,7 @@ function buildLevelUpEmbed(member, level) {
         },
         description: [
           `<a:VC_PandaClap:1331620157398712330> **Complimenti ${member}!**`,
-          `<:VC_LevelUp2:1443701876892762243> Hai appena __raggiunto__ il **livello** \`${level}\``,
+          `<:VC_LevelUp2:1482527047871107143> Hai appena __raggiunto__ il **livello** \`${level}\``,
           `<a:VC_HelloKittyGift:1329447876857958471> __Continua__ ad essere **attivo** in __chat__ e in __vocale__ per avanzare di _livello_!`,
         ].join("\n"),
       },
@@ -504,7 +504,7 @@ function buildPerksLevelEmbed(member, level, roleId) {
         },
         description: [
           `<a:VC_PandaClap:1331620157398712330> **Complimenti ${member}!**`,
-          `<:VC_LevelUp2:1443701876892762243> Hai appena __raggiunto__ il <@&${roleId}>`,
+          `<:VC_LevelUp2:1482527047871107143> Hai appena __raggiunto__ il <@&${roleId}>`,
           `<a:VC_HelloKittyGift:1329447876857958471> __Controlla__ <#${PERKS_CHANNEL_ID}> per sapere i nuovi **vantaggi** che hai _sbloccato_!`,
         ].join("\n"),
       },
@@ -522,22 +522,22 @@ async function sendPerksLevelMessage(guild, member, level) {
 }
 
 function buildPerkNearDmEmbed(member, targetLevel, roleLabel, missingExp) {
-  const safeRoleLabel = String(roleLabel || "<:VC_Mention:1443994358201323681> Ruolo sconosciuto").trim();
+  const safeRoleLabel = String(roleLabel || "<:VC_Mention:1482526855289634997> Ruolo sconosciuto").trim();
   return {
     embeds: [
       {
         color: 0x6f4e37,
-        title: "<:VC_Info:1460670816214585481> Sei vicino a un nuovo perk!",
+        title: "<:VC_InactiveStatus:1472011031709745307> Sei vicino a un nuovo perk!",
         thumbnail: {
           url: member?.user?.displayAvatarURL({ size: 256 }),
         },
         description: [
           `<a:VC_PandaClap:1331620157398712330> ${member}, ci sei quasi!`,
-          `<:VC_Mention:1443994358201323681> Sei vicino al ruolo **${safeRoleLabel}** (livello \`${targetLevel}\`).`,
-          `<:VC_EXP:1468714279673925883> Ti mancano **${Math.max(0, Number(missingExp || 0))} EXP**.`,
+          `<:VC_Mention:1482526855289634997> Sei vicino al ruolo **${safeRoleLabel}** (livello \`${targetLevel}\`).`,
+          `<:VC_EXP:1482534670896730143> Ti mancano **${Math.max(0, Number(missingExp || 0))} EXP**.`,
           PERKS_CHANNEL_ID
-            ? `<:VC_Info:1460670816214585481> Info perks: <#${PERKS_CHANNEL_ID}>`
-            : "<:VC_Info:1460670816214585481> Controlla il canale info del server.",
+            ? `<:VC_InactiveStatus:1472011031709745307> Info perks: <#${PERKS_CHANNEL_ID}>`
+            : "<:VC_InactiveStatus:1472011031709745307> Controlla il canale info del server.",
         ].join("\n"),
       },
     ],
@@ -617,7 +617,7 @@ async function sendLevelUpPayload(channel, member, payload) {
   if (!channel || !member || !payload) return;
   await channel
     .send({
-      content: `<a:VC_LevelUp:1469046204582068376> ${member} sei salito/a di livello!`,
+      content: `<a:VC_LevelUp:1482527020641419415> ${member} sei salito/a di livello!`,
       ...payload,
     })
     .catch(() => { });

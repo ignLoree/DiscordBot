@@ -68,7 +68,7 @@ const recentQuestionKeysByChannel = new Map();
 const REWARD_CHANNEL_ID = IDs.channels.commands;
 const MINIGAME_WIN_EMOJI = "<a:VC_Events:1448688007438667796>";
 const MINIGAME_CORRECT_FALLBACK_EMOJI = "\u2714";
-const MINIGAME_WRONG_EMOJI = "<a:VC_Cross:1448671102355116052>";
+const MINIGAME_WRONG_EMOJI = "<a:VC_Cross:1482532424570376253>";
 
 const CANVAS_STYLE = {
   bgGradStart: "#2c2419",
@@ -2752,12 +2752,12 @@ function buildGuessNumberEmbed(min, max, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il numero <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Indovina il numero <a:VC_Exclamation:1482534702077444217>")
     .setDescription(
       [
-        `<:VC_EXP:1468714279673925883> Indovina un numero tra **${min}** e **${max}** per ottenere **${rewardExp} exp**.`,
-        `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per indovinarlo!`,
-        `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+        `<:VC_EXP:1482534670896730143> Indovina un numero tra **${min}** e **${max}** per ottenere **${rewardExp} exp**.`,
+        `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per indovinarlo!`,
+        `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
     );
 }
@@ -2766,12 +2766,12 @@ function buildGuessWordEmbed(scrambled, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la parola <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Indovina la parola <a:VC_Exclamation:1482534702077444217>")
     .setDescription(
       [
-        `<:VC_EXP:1468714279673925883> Indovina la parola da queste lettere: **${scrambled}** per ottenere **${rewardExp} exp**.`,
-        `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per indovinarla!`,
-        `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+        `<:VC_EXP:1482534670896730143> Indovina la parola da queste lettere: **${scrambled}** per ottenere **${rewardExp} exp**.`,
+        `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per indovinarla!`,
+        `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
     );
 }
@@ -2780,12 +2780,12 @@ function buildGuessFlagEmbed(flagUrl, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la bandiera <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Indovina la bandiera <a:VC_Exclamation:1482534702077444217>")
     .setDescription(
       [
-        `<:VC_EXP:1468714279673925883> Indovina la nazione da questa bandiera per ottenere **${rewardExp} exp**.`,
-        `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per indovinarla!`,
-        `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+        `<:VC_EXP:1482534670896730143> Indovina la nazione da questa bandiera per ottenere **${rewardExp} exp**.`,
+        `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per indovinarla!`,
+        `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
     )
     .setImage(flagUrl);
@@ -2795,11 +2795,11 @@ function buildGuessPlayerEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il calciatore <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Indovina il calciatore <a:VC_Exclamation:1482534702077444217>")
     .setDescription([
-      `<:VC_EXP:1468714279673925883> Indovina il calciatore più famoso per ottenere **${rewardExp} exp**.`,
-      `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per indovinarlo!`,
-      `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+      `<:VC_EXP:1482534670896730143> Indovina il calciatore più famoso per ottenere **${rewardExp} exp**.`,
+      `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per indovinarlo!`,
+      `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
     ].join("\n"),);
   if (imageUrl) {
     embed.setImage(imageUrl);
@@ -2811,11 +2811,11 @@ function buildGuessSongEmbed(rewardExp, durationMs, artworkUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la canzone <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Indovina la canzone <a:VC_Exclamation:1482534702077444217>")
     .setDescription([
-      `<:VC_EXP:1468714279673925883> Indovina la canzone per ottenere **${rewardExp} exp**.`,
-      `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per indovinarla!`,
-      `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+      `<:VC_EXP:1482534670896730143> Indovina la canzone per ottenere **${rewardExp} exp**.`,
+      `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per indovinarla!`,
+      `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
     ].join("\n"),);
   if (artworkUrl) embed.setImage(artworkUrl);
   return embed;
@@ -2825,11 +2825,11 @@ function buildGuessCapitalEmbed(country, rewardExp, durationMs, imageUrl = null)
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la capitale <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Indovina la capitale <a:VC_Exclamation:1482534702077444217>")
     .setDescription([
-      `<:VC_EXP:1468714279673925883> Indovina la capitale di **${country}** per ottenere **${rewardExp} exp**.`,
-      `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per rispondere!`,
-      `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+      `<:VC_EXP:1482534670896730143> Indovina la capitale di **${country}** per ottenere **${rewardExp} exp**.`,
+      `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per rispondere!`,
+      `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
     ].join("\n"),
     );
   if (imageUrl) embed.setImage(imageUrl);
@@ -2840,11 +2840,11 @@ function buildGuessRegionCapitalEmbed(region, rewardExp, durationMs, imageUrl = 
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il capoluogo <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Indovina il capoluogo <a:VC_Exclamation:1482534702077444217>")
     .setDescription([
-      `<:VC_EXP:1468714279673925883> Indovina il capoluogo della regione **${region}** per ottenere **${rewardExp} exp**.`,
-      `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per rispondere!`,
-      `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+      `<:VC_EXP:1482534670896730143> Indovina il capoluogo della regione **${region}** per ottenere **${rewardExp} exp**.`,
+      `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per rispondere!`,
+      `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
     ].join("\n"),
     );
   if (imageName) embed.setImage(`attachment://${imageName}`);
@@ -2856,11 +2856,11 @@ function buildGuessReverseCapitalEmbed(capital, rewardExp, durationMs, imageUrl 
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Capitale inverso <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Capitale inverso <a:VC_Exclamation:1482534702077444217>")
     .setDescription([
-      `<:VC_EXP:1468714279673925883> **${capital}** è la capitale di quale Stato? Indovina per **${rewardExp} exp**.`,
-      `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per rispondere!`,
-      `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+      `<:VC_EXP:1482534670896730143> **${capital}** è la capitale di quale Stato? Indovina per **${rewardExp} exp**.`,
+      `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per rispondere!`,
+      `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
     ].join("\n"),
     );
   if (imageUrl) embed.setImage(imageUrl);
@@ -2871,12 +2871,12 @@ function buildFastTypeEmbed(phrase, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Scrivi per primo la frase <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Scrivi per primo la frase <a:VC_Exclamation:1482534702077444217>")
     .setDescription(
       [
-        `<:VC_EXP:1468714279673925883> Il primo che scrive questa frase ottiene **${rewardExp} exp**.`,
-        `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per scrivere la frase.`,
-        `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+        `<:VC_EXP:1482534670896730143> Il primo che scrive questa frase ottiene **${rewardExp} exp**.`,
+        `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per scrivere la frase.`,
+        `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
     );
 }
@@ -2885,11 +2885,11 @@ function buildGuessTeamEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la squadra di calcio <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Indovina la squadra di calcio <a:VC_Exclamation:1482534702077444217>")
     .setDescription([
-      `<:VC_EXP:1468714279673925883> Indovina la squadra di calcio dal logo per ottenere **${rewardExp} exp**.`,
-      `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per indovinare la squadra.`,
-      `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+      `<:VC_EXP:1482534670896730143> Indovina la squadra di calcio dal logo per ottenere **${rewardExp} exp**.`,
+      `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per indovinare la squadra.`,
+      `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
     ].join("\n"),
     );
   if (imageUrl) embed.setImage(imageUrl);
@@ -2900,11 +2900,11 @@ function buildGuessSingerEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il cantante <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Indovina il cantante <a:VC_Exclamation:1482534702077444217>")
     .setDescription([
-      `<:VC_EXP:1468714279673925883> Indovina il cantante dalla foto per ottenere **${rewardExp} exp**.`,
-      `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per indovinare il cantante.`,
-      `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+      `<:VC_EXP:1482534670896730143> Indovina il cantante dalla foto per ottenere **${rewardExp} exp**.`,
+      `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per indovinare il cantante.`,
+      `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
     ].join("\n"),
     );
   if (imageUrl) embed.setImage(imageUrl);
@@ -2915,11 +2915,11 @@ function buildGuessAlbumEmbed(rewardExp, durationMs, imageUrlOrAttachment) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina l'album <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Indovina l'album <a:VC_Exclamation:1482534702077444217>")
     .setDescription([
-      `<:VC_EXP:1468714279673925883> Indovina l'album dalla copertina per ottenere **${rewardExp} exp**.`,
-      `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per indovinare l'album.`,
-      `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+      `<:VC_EXP:1482534670896730143> Indovina l'album dalla copertina per ottenere **${rewardExp} exp**.`,
+      `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per indovinare l'album.`,
+      `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
     ].join("\n"),
     );
   if (imageUrlOrAttachment) embed.setImage(imageUrlOrAttachment);
@@ -3023,12 +3023,12 @@ function buildHangmanEmbed(maskedWord, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Impiccato <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Impiccato <a:VC_Exclamation:1482534702077444217>")
     .setDescription(
       [
-        `<:VC_EXP:1468714279673925883> Scrivi una lettera o prova la parola intera per ottenere **${rewardExp} exp**.`,
-        `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per indovinare la parola.`,
-        `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+        `<:VC_EXP:1482534670896730143> Scrivi una lettera o prova la parola intera per ottenere **${rewardExp} exp**.`,
+        `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per indovinare la parola.`,
+        `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
     );
 }
@@ -3070,12 +3070,12 @@ function buildItalianGkEmbed(question, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Cultura generale <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Cultura generale <a:VC_Exclamation:1482534702077444217>")
     .setDescription(
       [
-        `<:VC_EXP:1468714279673925883> **Domanda:** ${question} per ottenere **${rewardExp} exp**.`,
-        `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per rispondere alla domanda.`,
-        `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+        `<:VC_EXP:1482534670896730143> **Domanda:** ${question} per ottenere **${rewardExp} exp**.`,
+        `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per rispondere alla domanda.`,
+        `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
     );
 }
@@ -3099,7 +3099,7 @@ function buildDrivingQuizEmbed(row, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const statement = row?.statement ?? "";
   const isMultiple = row?.questionType === "multiple" && Array.isArray(row.options) && row.options.length >= 2;
-  const lines = [`<:VC_EXP:1468714279673925883> **${isMultiple ? "Domanda" : "Affermazione"}:** ${statement}`,
+  const lines = [`<:VC_EXP:1482534670896730143> **${isMultiple ? "Domanda" : "Affermazione"}:** ${statement}`,
   ];
   if (isMultiple) {
     row.options.forEach((opt, i) => {
@@ -3112,11 +3112,11 @@ function buildDrivingQuizEmbed(row, rewardExp, durationMs) {
   }
   lines.push(
     `Ricompensa: **${rewardExp} exp**`,
-    `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti**.`,
+    `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti**.`,
   );
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Quiz patente <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Quiz patente <a:VC_Exclamation:1482534702077444217>")
     .setDescription(lines.join("\n"));
 }
 
@@ -3124,11 +3124,11 @@ function buildMathExpressionEmbed( expression, rewardExp, durationMs, imageName 
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Espressione matematica <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Espressione matematica <a:VC_Exclamation:1482534702077444217>")
     .setDescription([
-      `<:VC_EXP:1468714279673925883> Risolvi: **${expression}** per ottenere **${rewardExp} exp**.`,
-      `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per risolvere l'espressione.`,
-      `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+      `<:VC_EXP:1482534670896730143> Risolvi: **${expression}** per ottenere **${rewardExp} exp**.`,
+      `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per risolvere l'espressione.`,
+      `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
     ].join("\n"),
     );
   if (imageName) embed.setImage(`attachment://${imageName}`);
@@ -3139,12 +3139,12 @@ function buildFindBotEmbed(rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Trova il bot <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Trova il bot <a:VC_Exclamation:1482534702077444217>")
     .setDescription(
       [
-        `<:VC_EXP:1468714279673925883> Trova il messaggio del bot tra i canali del server, premi il bottone per ottenere **${rewardExp} exp**.`,
-        `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per trovarlo.`,
-        `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+        `<:VC_EXP:1482534670896730143> Trova il messaggio del bot tra i canali del server, premi il bottone per ottenere **${rewardExp} exp**.`,
+        `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per trovarlo.`,
+        `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
     );
 }
@@ -3153,12 +3153,12 @@ function buildFindBotButtonEmbed(rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Sei vicino al bot <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Sei vicino al bot <a:VC_Exclamation:1482534702077444217>")
     .setDescription(
       [
-        `<:VC_EXP:1468714279673925883> Hai trovato il messaggio nascosto: clicca il bottone per ottenere **${rewardExp} exp**.`,
-        `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per cliccare il bottone.`,
-        `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+        `<:VC_EXP:1482534670896730143> Hai trovato il messaggio nascosto: clicca il bottone per ottenere **${rewardExp} exp**.`,
+        `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per cliccare il bottone.`,
+        `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
     );
 }
@@ -3357,7 +3357,7 @@ function buildYearHintEmbed(guessBeforeTarget) {
 
 function buildWinEmbed(winnerId, effectiveExp, totalExp, details = null) {
   const lines = [
-    `<a:VC_Winner:1448687700235256009> Complimenti <@${winnerId}>, hai vinto e guadagnato **${effectiveExp} exp**<a:VC_Exclamation:1448687427836444854>`,
+    `<a:VC_Winner:1482535294757507255> Complimenti <@${winnerId}>, hai vinto e guadagnato **${effectiveExp} exp**<a:VC_Exclamation:1482534702077444217>`,
   ];
   if (details) {
     const extras = [];
@@ -3365,11 +3365,11 @@ function buildWinEmbed(winnerId, effectiveExp, totalExp, details = null) {
     if (details.streakBonus > 0) extras.push(`<a:VC_Flame:1473106990493335665> Streak ${details.newStreak} **+${details.streakBonus} exp**`);
     if (extras.length) lines.push("", ...extras);
   }
-  lines.push("", "<:VC_Stats:1448695844923510884> **Le tue statistiche:**", `<a:VC_Arrow:1448672967721615452> Ora hai un totale di **${totalExp} exp**`);
+  lines.push("", "<:VC_Stats:1482527532682055780> **Le tue statistiche:**", `<a:VC_Arrow:1448672967721615452> Ora hai un totale di **${totalExp} exp**`);
   if (details?.newStreak > 1) lines.push(`<a:VC_Arrow:1448672967721615452> Serie di vittorie: **${details.newStreak}** (record: **${details.bestStreak}**)`);
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Events:1448688007438667796> Un utente ha vinto<a:VC_Exclamation:1448687427836444854>")
+    .setTitle("<a:VC_Events:1448688007438667796> Un utente ha vinto<a:VC_Exclamation:1482534702077444217>")
     .setDescription(lines.join("\n"))
     .setFooter({
       text: 'Digita il comando "+mstats" per vedere i tuoi progressi',
@@ -3439,7 +3439,7 @@ function buildTimeoutNumberEmbed(number) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! Il numero era **${number}**.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! Il numero era **${number}**.`,
     );
 }
 
@@ -3447,7 +3447,7 @@ function buildTimeoutWordEmbed(word) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! La parola era **${word}**.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! La parola era **${word}**.`,
     );
 }
 
@@ -3455,7 +3455,7 @@ function buildTimeoutFlagEmbed(name) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! La bandiera era **${name}**.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! La bandiera era **${name}**.`,
     );
 }
 
@@ -3463,7 +3463,7 @@ function buildTimeoutPlayerEmbed(name) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! Il calciatore era **${name}**.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! Il calciatore era **${name}**.`,
     );
 }
 
@@ -3471,7 +3471,7 @@ function buildTimeoutSongEmbed(title, artist) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! Era **${title}** \u2014 ${artist}.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! Era **${title}** \u2014 ${artist}.`,
     );
 }
 
@@ -3479,7 +3479,7 @@ function buildTimeoutFindBotEmbed() {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      "<a:VC_pixeltime:1470796283320209600> Tempo scaduto! Nessuno ha trovato il bot.",
+      "<a:VC_pixeltime:1482535344103620771> Tempo scaduto! Nessuno ha trovato il bot.",
     );
 }
 
@@ -3487,7 +3487,7 @@ function buildTimeoutCapitalEmbed(country, answer) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! La capitale di **${country}** era **${answer}**.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! La capitale di **${country}** era **${answer}**.`,
     );
 }
 
@@ -3495,7 +3495,7 @@ function buildTimeoutRegionCapitalEmbed(region, answer) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! Il capoluogo di **${region}** era **${answer}**.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! Il capoluogo di **${region}** era **${answer}**.`,
     );
 }
 
@@ -3503,7 +3503,7 @@ function buildTimeoutReverseCapitalEmbed(capital, answer) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! **${capital}** è la capitale di **${answer}**.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! **${capital}** è la capitale di **${answer}**.`,
     );
 }
 
@@ -3511,7 +3511,7 @@ function buildTimeoutFastTypeEmbed(phrase) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! La frase era \`${phrase}\`.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! La frase era \`${phrase}\`.`,
     );
 }
 
@@ -3519,7 +3519,7 @@ function buildTimeoutTeamEmbed(team) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! La squadra era **${team}**.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! La squadra era **${team}**.`,
     );
 }
 
@@ -3527,7 +3527,7 @@ function buildTimeoutSingerEmbed(name) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! Il cantante era **${name}**.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! Il cantante era **${name}**.`,
     );
 }
 
@@ -3535,7 +3535,7 @@ function buildTimeoutAlbumEmbed(name, artist) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! Era **${name}** di ${artist}.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! Era **${name}** di ${artist}.`,
     );
 }
 
@@ -3543,7 +3543,7 @@ function buildTimeoutHangmanEmbed(word) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! La parola era **${word}**.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! La parola era **${word}**.`,
     );
 }
 
@@ -3551,7 +3551,7 @@ function buildTimeoutItalianGkEmbed(answer) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! La risposta era **${answer}**.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! La risposta era **${answer}**.`,
     );
 }
 
@@ -3567,7 +3567,7 @@ function buildTimeoutDrivingQuizEmbed(game) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! ${text}`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! ${text}`,
     );
 }
 
@@ -3575,7 +3575,7 @@ function buildTimeoutMathEmbed(answer) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! Il risultato corretto era **${answer}**.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! Il risultato corretto era **${answer}**.`,
     );
 }
 
@@ -3584,7 +3584,7 @@ function buildTimeoutGuessYearEmbed(title, subtitle, year) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! **${title}**${sub} era del **${year}**.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! **${title}**${sub} era del **${year}**.`,
     );
 }
 
@@ -3592,7 +3592,7 @@ function buildTimeoutCompleteVerseEmbed(answer, song, artist) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! La risposta era **${answer}** (${song} — ${artist}).`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! La risposta era **${answer}** (${song} — ${artist}).`,
     );
 }
 
@@ -3600,7 +3600,7 @@ function buildTimeoutGuessEmojiEmbed(emojis, answer) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! ${emojis} era **${answer}**.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! ${emojis} era **${answer}**.`,
     );
 }
 
@@ -3608,7 +3608,7 @@ function buildTimeoutQuoteFilmEmbed(quote, answer) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! La citazione è da **${answer}**.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! La citazione è da **${answer}**.`,
     );
 }
 
@@ -3617,7 +3617,7 @@ function buildTimeoutCompleteProverbEmbed(start, end) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! Il proverbio completo: **${full}**.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! Il proverbio completo: **${full}**.`,
     );
 }
 
@@ -3628,7 +3628,7 @@ function buildTimeoutSynonymAntonymEmbed(word, answer, kind) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! ${label} di **${safeWord}** era **${safeAnswer}**.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! ${label} di **${safeWord}** era **${safeAnswer}**.`,
     );
 }
 
@@ -3636,7 +3636,7 @@ function buildTimeoutGuessCityEmbed(landmark, city) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_pixeltime:1470796283320209600> Tempo scaduto! **${landmark}** si trova a **${city}**.`,
+      `<a:VC_pixeltime:1482535344103620771> Tempo scaduto! **${landmark}** si trova a **${city}**.`,
     );
 }
 
@@ -3645,11 +3645,11 @@ function buildGuessYearEmbed(title, subtitle, rewardExp, durationMs, imageUrl = 
   const sub = subtitle ? ` — ${subtitle}` : "";
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina l'anno <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Indovina l'anno <a:VC_Exclamation:1482534702077444217>")
     .setDescription([
-      `<:VC_EXP:1468714279673925883> In che anno è uscito **${title}**${sub}? Scrivi l'anno per **${rewardExp} exp**.`,
-      `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per rispondere!`,
-      `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche.`,
+      `<:VC_EXP:1482534670896730143> In che anno è uscito **${title}**${sub}? Scrivi l'anno per **${rewardExp} exp**.`,
+      `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per rispondere!`,
+      `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche.`,
     ].join("\n"));
   if (imageUrl) embed.setImage(imageUrl);
   return embed;
@@ -3659,11 +3659,11 @@ function buildCompleteVerseEmbed(verse, rewardExp, durationMs, imageUrl = null) 
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Completa il verso <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Completa il verso <a:VC_Exclamation:1482534702077444217>")
     .setDescription([
-      `<:VC_EXP:1468714279673925883> Completa: **${verse}** per **${rewardExp} exp**.`,
-      `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per rispondere!`,
-      `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche.`,
+      `<:VC_EXP:1482534670896730143> Completa: **${verse}** per **${rewardExp} exp**.`,
+      `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per rispondere!`,
+      `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche.`,
     ].join("\n"));
   if (imageUrl) embed.setImage(imageUrl);
   return embed;
@@ -3673,11 +3673,11 @@ function buildGuessEmojiEmbed(emojis, rewardExp, durationMs, imageUrl = null) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina da emoji <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Indovina da emoji <a:VC_Exclamation:1482534702077444217>")
     .setDescription([
-      `<:VC_EXP:1468714279673925883> Cosa rappresenta **${emojis}**? Scrivi film, serie o canzone per **${rewardExp} exp**.`,
-      `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per rispondere!`,
-      `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche.`,
+      `<:VC_EXP:1482534670896730143> Cosa rappresenta **${emojis}**? Scrivi film, serie o canzone per **${rewardExp} exp**.`,
+      `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per rispondere!`,
+      `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche.`,
     ].join("\n"));
   if (imageUrl) embed.setImage(imageUrl);
   return embed;
@@ -3687,11 +3687,11 @@ function buildQuoteFilmEmbed(quote, rewardExp, durationMs, imageUrl = null) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Citazione da film/serie <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Citazione da film/serie <a:VC_Exclamation:1482534702077444217>")
     .setDescription([
-      `<:VC_EXP:1468714279673925883> *"${quote}"* — Da quale film o serie? **${rewardExp} exp**.`,
-      `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per rispondere!`,
-      `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche.`,
+      `<:VC_EXP:1482534670896730143> *"${quote}"* — Da quale film o serie? **${rewardExp} exp**.`,
+      `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per rispondere!`,
+      `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche.`,
     ].join("\n"));
   if (imageUrl) embed.setImage(imageUrl);
   return embed;
@@ -3701,11 +3701,11 @@ function buildCompleteProverbEmbed(start, rewardExp, durationMs, imageUrl = null
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Completa il proverbio <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Completa il proverbio <a:VC_Exclamation:1482534702077444217>")
     .setDescription([
-      `<:VC_EXP:1468714279673925883> **${start}** ... Completa il proverbio per **${rewardExp} exp**.`,
-      `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per rispondere!`,
-      `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche.`,
+      `<:VC_EXP:1482534670896730143> **${start}** ... Completa il proverbio per **${rewardExp} exp**.`,
+      `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per rispondere!`,
+      `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche.`,
     ].join("\n"));
   if (imageUrl) embed.setImage(imageUrl);
   return embed;
@@ -3716,11 +3716,11 @@ function buildSynonymAntonymEmbed(word, kind, rewardExp, durationMs, imageUrl = 
   const label = kind === "antonym" ? "il contrario" : "un sinonimo";
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle(kind === "antonym" ? "Trova il contrario <a:VC_Exclamation:1448687427836444854>" : "Trova il sinonimo <a:VC_Exclamation:1448687427836444854>")
+    .setTitle(kind === "antonym" ? "Trova il contrario <a:VC_Exclamation:1482534702077444217>" : "Trova il sinonimo <a:VC_Exclamation:1482534702077444217>")
     .setDescription([
-      `<:VC_EXP:1468714279673925883> Scrivi ${label} di **${word}** per **${rewardExp} exp**.`,
-      `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per rispondere!`,
-      `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche.`,
+      `<:VC_EXP:1482534670896730143> Scrivi ${label} di **${word}** per **${rewardExp} exp**.`,
+      `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per rispondere!`,
+      `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche.`,
     ].join("\n"));
   if (imageUrl) embed.setImage(imageUrl);
   return embed;
@@ -3730,11 +3730,11 @@ function buildGuessCityEmbed(landmark, rewardExp, durationMs, imageUrl = null) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la città <a:VC_Exclamation:1448687427836444854>")
+    .setTitle("Indovina la città <a:VC_Exclamation:1482534702077444217>")
     .setDescription([
-      `<:VC_EXP:1468714279673925883> In quale città si trova **${landmark}**? **${rewardExp} exp**.`,
-      `> <a:VC_pixeltime:1470796283320209600> Hai **${minutes} minuti** per rispondere!`,
-      `> <a:VC_Winner:1448687700235256009> Esegui il comando \`+mstats\` per vedere le tue statistiche.`,
+      `<:VC_EXP:1482534670896730143> In quale città si trova **${landmark}**? **${rewardExp} exp**.`,
+      `> <a:VC_pixeltime:1482535344103620771> Hai **${minutes} minuti** per rispondere!`,
+      `> <a:VC_Winner:1482535294757507255> Esegui il comando \`+mstats\` per vedere le tue statistiche.`,
     ].join("\n"));
   if (imageUrl) embed.setImage(imageUrl);
   return embed;
@@ -4175,7 +4175,7 @@ async function startGuessSongGame(client, cfg) {
   }
 
   const previewCustomId = `minigame_song_preview:${Date.now()}`;
-  const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(previewCustomId).setLabel("Ascolta anteprima").setEmoji(`<:VC_Preview:1462941162393309431>`).setStyle(ButtonStyle.Secondary).setDisabled(!info.previewUrl),);
+  const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(previewCustomId).setLabel("Ascolta anteprima").setEmoji(`<:VC_Preview:1482527267992375368>`).setStyle(ButtonStyle.Secondary).setDisabled(!info.previewUrl),);
 
   const songAttachmentName = "minigame_song.png";
   let songImageUrl = info.artwork;

@@ -57,7 +57,7 @@ async function logCommandUsage(client, { channelId, serverName, user, userId, co
   })
     .setTitle(`${client.user.username} - Log Comandi`)
     .addFields(
-      { name: "<a:VC_Channel:1448670215444631706> Server:", value: `${serverName}` },
+      { name: "<a:VC_Channel:1482534583944871996> Server:", value: `${serverName}` },
       { name: "<:VC_Bot:1470780684233871428> Comando:", value: `\`\`\`${content}\`\`\`` },
       { name: "<:member_role_icon:1330530086792728618> Utente:", value: `${user} · \`${userId}\`` },
     )

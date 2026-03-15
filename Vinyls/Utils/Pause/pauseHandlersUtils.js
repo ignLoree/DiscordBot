@@ -274,7 +274,7 @@ function getOnePausePerMonthWarning(staffDoc, normalized) {
     const k = getMonthKeyForPauseCount(p.dataRichiesta, p.dataRitorno);
     return k && k.year === newCountKey.year && k.month === newCountKey.month;
   }).length;
-  if (countSameMonth >= 1) return "<:VC_Attention:1443933073438675016> Hai già una richiesta pausa in questo mese. L’High Staff può accettare comunque.";
+  if (countSameMonth >= 1) return "<:VC_Attention:1482534443632558151> Hai già una richiesta pausa in questo mese. L’High Staff può accettare comunque.";
   return null;
 }
 
@@ -288,7 +288,7 @@ function getOneWeekBetweenWarning(staffDoc, excludePauseId = null) {
   const last = withDate[0];
   if (!last) return null;
   const weekAgo = Date.now() - 7 * MS_PER_DAY;
-  if (last.at > weekAgo) return "<:VC_Attention:1443933073438675016> Meno di 1 settimana dall’ultima richiesta. L’High Staff può accettare comunque.";
+  if (last.at > weekAgo) return "<:VC_Attention:1482534443632558151> Meno di 1 settimana dall’ultima richiesta. L’High Staff può accettare comunque.";
   return null;
 }
 
@@ -302,7 +302,7 @@ function getSpanTwoMonthsFiveDaysWarning(normalized) {
   if (!startKey || !endKey) return null;
   if (startKey.year === endKey.year && startKey.month === endKey.month) return null;
   const endDay = end.getUTCDate();
-  if (endDay > 5) return "<:VC_Attention:1443933073438675016> La pausa copre due mesi: il ritorno non dovrebbe superare il 5° giorno dell’altro mese. L’High Staff può accettare comunque.";
+  if (endDay > 5) return "<:VC_Attention:1482534443632558151> La pausa copre due mesi: il ritorno non dovrebbe superare il 5° giorno dell’altro mese. L’High Staff può accettare comunque.";
   return null;
 }
 

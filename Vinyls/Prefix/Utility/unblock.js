@@ -83,7 +83,7 @@ module.exports = {
 
       const embed = new EmbedBuilder()
         .setColor("#6f4e37")
-        .setTitle("<a:VC_Unlock:1470011538432852108> Quote sbloccate")
+        .setTitle("<a:VC_Unlock:1482532082466029608> Quote sbloccate")
         .setDescription(
           [
             "Le quote dei tuoi messaggi sono state sbloccate con successo!",

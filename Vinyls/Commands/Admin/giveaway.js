@@ -80,12 +80,12 @@ module.exports = {
       const result = await rerollGiveawayByMessageId(messageId, interaction.client);
       if (result.ok) {
         return safeEditReply(interaction, {
-          content: `<a:VC_Events:1448688007438667796> Re-roll effettuato! Nuovo vincitore: <@${result.newWinnerId}>. Il messaggio è stato aggiornato nel canale.`,
+          content: `<a:VC_Events:1448688007438667796> Re - roll effettuato! Nuovo vincitore: <@${result.newWinnerId}>. Il messaggio è stato aggiornato nel canale.`,
           flags: EPHEMERAL_FLAG,
         });
       }
       return safeEditReply(interaction, {
-        content: `<a:VC_Alert:1448670089670037675> ${result.error || "Errore durante il re-roll."}`,
+        content: `<a:VC_Alert:1448670089670037675> ${result.error || "Errore durante il re - roll."}`,
         flags: EPHEMERAL_FLAG,
       });
     }

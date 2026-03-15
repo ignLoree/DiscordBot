@@ -555,7 +555,7 @@ function buildGlobalPermissionDeniedEmbed(
 
   const embed = new EmbedBuilder()
     .setColor("Red")
-    .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
+    .setTitle("<:VC_Lock:1482526739044368476> **Non hai i permessi**")
     .setDescription(description);
 
   if (roles.length > 0) {
@@ -570,7 +570,7 @@ function buildGlobalPermissionDeniedEmbed(
 function buildGlobalNotYourControlEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
-    .setTitle("<:VC_Lock:1468544444113617063> **Accesso negato**")
+    .setTitle("<:VC_Lock:1482526739044368476> **Accesso negato**")
     .setDescription("Questo controllo non è associato al tuo comando.");
 }
 

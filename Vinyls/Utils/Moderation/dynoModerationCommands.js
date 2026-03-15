@@ -53,20 +53,20 @@ async function validateModerationTarget(message, member, actionLabel, targetUser
   }
   if (!targetMember) return { ok: true };
   if (String(targetMember.id) === String(message.author.id)) {
-    return { ok: false, error: `<:VC_Lock:1468544444113617063> Non puoi usare \`${actionLabel}\` su te stesso.` };
+    return { ok: false, error: `<:VC_Lock:1482526739044368476> Non puoi usare \`${actionLabel}\` su te stesso.` };
   }
   if (String(targetMember.id) === String(message.client.user.id)) {
-    return { ok: false, error: "<:VC_Lock:1468544444113617063> Non puoi moderare il bot." };
+    return { ok: false, error: "<:VC_Lock:1482526739044368476> Non puoi moderare il bot." };
   }
   if (isServerOwner(targetMember, message.guild)) {
-    return { ok: false, error: "<:VC_Lock:1468544444113617063> Non puoi moderare il proprietario del server." };
+    return { ok: false, error: "<:VC_Lock:1482526739044368476> Non puoi moderare il proprietario del server." };
   }
   const actorMember = message.member;
   if (actorMember?.roles?.highest != null && targetMember.roles?.highest != null) {
     if (targetMember.roles.highest.position >= actorMember.roles.highest.position) {
       return {
         ok: false,
-        error: "<:VC_Lock:1468544444113617063> Non puoi moderare un utente con ruolo superiore o uguale al tuo.",
+        error: "<:VC_Lock:1482526739044368476> Non puoi moderare un utente con ruolo superiore o uguale al tuo.",
       };
     }
   }
@@ -86,7 +86,7 @@ async function validateModerationTarget(message, member, actionLabel, targetUser
   if (protectedRoleIds.some((roleId) => targetMember.roles?.cache?.has(roleId))) {
     return {
       ok: false,
-      error: "<:VC_Lock:1468544444113617063> Non puoi moderare un utente con ruolo Staff o superiore.",
+      error: "<:VC_Lock:1482526739044368476> Non puoi moderare un utente con ruolo Staff o superiore.",
     };
   }
   return { ok: true };
@@ -277,7 +277,7 @@ function buildTemproleHelpRow(ownerId, currentValue = "default") {
   const filtered = hidden === "default" ? options : options.filter((item) => String(item.value).toLowerCase() !== hidden);
   const defaultOpt = { label: "Comando principale", description: "Torna all'aiuto principale", value: "default", };
   const allOpts = [...filtered.slice(0, 24), defaultOpt];
-  const menu = new StringSelectMenuBuilder().setCustomId(customId).setPlaceholder(String("Vedi sotto-comandi").slice(0, 150)).addOptions(...allOpts);
+  const menu = new StringSelectMenuBuilder().setCustomId(customId).setPlaceholder(String("Vedi sotto - comandi").slice(0, 150)).addOptions(...allOpts);
   return new ActionRowBuilder().addComponents(menu);
 }
 
@@ -293,7 +293,7 @@ async function sendTemproleHelpWithMenu(message) {
     if (interaction.user.id !== message.author.id) {
       await interaction
         .reply({
-          content: "<:VC_Lock:1468544444113617063> Puoi usare questo menu solo sul tuo comando.",
+          content: "<:VC_Lock:1482526739044368476> Puoi usare questo menu solo sul tuo comando.",
           flags: MessageFlags.Ephemeral,
         })
         .catch(() => { });
@@ -384,11 +384,11 @@ async function runNamed(name, message, args, client) {
     const duration = parseMaybeDuration(args[targetIndex + 1]);
     const reason = reasonFrom(args, duration ? targetIndex + 2 : targetIndex + 1, "");
     if (!reason || !reason.trim()) {
-      return reply(message, client, "Ban", "<:VC_Lock:1468544444113617063> Il motivo è obbligatorio per il ban. Uso: `+ban [utente] [durata] [motivo]`", "Red");
+      return reply(message, client, "Ban", "<:VC_Lock:1482526739044368476> Il motivo è obbligatorio per il ban. Uso: `+ban [utente] [durata] [motivo]`", "Red");
     }
     const deleteSeconds = mode === "save" ? 0 : 604800;
     const ok = await message.guild.members.ban(userId, { reason, deleteMessageSeconds: deleteSeconds }).then(() => true).catch(() => false);
-    if (!ok) return reply(message, client, "Ban", "<:VC_Lock:1468544444113617063> Operazione fallita.", "Red");
+    if (!ok) return reply(message, client, "Ban", "<:VC_Lock:1482526739044368476> Operazione fallita.", "Red");
     await sendModerationDm({
       user,
       guildId: message.guild.id,
@@ -414,7 +414,7 @@ async function runNamed(name, message, args, client) {
     if (!guard.ok) return reply(message, client, "Kick", guard.error, "Red");
     const reason = reasonFrom(args, 1, "");
     if (!reason || !reason.trim()) {
-      return reply(message, client, "Kick", "<:VC_Lock:1468544444113617063> Il motivo è obbligatorio per il kick. Uso: `+kick [utente] [motivo]`", "Red");
+      return reply(message, client, "Kick", "<:VC_Lock:1482526739044368476> Il motivo è obbligatorio per il kick. Uso: `+kick [utente] [motivo]`", "Red");
     }
     const ok = await member.kick(reason).then(() => true).catch(() => false);
     if (!ok) return reply(message, client, "Kick", "Operazione fallita.", "Red");
@@ -558,14 +558,14 @@ async function runNamed(name, message, args, client) {
     const { user, userId } = await pickUser(message, args, 0);
     if (!userId) return reply(message, client, "Warn", "Uso: `+warn @utente [testo]`.", "Red");
     if (String(userId) === String(message.author.id)) {
-      return reply(message, client, "Warn", "<:VC_Lock:1468544444113617063> Non puoi usare `warn` su te stesso.", "Red");
+      return reply(message, client, "Warn", "<:VC_Lock:1482526739044368476> Non puoi usare `warn` su te stesso.", "Red");
     }
     const warnMember = message.guild.members.cache.get(String(userId)) || (await message.guild.members.fetch(String(userId)).catch(() => null));
     const guard = await validateModerationTarget(message, warnMember, "warn", userId);
     if (!guard.ok) return reply(message, client, "Warn", guard.error, "Red");
     const content = String(args.slice(1).join(" ") || "").trim();
     if (!content) {
-      return reply(message, client, "Warn", "<:VC_Lock:1468544444113617063> Il motivo è obbligatorio per il warn. Uso: `+warn [utente] [motivo]`", "Red");
+      return reply(message, client, "Warn", "<:VC_Lock:1482526739044368476> Il motivo è obbligatorio per il warn. Uso: `+warn [utente] [motivo]`", "Red");
     }
     const reasonContent = content.slice(0, 512);
     await makeCase(client, message, "WARN", userId, reasonContent);
@@ -583,7 +583,7 @@ async function runNamed(name, message, args, client) {
 
   if (cmd === "warnings") {
     const { userId } = await pickUser(message, args, 0);
-    if (!userId) return reply(message, client, cmd, `<:VC_Lock:1468544444113617063> Uso: \`+${cmd} @utente\`.`, "Red");
+    if (!userId) return reply(message, client, cmd, `<:VC_Lock:1482526739044368476> Uso: \`+${cmd} @utente\`.`, "Red");
     const rows = await ModCase.find({ guildId: message.guild.id, userId, action: "WARN", active: true }).sort({ createdAt: -1 }).limit(20).lean().catch(() => []);
     if (!rows.length) {
       return message.channel
@@ -591,7 +591,7 @@ async function runNamed(name, message, args, client) {
           embeds: [
             new EmbedBuilder()
               .setColor("#3498DB")
-              .setDescription("<:VC_Lock:1468544444113617063> Nessun warning attivo trovato."),
+              .setDescription("<:VC_Lock:1482526739044368476> Nessun warning attivo trovato."),
           ],
         })
         .catch(() => null);
@@ -657,7 +657,7 @@ async function runNamed(name, message, args, client) {
       const targetLabel = targetUser ? `${targetUser}` : `\`${target.userId}\``;
       const responsibleLabel = message.author?.bot ? `${message.author} [BOT] \`${message.author.id}\`` : `${message.author} \`${message.author.id}\``;
       const warnRemovedEmbed = new EmbedBuilder().setColor("#57F287").setTitle("Warning Removed").setDescription([
-        `<:VC_BanHammer:1443933132645732362> **Warning for** ${targetLabel} **has been removed**`,
+        `<:VC_BanHammer:1482534474502897795> **Warning for** ${targetLabel} **has been removed**`,
         `<:staff:1443651912179388548> **Responsible:** ${responsibleLabel}`,
         `<:VC_Clock:1473359204189474886> <t:${Math.floor(Date.now() / 1000)}:F>`,
         `<:VC_reason:1478517122929004544> **Warning text:** ${(warningText || "").slice(0, 200)}${(warningText || "").length > 200 ? "…" : ""}`,
@@ -879,7 +879,7 @@ async function runNamed(name, message, args, client) {
             embeds: [
               new EmbedBuilder()
                 .setColor("#3498DB")
-                .setDescription(`<:VC_Info:1460670816214585481> **${msg}**`),
+                .setDescription(`<:VC_InactiveStatus:1472011031709745307> **${msg}**`),
             ],
           })
           .catch(() => null);
@@ -955,7 +955,7 @@ async function runNamed(name, message, args, client) {
       const length = formatDurationWords(row.durationMs);
       const blockLines = [
         `<:VC_id:1478517313618575419> **Case ${row.caseId}**`,
-        `<:VC_Info:1460670816214585481> **Tipo:** ${type}`,
+        `<:VC_InactiveStatus:1472011031709745307> **Tipo:** ${type}`,
         `<:member_role_icon:1330530086792728618> **Utente:** \`${target.userId}\` · ${targetUser?.username || "Sconosciuto"}`,
         `<:staff:1443651912179388548> **Moderatore:** ${modUser?.username || row.modId || "Sconosciuto"}`,
       ];
@@ -1043,7 +1043,7 @@ async function runNamed(name, message, args, client) {
     const reason = reasonFrom(args, reasonStart, cmd === "lock" ? "Canale bloccato." : "Canale sbloccato.");
     const me = message.guild.members.me;
     const perms = channel?.permissionsFor?.(me);
-    if (!perms?.has(PermissionsBitField.Flags.ManageChannels)) return reply(message, client, cmd, "<:VC_Lock:1468544444113617063> Non posso gestire quel canale.", "Red");
+    if (!perms?.has(PermissionsBitField.Flags.ManageChannels)) return reply(message, client, cmd, "<:VC_Lock:1482526739044368476> Non posso gestire quel canale.", "Red");
     await channel.permissionOverwrites
       .edit(
         message.guild.roles.everyone,
@@ -1060,8 +1060,8 @@ async function runNamed(name, message, args, client) {
           embeds: [
             new EmbedBuilder()
               .setColor("#ED4245")
-              .setTitle("<:VC_Lock:1468544444113617063> Canale bloccato")
-              .setDescription(`<:VC_Lock:1468544444113617063> Lock: ${reason}`),
+              .setTitle("<:VC_Lock:1482526739044368476> Canale bloccato")
+              .setDescription(`<:VC_Lock:1482526739044368476> Lock: ${reason}`),
           ],
         })
         .catch(() => null);
@@ -1071,7 +1071,7 @@ async function runNamed(name, message, args, client) {
             .edit(
               message.guild.roles.everyone,
               { SendMessages: null, SendMessagesInThreads: null },
-              { reason: "<a:VC_Unlock:1470011538432852108> Sblocco automatico (timer scaduto)." },
+              { reason: "<a:VC_Unlock:1482532082466029608> Sblocco automatico (timer scaduto)." },
             )
             .catch(() => null);
         }, duration);
@@ -1156,7 +1156,7 @@ async function runNamed(name, message, args, client) {
     );
   }
 
-  return reply(message, client, "Moderazione", `<:VC_Lock:1468544444113617063> Comando non supportato: ${cmd}`, "Red");
+  return reply(message, client, "Moderazione", `<:VC_Lock:1482526739044368476> Comando non supportato: ${cmd}`, "Red");
 }
 
 async function executeDynoModerationCommand(commandName, message, args, client) {

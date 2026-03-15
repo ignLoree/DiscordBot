@@ -3,7 +3,7 @@ const { safeMessageReply } = require("../../../shared/discord/replyRuntime");
 const{playRequest,touchMusicOutputChannel,searchPlayable,}=require("../../Services/Music/musicService");
 const { pickFromPagedMenu } = require("../../Services/Music/pagedPickerService");
 
-const SOURCE_EMOJIS={spotify:"<:VC_Spotify:1462941253803970571>",deezer:"<:VC_Deezer:1476933250835288167>",};
+const SOURCE_EMOJIS={spotify:"<:VC_Spotify:1482527369477492797>",deezer:"<:VC_Deezer:1482526421632159788>",};
 
 function getTrackSourceKey(track) {
   const source = String(track?.source || track?.queryType || track?.extractor?.identifier || "").toLowerCase();

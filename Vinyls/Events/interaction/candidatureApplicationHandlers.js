@@ -302,7 +302,7 @@ function setCooldown(userId, untilTs, type) {
 function buildRoleDeniedEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
-    .setTitle("<:VC_Lock:1468544444113617063> Accesso negato")
+    .setTitle("<:VC_Lock:1482526739044368476> Accesso negato")
     .setDescription(
       "<a:VC_Alert:1448670089670037675> Le candidature sono disponibili solo agli utenti con ruolo Member.",
     );
@@ -312,20 +312,20 @@ function buildAlreadyRoleEmbed(roleId) {
   const roleText = roleId ? `<@&${roleId}>` : "questo ruolo";
   return new EmbedBuilder()
     .setColor("Red")
-    .setTitle("<:VC_Lock:1468544444113617063> Accesso negato")
+    .setTitle("<:VC_Lock:1482526739044368476> Accesso negato")
     .setDescription(
-      `<:VC_Info:1460670816214585481> Sei già ${roleText}, perché dovresti ricandidarti?`,
+      `<:VC_InactiveStatus:1472011031709745307> Sei già ${roleText}, perché dovresti ricandidarti?`,
     );
 }
 
 function buildNoModuliDeniedEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
-    .setTitle("<:VC_Lock:1468544444113617063> Accesso negato")
+    .setTitle("<:VC_Lock:1482526739044368476> Accesso negato")
     .setDescription(
       "<a:VC_Alert:1448670089670037675> Sei blacklistato dalle candidature.",
       "",
-      "<:VC_Ticket:1448694637106692156> Se pensi sia un errore apri un ticket.",
+      "<:VC_Ticket:1482535175283019888> Se pensi sia un errore apri un ticket.",
     );
 }
 
@@ -337,15 +337,15 @@ function buildCooldownDeniedEmbed(untilTs, type) {
       : "**Helper**";
   return new EmbedBuilder()
     .setColor("Red")
-    .setTitle("<:VC_Lock:1468544444113617063> Candidatura non disponibile")
+    .setTitle("<:VC_Lock:1482526739044368476> Candidatura non disponibile")
     .setDescription(
       [
         `<:VC_Clock:1473359204189474886> Hai già inviato una candidatura ${label} di recente.`,
         "",
         `<:VC_update:1478721333096349817> Potrai reinviare **solo quella** (${label}) dopo: <t:${unix}:F> (<t:${unix}:R>).`,
         "",
-        "<:VC_Info:1460670816214585481> Le candidature **Helper** e **Partner Manager** hanno cooldown **separati**: puoi comunque candidarti all’altra se non è in cooldown.",
-        "<a:VC_Timer:1462779065625739344> Tra una candidatura e la successiva **dello stesso tipo** passano 7 giorni.",
+        "<:VC_InactiveStatus:1472011031709745307> Le candidature **Helper** e **Partner Manager** hanno cooldown **separati**: puoi comunque candidarti all’altra se non è in cooldown.",
+        "<a:VC_Timer:1482527426557775954> Tra una candidatura e la successiva **dello stesso tipo** passano 7 giorni.",
       ].join("\n"),
     );
 }
@@ -356,9 +356,9 @@ function buildIntroEmbed(type) {
       .setColor("#6f4e37")
       .setTitle("<:partnermanager:1443651916838998099> Candidatura Partner Manager")
       .setDescription(
-        "<:VC_Poll:1448695754972729436> Compilando questo modulo potrai candidarti come Partner Manager del server.",
-        "<a:VC_Timer:1462779065625739344> In caso verrete accettati farete una prova di 1/2 settimane",
-        "<:VC_Ticket:1448694637106692156> Se hai dei dubbi apri un ticket terza categoria.",
+        "<:VC_Poll:1482535102436216832> Compilando questo modulo potrai candidarti come Partner Manager del server.",
+        "<a:VC_Timer:1482527426557775954> In caso verrete accettati farete una prova di 1/2 settimane",
+        "<:VC_Ticket:1482535175283019888> Se hai dei dubbi apri un ticket terza categoria.",
         "",
         "<a:VC_Alert:1448670089670037675> **__LEGGI BENE ALL'INTERNO DEI RIQUADRI LA DOMANDA E POI RISPONDI__**",);
   }
@@ -366,9 +366,9 @@ function buildIntroEmbed(type) {
     .setColor("#6f4e37")
     .setTitle("<:helper:1443651909448630312> Candidatura Helper")
     .setDescription(
-      "<:VC_Poll:1448695754972729436> Compilando questo modulo potrai candidarti come Helper del server.",
-      "<a:VC_Timer:1462779065625739344> In caso verrete accettati farete una prova di 1/2 settimane",
-      "<:VC_Ticket:1448694637106692156> Se hai dei dubbi apri un ticket terza categoria.",
+      "<:VC_Poll:1482535102436216832> Compilando questo modulo potrai candidarti come Helper del server.",
+      "<a:VC_Timer:1482527426557775954> In caso verrete accettati farete una prova di 1/2 settimane",
+      "<:VC_Ticket:1482535175283019888> Se hai dei dubbi apri un ticket terza categoria.",
       "",
       "<a:VC_Alert:1448670089670037675> **__LEGGI BENE ALL'INTERNO DEI RIQUADRI LA DOMANDA E POI RISPONDI__**",
     );
@@ -386,7 +386,7 @@ function buildFinalThanksEmbed(untilTs, type) {
         "<a:VC_ThankYou:1330186319673950401> Grazie per esserti candidato.",
         "",
         `<:VC_update:1478721333096349817> Per **un'altra candidatura ${label}** dovrai attendere fino a: <t:${unix}:F> (<t:${unix}:R>).`,
-        "<:VC_Info:1460670816214585481> Puoi comunque candidarti all’**altro** ruolo (Helper / Partner Manager) se non l’hai già fatto di recente per quello.",
+        "<:VC_InactiveStatus:1472011031709745307> Puoi comunque candidarti all’**altro** ruolo (Helper / Partner Manager) se non l’hai già fatto di recente per quello.",
         "",
         "<a:VC_Alert:1448670089670037675> Non aprire ticket e non pingare lo staff per chiedere l'esito, altrimenti la candidatura verrà automaticamente scartata.",
       ].join("\n"),
@@ -595,7 +595,7 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
   const embed = new EmbedBuilder()
     .setColor("#3498DB")
     .setAuthor({ name: user.username, iconURL: user.displayAvatarURL({ size: 128 }) })
-    .setTitle(`<:VC_Poll:1448695754972729436> CANDIDATURA ${cfg.label.toUpperCase()} (#${applicationNumber})`)
+    .setTitle(`<:VC_Poll:1482535102436216832> CANDIDATURA ${cfg.label.toUpperCase()} (#${applicationNumber})`)
     .setDescription(formatApplicationDescription(type, state.answers))
     .setFooter({
       text: `User ID: ${user.id}\u2022${new Date().toLocaleString("it-IT")}`,
@@ -653,7 +653,7 @@ async function sendPartnerManagerWelcome(pmChannel, user) {
 # Benvenutx nei Partner Manager <:partnermanager:1443651916838998099>
 
 > **Per iniziare al meglio controlla:** <:VC_id:1478517313618575419>
-<:VC_Reply:1468262952934314131> <#1442569199229730836>
+<:VC_Reply:1482532158080942191> <#1442569199229730836>
 
 __Per qualsiasi cosa l'High Staff è disponibile__ <:staff:1443651912179388548>`,
   }).catch(() => null);
@@ -666,9 +666,9 @@ async function sendHelperWelcome(staffChannel, user) {
 # Benvenutx nello staff <:staff:1443651912179388548>
 
 > **Per iniziare al meglio controlla:** <:VC_id:1478517313618575419>
-<:VC_DoubleReply:1468713981152727120> <#1442569237142044773>
-<:VC_DoubleReply:1468713981152727120> <#1442569239063167139>
-<:VC_Reply:1468262952934314131> <#1442569243626307634>
+<:VC_DoubleReply:1482532332509466797> <#1442569237142044773>
+<:VC_DoubleReply:1482532332509466797> <#1442569239063167139>
+<:VC_Reply:1482532158080942191> <#1442569243626307634>
 
 __Per qualsiasi cosa l'High Staff è disponibile__ <:staff:1443651912179388548>`,
   }).catch(() => null);

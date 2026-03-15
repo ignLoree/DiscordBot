@@ -290,13 +290,13 @@ function buildDmWelcomeEmbed(member) {
         "Entrando nel server accetti automaticamente le nostre regole.",
         "<a:VC_Arrow:1448672967721615452> <https://discord.com/channels/1329080093599076474/1442569111119990887/1470102236527853661>",
         "------------------------------",
-        "<:VC_Dot:1443932948599668746> Check out our GUILD TAGS",
-        "<a:VC_Moon:1472299537094934642>[⭑.ᐟ](<https://discord.gg/E6vrm5zE6B>)<:VC_Luna1:1471613026158514246><:VC_Luna2:1482497653387427902> & <a:VC_Money:1448671284748746905>[⭑.ᐟ](<https://discord.gg/QnTN5P578g>)<:VC_Cash1:1482460724302184450><:VC_Cash2:1482460763346960434>",
+        "<:VC_Dot:1482532364222595303> Check out our GUILD TAGS",
+        "<a:VC_Moon:1472299537094934642>[⭑.ᐟ](<https://discord.gg/E6vrm5zE6B>)<:VC_Luna1:1482497618289496117><:VC_Luna2:1482497653387427902> & <a:VC_Money:1448671284748746905>[⭑.ᐟ](<https://discord.gg/QnTN5P578g>)<:VC_Cash1:1482460724302184450><:VC_Cash2:1482460763346960434>",
         "<:VC_Firework:1470796227913322658>[⭑.ᐟ](<https://discord.gg/WMuZ4EMAkc>)<:VC_Porn1:1482497744513011944><:VC_Porn2:1482497774892089547> & <a:VC_PepeEggPlant:1331622686014570588>[⭑.ᐟ](<https://discord.gg/uqUNS9f5m5>)<:VC_SixNine1:1482497833578922065><:VC_SixNine2:1482497868328865813>",
         "<a:VC_PepeSmoke:1331590685673132103>[⭑.ᐟ](<https://discord.gg/SzBwnxHXNv>)<:VC_Weed1:1482497951686201534><:VC_Weed2:1482497986910097592> & <a:VC_PepeExcited:1331621719093284956>[⭑.ᐟ](<https://discord.gg/z3EXtJwvQH>)<:VC_Figa1:1482495980275499169><:VC_Figa2:1482496046222544937>",
         "<a:VC_Arrow:1448672967721615452> <https://discord.com/channels/1329080093599076474/1442569111119990887/1470102239094767699>",
         "------------------------------",
-        "<a:VC_Exclamation:1448687427836444854> Verify Yourself: <https://discord.com/channels/1329080093599076474/1442569059983163403>",
+        "<a:VC_Exclamation:1482534702077444217> Verify Yourself: <https://discord.com/channels/1329080093599076474/1442569059983163403>",
       ].join("\n"),
     )
     .setThumbnail(member.guild.iconURL({ size: 256 }))
@@ -429,13 +429,13 @@ async function handleBotJoin(member, joinGateConfig) {
       await inviteChannel
         .send({
           content:
-            "<:VC_Reply:1468262952934314131> Bot entrato tramite vanity **.gg/viniliecaffe**",
+            "<:VC_Reply:1482532158080942191> Bot entrato tramite vanity **.gg/viniliecaffe**",
         })
         .catch(() => {});
     } else {
       await inviteChannel
         .send({
-          content: `<:VC_Reply:1468262952934314131> Bot entrato con il link <${info.link}>,\n-# -> invitato da ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`,
+          content: `<:VC_Reply:1482532158080942191> Bot entrato con il link <${info.link}>,\n-# -> invitato da ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`,
         })
         .catch(() => {});
     }
@@ -1013,7 +1013,7 @@ async function announceInviteInfo(member, channel, info) {
     await channel
       .send({
         content:
-          "<:VC_Reply:1468262952934314131> L'utente ha usato il link vanity **.gg/viniliecaffe**",
+          "<:VC_Reply:1482532158080942191> L'utente ha usato il link vanity **.gg/viniliecaffe**",
       })
       .catch(() => {});
     return;
@@ -1021,7 +1021,7 @@ async function announceInviteInfo(member, channel, info) {
 
   await channel
     .send({
-      content: `<:VC_Reply:1468262952934314131> È entratx con il link <${info.link}>,\n-# -> invitato da ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`,
+      content: `<:VC_Reply:1482532158080942191> È entratx con il link <${info.link}>,\n-# -> invitato da ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`,
     })
     .catch(() => {});
 }

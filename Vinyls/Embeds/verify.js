@@ -24,7 +24,7 @@ async function run(client) {
     .setTitle("<a:VC_HeartsPink:1468685897389052008> **__Benvenutx su Vinili & Caffè__**")
     .setDescription(
       "<:vegacheckmark:1443666279058772028> Per **verificarti** premi il pulsante **__`Verify`__**, poi inserisci il **codice** che riceverai in **risposta effimera**.\n" +
-        "<:VC_Ticket:1448694637106692156> Per **qualsiasi** problema, non **esitate** ad aprire un **__<#1442569095068254219> `Prima Categoria`__**",
+        "<:VC_Ticket:1482535175283019888> Per **qualsiasi** problema, non **esitate** ad aprire un **__<#1442569095068254219> `Prima Categoria`__**",
     )
     .setImage(DIVIDER_URL);
 
@@ -41,7 +41,7 @@ async function run(client) {
     .setImage(DIVIDER_URL);
 
   const verifyRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId("verify_start").setEmoji(`<a:VC_Verified:1448687631109197978>`).setLabel("︲VERIFY").setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId("verify_start").setEmoji(`<a:VC_Verified:1482532479637127188>`).setLabel("︲VERIFY").setStyle(ButtonStyle.Success),
   );
 
   let panelDoc = null;

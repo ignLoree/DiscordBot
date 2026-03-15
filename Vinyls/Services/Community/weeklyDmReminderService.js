@@ -79,7 +79,7 @@ const defaultPool = [
     description: `Partecipa a eventi e poll in ${channelMention(IDs.channels.polls, "canale polls")}: aiuti la comunità e resti aggiornato.`,
   },
   {
-    title: "Contatore e mini-attività",
+    title: "Contatore e mini - attività",
     description: `Per attività leggere passa da ${channelMention(IDs.channels.counting, "canale counting")} e dai un'occhiata ai canali community.`,
   },
   {
@@ -116,7 +116,7 @@ const defaultPool = [
   },
   {
     title: "Obiettivo settimanale",
-    description: "Impostati un mini-obiettivo: più costanza in chat, più presenza in vocale o più partecipazione ai poll.",
+    description: "Impostati un mini - obiettivo: più costanza in chat, più presenza in vocale o più partecipazione ai poll.",
   },
   {
     title: "Sfrutta il forum",
@@ -687,7 +687,7 @@ function createExternalReturnEmbed(guild) {
   const guildName = String(guild?.name || "il server");
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle(`<:VC_Info:1460670816214585481> Ti aspettiamo su ${guildName}`)
+    .setTitle(`<:VC_InactiveStatus:1472011031709745307> Ti aspettiamo su ${guildName}`)
     .setDescription(
       [
         "<:VC_PepeWave:1331589315175907412> Se vuoi rientrare, sei il benvenuto: il server è sempre attivo.",

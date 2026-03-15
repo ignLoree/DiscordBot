@@ -2,7 +2,7 @@ const { EmbedBuilder, MessageFlagsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 
 const MAX_CONTENT_LOG_LENGTH = 1800;
-const VERIFICATION_EXCLUDED_CHANNEL_IDS=new Set([IDs.channels.verify,IDs.channels.clickMe].filter(Boolean).map(String),);
+const VERIFICATION_EXCLUDED_CHANNEL_IDS=new Set([IDs.channels.verify,IDs.channels.clickMe,IDs.channels.activityLogs].filter(Boolean).map(String),);
 
 function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
@@ -48,7 +48,10 @@ function hasMessageFlag(message, flag) {
       return Boolean(message.flags.has(flag));
     }
   } catch (err) {
-    global.logger?.warn?.("[messageDelete] ", err?.message || err);
+    const chId = String(message?.channelId || message?.channel?.id || "");
+    if (chId !== String(IDs.channels?.activityLogs || "")) {
+      global.logger?.warn?.("[messageDelete] ", err?.message || err);
+    }
   }
   const raw = message?.flags?.bitfield ?? message?.flags ?? 0;
   try {
@@ -209,7 +212,10 @@ module.exports = {
       history.unshift(payload);
       resolvedClient.snipes.set(channelId, history.slice(0, 10));
     } catch (error) {
-      global.logger?.error?.("[messageDelete] failed:", error);
+      const chId = String(resolved?.channel?.id || resolved?.channelId || message?.channelId || "");
+      if (chId !== String(IDs.channels?.activityLogs || "")) {
+        global.logger?.error?.("[messageDelete] failed:", error);
+      }
     }
   },
 };

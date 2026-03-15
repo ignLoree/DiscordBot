@@ -1,23 +1,9 @@
 const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, UserSelectMenuBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionsBitField, ChannelType, } = require("discord.js");
 const { CustomRole } = require("../../Schemas/Community/communitySchemas");
 const axios = require("axios");
-const IDs = require("../../Utils/Config/ids");
 const { resolveCustomRoleState, buildExpiryText, } = require("../../Utils/Community/customRoleState");
-const { getClientGuildCached, getGuildChannelCached, getGuildMemberCached, getGuildRoleCached, getUserCached, } = require("../../Utils/Interaction/interactionEntityCache");
-const {
-  fetchGuildChannel,
-  fetchGuildMember,
-  fetchGuildRole,
-  replyEphemeral,
-  parseRoleActionId,
-  parseVoiceActionId,
-  findCustomVoiceByRole,
-  canManageRole,
-  refreshEmbedRoleLine,
-  sanitizeVoiceBaseName,
-  parseCustomVocName,
-  buildCustomVocName,
-} = require("../../Utils/Interaction/customRoleUtils");
+const { getClientGuildCached, getGuildMemberCached, getGuildRoleCached, getUserCached, } = require("../../Utils/Interaction/interactionEntityCache");
+const { fetchGuildChannel, fetchGuildMember, fetchGuildRole, replyEphemeral, parseRoleActionId, parseVoiceActionId, findCustomVoiceByRole, canManageRole, refreshEmbedRoleLine, sanitizeVoiceBaseName, parseCustomVocName, buildCustomVocName } = require("../../Utils/Interaction/customRoleUtils");
 const pendingRoleGrants = new Map();
 const PRIVATE_FLAG = 1 << 6;
 
@@ -28,7 +14,7 @@ async function checkOwnership(interaction, ownerId) {
       embeds: [
         new EmbedBuilder()
           .setColor("Red")
-          .setTitle("<:VC_Lock:1468544444113617063> Accesso negato")
+          .setTitle("<:VC_Lock:1482526739044368476> Accesso negato")
           .setDescription(
             "<:attentionfromvega:1443651874032062505> Solo il proprietario del ruolo personalizzato può usare questo controllo.",
           ),
@@ -60,7 +46,7 @@ async function ensureOwnerCustomRoleActive(
       content: [
         "<a:VC_Alert:1448670089670037675> Il tuo custom role temporaneo è scaduto.",
         `<:VC_Clock:1473359204189474886> Scadenza: ${buildExpiryText(state.doc)}`,
-        "<:VC_Info:1460670816214585481> Usa `+customrole create` per crearne uno nuovo.",
+        "<:VC_InactiveStatus:1472011031709745307> Usa `+customrole create` per crearne uno nuovo.",
       ].join("\n"),
       flags: PRIVATE_FLAG,
     });
@@ -108,15 +94,7 @@ async function updatePanelMessage(interaction, panelMessageId, role) {
   await msg.edit({ embeds: [updated] }).catch(() => { });
 }
 
-async function createCustomRoleGrantRequest({
-  client,
-  guildId,
-  channelId,
-  requesterId,
-  targetId,
-  roleId,
-  timeoutMs = 60_000,
-}) {
+async function createCustomRoleGrantRequest({ client, guildId, channelId, requesterId, targetId, roleId, timeoutMs = 60_000 }) {
   const guild = await getClientGuildCached(client, guildId);
   const channel = await fetchGuildChannel(guild, channelId);
   const targetMember = await fetchGuildMember(guild, targetId);
@@ -127,9 +105,9 @@ async function createCustomRoleGrantRequest({
 
   const waitingEmbed = new EmbedBuilder()
     .setColor("#f1c40f")
-    .setTitle("<a:VC_pixeltime:1470796283320209600> In attesa di conferma")
+    .setTitle("<a:VC_pixeltime:1482535344103620771> In attesa di conferma")
     .setDescription(
-      `<a:VC_Timer:1462779065625739344> Sto aspettando che ${targetMember} accetti di ricevere il ruolo **${role.name}**.`,
+      `<a:VC_Timer:1482527426557775954> Sto aspettando che ${targetMember} accetti di ricevere il ruolo **${role.name}**.`,
   );
   const promptMsg = await channel.send({ embeds: [waitingEmbed] }).catch(() => null);
   if (!promptMsg) return { ok: false };
@@ -194,7 +172,7 @@ async function createCustomRoleGrantRequest({
               new EmbedBuilder()
                 .setColor("#e67e22")
                 .setTitle("<:VC_update:1478721333096349817> Scaduto")
-                .setDescription(`<a:VC_Timer:1462779065625739344> <@${req.targetId}> non ha risposto in tempo.`),
+                .setDescription(`<a:VC_Timer:1482527426557775954> <@${req.targetId}> non ha risposto in tempo.`),
             ],
           })
           .catch(() => { });
@@ -210,7 +188,7 @@ async function createCustomRoleGrantRequest({
               new EmbedBuilder()
                 .setColor("#e67e22")
                 .setTitle("<:VC_update:1478721333096349817> Scaduto")
-                .setDescription( "<a:VC_Timer:1462779065625739344> Tempo scaduto: la richiesta non è più valida." ),
+                .setDescription( "<a:VC_Timer:1482527426557775954> Tempo scaduto: la richiesta non è più valida." ),
             ],
             components: [],
           })
@@ -326,8 +304,8 @@ async function handleRoleActionButton(interaction) {
         embeds: [
           new EmbedBuilder()
             .setColor("#6f4e37")
-            .setTitle("<:VC_Mention:1443994358201323681> Seleziona un utente")
-            .setDescription("<:VC_Info:1460670816214585481> Seleziona un utente: riceverà una richiesta in DM per accettare il ruolo." ),
+            .setTitle("<:VC_Mention:1482526855289634997> Seleziona un utente")
+            .setDescription("<:VC_InactiveStatus:1472011031709745307> Seleziona un utente: riceverà una richiesta in DM per accettare il ruolo." ),
         ],
         components: [
           new ActionRowBuilder().addComponents(
@@ -749,7 +727,7 @@ async function handleCustomVocButton(interaction) {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setTitle("<:VC_Lock:1468544444113617063> Accesso negato")
+            .setTitle("<:VC_Lock:1482526739044368476> Accesso negato")
             .setDescription(
               "<a:VC_Alert:1448670089670037675> Solo il proprietario della vocale privata può usare questo controllo.",
             ),
@@ -780,7 +758,7 @@ async function handleCustomVocButton(interaction) {
         ? "Imposta emoji vocale"
         : "Modifica nome vocale",
     );
-  const input = new TextInputBuilder().setCustomId("value").setLabel(head === "customvoc_emoji" ? "Emoji" : "Nuovo nome").setStyle(TextInputStyle.Short).setRequired(true).setPlaceholder(head === "customvoc_emoji" ? "Es: ?" : "Es: privata-lore").setMaxLength(head === "customvoc_emoji" ? 32 : 90);
+  const input = new TextInputBuilder().setCustomId("value").setLabel(head === "customvoc_emoji" ? "Emoji" : "Nuovo nome").setStyle(TextInputStyle.Short).setRequired(true).setPlaceholder(head === "customvoc_emoji" ? "Es: ?" : "Es: privata - lore").setMaxLength(head === "customvoc_emoji" ? 32 : 90);
   modal.addComponents(new ActionRowBuilder().addComponents(input));
   const shown = await interaction.showModal(modal).then(() => true).catch(() => false);
   if (!shown) {
@@ -926,7 +904,7 @@ async function handleGrantButtons(interaction) {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setTitle("<:VC_Lock:1468544444113617063> Accesso negato")
+            .setTitle("<:VC_Lock:1482526739044368476> Accesso negato")
             .setDescription(
               "<a:VC_Alert:1448670089670037675>Solo l'utente invitato può rispondere a questa richiesta.",
             ),

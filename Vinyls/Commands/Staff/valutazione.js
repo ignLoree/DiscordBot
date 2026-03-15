@@ -145,7 +145,7 @@ async function handlePositiveRemove(
     `<:VC_reason:1478517122929004544> A __${staffUser.username}__ è stata **rimossa** una _Valutazione Positiva!_`, reason,
     "",
     "<:VC_update:1478721333096349817> __Valutazione Positive Totali__",
-    `<:VC_OnlineStatus:1472011187569950751> Ora sei a \`${staffDoc.positiveCount}\` valutazioni positive!`);
+    `<:VC_OnlineStatus:1482527088912240650> Ora sei a \`${staffDoc.positiveCount}\` valutazioni positive!`);
 
   await sendChannelEmbed(channel, { embeds: [embed] });
   return safeEditReply(interaction, {
@@ -258,7 +258,7 @@ async function handleNegativeRemove(
     `<:VC_reason:1478517122929004544> A __${staffUser.username}__ è stata **rimossa** una _Valutazione Negativa!_`, reason,
     "",
     "<:VC_update:1478721333096349817> __Valutazione Negative Totali__",
-    `<:VC_OnlineStatus:1472011187569950751> Ora sei a \`${staffDoc.negativeCount}\` valutazioni negative!`);
+    `<:VC_OnlineStatus:1482527088912240650> Ora sei a \`${staffDoc.negativeCount}\` valutazioni negative!`);
 
   await sendChannelEmbed(channel, { embeds: [embed] });
   return safeEditReply(interaction, {
@@ -281,7 +281,7 @@ async function handleMedia(interaction, staffUser, doc) {
   }
 
   const embed = new EmbedBuilder()
-    .setTitle(`<:VC_Info:1460670816214585481> Valutazioni di ${staffUser.username}`)
+    .setTitle(`<:VC_InactiveStatus:1472011031709745307> Valutazioni di ${staffUser.username}`)
     .setColor("#6f4e37")
     .addFields(
       {

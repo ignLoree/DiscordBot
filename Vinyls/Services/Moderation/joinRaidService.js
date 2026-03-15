@@ -342,7 +342,7 @@ async function doFinalizeJoinRaidReportLocked(guild, reason = "elapsed") {
     guild,
     "<a:VC_Alert:1448670089670037675> **Join Raid Report!**",
     [
-      `<:VC_Mention:1443994358201323681> **${caughtCount} utenti** sono stati catturati dalla protezione raid.`,
+      `<:VC_Mention:1482526855289634997> **${caughtCount} utenti** sono stati catturati dalla protezione raid.`,
       `<:VC_reason:1478517122929004544> **Codice:** \`${code}\``,
       `<:VC_Clock:1473359204189474886> **Durata:** ${Math.round(Number(JOIN_RAID_CONFIG.raidDurationMs || 0) / 60_000)} minuti`,
     ],
@@ -758,7 +758,7 @@ async function applyPunishment(member, reasons) {
     [
       `<:member_role_icon:1330530086792728618> **JoinRaid Filter:** ${reasons.map((x) => x.label).join(", ") || "N/A"}`,
       `<:VC_reason:1478517122929004544> **Member:** ${member.user} [\`${member.id}\`]`,
-      `<:VC_BanHammer:1443933132645732362> **Action:** ${appliedAction}${punished ? "" : " (fallback)"}`,
+      `<:VC_BanHammer:1482534474502897795> **Action:** ${appliedAction}${punished ? "" : " (fallback)"}`,
       `<:VC_PinkQuestionMark:1471892611026391306> **Can Ban:** ${canBan ? "Yes" : "No"} | **Can Kick:** ${canKick ? "Yes" : "No"} | **Can Timeout:** ${canTimeout ? "Yes" : "No"}`,
       appliedAction === "ban"
         ? `${ARROW} **Duration:** ${Math.round(
@@ -908,7 +908,7 @@ async function processJoinRaidForMember(member, options = {}) {
           [
             `<:member_role_icon:1330530086792728618> **Member:** ${member.user} [\`${member.id}\`]`,
             `<:VC_reason:1478517122929004544> **Reasons:** ${reasons.map((x) => x.label).join(", ") || "N/A"}`,
-            `<:VC_BanHammer:1443933132645732362> **Action:** \`log\``,
+            `<:VC_BanHammer:1482534474502897795> **Action:** \`log\``,
           ],
           "#F59E0B",
         );

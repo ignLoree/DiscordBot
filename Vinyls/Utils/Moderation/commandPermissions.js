@@ -1332,11 +1332,11 @@ function buildGlobalPermissionDeniedEmbed(requiredRoleIds = [], entityLabel = "c
   const roles = Array.isArray(requiredRoleIds) ? requiredRoleIds.filter(Boolean) : [];
   const rolesText = roles.length ? roles.map((id) => `<@&${id}>`).join(", ")
     : "<:attentionfromvega:1443651874032062505> Nessun ruolo configurato.";
-  const description = customDescription != null ? customDescription : `<:VC_Lock:1468544444113617063> Questo ${entityLabel} è riservato ad una categoria di utenti specifici.`;
+  const description = customDescription != null ? customDescription : `<:VC_Lock:1482526739044368476> Questo ${entityLabel} è riservato ad una categoria di utenti specifici.`;
 
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
+    .setTitle("<:VC_Lock:1482526739044368476> **Non hai i permessi**")
     .setDescription(description);
   if (roles.length > 0) {
     embed.addFields({
@@ -1354,8 +1354,8 @@ function buildGlobalChannelDeniedEmbed(allowedChannelIds = [], entityLabel = "co
 
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
-    .setDescription(`<:VC_Lock:1468544444113617063> Questo ${entityLabel} è disponibile solo in canali specifici.`);
+    .setTitle("<:VC_Lock:1482526739044368476> **Non hai i permessi**")
+    .setDescription(`<:VC_Lock:1482526739044368476> Questo ${entityLabel} è disponibile solo in canali specifici.`);
   if (channels.length > 0) {
     embed.addFields({
       name: "<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**",
@@ -1368,7 +1368,7 @@ function buildGlobalChannelDeniedEmbed(allowedChannelIds = [], entityLabel = "co
 function buildGlobalNotYourControlEmbed() {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<:VC_Lock:1468544444113617063> **Accesso negato**")
+    .setTitle("<:VC_Lock:1482526739044368476> **Accesso negato**")
     .setDescription("<:attentionfromvega:1443651874032062505> Questo controllo non è associato al tuo comando.");
 }
 

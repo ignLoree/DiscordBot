@@ -34,7 +34,7 @@ module.exports = {
     .setImage(`attachment://rank-${targetUser.id}.png`)
     .setDescription(
       [
-        `<:VC_EXP:1468714279673925883> Hai accumulato un totale di **${stats.totalExp} EXP**.`,
+        `<:VC_EXP:1482534670896730143> Hai accumulato un totale di **${stats.totalExp} EXP**.`,
         `<a:VC_Rocket:1468544312475123753> **Moltiplicatore:** ${multiplier}x`,
       ].join("\n"),
     )

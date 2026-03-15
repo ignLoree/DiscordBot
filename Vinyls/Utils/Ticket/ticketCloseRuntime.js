@@ -8,13 +8,13 @@ const { getClientGuildCached, getGuildChannelCached, getGuildMemberCached, } = r
 
 function buildTicketRatingRows(ticketId) {
   const stylesByScore = { 1: ButtonStyle.Danger, 2: ButtonStyle.Danger, 3: ButtonStyle.Primary, 4: ButtonStyle.Success, 5: ButtonStyle.Success, };
-  const row = new ActionRowBuilder().addComponents(...[1, 2, 3, 4, 5].map((score) => new ButtonBuilder().setCustomId(`ticket_rate:${ticketId}:${score}`).setStyle(stylesByScore[score] || ButtonStyle.Secondary).setLabel(String(score)).setEmoji("<:VC_EXP:1468714279673925883>"),),);
+  const row = new ActionRowBuilder().addComponents(...[1, 2, 3, 4, 5].map((score) => new ButtonBuilder().setCustomId(`ticket_rate:${ticketId}:${score}`).setStyle(stylesByScore[score] || ButtonStyle.Secondary).setLabel(String(score)).setEmoji("<:VC_EXP:1482534670896730143>"),),);
   return [row];
 }
 
 function formatRatingStars(score) {
   const s = Math.max(0, Math.min(5, Math.floor(Number(score) || 0)));
-  return "<:VC_EXP:1468714279673925883>".repeat(s) + "<:VC_EXP:1468714279673925883>".repeat(5 - s);
+  return "<:VC_EXP:1482534670896730143>".repeat(s) + "<:VC_EXP:1482534670896730143>".repeat(5 - s);
 }
 
 function buildTicketClosedEmbed(data) {
@@ -34,12 +34,12 @@ function buildTicketClosedEmbed(data) {
   if (Number.isFinite(data?.ratingScore) && data.ratingScore >= 1) {
     const stars = formatRatingStars(data.ratingScore);
     const byPart = data?.ratingBy ? ` – da <@${data.ratingBy}>` : "";
-    fields.push({ name: "<:VC_EXP:1468714279673925883> Valutazione", value: `${stars}${byPart}`, inline: true });
+    fields.push({ name: "<:VC_EXP:1482534670896730143> Valutazione", value: `${stars}${byPart}`, inline: true });
   }
 
   const embed = new EmbedBuilder()
-    .setAuthor({ name: data?.guildName || "<:VC_Ticket:1448694637106692156> Sistema Ticket", iconURL: data?.guildIconURL || undefined, })
-    .setTitle("<:VC_Ticket:1448694637106692156> Ticket Chiuso")
+    .setAuthor({ name: data?.guildName || "<:VC_Ticket:1482535175283019888> Sistema Ticket", iconURL: data?.guildIconURL || undefined, })
+    .setTitle("<:VC_Ticket:1482535175283019888> Ticket Chiuso")
     .setColor("#6f4e37")
     .addFields(fields.slice(0, 25))
     .setFooter({ text: "© 2025 Vinili & Caffè. Tutti i diritti riservati." })

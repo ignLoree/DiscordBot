@@ -20,8 +20,8 @@ async function _reply(message, payload) {
   }
 }
 const PREFIX = "nodm_panel_";
-const EMOJI_OFF = "<:VC_OfflineStatus:1472011150081130751>";
-const EMOJI_ON = "<:VC_OnlineStatus:1472011187569950751>";
+const EMOJI_OFF = "<:VC_OfflineStatus:1482527117051957380>";
+const EMOJI_ON = "<:VC_OnlineStatus:1482527088912240650>";
 
 function buildPanelEmbed(prefs, mode = "disable") {
   const isAll = prefs.blockAll || prefs.disabled.has(DM_CATEGORY_ALL);
@@ -35,10 +35,10 @@ function buildPanelEmbed(prefs, mode = "disable") {
       : "<:VC_PinkQuestionMark:1471892611026391306>Scegli **quali DM** disattivare. Clicca un pulsante per attivare/disattivare quella categoria.";
   const footerText =
     mode === "enable"
-      ? "<:VC_Info:1460670816214585481> Usa +dm-disable per disattivare categorie."
-      : "<:VC_Info:1460670816214585481> Usa +dm-enable per riattivare tutto.";
+      ? "<:VC_InactiveStatus:1472011031709745307> Usa +dm-disable per disattivare categorie."
+      : "<:VC_InactiveStatus:1472011031709745307> Usa +dm-enable per riattivare tutto.";
   const desc = [
-    `<:VC_Ticket:1448694637106692156> ${intro}`,
+    `<:VC_Ticket:1482535175283019888> ${intro}`,
     "",
     ...lines,
     "",
@@ -46,12 +46,12 @@ function buildPanelEmbed(prefs, mode = "disable") {
       ? "<:attentionfromvega:1443651874032062505> **Tutti i DM sono attualmente disattivati.** Clicca una categoria per ricevere solo quella, o **Attiva tutto**."
       : "<a:VC_Alert:1448670089670037675> Usa **Disattiva tutto** per bloccare tutti i DM, o **Attiva tutto** per riceverli tutti.",
     "",
-    "<a:VC_Exclamation:1448687427836444854> Ticket, moderazione e messaggi importanti restano sempre inviati.",
+    "<a:VC_Exclamation:1482534702077444217> Ticket, moderazione e messaggi importanti restano sempre inviati.",
   ].join("\n");
 
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Announce:1448687280381235443> Preferenze DM")
+    .setTitle("<a:VC_Announce:1482534613568979007> Preferenze DM")
     .setDescription(desc)
     .setFooter({ text: footerText });
 }
@@ -182,7 +182,7 @@ async function runNoDmPanel(message, options = {}) {
               .setColor("#6f4e37")
               .setTitle("<:VC_Success:1468685897389052008> Preferenze DM salvate")
               .setDescription(
-                "<:VC_Info:1460670816214585481> Le tue preferenze sono state aggiornate. Usa `+dm-disable` o `+dm-enable` per modificarle.",
+                "<:VC_InactiveStatus:1472011031709745307> Le tue preferenze sono state aggiornate. Usa `+dm-disable` o `+dm-enable` per modificarle.",
               ),
           ],
           components: [],
